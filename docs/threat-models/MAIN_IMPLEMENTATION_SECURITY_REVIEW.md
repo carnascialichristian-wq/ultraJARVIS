@@ -332,6 +332,44 @@ reale per chiunque legga `gates.txt` senza notare `(forced stub)`.
 Combinato con S-14 il risultato è che `gates.txt` **non è una prova**: va trattato come
 output diagnostico, mai come evidenza di qualità in un `proof_ref`.
 
+## 4-octies. S-16 — i record di memoria non hanno provenienza. **MEDIUM, non ancora attivo.**
+
+`core/memory.py` scrive record con tre campi:
+
+```python
+entry = {"ts": time.time(), "fact": fact.strip(), "tags": tags or []}
+```
+
+**Non esiste un campo di provenienza.** Un fatto dichiarato da Christian e un fatto estratto
+da una pagina web finirebbero indistinguibili nello stesso file.
+
+**Onestà sullo stato: non è una vulnerabilità attiva.** Ho verificato che `core/planner.py`,
+`core/job_worker.py` e `core/natural_tasks.py` **non leggono la memoria** al ref corrente,
+quindi il percorso *contenuto non fidato → memoria → decisione* non è cablato. Il difetto è
+di progetto, e va corretto **prima** che quel cablaggio esista, non dopo.
+
+**Perché lo segnalo comunque:** il senso della memoria è essere riletta e influenzare le
+decisioni. Nel momento in cui `recall()` alimenta un planner, senza provenienza il sistema
+non può applicare la regola che i miei contratti già impongono —
+`originLabel: TRUSTED_INTERNAL | HUMAN_PROVIDED | UNTRUSTED_EXTERNAL` — ed è la stessa
+lacuna di `TH-SF-03` (l'intent della forge non vincolato a provenienza fidata).
+
+**Correzione:** aggiungere `origin` e `source_ref` al record, con default **non** fidato:
+
+```python
+entry = {
+    "ts": time.time(),
+    "fact": fact.strip(),
+    "tags": tags or [],
+    "origin": origin,          # HUMAN_PROVIDED | TRUSTED_INTERNAL | UNTRUSTED_EXTERNAL
+    "source_ref": source_ref,  # da dove viene, verificabile
+}
+```
+
+**→ Riguarda GEMINI più di Grok:** `UJ-MEM-001` (database, memoria, provenienza) è suo, e
+questa è la prova concreta che il campo serve nello schema fin dall'inizio. Retrofittarlo
+dopo significa avere un archivio di fatti di cui nessuno sa l'origine.
+
 ## 5. S-01 — `ToolSpec.safe` è dichiarato e mai letto. **HIGH.**
 
 `core/registry.py:15` definisce `safe: bool = True`. Ricerca su tutto il codice (escluse le
@@ -436,6 +474,7 @@ controllo di sicurezza, e **non deve ricevere crediti di mitigazione nel risk re
 | ID | Severità | Sintesi | Stato |
 |---|---|---|---|
 | S-14 | **HIGH** | il verdetto dei gate è una ricerca di sottostringa: **una build fallita riporta PASS** | **aperto** |
+| S-16 | MEDIUM | i record di memoria non hanno provenienza (per GEMINI, `UJ-MEM-001`) | aperto, **non ancora attivo** |
 | S-15 | MEDIUM | `use_real=False` stampa `PASS (forced stub)` su tutti i gate | **aperto** |
 | S-12 | **HIGH** | `promote_job_to_tools` scrive codice generato in `tools/` **senza gate di safety** | **aperto** |
 | S-13 | MEDIUM | ogni tool promosso non compila (header con una virgoletta di troppo) — e **maschera S-12 per caso** | **aperto** |
@@ -488,6 +527,24 @@ Onestà di stato: due findings della prima stesura **non sono più veri** al ref
 |---|---|---|
 | S-04 | `core.natural_tasks` inimportabile (`No module named 'core.verify'`), unico chiamante del safety scan | **CHIUSO** — `config`, `gates`, `logging_uj`, `reliability`, `utils`, `verify` sono su `main`; l'import riesce |
 | S-05 | 7 tool su `main` contro 55 nello snapshot; 3 voci di catalogo senza modulo | **CHIUSO** — 94 file tool, catalogo a 44, moduli presenti |
+
+## 10-bis. Cosa ho verificato e ho trovato CORRETTO
+
+Lo scrivo perché una review che elenca solo i difetti dà un'impressione falsa dell'insieme.
+
+- **`tools/os_control.py`** — stub genuini: `set_volume` fa clamp in `[0,100]`, `open_app`
+  ha una allowlist di quattro applicazioni e solleva `PermissionError` fuori da quella.
+  Unico rilievo minore: `terminal` è fra le app consentite, e il giorno in cui lo stub
+  diventasse reale aprire un terminale sarebbe un'escalation. Da togliere dalla lista
+  prima, non dopo.
+- **`tools/automation.py`** — dry-run reale, con storico in memoria e nessuna dipendenza da
+  librerie di automazione UI. Il rilievo `S-06` riguarda la loro **presenza nel catalogo**,
+  non la loro implementazione.
+- **`core/gates.py`** — esegue `ruff`, `black` e `pytest` per davvero e legge gli exit code
+  correttamente, con timeout. Il difetto `S-14` **non è qui**: è nel chiamante che ne
+  interpreta il testo invece del risultato.
+- **`core/memory.py`** — scrittura append-only in JSONL, nessuna deserializzazione
+  pericolosa, errori di parsing gestiti riga per riga.
 
 ## 11. Cosa NON ho fatto
 
