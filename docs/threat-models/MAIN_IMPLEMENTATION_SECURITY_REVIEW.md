@@ -374,10 +374,12 @@ controllo di sicurezza, e **non deve ricevere crediti di mitigazione nel risk re
 
 | ID | Severità | Sintesi | Stato |
 |---|---|---|---|
+| S-12 | **HIGH** | `promote_job_to_tools` scrive codice generato in `tools/` **senza gate di safety** | **aperto** |
+| S-13 | MEDIUM | ogni tool promosso non compila (header con una virgoletta di troppo) — e **maschera S-12 per caso** | **aperto** |
 | S-10 | **HIGH** | `files.safe_read` legge **qualunque file del sistema**: nessun contenimento nella root | **aperto** |
 | S-11 | **HIGH** | `force=True` aggira `PROTECTED` e `Registry.call()` lo inoltra → sovrascrittura di `core/registry.py` | **aperto** |
 | S-09 | **HIGH** | `lstrip("www.")`: `wexample.com` passa la allowlist del browser | **aperto, sfruttabile** |
-| S-01 | HIGH | `ToolSpec.safe` dichiarato e mai letto; 44/44 `safe=True` | aperto |
+| S-01 | HIGH | `ToolSpec.safe` dichiarato e mai letto; 125/125 `safe=True` | aperto |
 | S-02 | HIGH | `Registry.call()` senza ammissione, tetto o evento | aperto |
 | S-03 | HIGH | `email.send`: `force` morto, `SAFE_MODE` riscrivibile, nessuna idempotenza | aperto |
 | S-06 | MEDIUM | automazione consumer UI registrata e chiamabile, vietata dai vincoli | aperto |
@@ -386,6 +388,10 @@ controllo di sicurezza, e **non deve ricevere crediti di mitigazione nel risk re
 
 ### Ordine consigliato
 
+0. **S-12 PRIMA di S-13, mai il contrario.** Correggere la virgoletta di troppo *senza*
+   aggiungere prima il gate di safety **apre** l'esecuzione di codice generato non
+   validato. È un fix di un carattere, che chiunque farebbe senza pensarci: per questo va
+   scritto qui e non lasciato all'intuito.
 1. **S-10** — tre righe: copiare in `safe_read` il controllo `relative_to(root)` che
    `safe_write` ha già. È il difetto con l'impatto peggiore, perché espone segreti che non
    appartengono al progetto.
@@ -402,7 +408,7 @@ controllo di sicurezza, e **non deve ricevere crediti di mitigazione nel risk re
 
 ### Il filo comune
 
-Sei findings su nove sono **manopole di sicurezza che non girano nulla**: `ToolSpec.safe`
+Sei findings su undici sono **manopole di sicurezza che non girano nulla**: `ToolSpec.safe`
 mai letto, `force` di `email.send` mai referenziato, `SAFE_MODE` riscrivibile, `PROTECTED`
 disattivabile da kwarg, `lstrip` che non fa quello che il nome dice, scanner che non
 rileva. Ognuna, letta da sola, **sembra** una difesa.
