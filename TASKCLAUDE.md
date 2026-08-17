@@ -25,13 +25,13 @@
 | UJ-RUN-001 — Runtime blueprint | 13 | **REVIEW** | **GEMINI** | **Gemini deve revisionarlo** |
 | UJ-SEC-001 — Threat model, approval policy, critica Costituzione | 13 | **REVIEW** | **GROK** | **Grok deve revisionarlo** |
 | UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | IN_PROGRESS (2/8) | GEMINI | Gemini incrocia con UJ-CAP-001 |
-| UJ-RCV-001 — Checkpoint/retry/recovery | 8 | READY | ChatGPT | — |
-| UJ-SKL-001 — Skill Forge | 13 | **READY** (sbloccato) | ChatGPT | — |
-| UJ-MCP-001 — ToolManifest e MCP admission | 8 | **READY** (sbloccato) | GEMINI | prossimo che prendo |
+| UJ-MCP-001 — ToolManifest e MCP admission | 8 | **REVIEW** | **GEMINI** | **Gemini deve revisionarlo** |
+| UJ-RCV-001 — Checkpoint/retry/recovery | 8 | READY | ChatGPT | prossimo che prendo |
+| UJ-SKL-001 — Skill Forge | 13 | READY | ChatGPT | — |
 | UJ-REV-001 — Review del Program OS | 5 | **BLOCKED: aspetto ChatGPT** | Christian | **ChatGPT mi blocca** |
 | UJ-REV-002 — Security review Website Team | 8 | **BLOCKED: aspetto ChatGPT** | GROK | **ChatGPT mi blocca** |
 
-**Progresso onesto:** 0/76 accettato, 24/76 proposto. Nessun task DONE.
+**Progresso onesto:** 0/76 accettato, 31/76 proposto. Nessun task DONE.
 `completed_weight` resta 0 finché un reviewer non accetta (§7.3): non mi auto-assegno peso.
 **ETA: UNKNOWN** — manca velocity su due cicli (§7.4). Non chiedetemi una data.
 
@@ -62,10 +62,14 @@ Non fidatevi di quello che scrivo. Riproducete:
 cd packages/contracts && npx tsc --noEmit && npx tsc && cd ../..
 node --test tests/contracts/runtime-invariants.test.mjs   # atteso 34/34
 node --test tests/contracts/approval-policy.test.mjs      # atteso 28/28
+node --test tests/contracts/tool-admission.test.mjs       # atteso 30/30
 ```
 
-Atteso: typecheck exit 0, **62 test / 62 pass** in totale. Se non torna, il mio lavoro è
+Atteso: typecheck exit 0, **92 test / 92 pass** in totale. Se non torna, il mio lavoro è
 da rifiutare, non da interpretare.
+
+> Trappola dell'ambiente: eseguite i test **dalla root del repository**. Se fate `cd` in
+> `packages/contracts` prima, il test runner non trova i file. Ci sono cascato due volte.
 
 ---
 
@@ -227,6 +231,49 @@ modificato nulla, come impone l'Articolo 12. La più importante:
 `BLOCKER` invece di scegliere da soli**. Una IA che obbedisce e una che rifiuta hanno
 entrambe ragione oggi, ed è il problema.
 
+### 4.9 MCP non è una garanzia di sicurezza — e TH-10 non è chiusa
+
+Da `TOOL_PLANE.md` (UJ-MCP-001). Due punti che vi riguardano direttamente.
+
+**Primo: un server MCP è codice di terzi che dichiara cosa sa fare.** La dichiarazione è
+**input non fidato**, come una pagina web. Parlare un protocollo standard non dice nulla
+sulla condotta. Non esiste corsia preferenziale per "è ufficiale" o "lo usano tutti":
+l'Articolo 11 lo vieta. Ogni server, locale o remoto, passa dalla stessa admission a 18
+regole.
+
+**Secondo, e più importante per GROK: TH-10 NON è chiusa.**
+
+Ho reso meccanica la mitigazione P0-1 — solo `TOOL_RUNTIME` può emettere
+`tool.called/returned/failed`, nemmeno il Supervisor. Questo impedisce a un agente di
+**falsificare l'attestazione di aver chiamato un tool**.
+
+Non impedisce a un agente di **gonfiare il proprio `ResultEnvelope`**, cioè di dichiarare
+"task completato" quando non lo è.
+
+**→ GROK, nel risk register:** TH-10 va segnata come **coperta parzialmente**. Se le
+assegni una mitigazione piena, il register mente. La parte scoperta si chiude solo con
+l'emendamento **P-05** (nessuna affermazione di lavoro senza prova riproducibile) e con
+la review indipendente, che è processo, non codice.
+
+Lo segnalo io perché è mio interesse che risulti chiusa, ed è esattamente per questo che
+va scritto nero su bianco che non lo è.
+
+### 4.10 Per GEMINI: ToolManifest e CapabilityRecord non vanno fusi
+
+Si somigliano, e la tentazione di unificarli sarà forte quando compilerai il Capability
+Registry. **Rispondono a domande diverse:**
+
+| | `CapabilityRecord` (tuo, UJ-CAP-001) | `ToolManifest` (mio, UJ-MCP-001) |
+|---|---|---|
+| Domanda | *l'account può usare questo prodotto?* | *il sistema può chiamare questa funzione?* |
+| Cambia quando | cambia il piano o la policy del provider | cambia il codice del tool |
+
+Se li fondiamo, **ogni cambio di piano invalida i tool** e **ogni aggiornamento di tool
+richiede una riverifica di piano**: due cicli di vita diversi legati a forza.
+
+Un `ToolManifest` **cita** un `capability_id`, non lo duplica. Se non sei d'accordo, è
+il momento di dirlo — dopo costa.
+
 ---
 
 ## 5. Handoff specifico per ciascuno di voi
@@ -363,5 +410,6 @@ Derivano dal prompt canonico, ma le ho rese operative e le rispetto in modo veri
 |---|---|---|
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | creazione; consegna di UJ-RUN-001 in REVIEW, scoperte §4.1 e §4.2, handoff alle tre IA |
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-SEC-001** in REVIEW; aggiunte §4.6 (proof fabrication), §4.7 (8 difese su 15), §4.8 (Costituzione); Grok è ora reviewer anche di UJ-SEC-001 con 3 domande dirette; UJ-SKL-001 e UJ-MCP-001 sbloccati; proposto `UJ-SEC-002` a ChatGPT |
+| 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-MCP-001** in REVIEW; aggiunte §4.9 (MCP non è sicurezza; **TH-10 non è chiusa**) e §4.10 (ToolManifest ≠ CapabilityRecord, per Gemini); chiuso `R-RUN-03`, chiuso parzialmente `R-RUN-04`, nuovo `R-MCP-01`; 92 test totali |
 
 *(Regola 2 di `CLAUDE.md`: questo file va esteso a fine di ogni task, non riscritto.)*

@@ -152,9 +152,9 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 | UJ-RUN-001 — Runtime blueprint | 13 | **REVIEW** | 0/13 | 11/13 | review di Gemini | — |
 | UJ-SEC-001 — Threat model + approval policy + critica Costituzione | 13 | **REVIEW** | 0/13 | 11/13 | review di Grok | — |
 | UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | IN_PROGRESS | 0/8 | 2/8 | 6 | S-10 richiede login → HUMAN_BRIDGE |
+| UJ-MCP-001 — ToolManifest + MCP admission | 8 | **REVIEW** | 0/8 | 7/8 | review di Gemini | — |
 | UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **READY** | 0/8 | — | 8 | sbloccato da UJ-RUN-001 |
 | UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | **READY** | 0/13 | — | 13 | sbloccato da UJ-SEC-001 |
-| UJ-MCP-001 — ToolManifest + MCP admission | 8 | **READY** | 0/8 | — | 8 | sbloccato da UJ-SEC-001 |
 | UJ-REV-001 — Review del Program OS di ChatGPT | 5 | BLOCKED | 0/5 | — | 5 | UJ-INT-001 non esiste |
 | UJ-REV-002 — Security review Website Team | 8 | BLOCKED | 0/8 | — | 8 | UJ-INT-007 non esiste |
 
@@ -164,7 +164,8 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 portafoglio CLAUDE = 76 unità
 
 accettato formalmente = 0 / 76  = 0%      nessun reviewer ha ancora accettato
-proposto in review    = 24 / 76 = 31,6%   11 UJ-RUN-001 + 11 UJ-SEC-001 + 2 UJ-CLD-001
+proposto in review    = 31 / 76 = 40,8%   11 UJ-RUN-001 + 11 UJ-SEC-001
+                                          + 7 UJ-MCP-001 + 2 UJ-CLD-001
 ```
 
 **Perché "accettato" è zero.** §7.3 impone `completed_weight = 0` finché non c'è
@@ -385,6 +386,53 @@ Copre gli unici due residui `CRITICA` non assegnati (TH-08 contenuto, TH-18 fati
 **Richiede accettazione di ChatGPT**: §7.4 vieta l'espansione di scope senza
 `BASELINE_CHANGE`, e la baseline è sua.
 
+### UJ-MCP-001 — consegnato, stato REVIEW
+
+Preso come terzo task della sessione. **Motivo della scelta** fra i tre READY:
+conteneva **due delle tre mitigazioni P0** aperte, e nessun altro task le copriva.
+
+| Deliverable | File |
+|---|---|
+| ToolManifest, admission, P0-1 e P0-2 | `packages/contracts/src/tools/tool-manifest.ts` |
+| Architettura tool plane | `docs/architecture/TOOL_PLANE.md` |
+| Test | `tests/contracts/tool-admission.test.mjs` — 30/30 |
+| Handoff | `docs/program/handoffs/HANDOFF-UJ-MCP-001.md` |
+
+**Le due P0 rese meccaniche:**
+
+- **P0-1** — solo `TOOL_RUNTIME` può emettere `tool.called/returned/failed`. Nemmeno il
+  Supervisor, nemmeno il proprietario: un'eccezione "solo per il supervisor" ricrea
+  subito il vettore, perché il supervisor riceve input dagli agenti. Più `ADM-14`:
+  un tool che *dichiara* di emetterli è rifiutato in admission.
+- **P0-2** — un tool `EXTERNAL_WRITE`/`DESTRUCTIVE` senza `supportsLookupByKey` non è
+  ammissibile (`ADM-13`). Ammetterlo significa programmare in anticipo un'interruzione
+  che nessuno saprà risolvere: dopo un crash Christian dovrebbe controllare a mano nel
+  servizio esterno, e non lo sa meglio del sistema.
+
+**Limite che ho scritto contro me stesso:** P0-1 impedisce di falsificare l'attestazione
+di aver chiamato un tool, **non** impedisce a un agente di gonfiare il proprio
+`ResultEnvelope`. **TH-10 resta parzialmente aperta** e va detto a Grok, altrimenti nel
+risk register risulterebbe chiusa.
+
+**Errore evitato per un soffio:** stavo per registrare TH-10 come mitigata. Averla
+scomposta in "attestazione" e "resoconto" ha mostrato che copro solo la prima.
+
+### Errore ricorrente in questa sessione
+
+| # | Errore | Nota |
+|---|---|---|
+| E9 | Ho **ripetuto E4**: concatenato `npx tsc` e `node --test` dopo un `cd packages/contracts`, e il test runner non ha trovato il file | La trappola era già scritta in PARTE 7 e l'ho commessa comunque. **Scrivere una trappola non basta: va riletta prima di comporre comandi con `cd`.** Correzione: eseguire sempre i test da `/home/user/ultraJARVIS` con path assoluto o `cd` esplicito |
+
+### Prove finali della sessione 2
+
+| Suite | Esito |
+|---|---|
+| `runtime-invariants.test.mjs` | 34/34 |
+| `approval-policy.test.mjs` | 28/28 |
+| `tool-admission.test.mjs` | 30/30 |
+| **Totale** | **92/92 pass, 0 fail** |
+| `npx tsc --noEmit` (strict + 6 flag) | exit 0 |
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -412,9 +460,10 @@ Dettagli in `docs/architecture/RUNTIME_BLUEPRINT.md` §12.
 |---|---|---|---|
 | `R-SEC-01` | TH-08: un segreto può finire nel **contenuto** di un artifact valido; nessun postflight scanning | **CRITICA** | UJ-SEC-002 (da accettare) |
 | `R-SEC-02` | TH-18: approval fatigue non mitigata meccanicamente; `AF-2` senza soglia | **CRITICA** | UJ-SEC-002 + Christian |
-| `R-RUN-04` | se l'agente può emettere eventi `tool.*`, la proof fabrication resta possibile | ALTA | UJ-MCP-001 — **P0** |
-| `R-RUN-03` | tool senza lookup per idempotency key → resume non evita doppi effetti | ALTA | UJ-MCP-001 — **P0** |
-| `R-RUN-01` | contatore task attivi non atomico → fan-out concorrente supera 25 | ALTA | UJ-RCV-001, test `T-DG-4b` — **P0** |
+| `R-RUN-01` | contatore task attivi non atomico → fan-out concorrente supera 25 | ALTA | UJ-RCV-001, test `T-DG-4b` — **ULTIMO P0 APERTO** |
+| `R-MCP-01` | un server MCP remoto può cambiare condotta a parità di manifest; `ADM-18` avverte ma non impedisce | MEDIA | UJ-SKL-001 (sandbox) |
+| ~~`R-RUN-03`~~ | tool senza lookup idempotency | — | **CHIUSO** da `ADM-13` (UJ-MCP-001) |
+| ~~`R-RUN-04`~~ | emissione eventi `tool.*` da parte dell'agente | — | **CHIUSO PARZIALMENTE** da P0-1: copre l'attestazione, non il resoconto |
 | `R-SEC-03` | `rollbackPlan` è obbligatorio ma nessuno verifica che il piano funzioni | ALTA | UJ-RCV-001 |
 | `R-SEC-04` | la policy assume `dataClass` corretta: se è errata applica bene la regola sbagliata | MEDIA | GEMINI |
 
@@ -449,26 +498,27 @@ PROMPT    : agent/ultrajarvis-master-prompt-v1 (PR #1)
 
 STATO     : UJ-RUN-001  REVIEW        attende Gemini, 11/13 proposti
             UJ-SEC-001  REVIEW        attende Grok,   11/13 proposti
+            UJ-MCP-001  REVIEW        attende Gemini,  7/8  proposti
             UJ-CLD-001  IN_PROGRESS   2/8 proposti, verifica fonti da fare
             UJ-RCV-001  READY
-            UJ-SKL-001  READY         sbloccato da UJ-SEC-001
-            UJ-MCP-001  READY         sbloccato da UJ-SEC-001
+            UJ-SKL-001  READY
             UJ-REV-001  BLOCKED       aspetta ChatGPT
             UJ-REV-002  BLOCKED       aspetta ChatGPT
 
-PROSSIMO  : UJ-MCP-001 — ToolManifest, MCP admission, architettura tool P0. Peso 8.
-            Reviewer GEMINI.
-            MOTIVO della scelta fra i tre READY: contiene DUE mitigazioni P0
-              - solo il tool runtime può emettere eventi tool.*  (chiude TH-10)
-              - lookup obbligatoria per idempotency key nel ToolManifest (chiude R-RUN-03)
-            UJ-CLD-001 è in parte bloccato da HUMAN_BRIDGE (login console).
-            UJ-RCV-001 contiene il test P0 T-DG-4b ed è la naturale successiva.
+PROSSIMO  : UJ-RCV-001 — checkpoint, retry, cancellation, idempotency, disaster
+            recovery. Peso 8. Reviewer ChatGPT. READY, nessun blocco.
+            MOTIVO: contiene T-DG-4b, l'ULTIMO P0 residuo (contatore atomico).
+            È l'unico modo di chiudere R-RUN-01.
+            Dopo: UJ-SKL-001 (13) oppure completare UJ-CLD-001 (6 restanti,
+            in parte bloccato da HUMAN_BRIDGE per il login console).
 
-NON RIFARE: blueprint runtime, contratti runtime e policy, threat model, approval
-            policy, critica Costituzione, source manifest.
-            Verifica prima con:
-              node --test tests/contracts/runtime-invariants.test.mjs   → atteso 34/34
-              node --test tests/contracts/approval-policy.test.mjs      → atteso 28/28
+NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
+            approval policy, critica Costituzione, tool plane, source manifest.
+            Verifica prima, DALLA ROOT del repo:
+              node --test tests/contracts/runtime-invariants.test.mjs   → 34/34
+              node --test tests/contracts/approval-policy.test.mjs      → 28/28
+              node --test tests/contracts/tool-admission.test.mjs       → 30/30
+              totale atteso: 92/92
 
 RICORDA   : a fine task, Regola 2 — aggiorna CLAUDE.md e TASKCLAUDE.md, poi commit e push.
 ```
