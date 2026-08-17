@@ -1,0 +1,17 @@
+{
+  "name": "@ultrajarvis/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared, provider-neutral contracts for ultraJARVIS. Runtime contracts are UJ-RUN-001 (CLAUDE), status REVIEW.",
+  "exports": {
+    "./runtime": "./src/runtime/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
