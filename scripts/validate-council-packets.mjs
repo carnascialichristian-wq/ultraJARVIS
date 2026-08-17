@@ -286,7 +286,8 @@ if (!schemasOnly) {
   const idempotencyKeys = cards.map(({ card }) => card?.idempotency_key).filter(Boolean);
   assert(new Set(cardIds).size === cardIds.length, "Delegation card IDs must be unique.");
   assert(new Set(idempotencyKeys).size === idempotencyKeys.length, "Delegation idempotency keys must be unique.");
-  assert(deepEqual(new Set(mission?.delegation_card_ids), new Set(cardIds)), "Mission card IDs must match the four card files.");
+  const missionCardIds = [...(mission?.delegation_card_ids ?? [])].sort();
+  assert(deepEqual(missionCardIds, [...cardIds].sort()), "Mission card IDs must match the four card files.");
 
   const byTask = new Map(backlog?.tasks?.map((task) => [task.task_id, task]) ?? []);
   const expectedTargets = new Map([

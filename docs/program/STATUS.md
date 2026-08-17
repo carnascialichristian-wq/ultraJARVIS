@@ -11,17 +11,18 @@ Snapshot date: 2026-08-17. Numeric source: `BACKLOG.json` on the same ref.
 | Meta bootstrap only | 26 / 29 | 89.66% | 3 | HIGH: PR #1 and its remaining gate are observable |
 | Lifetime ultraJARVIS program | UNKNOWN | N/A | UNKNOWN | Correctly unbaselined and extensible |
 
-`UJ-INT-001` is submitted for review with 13 units of produced scope, but it
-contributes zero accepted weight until the named independent review passes.
+`UJ-INT-001` and `UJ-INT-006` are submitted for review with 21 units of produced
+scope, but they contribute zero accepted weight until their named independent
+reviews pass.
 
 ## Core portfolio by status
 
 | Status | Tasks | Weight | Meaning |
 |---|---:|---:|---|
-| REVIEW | 1 | 13 | Artifact submitted; acceptance pending |
+| REVIEW | 2 | 21 | Artifacts submitted; acceptance pending |
 | READY | 6 | 73 | Inputs sufficient to begin, subject to one-primary-task WIP rule |
 | TRIAGED | 1 | 13 | Scoped but not selected as current primary work |
-| BLOCKED | 19 | 168 | Explicit dependency/evidence blocker exists |
+| BLOCKED | 18 | 160 | Explicit dependency/evidence blocker exists |
 | DEFERRED | 5 | 44 | Future milestone or insufficient operational evidence |
 | DONE | 0 | 0 | No core portfolio weight independently accepted yet |
 | **Total** | **32** | **311** | Four-AI initial portfolio |
@@ -36,6 +37,7 @@ from this table.
 | UJ-META-001 | ChatGPT | DONE | 21/21 | canonical prompt + PR #1 | none | preserve hash/change control |
 | UJ-META-002 | Christian | REVIEW | 5/8 | draft PR #1 | owner decisions and merge | accept/amend named decisions |
 | UJ-INT-001 | ChatGPT | REVIEW | 0/13 | Program OS artifact set on PR #1 branch | independent review | Grok reviews progress/system; Claude reviews Program OS |
+| UJ-INT-006 | ChatGPT | REVIEW | 0/8 | five packet schemas, admission rules, one mission, four cards | independent Claude review | validate/import specialist responses; do not award weight |
 | UJ-RUN-001 | Claude | READY | 0/13 | none yet | none | produce provider-neutral runtime blueprint |
 | UJ-CAP-001 | Gemini | READY | 0/13 | none yet | none | produce four-AI Capability Registry |
 | UJ-GGL-001 | Gemini | READY | 0/13 | none yet | none | produce coordinated Google evidence pack |
@@ -45,11 +47,16 @@ from this table.
 
 ```mermaid
 flowchart TD
-    OS["UJ-INT-001 Program OS review"] --> SYN["UJ-INT-002 architecture synthesis"]
+    OS["UJ-INT-001 Program OS review"] --> CARDS["UJ-INT-006 Council cards"]
+    CARDS --> RUN
+    CARDS --> CAP
+    CARDS --> GGL
+    CARDS --> RED
     RUN["UJ-RUN-001 runtime"] --> SYN
     CAP["UJ-CAP-001 capability"] --> SYN
     GGL["UJ-GGL-001 Google evidence"] --> SYN
     RED["UJ-RED-001 falsification"] --> SYN
+    SYN["UJ-INT-002 architecture synthesis"]
     SYN --> DEC["Christian decisions and ADR acceptance"]
     DEC --> M0["M0 exit gate"]
 ```
@@ -71,10 +78,9 @@ production write is requested.
 ## Remaining M0 work
 
 - 68 accepted-weight units remain in the current M0 bootstrap snapshot.
-- The immediate independent branches are UJ-RUN-001, UJ-CAP-001/UJ-GGL-001,
-  and UJ-RED-001.
+- Four immutable HUMAN_BRIDGE cards are ready for UJ-RUN-001,
+  UJ-CAP-001/UJ-GGL-001, and UJ-RED-001.
 - UJ-INT-002 is the current integration bottleneck and cannot start until those
   specialist artifacts exist.
 - ETA is UNKNOWN until multiple reviewed tasks establish an accepted velocity
   range. Report critical path and units, not a date.
-

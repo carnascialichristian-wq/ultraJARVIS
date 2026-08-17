@@ -35,15 +35,18 @@ The receiving integrator rejects impossible transitions and weight arithmetic.
 
 ## Relationship to Council Packets
 
-This minimal handoff contract supports M0 session continuity. UJ-INT-006 will
-later define and test the complete MissionPacket, DelegationCard, ResponsePacket,
-and SynthesisPacket family. Until then, a specialist response is both:
+This minimal handoff contract supports M0 session continuity. UJ-INT-006 now
+defines and tests the complete MissionPacket, DelegationCard, ResponsePacket,
+ReviewResult, and SynthesisPacket family. A specialist response is both:
 
 1. a versioned specialist artifact; and
 2. a valid `handoff-packet/v1` pointing to that artifact.
+
+Council admission and merge follow `COUNCIL_IMPORT_AND_MERGE.md`; a valid
+ResponsePacket proposes task state but does not independently award accepted
+weight.
 
 ## Storage convention
 
 Use `docs/program/handoffs/<task-id>/<timestamp>-<from>-to-<target>.json` when
 handoff instances begin. Do not create empty placeholder packets.
-

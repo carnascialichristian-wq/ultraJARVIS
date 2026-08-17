@@ -8,8 +8,8 @@
 | Baseline date | 2026-08-17 |
 | Repository | `carnascialichristian-wq/ultraJARVIS` |
 | Observed default branch | `main` at `9d2a93de20a082b384ddb16f88fff4df5e41c7f7` |
-| Working ref | `agent/ultrajarvis-master-prompt-v1` at `b8a7697ca69722fe1947e24350752907ee58cfd2` before this task commit |
-| Open change | Draft PR #1, canonical prompt and launch README |
+| Working ref | `agent/ultrajarvis-master-prompt-v1`; Council contracts pinned at `3611b1b400cf57b5021bab228a3de9470d6eca5c` |
+| Open change | Draft PR #1: canonical prompt, Program OS, and Council packet layer |
 | Current milestone | M0 — Canonicalization and initial state |
 | Infrastructure mode | `STRICT_ZERO_CARD` (proposed active default; owner acceptance pending in PR #1) |
 | Maximum current autonomy | L2 — Sandbox |
@@ -21,8 +21,9 @@
 The canonical master prompt exists on the draft PR branch and defines the
 M0–M17 program, Constitution, four-AI ownership, zero-cost boundary, and initial
 311-weight portfolio. The default branch still contains only the original
-minimal README. UJ-INT-001 is producing the first machine-readable Program OS;
-its artifacts require independent review before accepted weight changes.
+minimal README. UJ-INT-001 and UJ-INT-006 have submitted the Program OS and
+Council packet layer for independent review. The first M0 mission and four
+HUMAN_BRIDGE cards are ready; no specialist response has been imported yet.
 
 ## User constraints in force
 
@@ -56,16 +57,17 @@ must not be represented as final decisions:
 
 - `UJ-META-001`: DONE, 21/21 accepted, proof is the canonical prompt.
 - `UJ-META-002`: REVIEW, 5/8 accepted, awaiting owner review and merge decision.
-- `UJ-INT-001`: IN_PROGRESS while these artifacts are drafted; transition to
-  REVIEW after a remote commit exists. Accepted weight remains 0/13 until Grok
-  review.
+- `UJ-INT-001`: REVIEW, 0/13 accepted until Grok review.
+- `UJ-INT-006`: REVIEW, 0/8 accepted until Claude review; five packet schemas,
+  admission rules, one mission, and four Delegation Cards are submitted.
 - Immediate external work: `UJ-RUN-001` (Claude), `UJ-CAP-001` and
   `UJ-GGL-001` (Gemini), `UJ-RED-001` (Grok).
 
 ## M0 critical path
 
 1. Finish and independently review UJ-INT-001.
-2. Receive schema-valid specialist artifacts for UJ-RUN-001, UJ-CAP-001,
+2. Deliver the four pinned Delegation Cards by HUMAN_BRIDGE and receive
+   schema-valid specialist artifacts for UJ-RUN-001, UJ-CAP-001,
    UJ-GGL-001, and UJ-RED-001.
 3. Resolve or explicitly preserve their conflicts.
 4. Obtain Christian's decisions on Constitution and active infrastructure mode.
@@ -79,7 +81,7 @@ must not be represented as final decisions:
 |---|---|---|---|
 | Constitution and autonomy ceiling not owner-accepted | UJ-META-002, M0 exit | Christian | keep work draft/L2 |
 | `STRICT_ZERO_CARD` not explicitly owner-confirmed | infrastructure ADR | Christian | treat it as safe proposed default; do not enable billing |
-| Specialist reports do not yet exist | UJ-INT-002 | Claude, Gemini, Grok via human bridge | finish Program OS and packet contracts |
+| Specialist reports do not yet exist | UJ-INT-002 | Claude, Gemini, Grok via human bridge | use the four ready cards; validate every ResponsePacket before import |
 | Claude Code/Agent SDK/OAuth case unresolved | automatic Claude adapter | Claude UJ-CLD-001 | keep HUMAN_BRIDGE/BLOCKED |
 | No measured accepted velocity | all ETA claims | several reviewed tasks | report units and critical path only |
 
@@ -92,4 +94,3 @@ must not be represented as final decisions:
 | No AI has unverified capability claims | OPEN | capability registry review |
 | Four owners have READY work | SATISFIED | `BACKLOG.json` |
 | Owner can see remaining work | REVIEW | `STATUS.md` and progress validation |
-

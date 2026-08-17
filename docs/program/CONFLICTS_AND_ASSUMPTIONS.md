@@ -11,6 +11,7 @@
 | C-005 | Reviewer naming | UJ-INT-001 queue names Grok reviewer, while UJ-REV-001 assigns Claude a Program OS review | Grok reviews task/progress via UJ-REV-004; Claude performs independent system review; Christian accepts protected decisions | both review artifacts |
 | C-006 | Partial accepted weight | Source baseline grants UJ-META-002 5/8 while the full owner review is pending | Preserve inherited 5/8 as draft baseline; no additional accepted weight without review | UJ-REV-004 and Christian |
 | C-007 | Automatic GitHub capability | The plan treats GitHub automation as a capability to verify; this session directly observed read/write connector access | Record only the current session observation; Capability Registry must revalidate auth, scope, and quota | UJ-CAP-001 |
+| C-008 | RESOLVED transcription mismatch | Initial BACKLOG incorrectly copied the UJ-INT-002 and UJ-INT-006 reviewers as Grok instead of Claude | Corrected both reviewers while preserving UJ-INT-001 reviewer Grok; validator now pins all three assignments | `scripts/validate-council-packets.mjs` + UJ-INT-006 commit |
 
 ## Assumptions
 
@@ -36,4 +37,3 @@
 
 A row closes only with a dated owner decision, official source, reproducible test,
 or accepted ADR. When facts change, supersede the row; do not delete history.
-

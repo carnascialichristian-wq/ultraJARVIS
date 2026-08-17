@@ -24,7 +24,7 @@ No row authorizes a side effect. Action-level policy and approval still apply.
 
 | Workstream | Owner | Initial weight | Current primary task | Required reviewer | WIP rule |
 |---|---|---:|---|---|---|
-| Integration | ChatGPT | 81 | UJ-INT-001 (REVIEW) | Grok; Claude Program OS review | one primary + one independent secondary |
+| Integration | ChatGPT | 81 | UJ-INT-001 + UJ-INT-006 (REVIEW) | Grok for Program OS; Claude for Council contracts | no new primary until review or a valid specialist response arrives |
 | Runtime & security | Claude | 76 | UJ-RUN-001 (READY) | Gemini | one primary; UJ-CLD-001 evidence may be secondary |
 | Capability & knowledge | Gemini | 81 | UJ-CAP-001 + coordinated UJ-GGL-001 | Claude/Grok | coordinated pack, separate weights |
 | Falsification & risk | Grok | 73 | UJ-RED-001 (READY) | ChatGPT | UJ-OSS-001 remains secondary/triaged |
@@ -56,11 +56,13 @@ rewrite the source artifact.
 
 ## M0 handoff order
 
-1. ChatGPT submits UJ-INT-001 contracts and state.
-2. Claude, Gemini, and Grok each return the exact artifacts in
-   `SPECIALIST_INPUTS.md` using `handoff-packet/v1`.
-3. Named reviewers evaluate each artifact.
-4. ChatGPT runs `RECONCILIATION.md`, preserving unresolved disagreements.
-5. Christian resolves protected decisions.
-6. ChatGPT activates UJ-INT-002 and proposes the M0 exit baseline.
-
+1. ChatGPT submits UJ-INT-001 Program OS and UJ-INT-006 Council contracts.
+2. Christian manually transfers one pinned Delegation Card to each target
+   session; Gemini receives two separate cards/tasks.
+3. Claude, Gemini, and Grok each return the exact artifacts in
+   `SPECIALIST_INPUTS.md` using `response-packet/v1` plus session handoff.
+4. The importer applies `COUNCIL_IMPORT_AND_MERGE.md`; named reviewers issue
+   `review-result/v1`.
+5. ChatGPT runs `RECONCILIATION.md`, preserving unresolved disagreements.
+6. Christian resolves protected decisions.
+7. ChatGPT activates UJ-INT-002 and proposes the M0 exit baseline.

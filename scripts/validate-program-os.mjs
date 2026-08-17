@@ -51,6 +51,18 @@ const requiredArtifacts = [
   "docs/program/WORKSTREAMS.md",
   "docs/program/HANDOFFS.md",
   "schemas/handoff-packet.schema.json",
+  "docs/program/COUNCIL_PACKETS.md",
+  "docs/program/COUNCIL_IMPORT_AND_MERGE.md",
+  "schemas/mission-packet.schema.json",
+  "schemas/delegation-card.schema.json",
+  "schemas/response-packet.schema.json",
+  "schemas/synthesis-packet.schema.json",
+  "schemas/review-result.schema.json",
+  "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json",
+  "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json",
+  "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
+  "prompts/delegation-cards/UJ-GGL-001-GEMINI.json",
+  "prompts/delegation-cards/UJ-RED-001-GROK.json",
   "docs/adrs/README.md",
   "docs/adrs/ADR_TEMPLATE.md",
   "docs/program/CONFLICTS_AND_ASSUMPTIONS.md",
@@ -59,7 +71,8 @@ const requiredArtifacts = [
   "docs/program/SPECIALIST_INPUTS.md",
   "docs/program/RECONCILIATION.md",
   "docs/program/RESUME_POINT.md",
-  "scripts/validate-program-os.mjs"
+  "scripts/validate-program-os.mjs",
+  "scripts/validate-council-packets.mjs"
 ];
 
 for (const artifact of requiredArtifacts) read(artifact);
@@ -67,6 +80,7 @@ for (const artifact of requiredArtifacts) read(artifact);
 const schema = parseJson("schemas/backlog.schema.json");
 const handoffSchema = parseJson("schemas/handoff-packet.schema.json");
 const backlog = parseJson("docs/program/BACKLOG.json");
+const statusDocument = read("docs/program/STATUS.md");
 
 assert(schema?.$schema === "https://json-schema.org/draft/2020-12/schema", "Backlog schema must use JSON Schema 2020-12.");
 assert(handoffSchema?.properties?.schema_version?.const === "ultrajarvis.handoff-packet/v1", "Handoff schema version is invalid.");
@@ -139,6 +153,42 @@ if (backlog) {
     if (!proof.ref.startsWith("http") && !proof.ref.startsWith("agent/")) {
       assert(existsSync(resolve(root, proof.ref)), `UJ-INT-001 proof path is missing: ${proof.ref}`);
     }
+  }
+
+  const reviewerRegression = new Map([
+    ["UJ-INT-001", "GROK"],
+    ["UJ-INT-002", "CLAUDE"],
+    ["UJ-INT-006", "CLAUDE"]
+  ]);
+  for (const [taskId, expectedReviewer] of reviewerRegression) {
+    const task = tasks.find((candidate) => candidate.task_id === taskId);
+    assert(task?.reviewer === expectedReviewer, `${taskId} reviewer must remain ${expectedReviewer}; found ${task?.reviewer ?? "MISSING"}.`);
+  }
+
+  const councilTask = tasks.find((task) => task.task_id === "UJ-INT-006");
+  assert(councilTask?.status === "REVIEW", "UJ-INT-006 must be submitted as REVIEW in this package.");
+  assert(councilTask?.weight === 8, "UJ-INT-006 baseline weight must remain 8.");
+  assert(councilTask?.completed_weight === 0, "UJ-INT-006 must not self-award accepted weight.");
+  for (const proof of councilTask?.proof ?? []) {
+    if (!proof.ref.startsWith("http") && !proof.ref.startsWith("agent/")) {
+      assert(existsSync(resolve(root, proof.ref)), `UJ-INT-006 proof path is missing: ${proof.ref}`);
+    }
+  }
+
+  const initialPortfolio = backlog.baselines?.find((baseline) => baseline.baseline_id === "initial-four-ai-portfolio");
+  if (initialPortfolio) {
+    const coreTasks = initialPortfolio.task_ids.map((id) => tasks.find((task) => task.task_id === id));
+    const expectedCoreStatuses = ["REVIEW", "READY", "TRIAGED", "BLOCKED", "DEFERRED", "DONE"];
+    for (const status of expectedCoreStatuses) {
+      const matching = coreTasks.filter((task) => task?.status === status);
+      const count = matching.length;
+      const weight = matching.reduce((sum, task) => sum + task.weight, 0);
+      assert(
+        statusDocument.includes(`| ${status} | ${count} | ${weight} |`),
+        `STATUS.md core row for ${status} must report ${count} tasks and ${weight} weight.`
+      );
+    }
+    assert(statusDocument.includes("| **Total** | **32** | **311** |"), "STATUS.md core total must remain 32 tasks / 311 weight.");
   }
 
   const sourceText = JSON.stringify(backlog);

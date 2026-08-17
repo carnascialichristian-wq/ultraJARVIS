@@ -1,7 +1,7 @@
 {
   "schema_version": "ultrajarvis.backlog/v1",
   "program": "ultraJARVIS",
-  "generated_at": "2026-08-17T07:36:19.727Z",
+  "generated_at": "2026-08-17T08:10:13.713Z",
   "source_ref": "agent/ultrajarvis-master-prompt-v1",
   "scope_note": "The four-AI initial portfolio is baselined at 311 accepted-weight units. Meta-bootstrap and zero-weight auxiliary candidates are tracked separately. The total lifetime scope of ultraJARVIS remains UNKNOWN.",
   "baselines": [
@@ -346,7 +346,7 @@
         "M2"
       ],
       "owner": "CHATGPT",
-      "reviewer": "GROK",
+      "reviewer": "CLAUDE",
       "status": "BLOCKED",
       "priority": "P0",
       "dependencies": [
@@ -372,7 +372,7 @@
         },
         {
           "criterion_id": "AC-02",
-          "text": "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
           "state": "PENDING",
           "proof_refs": []
         }
@@ -569,8 +569,8 @@
         "M6"
       ],
       "owner": "CHATGPT",
-      "reviewer": "GROK",
-      "status": "BLOCKED",
+      "reviewer": "CLAUDE",
+      "status": "REVIEW",
       "priority": "P1",
       "dependencies": [
         "UJ-INT-001"
@@ -582,22 +582,57 @@
           "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
         }
       ],
-      "output_contract": "Versioned Mission, Delegation, Response, and Synthesis packet contracts",
+      "output_contract": "Versioned Mission, Delegation, Response, Synthesis, and Review packet contracts with deterministic import and merge rules",
       "acceptance_criteria": [
         {
           "criterion_id": "AC-01",
-          "text": "The Versioned Mission, Delegation, Response, and Synthesis packet contracts artifact exists and conforms to its declared contract.",
+          "text": "Five versioned Council packet schemas, import/merge rules, one M0 mission, and four ready Delegation Cards exist.",
           "state": "PENDING",
-          "proof_refs": []
+          "proof_refs": [
+            "schemas/mission-packet.schema.json",
+            "schemas/delegation-card.schema.json",
+            "schemas/response-packet.schema.json",
+            "schemas/synthesis-packet.schema.json",
+            "schemas/review-result.schema.json",
+            "docs/program/COUNCIL_PACKETS.md",
+            "docs/program/COUNCIL_IMPORT_AND_MERGE.md",
+            "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json",
+            "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json",
+            "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
+            "prompts/delegation-cards/UJ-GGL-001-GEMINI.json",
+            "prompts/delegation-cards/UJ-RED-001-GROK.json"
+          ]
         },
         {
           "criterion_id": "AC-02",
-          "text": "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "text": "The dependency-free validator passes schema, cross-reference, policy, replay, reviewer, and ledger regressions.",
+          "state": "PENDING",
+          "proof_refs": [
+            "scripts/validate-council-packets.mjs"
+          ]
+        },
+        {
+          "criterion_id": "AC-03",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
           "state": "PENDING",
           "proof_refs": []
         }
       ],
-      "proof": [],
+      "proof": [
+        { "ref": "schemas/mission-packet.schema.json" },
+        { "ref": "schemas/delegation-card.schema.json" },
+        { "ref": "schemas/response-packet.schema.json" },
+        { "ref": "schemas/synthesis-packet.schema.json" },
+        { "ref": "schemas/review-result.schema.json" },
+        { "ref": "docs/program/COUNCIL_PACKETS.md" },
+        { "ref": "docs/program/COUNCIL_IMPORT_AND_MERGE.md" },
+        { "ref": "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json" },
+        { "ref": "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json" },
+        { "ref": "prompts/delegation-cards/UJ-CAP-001-GEMINI.json" },
+        { "ref": "prompts/delegation-cards/UJ-GGL-001-GEMINI.json" },
+        { "ref": "prompts/delegation-cards/UJ-RED-001-GROK.json" },
+        { "ref": "scripts/validate-council-packets.mjs" }
+      ],
       "data_class": "C1",
       "side_effect": "INTERNAL_WRITE",
       "approval_gate": "REVIEWED_BRANCH_PR",
@@ -605,16 +640,16 @@
       "completed_weight": 0,
       "remaining_weight": 8,
       "confidence": {
-        "level": "MEDIUM",
-        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+        "level": "HIGH",
+        "reason": "The full packet family and ready delegation instances are submitted; independent Claude acceptance is pending."
       },
       "blocker": {
-        "kind": "DEPENDENCY",
-        "cause": "Program OS handoff baseline awaits review.",
-        "resolver": "GROK reviewer"
+        "kind": "EVIDENCE",
+        "cause": "Artifacts are submitted but accepted weight requires independent Claude review.",
+        "resolver": "CLAUDE"
       },
-      "next_action": "Expand the minimal handoff contract after UJ-INT-001 passes review.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "next_action": "Claude validates the packet contracts and import rules; keep accepted weight at 0/8 until review proof exists.",
+      "updated_at": "2026-08-17T07:57:49.726Z"
     },
     {
       "task_id": "UJ-INT-007",
@@ -2444,4 +2479,3 @@
     }
   ]
 }
-

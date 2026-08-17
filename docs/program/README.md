@@ -11,6 +11,8 @@ canonical constitutional contract remains
 | `STATUS.md` | Human-readable status snapshot | ChatGPT | ledger change |
 | `WORKSTREAMS.md` | Ownership, RACI, and dependency boundaries | ChatGPT | baseline change |
 | `HANDOFFS.md` | Handoff contract and artifact layout | ChatGPT | protocol change |
+| `COUNCIL_PACKETS.md` | Mission, Delegation, Response, Review, and Synthesis packet family | ChatGPT | packet version change |
+| `COUNCIL_IMPORT_AND_MERGE.md` | Admission, replay, policy, quarantine, and deterministic merge rules | ChatGPT | importer policy change |
 | `SPECIALIST_INPUTS.md` | Exact inputs expected from Claude, Gemini, and Grok | ChatGPT | council cycle change |
 | `RECONCILIATION.md` | Deterministic merge algorithm for specialist artifacts | ChatGPT | synthesis protocol change |
 | `CONFLICTS_AND_ASSUMPTIONS.md` | Open conflicts, assumptions, and blockers | owning workstream | discovery or decision |
@@ -28,4 +30,3 @@ canonical constitutional contract remains
 5. Constitution, budget, data classification, and autonomy ceilings require
    Christian's approval to change.
 6. Conflicts are recorded, not silently normalized.
-

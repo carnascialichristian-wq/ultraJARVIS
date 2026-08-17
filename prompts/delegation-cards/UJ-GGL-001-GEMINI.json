@@ -1,0 +1,120 @@
+{
+  "schema_version": "ultrajarvis.delegation-card/v1",
+  "card_id": "UJ-CARD-GGL-001-GEMINI",
+  "created_at": "2026-08-17T08:05:23.159Z",
+  "created_by": {
+    "ai_id": "CHATGPT",
+    "product": "ChatGPT Work Mode with GitHub connector"
+  },
+  "target_ai": "GEMINI",
+  "target_product": "Gemini under Google AI Pro via human bridge",
+  "mission_id": "UJ-MISSION-M0-COUNCIL-001",
+  "task_id": "UJ-GGL-001",
+  "task_snapshot": {
+    "status": "READY",
+    "weight": 13,
+    "accepted_weight": 0,
+    "priority": "P0"
+  },
+  "role": "Google Ecosystem, Knowledge & Cloud Feasibility Architect",
+  "repository_scope": {
+    "full_name": "carnascialichristian-wq/ultraJARVIS",
+    "read_ref": "3611b1b400cf57b5021bab228a3de9470d6eca5c",
+    "write_branch_patterns": [
+      "agent/uj-ggl-001-*"
+    ],
+    "direct_main_write": false
+  },
+  "context_digest": "The plan names many Google app, developer, cloud, workspace, labs, knowledge, and media products, but their current status and zero-card eligibility must be proven rather than assumed.",
+  "input_artifacts": [
+    {
+      "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+      "sha256": "a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87",
+      "media_type": "text/markdown",
+      "data_class": "C1"
+    },
+    {
+      "ref": "docs/program/SPECIALIST_INPUTS.md",
+      "sha256": "72edc3952585fb2c31cafd0fa206ab2e66647d49d3190202adf2eba71593590a",
+      "media_type": "text/markdown",
+      "data_class": "C1"
+    },
+    {
+      "ref": "docs/program/COUNCIL_PACKETS.md",
+      "sha256": "eb4d0d0dd46ebdaf07b7ab70380ee80fe0b35da222953f80576749cd3d29ff88",
+      "media_type": "text/markdown",
+      "data_class": "C1"
+    },
+    {
+      "ref": "schemas/response-packet.schema.json",
+      "sha256": "ee44e1b7e262bc0817e0b4f65de8830d122687618a59774fdabfddf3b7e69c0a",
+      "media_type": "application/schema+json",
+      "data_class": "C1"
+    }
+  ],
+  "instructions": "Read every listed artifact at the pinned commit. Produce docs/evidence/GOOGLE_CAPABILITY_EVIDENCE_PACK.md. Inventory only relevant Google app, developer, cloud, workspace, labs, knowledge, coding, and media capabilities. For each item record ACTIVE/PREVIEW/DEPRECATED/UNKNOWN, official source and date, account/region access, subscription versus API, quota and billing, strict-zero-card eligibility, automation, data/privacy/export, commercial/media constraints where relevant, and fallback. Identify unnecessary products explicitly. Provide recommendations for UJ-INF-001 and a deprecation-watch shortlist. Return a separate ResponsePacket for UJ-GGL-001; do not merge its weight with UJ-CAP-001.",
+  "required_output_schema": "ultrajarvis.response-packet/v1",
+  "acceptance_criteria": [
+    {
+      "criterion_id": "AC-01",
+      "text": "Relevant Google capabilities are classified without turning the product list into required architecture.",
+      "verification": "Provide an artifact path/hash and a concrete check for criterion 1."
+    },
+    {
+      "criterion_id": "AC-02",
+      "text": "Every material status, quota, billing, and automation claim has a current official source and date.",
+      "verification": "Provide an artifact path/hash and a concrete check for criterion 2."
+    },
+    {
+      "criterion_id": "AC-03",
+      "text": "Strict-zero-card eligibility and subscription/API separation are explicit.",
+      "verification": "Provide an artifact path/hash and a concrete check for criterion 3."
+    },
+    {
+      "criterion_id": "AC-04",
+      "text": "Deprecated, preview, Labs, unknown, or unnecessary products are visibly separated from active candidates.",
+      "verification": "Provide an artifact path/hash and a concrete check for criterion 4."
+    },
+    {
+      "criterion_id": "AC-05",
+      "text": "ResponsePacket is valid, separate from UJ-CAP-001, proposes REVIEW, and keeps accepted weight at 0/13.",
+      "verification": "Provide an artifact path/hash and a concrete check for criterion 5."
+    }
+  ],
+  "forbidden_actions": [
+    "Use a paid or pay-per-use API.",
+    "Enable billing, create a billing account, or accept overage risk.",
+    "Automate a consumer UI, cookie, browser session, or login.",
+    "Run heavy model inference on Christian's computer.",
+    "Read, request, reveal, or store secret values.",
+    "Write directly to main, merge a pull request, deploy production, or create accounts.",
+    "Mark the task DONE or award accepted weight without the named independent reviewer.",
+    "Perform another primary AI's task or claim that another AI agrees without its packet."
+  ],
+  "data_class": "C1",
+  "allowed_modes": [
+    "HUMAN_BRIDGE"
+  ],
+  "side_effect_limit": "INTERNAL_WRITE",
+  "autonomy_ceiling": "L2",
+  "tool_allowlist": [
+    "OFFICIAL_PRIMARY_SOURCE_WEB_READ_IF_AVAILABLE",
+    "AUTHORIZED_GITHUB_READ_IF_AVAILABLE",
+    "AUTHORIZED_GITHUB_BRANCH_WRITE_IF_AVAILABLE"
+  ],
+  "call_budget": {
+    "max_model_calls": 1,
+    "max_tool_calls": 40,
+    "incremental_cost_eur": 0
+  },
+  "reviewer": "GROK",
+  "expires_at": "2026-09-17T00:00:00Z",
+  "return_channel": {
+    "mode": "copy-paste",
+    "destination": "Return artifact files and one ResponsePacket JSON to the ChatGPT ultraJARVIS integration session; use a review branch/PR only if GitHub write is actually available.",
+    "requires_artifact_hashes": true
+  },
+  "idempotency_key": "UJ-IDEMP-GGL-001-GEMINI",
+  "status": "READY"
+}
+
