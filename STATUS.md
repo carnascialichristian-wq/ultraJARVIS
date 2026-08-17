@@ -1,36 +1,34 @@
 # Publish status — ultraJARVIS
 
 **Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
-**Source:** local UltraJarvis_v8 work (NOT published to UltraJarvis_v8-grok in this wave)
+**Target:** ultraJARVIS (not UltraJarvis_v8-grok)
 
-## Published on this repo
+## Published (2026-08-17 evening)
 
-### Docs
-- README.md, STATUS.md, taskgrok.md, Makefile, pytest.ini
-
-### Advisors
-- critic.py (suggests uj promote), safety.py, style.py
-
-### Core
-- health.py, job_worker.py, memory.py (list_tags), planner.py
-- metrics.py, skills.py, registry.py (catalog of published tools)
-- natural_tasks.py (pipeline + promote_job_to_tools)
-- __init__.py
+### Core (complete)
+health, job_worker, memory, planner, metrics, skills, registry, natural_tasks,  
+gates, verify, utils, reliability, config, logging_uj
 
 ### CLI
-- bin/uj (health, status, seed, run, tools, memory, snapshot, skills, **promote**)
+bin/uj — health status seed run tools memory snapshot skills **promote**
 
-### Tools
-- files.py (guarded I/O + PROTECTED)
-- math_helpers.py (incl. lcm, is_prime)
-- list_helpers.py, dict_helpers.py
-- automation.py, os_control.py
+### Tools (large set)
+files, math (+lcm/is_prime), list, dict, string, time, json, hash, validate, path,  
+bool, text_stats, websearch, browser, email, automation, os_control,  
+abs/neg/strip/title/isdigit/isalpha/isspace/isalnum/isdecimal/isnumeric,  
+capitalize/casefold/swapcase/rev, upper/lower, starts/ends, replace, join, split,  
+find, contains, trim, zfill, center, lstrip/rstrip, inc/dec, mod, floor/ceil,  
+sqrt, round, sum, avg
 
-## Still local-only / partial
-- Full 135-tool registry catalog (remote has the tools that exist on this repo)
-- Remaining ~80 tools/*_helpers.py
-- Full tests/* suite (~206 tests)
-- core/gates.py, verify.py, reliability.py, utils.py, config.py, logging_uj.py (may still be missing)
+### Tests
+math_helpers, list_helpers, validate_helpers
 
-## Next
-Continue batch-publishing remaining core + tools + tests to this same repo.
+### Docs
+README, STATUS, taskgrok, GROK_CONTINUITY, Makefile, pytest.ini, advisors/*
+
+## Remaining
+- More tools/* still local (~40+)
+- Full tests suite (~200 local)
+- Expand registry entries to match every published helper
+
+Continues until user says **stop**.
