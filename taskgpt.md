@@ -304,3 +304,9 @@ conflitto va registrato, non eliminato.
 - La main corrente è `6af4a3721ab0d7f3272fd6e4e872b1331da99aa5`; le PR #3, #5 e #6 restano basate sul ref storico `a9e83…`.
 - Il prompt Gemini è stato corretto per non confondere la main corrente con la base della quarantena. Non è stato eseguito alcun rebase/retarget/merge.
 - Nessun task, stato o peso cambia; il gate resta l’intake verificabile del resend Gemini.
+### 2026-08-18 — ChatGPT/Codex — warning su cloud_bridge in main
+
+- Il diff `24b50c0… → 6af4a37…` aggiunge solo `cloud_bridge.py`. Il codice usa OpenAI come provider predefinito e, se `UJ_PLANNER_LLM=1`, può fare chiamate con retry; è un finding STRICT_ZERO/pay-per-use da sottoporre a review Claude.
+- La claim di commit `218 tests green` resta non verificata: nel diff non risultano test aggiunti/modificati e non è stato eseguito runtime.
+- Nessuna chiamata, installazione, modifica a main, task delta o peso; PR #3/#5/#6 restano draft senza review/commenti/status.
+- Prossimo passo: intake del resend Gemini; mantenere il percorso cloud disabilitato finché il finding non ha evidenza e mitigazione.

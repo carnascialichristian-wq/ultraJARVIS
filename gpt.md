@@ -390,3 +390,12 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Controlli: riletti prompt/ledger/resume remoti e metadati delle PR; nessun output Gemini o peso importato.
 - Stato: `UJ-CAP-001` e `UJ-GGL-001` READY 0/13; PR #3/#5/#6 aperte draft; main non modificata da questa sessione.
 - Prossima azione: ricevere il resend e validarlo contro il commit reale degli input e la head GitHub corrente.
+### 2026-08-18 — ChatGPT/Codex — triage main phase2 e warning STRICT_ZERO
+
+- Ref osservato: `main@6af4a3721ab0d7f3272fd6e4e872b1331da99aa5`; confronto col parent `24b50c007bf89c676b3fe72fb396f495bec11018` = 1 commit, un solo file aggiunto: `cloud_bridge.py` (+89 righe).
+- Audit statico non esecutivo: `MODEL_PROVIDER` ha default `openai`; con `UJ_PLANNER_LLM=1` il planner può chiamare `OpenAI(api_key=OPENAI_API_KEY)`, modello `gpt-4o-mini`, con retry fino a tre tentativi. Questo apre un percorso potenzialmente pay-per-use e contrasta il vincolo STRICT_ZERO/no billing finché non è esplicitamente bloccato o approvato.
+- La commit message dichiara `218 tests green`, ma il diff del commit non contiene file di test; non ho eseguito runtime, rete, API o test locale e quindi non tratto la claim come prova indipendente.
+- Il finding è registrato per la review di sicurezza del proprietario Claude; non modifica backlog, status o pesi e non autorizza alcuna chiamata al provider.
+- Controlli aggiuntivi: PR #3/#5/#6 senza review, commenti inline o status check; nessun ResponsePacket Gemini ricevuto.
+- Prossima azione: attendere il resend Gemini e, separatamente, richiedere evidenza/mitigazione per il percorso `cloud_bridge` prima di considerarlo conforme a STRICT_ZERO.
+- Aggiornamento speculare: inserito in `taskgpt.md`.

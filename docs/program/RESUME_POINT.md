@@ -77,3 +77,10 @@ remoto osservato; lo storico non viene cancellato.
 - `main` corrente osservata: `6af4a3721ab0d7f3272fd6e4e872b1331da99aa5`. La base storica `a9e83ee2fdd5b165d90d1217079882b02abc29d3` resta sulle PR #3, #5 e #6; non sono state riallineate.
 - Il prompt Gemini e i ledger sono stati corretti per questa differenza di refs. Nessun merge, rebase, retarget, backlog delta o peso è stato applicato.
 - Prossimo comando invariato: ricevere 3 artifact e 2 ResponsePacket, congelare la head/input ref e validare tutto prima di branch/PR dedicate.
+
+## Latest remote reconciliation — 2026-08-18 — main phase2 security triage
+
+- `main@6af4a3721ab0d7f3272fd6e4e872b1331da99aa5` aggiunge `cloud_bridge.py` rispetto a `24b50c0…`. La lettura statica rileva provider OpenAI predefinito, opt-in `UJ_PLANNER_LLM=1` e retry: potenziale conflitto STRICT_ZERO, non eseguito e non approvato.
+- Il commit message dichiara 218 test verdi, ma il confronto remoto mostra un solo file nel commit; la claim resta non verificata in questa sessione.
+- Il finding va a una review di sicurezza separata; non sblocca Gemini, non cambia backlog/pesi e non autorizza API o billing.
+- Prossimo comando: ricevere/validare il resend Gemini; poi mantenere separati i gate di sicurezza e di integrazione.
