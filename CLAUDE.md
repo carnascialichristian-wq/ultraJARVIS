@@ -94,6 +94,11 @@ Se sei una sessione appena aperta, fai **esattamente questo, in questo ordine**:
 | 6 | Riesegui le prove prima di fidarti | vedi §"Comandi di verifica" qui sotto |
 | 7 | Prendi il task indicato nel RESUME_POINT | in fondo a questo file |
 
+> Il prompt che Christian incolla per aprire una sessione nuova è in
+> **`AVVIO_NUOVA_SESSIONE.md`** alla root. Se cambia qualcosa in questa procedura —
+> l'hash del piano, il comando dei test, il branch — va aggiornato **anche lì**,
+> altrimenti la prossima sessione parte con istruzioni stantie.
+
 **Non ripartire da zero. Non rifare lavoro già fatto.** Prima di produrre qualcosa,
 controlla la tabella di stato: se un artefatto esiste già, va riconciliato, non riscritto.
 
