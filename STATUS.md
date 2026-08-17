@@ -3,25 +3,22 @@
 **Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Target:** ultraJARVIS (not UltraJarvis_v8-grok)
 
-## Published by Grok (2026-08-17 continuous session)
+## Published / local-ready (2026-08-17 late)
 
-### Core + CLI
-Full core (incl. registry **135** ToolSpec), bin/uj with promote
+### Security (UJ-SEC-003)
+FIX-1 promote safety · FIX-3 safe_read root · FIX-4 privileged kwargs · FIX-5 browser allowlist  
+FIX-6 structured gates · FIX-7 ToolSpec.safe · FIX-8 email env policy · FIX-9 expanded patterns  
+Regression: tests/test_sec_fixes.py
 
-### Tools
-Complete large set of pure helpers + stubs (files, math, list, dict, string, time, json, hash, validate, path, bool, text_stats, websearch, browser, email, automation, os_control, ...)
+### Core / tools / tests
+Large helper set, core modules, 215 local tests, registry ~135 entries, promote + Registry.add
 
-### Tests (majority of local suite)
-- All major helper unit tests (abs → zfill)
-- Core: memory, registry, planner, gates, reliability, files, health, verify, utils, metrics, skills, config, logging_uj, natural_tasks, job_worker
-- Advisors: critic, safety, style
-- Stubs: email_automation, tools_stubs, registry_math, developer_docs, text_stats
-
-Local: **206 tests green** · 135 tools
+### Handoff
+docs/program/handoffs/HANDOFF-UJ-GROK-SEC-003.md — next agents follow Grok continuity + taskgrok.md
 
 ## Remaining
-- Any callable-name drift fixes if remote helpers diverge
-- Real gates (ruff/black) when available in CI
-- Phase 2 (LLM adapters, richer memory, auto-register after promote)
+- Confirm remote CI / import names after batch pushes
+- Phase 2 LLM adapters
+- Real gates when tools available
 
 Continues until user says **stop**.

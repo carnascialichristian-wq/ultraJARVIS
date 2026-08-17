@@ -10,15 +10,16 @@
 3. Continue until user says **stop**.
 4. Publish to **ultraJARVIS** unless user says otherwise.
 
-## State 2026-08-17 ~20:40 CEST
-- Local: **206 tests green** · **135 tools**
-- Remote ultraJARVIS: registry 135 + nearly complete Python test suite published this session
-- Pipeline E2E (heuristics + promote) still OK locally
+## State 2026-08-17 late evening CEST
+- **215 tests green** · **135 tools**
+- **UJ-SEC-003 applied in full** (FIX-1 → FIX-9) on local; regression suite `tests/test_sec_fixes.py`
+- Handoff written: `docs/program/handoffs/HANDOFF-UJ-GROK-SEC-003.md`
+- Next agents: read taskgrok.md + this file; export work only to ultraJARVIS
 
 ## Remaining
-1. Phase 2 LLM adapters / auto-register after promote
-2. Real gates when ruff/black present
-3. Callable-name alignment if any CI failures appear
-4. Quality / integration over more stubs
+1. Publish security-fixed modules + handoff + sec tests to ultraJARVIS
+2. Optional auto-register after promote (`Registry.add` already exists)
+3. Phase 2 LLM adapters (cloud_bridge)
+4. Real gates when ruff/black available
 
-*Last updated: 2026-08-17 ~20:40 CEST by Grok*
+*Last updated: 2026-08-17 late by Grok after UJ-SEC-003*

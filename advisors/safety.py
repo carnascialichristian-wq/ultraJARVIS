@@ -5,13 +5,20 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List
 
+# Early-warning substring list only (FIX-9 / UJ-SEC-003). Not a security boundary.
+# Real containment is admission control (Registry.safe, promote force gate,
+# path containment in tools.files).
 DANGEROUS_SNIPPETS = [
     "rm -rf",
     "os.system(",
     "subprocess.call(",
+    "subprocess.popen",
+    "subprocess.run(",
     "eval(",
     "exec(",
     "__import__('os')",
+    "importlib.import_module",
+    "getattr(__builtins__",
     "shutil.rmtree",
 ]
 
