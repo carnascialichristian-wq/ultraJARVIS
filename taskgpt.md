@@ -184,3 +184,21 @@ conflitto va registrato, non eliminato.
 - Stato: nessuna review reale è arrivata e nessun peso è cambiato.
 - Prossimo passo: quando Grok/Claude rispondono, inviare il loro JSON esatto a
   ChatGPT per lo staging non fidato e la validazione al commit verificato.
+
+### 2026-08-17 — ChatGPT/Codex — pubblicazione verificata dell'intake ReviewResult
+
+- Ref di implementazione: `6b0a24b921ba903ff5913c2f170a1c0b854f0d25` →
+  `d8be422e44a787fae8e0a7577ad83694d00ee14a`; ripartire sempre dalla head
+  corrente della PR #1, non da una SHA ricordata in chat.
+- Pubblicato `docs/program/REVIEW_RESULT_IMPORT.md` e il validator esteso;
+  l'intake controlla commit esatto, reviewer/owner, hash degli artefatti,
+  criteri, policy e peso intero. Non aggiorna il backlog automaticamente.
+- Verifica remota: PR #1 aperta, draft e mergeable; tree e 11 blob attesi
+  coincidono; nessuna review, commento o status check era presente al controllo.
+- Controlli: self-test positivo, JSON non-ReviewResult rifiutato correttamente,
+  validator Council/Program OS, JSON, Markdown e segreti — PASS.
+- Stato: invariato. UJ-INT-001 richiede la review Grok; UJ-INT-006 richiede la
+  review Claude. Nessun peso può cambiare senza una review indipendente reale.
+- Handoff: usare i due review request, restituire il JSON senza riscriverlo e
+  includere il blocco append per entrambi i registri. ChatGPT eseguirà prima
+  `--review-result` con l'esatta head remota.

@@ -207,6 +207,31 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
   applicare un delta ledger soltanto in un successivo commit reviewato.
 - Aggiornamento speculare: inserito in `taskgpt.md` nella stessa pubblicazione.
 
+### 2026-08-17 — ChatGPT/Codex — chiusura e prova di pubblicazione dell'intake ReviewResult
+
+- Ref iniziale/finale dell'implementazione: 
+  `6b0a24b921ba903ff5913c2f170a1c0b854f0d25` →
+  `d8be422e44a787fae8e0a7577ad83694d00ee14a`.
+  La head della PR #1 che contiene questa appendice va sempre riletta prima di
+  una nuova sessione.
+- Pubblicazione: aggiornati la branch
+  `agent/ultrajarvis-master-prompt-v1` e il corpo della PR #1; `main` non è
+  stato toccato e la PR resta draft, aperta e mergeable.
+- Prove remote: commit, parent e tree corrispondono a quanto pubblicato;
+  verificati 11 blob attesi senza mismatch. Al controllo finale: 0 review, 0
+  commenti issue, 0 commenti inline e 0 status check.
+- Controlli realmente eseguiti: sintassi Node; self-test ReviewResult; rifiuto
+  atteso di un JSON non-ReviewResult; validator Council; validator Program OS;
+  parsing JSON; fence Markdown; controllo segreti; verifica remota di tree e
+  PR — PASS, con il test negativo considerato riuscito perché rifiutato.
+- Limite e stato: non è arrivato alcun ReviewResult indipendente. Non vengono
+  simulati reviewer, output o pesi: UJ-INT-001 resta REVIEW 0/13, UJ-INT-006
+  REVIEW 0/8, portfolio 0/311 e M0 26/94.
+- Prossima azione concreta: Grok esegue il pack UJ-INT-001 e Claude il pack
+  UJ-INT-006 via HUMAN_BRIDGE; ChatGPT riceve il JSON originale, lo mette in
+  staging non fidato e applica il comando con l'esatta head GitHub.
+- Aggiornamento speculare: inserito in `taskgpt.md` nella stessa pubblicazione.
+
 ### 2026-08-17 — ChatGPT/Codex — pacchetti di review per i gate M0
 
 - Ref iniziale osservato: `2146c39b47d1985e4b3e3e5049b8ec55e54df2f4`.
