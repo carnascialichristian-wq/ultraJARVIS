@@ -840,6 +840,85 @@ tutta la causa a ChatGPT.
 
 ---
 
+## Sessione 3, terza parte — pubblicazione su `main`
+
+**Richiesta di Christian:** *"pubblica sulla repo di git la roba che hai fatto mica sul
+branch"*, poi scelta esplicita **"mergio entrambe adesso"** (PR #1 e PR #2).
+
+### Cosa ho trovato, che non era quello che mi aspettavo
+
+Mentre lavoravo, **`main` è avanzato moltissimo per mano di altri**: da 1 file (solo
+README) a un'implementazione Python completa — `bin/uj`, `core/`, `tools/`, advisors —
+pubblicata da Grok, più il commit `bb51093 "Merge Claude repo analysis into main"`.
+
+**Il mio lavoro era già su `main`**: `bb51093` aveva mergiato `eaa7a51`, incluse entrambe
+le review di questa sessione. Quello che mancava davvero era **il piano canonico e il
+Program OS di ChatGPT** (PR #1), che era ancora solo sul branch draft.
+
+Quindi il merge utile era uno solo, non due.
+
+### Errore commesso, e come si è manifestato
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E13 | **`git push … \| tail -3` maschera l'exit code**: la pipe restituisce l'exit di `tail`, non di `git push` | ho dichiarato **"PUSH main OK"** mentre il push era stato **rifiutato** (`main` remoto era avanzato). Christian ha dovuto dire "Riprova" | catturare l'output in una variabile e testare `$?` di `git push`, mai attraverso una pipe | **è un'auto-attestazione falsa di successo — la stessa classe di TH-10 che sto contestando agli altri.** Una pipeline di verifica che non può fallire non verifica |
+
+E13 è grave nel merito, non nella forma: ho **dichiarato riuscita un'operazione fallita**.
+Il fatto che l'abbia fatto un bug di shell e non una scelta non cambia l'effetto, ed è
+esattamente ciò che F-001 di UJ-INT-006 descrive.
+
+### Come ho risolto i conflitti (tre file, tutti non miei)
+
+`main` e PR #1 divergevano su `README.md`, `gpt.md`, `taskgpt.md`.
+
+- **`gpt.md` e `taskgpt.md`** → tenuta la versione di `main`. **Non a occhio:** ho
+  verificato prima che fosse un **superset stretto**, cioè che zero righe presenti sul
+  branch PR #1 mancassero da `main`. Nessuna riga della memoria di ChatGPT è andata persa.
+- **`README.md`** → **divergenza vera**: su `main` c'era il README dell'implementazione
+  Grok, su PR #1 quello del programma col link al prompt canonico. **Nessuno dei due
+  conteneva l'altro.** Li ho **uniti entrambi** come sezioni invece di scegliere un
+  vincitore, perché `COUNCIL_IMPORT_AND_MERGE.md` vieta di risolvere una contraddizione
+  per media silenziosa. Ho lasciato una nota di merge nel file.
+
+### Prove eseguite sull'albero mergiato, PRIMA del commit
+
+| Verifica | Esito |
+|---|---|
+| Suite contratti | **138/138 pass, 0 fail** |
+| `npx tsc -p packages/contracts --noEmit` | **exit 0** |
+| `node scripts/validate-program-os.mjs` | **PASS** — 43 task, peso 311 |
+| `node scripts/validate-council-packets.mjs` | **PASS** |
+| `node scripts/test-review-result-intake.mjs` | **PASS**, 7 casi |
+| Hash del piano canonico dopo il merge | `a3fcdfc9…a69a87` **invariato** |
+
+**Commit `99dece5` su `main`, push riuscito** (exit code verificato davvero, vedi E13).
+`main` passa da 1 a **114 file**.
+
+### Quello che il merge NON cambia
+
+**Pubblicare non è accettare.** Nessun valore del ledger si muove: `UJ-INT-001` resta
+**0/13**, `UJ-INT-006` resta **0/8**, il mio portafoglio resta **0/76 accettato**.
+`GOVERNANCE.md` dice che `main` rappresenta lo stato accettato del programma: da oggi non
+è più vero alla lettera, ed è una conseguenza della decisione del proprietario, non un
+errore. Va però saputa, perché un lettore futuro potrebbe leggere la presenza su `main`
+come accettazione.
+
+### FATTO NUOVO — Grok ha consegnato
+
+È comparso il branch **`agent/uj-red-001-grok-v8-snapshot`** (`97f7f06`), con
+`UJ-RED-001 archive Grok v8 source snapshot`. **Non è su `main`** e **non l'ho mergiato**:
+Christian ha autorizzato PR #1 e PR #2, non questo.
+
+**Non sono io il reviewer di UJ-RED-001: è CHATGPT** (verificato in `BACKLOG.json`, non
+assunto). Nessun dovere da reviewer per me.
+
+**Avvertenza per chi lo mergerà:** quel branch parte da `31f31b9`, cioè dal branch di
+ChatGPT, e **non contiene il mio lavoro né l'implementazione Python già su `main`**. Un
+merge a tre vie è sicuro; una risoluzione "prendi il loro" o un reset cancellerebbe 12.764
+righe, fra cui `tests/contracts/tool-admission.test.mjs`.
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -906,6 +985,14 @@ Sintesi operativa degli errori sopra, in forma di regole:
     solo per il test runner (E10). Path assoluti sempre.
 14. **Cita solo prove che hai davvero aperto.** Se una review elenca artefatti non letti,
     è vuota nello stesso modo che F-001 descrive — e scriverlo mentre lo si fa è peggio.
+15. **Mai testare l'esito di un comando attraverso una pipe** (E13). `git push … | tail`
+    restituisce l'exit di `tail`: ho dichiarato riuscito un push rifiutato. Cattura
+    l'output in una variabile e testa `$?` del comando vero. Una verifica che non può
+    fallire non è una verifica — è un'auto-attestazione, cioè TH-10 applicata a me stesso.
+16. **`main` non è più solo tuo né solo di ChatGPT.** Prima di qualunque merge, `git fetch`
+    e guarda dov'è arrivato: in questa sessione è passato da 1 a 114 file mentre lavoravo.
+    E prima di mergiare il branch di un'altra IA, verifica su cosa è basato: se parte da un
+    ref vecchio, una risoluzione sbagliata cancella il lavoro altrui.
 
 ---
 
@@ -915,8 +1002,15 @@ Sintesi operativa degli errori sopra, in forma di regole:
 PROGRAMMA : ultraJARVIS
 AI_ID     : CLAUDE — Runtime, Security & Skill Architect
 BRANCH    : claude/ultrajarvis-repo-analysis-li6vvj
-PROMPT    : agent/ultrajarvis-master-prompt-v1 (PR #1)
+PROMPT    : ORA SU main (sessione 3): docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
             sha256 a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87
+            Verifica: sha256sum docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
+            (non serve più leggerlo dal branch agent/… : PR #1 è stata mergiata)
+
+MAIN      : 114 file, commit 99dece5. Contiene ora il piano canonico, il
+            Program OS, i miei contratti e review, e l'implementazione
+            Python di Grok. ATTENZIONE: essere su main NON significa
+            accettato. Ledger invariato: 0/76 mio, 0/13 UJ-INT-001, 0/8 UJ-INT-006.
 
 STATO     : UJ-RUN-001  REVIEW        attende Gemini, 11/13 proposti
             UJ-SEC-001  REVIEW        attende Grok,   11/13 proposti
@@ -945,12 +1039,20 @@ PROSSIMO  : IL PORTAFOGLIO È ORA DAVVERO ESAURITO. 7 task su 8 in REVIEW.
             Se apri una sessione nuova:
             1. ESEGUI PRIMA LA TRAPPOLA 11 — git fetch di tutti i branch e
                controlla se qualcuno ha consegnato. Nella sessione 3 questo
-               controllo ha trovato due task che aspettavano me.
+               controllo ha trovato due task che aspettavano me, e poi una
+               consegna di Grok comparsa a metà lavoro.
             2. Se esiste UJ-INT-007  -> prendi UJ-REV-002.
             3. Se Gemini/Grok hanno consegnato -> hai doveri da reviewer su
                UJ-CAP-001, UJ-MEM-001, UJ-ADK-001, UJ-RSK-001, UJ-ALT-001.
+               NON su UJ-RED-001: il suo reviewer è CHATGPT (verificato).
             4. Se NIENTE di tutto questo -> ALLORA registra l'attesa. Questa
                volta è la risposta corretta, ma solo dopo i punti 1-3.
+
+            IN SOSPESO, non mio ma da sapere: il branch
+            agent/uj-red-001-grok-v8-snapshot (97f7f06) NON è su main.
+            Reviewer: ChatGPT. Se qualcuno lo merge, deve usare un merge a
+            tre vie: parte da 31f31b9 e non contiene il lavoro mio né il
+            Python già su main.
 
             METODO CHE HA FUNZIONATO, da riusare: eseguire i validatori PRIMA di
             leggere il codice, costruire una suite avversariale invece di
