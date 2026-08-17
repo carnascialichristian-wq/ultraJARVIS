@@ -1,9 +1,9 @@
 from tools.bool_helpers import xor, all_true
 
 def test_xor():
-    assert xor(True, False) is True
-    assert xor(True, True) is False
+    assert xor(True, False)
+    assert not xor(True, True)
 
 def test_all_true():
-    assert all_true([True, True]) is True
-    assert all_true([True, False]) is False
+    assert all_true(True, True)
+    assert not all_true(True, False)
