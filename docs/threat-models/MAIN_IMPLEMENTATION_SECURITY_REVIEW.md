@@ -271,6 +271,67 @@ corretto — un fix di un carattere, che chiunque farebbe senza pensarci — **S
 
 **Va quindi corretto prima S-12, poi S-13**, e mai il contrario.
 
+## 4-sexies. S-14 — il verdetto dei gate è una ricerca di sottostringa, e dà falsi PASS. **HIGH.**
+
+`core/gates.py` esegue controlli **veri**: `ruff`, `black`, `pytest`, con exit code letti
+correttamente. Il difetto non è lì: è in come `core/natural_tasks.py:123` ne ricava il
+verdetto.
+
+```python
+status = "PASS" if "PASS" in str(gates_text).upper() or "ok" in str(gates_text).lower() else "FAIL"
+```
+
+Il testo dei gate viene cercato per sottostringa, **e non per esito**. Misurato sulla riga
+esatta:
+
+| Testo dei gate | Verdetto | Corretto? |
+|---|---|---|
+| tutto `FAIL`, output pulito | `FAIL` | sì |
+| `ruff PASS` + `pytest FAIL` | **`PASS`** | **no** |
+| tutto `FAIL`, ma il job sta in `.../booking_tool` | **`PASS`** | **no** — `bo`**`ok`**`ing` |
+| tutto `FAIL`, pytest stampa `AssertionError: broken pipeline` | **`PASS`** | **no** — `br`**`ok`**`en` |
+| tutti i gate `SKIP` (`ruff`/`black` non installati) | `FAIL` | discutibile |
+
+Tre falsi `PASS` su cinque casi, tutti realistici:
+
+1. **basta che un gate su tre passi** perché la stringa `PASS` compaia nel testo;
+2. **la sottostringa `ok` compare ovunque** — `broken`, `token`, `booking`, `looked`, e
+   nel path del job che finisce nell'header `Target:`. Un job chiamato `booking_tool`
+   passa i gate qualunque cosa succeda;
+3. l'output di errore troncato a 800 caratteri viene incollato nello stesso testo, quindi
+   **più i test falliscono in modo verboso, più è probabile che compaia `ok`**.
+
+**Il verdetto non misura l'esito dei controlli: misura la presenza di due parole nel loro
+output.** È la stessa forma del loop detector testuale e dello scanner di safety — la
+**sesta** occorrenza nel programma.
+
+**Correzione:** `run_gates` conosce già `any_fail`. Deve restituire un esito strutturato —
+`{"ok": bool, "checks": [...]}` — e il chiamante deve leggere il campo booleano. Il testo
+serve all'umano, non alla macchina.
+
+**Perché è HIGH e non MEDIUM:** questo verdetto alimenta il riepilogo del job ed è il solo
+segnale di qualità prima della promozione (S-12). Un `PASS` falso qui è la condizione che
+rende plausibile promuovere codice rotto.
+
+## 4-septies. S-15 — i gate hanno un interruttore che li dichiara tutti PASS. **MEDIUM.**
+
+`run_gates(..., use_real=False)` non salta i controlli: **stampa che sono passati**.
+
+```
+ruff check ........ PASS (forced stub)
+black --check ..... PASS (forced stub)
+pytest ............ PASS (forced stub)
+Overall: PASS
+```
+
+`NaturalTaskRunner.__init__` espone `use_real_gates: bool = True`, quindi il default è
+corretto — ma un chiamante che costruisca il runner con `use_real_gates=False` ottiene
+**PASS incondizionato su ogni job**, e il testo prodotto è indistinguibile da un esito
+reale per chiunque legga `gates.txt` senza notare `(forced stub)`.
+
+Combinato con S-14 il risultato è che `gates.txt` **non è una prova**: va trattato come
+output diagnostico, mai come evidenza di qualità in un `proof_ref`.
+
 ## 5. S-01 — `ToolSpec.safe` è dichiarato e mai letto. **HIGH.**
 
 `core/registry.py:15` definisce `safe: bool = True`. Ricerca su tutto il codice (escluse le
@@ -374,6 +435,8 @@ controllo di sicurezza, e **non deve ricevere crediti di mitigazione nel risk re
 
 | ID | Severità | Sintesi | Stato |
 |---|---|---|---|
+| S-14 | **HIGH** | il verdetto dei gate è una ricerca di sottostringa: **una build fallita riporta PASS** | **aperto** |
+| S-15 | MEDIUM | `use_real=False` stampa `PASS (forced stub)` su tutti i gate | **aperto** |
 | S-12 | **HIGH** | `promote_job_to_tools` scrive codice generato in `tools/` **senza gate di safety** | **aperto** |
 | S-13 | MEDIUM | ogni tool promosso non compila (header con una virgoletta di troppo) — e **maschera S-12 per caso** | **aperto** |
 | S-10 | **HIGH** | `files.safe_read` legge **qualunque file del sistema**: nessun contenimento nella root | **aperto** |
@@ -408,7 +471,7 @@ controllo di sicurezza, e **non deve ricevere crediti di mitigazione nel risk re
 
 ### Il filo comune
 
-Sei findings su undici sono **manopole di sicurezza che non girano nulla**: `ToolSpec.safe`
+Sette findings su tredici sono **manopole di sicurezza che non girano nulla**: `ToolSpec.safe`
 mai letto, `force` di `email.send` mai referenziato, `SAFE_MODE` riscrivibile, `PROTECTED`
 disattivabile da kwarg, `lstrip` che non fa quello che il nome dice, scanner che non
 rileva. Ognuna, letta da sola, **sembra** una difesa.
