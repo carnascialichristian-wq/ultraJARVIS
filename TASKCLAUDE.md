@@ -776,6 +776,53 @@ di UI consumer è vietata dalla Costituzione e dalle `forbidden_actions` di tutt
 le delegation card. Oggi sono dry-run; la distanza fra lo stub e l'azione reale è la
 sostituzione di un corpo di funzione, e nessun gate se ne accorgerebbe.
 
+### 13.2 Quattro findings piu gravi: promozione senza gate e gate che mentono
+
+**`S-12` (HIGH) — GROK, questo e il piu serio.** `promote_job_to_tools()` scrive il
+`tool.py` di un job dentro `tools/`, cioe nella directory da cui il registry importa ed
+esegue. L'unica validazione e `if "def " not in text`. Dimostrato promuovendo un file con
+`os.system(cmd)`, `eval(` e `rm -rf`: **tre dei sette pattern che il vostro stesso scanner
+conosce**, e la promozione e riuscita senza sollevare nulla.
+
+E la proprieta che `UJ-SKL-001` rende meccanica dal lato TypeScript: **una skill non puo
+avanzare il proprio stadio**. Qui non esistono stadi.
+
+**`S-13` (MEDIUM) — e la combinazione conta piu dei due difetti separati.** Ogni tool
+promosso non compila, per una virgoletta di troppo nell'header. Quindi il codice non
+validato viene scritto ma non si carica mai: **il contenimento di S-12 e oggi un errore di
+battitura.**
+
+> **Correggete S-12 PRIMA di S-13.** Sistemare un typo di un carattere e cosa che chiunque
+> farebbe senza pensarci, e farlo per primo **apre** l'esecuzione di codice generato non
+> validato.
+
+E il terzo caso in questo albero in cui l'unica cosa che impedisce un guasto e un difetto,
+dopo il trasporto SMTP assente di `email.send` e i moduli mancanti su main — **e quello di
+mezzo ha gia smesso di proteggere durante questa sessione**, quando il modulo e arrivato.
+
+**`S-14` (HIGH) — una build fallita riporta PASS.** `core/gates.py` esegue controlli veri e
+legge bene gli exit code. Il difetto e in `natural_tasks.py:123`:
+
+```python
+status = "PASS" if "PASS" in text.upper() or "ok" in text.lower() else "FAIL"
+```
+
+Tre falsi PASS su cinque casi misurati: basta che un gate su tre passi; la sottostringa
+`ok` compare in `broken`, `token`, `booking`, e nel path del job stampato nell'header —
+**un job in `.../booking_tool` passa i gate qualunque cosa succeda**; e l'output di errore
+troncato finisce nello stesso testo, quindi piu i test falliscono in modo verboso, piu e
+probabile che il verdetto sia PASS.
+
+`run_gates` calcola gia `any_fail`: basta restituire un esito strutturato e leggere il
+booleano. Il testo serve all'umano, non alla macchina.
+
+**`S-15` (MEDIUM):** `run_gates(use_real=False)` non salta i controlli, **stampa che sono
+passati**.
+
+**-> CHATGPT, conseguenza diretta sul Program OS:** `gates.txt` **non e una prova** e non
+va mai accettato come `proof_ref`. Un artefatto che dice PASS senza che nessun controllo
+sia passato e esattamente `TH-10` in forma automatizzata.
+
 ### 13.1 Quarta conferma della stessa forma
 
 `advisors/safety.py` confronta testo minuscolo con 7 stringhe fisse. Misurato:

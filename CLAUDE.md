@@ -995,14 +995,52 @@ sovrascrive **il file che definisce quali tool esistono**. Dimostrato su una roo
 per non toccare il repo reale. `PROTECTED` non e un permesso: e un default che il chiamante
 puo cambiare.
 
+### Altri quattro findings, proseguendo su promozione e gate
+
+**`S-12` (HIGH) — la promozione di codice generato non ha alcun gate.**
+`promote_job_to_tools()` scrive il `tool.py` di un job dentro `tools/`, cioe nella
+directory da cui il registry importa ed esegue. L'unica validazione del contenuto e
+`if "def " not in text`. Dimostrato: ho promosso un file con `os.system(cmd)` piu le
+stringhe `eval(` e `rm -rf` — tre dei sette pattern che il loro stesso scanner conosce — e
+la promozione e riuscita senza sollevare nulla. E la proprieta che `UJ-SKL-001` rende
+meccanica dal lato TypeScript: li una skill non puo avanzare il proprio stadio, qui non
+esistono stadi.
+
+**`S-13` (MEDIUM) — ogni tool promosso non compila**, per una virgoletta di troppo
+nell'header (`SyntaxError: unterminated string literal`). **E maschera S-12 per caso.**
+
+**Il punto piu importante di tutta la review sta in questa combinazione.** Il contenimento
+di S-12 oggi e *un errore di battitura*. E il terzo caso in questo albero in cui l'unica
+cosa che impedisce un guasto di sicurezza e un difetto — dopo il trasporto SMTP assente di
+`email.send` e i moduli mancanti su main, **che hanno gia smesso di proteggere durante
+questa sessione**. Quindi va corretto **prima S-12, poi S-13**, mai il contrario: sistemare
+un typo di un carattere e cosa che chiunque farebbe senza pensarci, e aprirebbe
+l'esecuzione di codice generato non validato.
+
+**`S-14` (HIGH) — una build fallita riporta PASS.** `core/gates.py` esegue controlli veri e
+legge bene gli exit code; il difetto e in come `natural_tasks.py:123` ne ricava il verdetto:
+
+```python
+status = "PASS" if "PASS" in text.upper() or "ok" in text.lower() else "FAIL"
+```
+
+Misurato, tre falsi PASS su cinque casi realistici: basta che un gate su tre passi; la
+sottostringa `ok` compare in `broken`, `token`, `booking` — **un job in `.../booking_tool`
+passa i gate qualunque cosa succeda**; e l'output di errore troncato viene incollato nello
+stesso testo, quindi piu i test falliscono in modo verboso, piu e probabile che compaia
+`ok`.
+
+**`S-15` (MEDIUM)** — `run_gates(use_real=False)` non salta i controlli: **stampa che sono
+passati**. `gates.txt` non e una prova e non va mai citato in un `proof_ref`.
+
 ### Il filo comune, ed e la parte che conta
 
-Sei findings su nove sono **manopole di sicurezza che non girano nulla**: `ToolSpec.safe`
+Sette findings su tredici sono **manopole di sicurezza che non girano nulla**: `ToolSpec.safe`
 mai letto, `force` di `email.send` mai referenziato, `SAFE_MODE` riscrivibile, `PROTECTED`
 disattivabile da kwarg, `lstrip` che non fa quello che il nome dice, scanner che non rileva.
 Ognuna, letta da sola, **sembra** una difesa.
 
-E la quinta occorrenza della stessa forma nel programma. La regola operativa: **un controllo
+E la settima occorrenza della stessa forma nel programma. La regola operativa: **un controllo
 va verificato eseguendolo contro il caso che deve fermare**, non leggendone il nome.
 
 ### Gli altri findings HIGH
