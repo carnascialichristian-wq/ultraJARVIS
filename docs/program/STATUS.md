@@ -84,3 +84,13 @@ production write is requested.
   specialist artifacts exist.
 - ETA is UNKNOWN until multiple reviewed tasks establish an accepted velocity
   range. Report critical path and units, not a date.
+
+
+## Remote reconciliation — 2026-08-17
+
+Questo blocco aggiorna la vista del ref senza alterare i numeri di `BACKLOG.json`.
+
+- Ref corrente osservato: `main@5175ae8615e73f8d9dfe1a329831bd4975fff9c8`; PR #1 è CLOSED/MERGED a `99dece590a124342abd19f5e090629f231ec40c4`, mentre PR #3 è OPEN/DRAFT e resta basata su `31f31b99ad7e63bf581161ce9cd12b11f83a945f` con head `97f7f06d56f39101b6a54a74dfbcafea49b72676`.
+- La PR #3 è pulita rispetto alla propria base storica, ma è divergente rispetto a main (+2 commit sulla PR, +44 su main rispetto al merge-base `31f31b99ad7e63bf581161ce9cd12b11f83a945f`). Non è stata riallineata né mergiata.
+- Il Program OS è ora presente su main, ma ciò non assegna peso ai task di review: `UJ-INT-001` e `UJ-INT-006` restano a 0 accepted; il backlog non è stato modificato.
+- Gemini non ha ancora consegnato output verificabili per `UJ-CAP-001` e `UJ-GGL-001`; entrambi restano READY/HUMAN_BRIDGE a 0/13. L’integrazione richiede due ResponsePacket separati, fonti/hash/schema validi e branch/PR dedicate.

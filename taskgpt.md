@@ -269,3 +269,15 @@ conflitto va registrato, non eliminato.
 - `main` contiene runtime/docs Claude, il codice Python/Grok già presente e i ledger; non contiene ancora l'intero Program OS (`AGENTS.md`, backlog, schemi Council e prompt canonico). Questa distinzione è obbligatoria per le prossime IA.
 - Nessun peso è stato accettato. UJ-CAP-001 e UJ-GGL-001 restano READY/HUMAN_BRIDGE per Gemini; la loro integrazione dovrà avvenire in branch dedicate e con ResponsePacket separati.
 - Prossimo resume point: ricevere l'output completo di Gemini, verificare fonti/hash/schema, aggiornare entrambi i ledger, pubblicare le branch UJ-CAP-001/UJ-GGL-001 e solo dopo riallineare PR #1/#3.
+
+
+### 2026-08-17 — ChatGPT/Codex — remote reconciliation and Gemini intake gate
+
+- Ref osservato: `main@5175ae8615e73f8d9dfe1a329831bd4975fff9c8`; branch di continuità: `agent/continuity-20260817-v3` dallo stesso head. La head finale va riletta da GitHub.
+- Verifica: PR #1 è CLOSED/MERGED al commit `99dece590a124342abd19f5e090629f231ec40c4`; PR #3 è OPEN/DRAFT con head `97f7f06d56f39101b6a54a74dfbcafea49b72676`, base `31f31b99ad7e63bf581161ce9cd12b11f83a945f`. Il confronto PR #3 contro `main@5175ae8615e73f8d9dfe1a329831bd4975fff9c8` è divergente: +2 commit sulla PR e +44 commit su main rispetto al merge-base `31f31b99ad7e63bf581161ce9cd12b11f83a945f`.
+- Correzione di continuità: i checkpoint precedenti che descrivono PR #1 come draft/non mergiata e `main` priva del Program OS sono storici; non vengono cancellati, ma non sono più lo stato remoto corrente. La merge osservata non viene trattata come review o accettazione dei task.
+- Gemini: nessun output, artifact, branch o PR verificabile per `UJ-CAP-001` e `UJ-GGL-001`; entrambe restano READY/HUMAN_BRIDGE e 0/13. Nessuna ResponsePacket è stata simulata o importata.
+- Controlli: refs/tree/PR/commenti/status/confronti GitHub e parsing dei contratti/card/backlog; validator Node locale non eseguito per assenza di checkout e `gh`.
+- Stato: nessuna modifica a task, status o peso; portfolio 0/311, M0 26/94, `UJ-INT-002` BLOCKED.
+- Prossimo passo: ricevere i due pacchetti Gemini separati, validare fonti, bytes, hash, schema, card/mission/task, policy e ResponsePacket; pubblicare poi due branch/PR dedicate e lasciare PR #3 separata fino a riallineamento/revisione.
+- Stesso aggiornamento aggiunto a `gpt.md`: sì.

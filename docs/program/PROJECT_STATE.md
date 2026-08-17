@@ -109,3 +109,15 @@ Independent review requests are stored at
 | No AI has unverified capability claims | OPEN | capability registry review |
 | Four owners have READY work | SATISFIED | `BACKLOG.json` |
 | Owner can see remaining work | REVIEW | `STATUS.md` and progress validation |
+
+
+## Remote reconciliation — 2026-08-17
+
+Le tabelle sopra conservano la baseline iniziale e non vengono riscritte in modo
+retroattivo. Alla verifica corrente, il ref remoto prevalente è `main@5175ae8615e73f8d9dfe1a329831bd4975fff9c8`:
+
+- il Program OS, il prompt canonico e i contratti Council sono presenti su main tramite il merge commit `99dece590a124342abd19f5e090629f231ec40c4`; i commit successivi di main non sono una prova di accettazione dei task;
+- PR #1 è chiusa/mergiata; PR #3 resta draft, con head `97f7f06d56f39101b6a54a74dfbcafea49b72676` sulla base storica `31f31b99ad7e63bf581161ce9cd12b11f83a945f` e senza ResponsePacket Gemini;
+- il confronto PR #3/main è divergente (+2 sulla PR, +44 su main rispetto a `31f31b99ad7e63bf581161ce9cd12b11f83a945f`). Non si rebase o retargetta questa PR senza la review prevista;
+- `UJ-CAP-001` e `UJ-GGL-001` restano READY 0/13, separati e HUMAN_BRIDGE-only. Nessun nuovo task status, peso o ADR accettato è stato scritto;
+- la prossima azione resta l’intake rigoroso dei due pacchetti Gemini. Il merge di PR #1 è un evento di repository, non un’approvazione formale del Program OS.

@@ -51,3 +51,15 @@ starting the next session; do not infer it from chat:
 
 No deployment, billing, account creation, production write, message send, or
 destructive action is pending.
+
+
+## Latest remote reconciliation — 2026-08-17
+
+Questa sezione supersede i campi di checkpoint precedenti soltanto per lo stato
+remoto osservato; lo storico non viene cancellato.
+
+- `main` osservata a `5175ae8615e73f8d9dfe1a329831bd4975fff9c8`; la branch di continuità `agent/continuity-20260817-v3` è stata creata dallo stesso head.
+- PR #1 è CLOSED/MERGED con `99dece590a124342abd19f5e090629f231ec40c4`. Il merge pubblica artefatti ma non cambia automaticamente il peso di `UJ-INT-001` o `UJ-INT-006`; il backlog resta la fonte numerica.
+- PR #3 è OPEN/DRAFT, head `97f7f06d56f39101b6a54a74dfbcafea49b72676`, base `31f31b99ad7e63bf581161ce9cd12b11f83a945f`; il confronto con main è divergente (PR +2, main +44 rispetto al merge-base `31f31b99ad7e63bf581161ce9cd12b11f83a945f`). Non modificarne la base o fonderla in questa fase.
+- Nessun output Gemini è stato ricevuto o trovato. `UJ-CAP-001` e `UJ-GGL-001` restano READY/HUMAN_BRIDGE a 0/13 con ResponsePacket separati obbligatori.
+- Prossimo comando: ricevere i JSON originali e gli artifact Gemini; congelare hash/ref, eseguire l'intera admission pipeline di `COUNCIL_IMPORT_AND_MERGE.md`, quindi pubblicare branch/PR dedicate. Se non esiste un pacchetto valido, non modificare backlog o pesi.
