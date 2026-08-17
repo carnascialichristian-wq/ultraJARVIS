@@ -225,3 +225,19 @@ conflitto va registrato, non eliminato.
   UJ-INT-006 restano REVIEW con peso 0. Non promuovere nulla in base ai test.
 - Prossimo passo: usare i review pack esistenti, restituire il JSON originale e
   validarlo all'esatta head GitHub prima di cambiare il ledger.
+
+### 2026-08-17 — ChatGPT/Codex — import Grok v8: snapshot, non consegna task
+
+- Fonte/pin: `carnascialichristian-wq/UltraJarvis_v8-grok@e3311c46a394a6dd1ef89c4e9415f2e257450605`; 84 file /
+  68062 byte in `imports/grok-v8/`, manifestati per Git blob SHA.
+- Stato: Python isolato, NON attivo, non sovrascrive `main`/Council e non è
+  un ResponsePacket o ReviewResult.
+- Controlli: tree+blobs, path/mode e pattern segreti comuni PASS (0); nessuna
+  esecuzione/installazione.
+- Problemi: test non pubblicati contro claim 206; 7 ToolSpec contro claim 135;
+  dipendenza da `core/natural_tasks.py` assente; licenza upstream non
+  verificata.
+- Stato/peso: invariato. `UJ-RED-001` READY 0/13, portfolio 0/311.
+- Prossima azione: controllo SHA post-publish, ResponsePacket Grok schema-valid,
+  poi porting TypeScript solo con ADR/test/review.
+- Stesso aggiornamento aggiunto a `gpt.md`: sì.

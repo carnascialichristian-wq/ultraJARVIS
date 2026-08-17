@@ -286,3 +286,31 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
   HUMAN_BRIDGE, eseguire l'intake all'esatta head GitHub e solo dopo valutare un
   eventuale commit ledger separato.
 - Aggiornamento speculare: inserito in `taskgpt.md` nella stessa pubblicazione.
+
+### 2026-08-17 — ChatGPT/Codex — snapshot Grok v8 importato come sorgente isolato
+
+- Fonte: `carnascialichristian-wq/UltraJarvis_v8-grok@e3311c46a394a6dd1ef89c4e9415f2e257450605`; il nome iniziale
+  `ultraJARVIS-GROK` non era raggiungibile, quindi è stata identificata la
+  repository effettiva `UltraJarvis_v8-grok`.
+- Output: tutti i 84 file pubblicati (68062 byte) sono
+  copiati senza modifiche sotto `imports/grok-v8/`; il manifest conserva path,
+  Git blob SHA, mode e byte. Creato
+  `docs/program/GROK_V8_SNAPSHOT_IMPORT.md`.
+- Controlli reali: tree/blobs completi, path/mode e pattern di credenziali
+  comuni — 0 rilevamenti. Nessun Python, test, CLI, rete, browser, dipendenza,
+  billing o azione esterna è stata eseguita.
+- Limite: la fonte dichiara 206 test e 135 tool, ma non pubblica test,
+  registra 7 `ToolSpec` e usa `core.natural_tasks` assente. La claim non è
+  prova accettata.
+- Compatibilità: codice Python isolato e **NON attivo**; la baseline resta
+  TypeScript/Node/pnpm. Nessuna task o peso cambia: `UJ-RED-001` resta READY
+  0/13 e portfolio 0/311.
+- Provenienza: upstream esterno dichiarato senza licenza GitHub verificabile;
+  mantenere privato e non ridistribuire.
+- Errore/lezione: il tentativo iniziale di creare la branch con
+  `update_ref` è stato rifiutato (reference inesistente); la branch è ora
+  creata in modo esplicito prima del commit. Nessun `main` è stato toccato.
+- Prossima azione: verificare gli SHA post-pubblicazione, poi richiedere a Grok
+  un ResponsePacket `UJ-RED-001` valido e portare solo componenti selezionati
+  con ADR, test e review.
+- Aggiornamento speculare: aggiunto a `taskgpt.md` nella stessa pubblicazione.

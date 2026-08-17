@@ -1,0 +1,626 @@
+{
+  "schema_version": "ultrajarvis.external-snapshot-import/v1",
+  "import_kind": "verbatim_external_snapshot",
+  "imported_at": "2026-08-17",
+  "source": {
+    "repository": "carnascialichristian-wq/UltraJarvis_v8-grok",
+    "url": "https://github.com/carnascialichristian-wq/UltraJarvis_v8-grok",
+    "ref": "main",
+    "commit_sha": "e3311c46a394a6dd1ef89c4e9415f2e257450605",
+    "original_repository_declared_by_source": "https://github.com/mootmoot1/UltraJarvis_v8",
+    "license_status": "UNVERIFIED: no GitHub license endpoint was exposed by source or declared upstream at verification time."
+  },
+  "destination": {
+    "repository": "carnascialichristian-wq/ultraJARVIS",
+    "branch": "agent/uj-red-001-grok-v8-snapshot",
+    "directory": "imports/grok-v8",
+    "activation": "NOT_ACTIVE",
+    "reason": "Canonical ultraJARVIS baseline is TypeScript/Node/pnpm; source is Python and requires a reviewed compatibility/porting decision."
+  },
+  "integrity": {
+    "source_blob_count": 84,
+    "source_total_bytes": 68062,
+    "transport": "GitHub Git blob fetch -> GitHub create-tree content",
+    "required_post_publish_check": "Target blob SHA must equal source_git_blob_sha for every manifest row."
+  },
+  "static_preflight": {
+    "credential_like_patterns_found": 0,
+    "execution_performed": false,
+    "source_test_paths_committed": 0,
+    "source_claims_unverified": [
+      "Source docs claim 206 tests and 135 tools; no test files are in the pinned tree.",
+      "core/registry.py has seven committed ToolSpec entries.",
+      "bin/uj imports core.natural_tasks, which is absent from the pinned tree."
+    ]
+  },
+  "files": [
+    {
+      "source_path": "advisors/__init__.py",
+      "destination_path": "imports/grok-v8/advisors/__init__.py",
+      "source_git_blob_sha": "e270fbc7383b7931709c928fbd82202cbeeadc80",
+      "source_mode": "100644",
+      "bytes": 36
+    },
+    {
+      "source_path": "advisors/critic.py",
+      "destination_path": "imports/grok-v8/advisors/critic.py",
+      "source_git_blob_sha": "36233578d9783af54def6130206b0b3c31b164dd",
+      "source_mode": "100644",
+      "bytes": 1462
+    },
+    {
+      "source_path": "advisors/safety.py",
+      "destination_path": "imports/grok-v8/advisors/safety.py",
+      "source_git_blob_sha": "34f2b3f43409a66fac09bbfb0b2f7f6446d86360",
+      "source_mode": "100644",
+      "bytes": 955
+    },
+    {
+      "source_path": "advisors/style.py",
+      "destination_path": "imports/grok-v8/advisors/style.py",
+      "source_git_blob_sha": "07b32f29000904d39fb9c48885b805cbaf9046b3",
+      "source_mode": "100644",
+      "bytes": 1133
+    },
+    {
+      "source_path": "bin/uj",
+      "destination_path": "imports/grok-v8/bin/uj",
+      "source_git_blob_sha": "0fe57f8cd9dd00cc29665649ce07e0670991acff",
+      "source_mode": "100644",
+      "bytes": 7433
+    },
+    {
+      "source_path": "cloud_bridge.py",
+      "destination_path": "imports/grok-v8/cloud_bridge.py",
+      "source_git_blob_sha": "351a2b5d2b2344e9ddd7c913ff13202ffbc6253e",
+      "source_mode": "100644",
+      "bytes": 964
+    },
+    {
+      "source_path": "core/__init__.py",
+      "destination_path": "imports/grok-v8/core/__init__.py",
+      "source_git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "source_mode": "100644",
+      "bytes": 0
+    },
+    {
+      "source_path": "core/config.py",
+      "destination_path": "imports/grok-v8/core/config.py",
+      "source_git_blob_sha": "45c5815244ad25760ad912a3e157b5b0553c0bc5",
+      "source_mode": "100644",
+      "bytes": 1531
+    },
+    {
+      "source_path": "core/gates.py",
+      "destination_path": "imports/grok-v8/core/gates.py",
+      "source_git_blob_sha": "5caaf5d82b32f70e863770d0143cf03fea2fd95e",
+      "source_mode": "100644",
+      "bytes": 3894
+    },
+    {
+      "source_path": "core/health.py",
+      "destination_path": "imports/grok-v8/core/health.py",
+      "source_git_blob_sha": "886247c2429cab6e340455d57d8e630fc0cd9279",
+      "source_mode": "100644",
+      "bytes": 2480
+    },
+    {
+      "source_path": "core/job_worker.py",
+      "destination_path": "imports/grok-v8/core/job_worker.py",
+      "source_git_blob_sha": "c8ca613003e07ceacb142f41af5b336c92992908",
+      "source_mode": "100644",
+      "bytes": 3541
+    },
+    {
+      "source_path": "core/logging_uj.py",
+      "destination_path": "imports/grok-v8/core/logging_uj.py",
+      "source_git_blob_sha": "40cc1d99fab7d48a5aa48f3de7eb0f019cb27127",
+      "source_mode": "100644",
+      "bytes": 1374
+    },
+    {
+      "source_path": "core/memory.py",
+      "destination_path": "imports/grok-v8/core/memory.py",
+      "source_git_blob_sha": "f81b8c1584035808e82c3b781b647450c3f60c29",
+      "source_mode": "100644",
+      "bytes": 2216
+    },
+    {
+      "source_path": "core/metrics.py",
+      "destination_path": "imports/grok-v8/core/metrics.py",
+      "source_git_blob_sha": "a402fc46e57cca510fe03b89f26984603210a722",
+      "source_mode": "100644",
+      "bytes": 1145
+    },
+    {
+      "source_path": "core/planner.py",
+      "destination_path": "imports/grok-v8/core/planner.py",
+      "source_git_blob_sha": "ced674b3ae9528b6bd3492ac287224a2967419de",
+      "source_mode": "100644",
+      "bytes": 4167
+    },
+    {
+      "source_path": "core/registry.py",
+      "destination_path": "imports/grok-v8/core/registry.py",
+      "source_git_blob_sha": "b57f9c5f21274c301288c793e5cd839508ba1fd0",
+      "source_mode": "100644",
+      "bytes": 3022
+    },
+    {
+      "source_path": "core/reliability.py",
+      "destination_path": "imports/grok-v8/core/reliability.py",
+      "source_git_blob_sha": "29697514dcd55f0a452c5121300cd3b9da31bfb6",
+      "source_mode": "100644",
+      "bytes": 1905
+    },
+    {
+      "source_path": "core/skills.py",
+      "destination_path": "imports/grok-v8/core/skills.py",
+      "source_git_blob_sha": "eb5e901685f22a5d070fa1e105bad1b731602570",
+      "source_mode": "100644",
+      "bytes": 1345
+    },
+    {
+      "source_path": "core/utils.py",
+      "destination_path": "imports/grok-v8/core/utils.py",
+      "source_git_blob_sha": "8334f7abacd7bab510ceed07a799c9aba5cbb2ea",
+      "source_mode": "100644",
+      "bytes": 892
+    },
+    {
+      "source_path": "core/verify.py",
+      "destination_path": "imports/grok-v8/core/verify.py",
+      "source_git_blob_sha": "1c5fcf36968b5f566fb830e712e38c4348b33ab8",
+      "source_mode": "100644",
+      "bytes": 827
+    },
+    {
+      "source_path": "docs/DEVELOPER.md",
+      "destination_path": "imports/grok-v8/docs/DEVELOPER.md",
+      "source_git_blob_sha": "2054e666beccf2e3eb4399e56c7395256818321a",
+      "source_mode": "100644",
+      "bytes": 1088
+    },
+    {
+      "source_path": "docs/GROK_CONTINUITY.md",
+      "destination_path": "imports/grok-v8/docs/GROK_CONTINUITY.md",
+      "source_git_blob_sha": "a214ff37497173290528a6c02323daf74451acb1",
+      "source_mode": "100644",
+      "bytes": 2289
+    },
+    {
+      "source_path": "docs/PHASE2.md",
+      "destination_path": "imports/grok-v8/docs/PHASE2.md",
+      "source_git_blob_sha": "492112bfddbac4d38f4bc1247c6deaf640ff945b",
+      "source_mode": "100644",
+      "bytes": 468
+    },
+    {
+      "source_path": "grok.md",
+      "destination_path": "imports/grok-v8/grok.md",
+      "source_git_blob_sha": "a214ff37497173290528a6c02323daf74451acb1",
+      "source_mode": "100644",
+      "bytes": 2289
+    },
+    {
+      "source_path": "Makefile",
+      "destination_path": "imports/grok-v8/Makefile",
+      "source_git_blob_sha": "9b931c1eb65a9fe331110aa0df784259d71bb02c",
+      "source_mode": "100644",
+      "bytes": 241
+    },
+    {
+      "source_path": "pytest.ini",
+      "destination_path": "imports/grok-v8/pytest.ini",
+      "source_git_blob_sha": "18123bda787da906d301e2e9698932b5801628b8",
+      "source_mode": "100644",
+      "bytes": 66
+    },
+    {
+      "source_path": "README.md",
+      "destination_path": "imports/grok-v8/README.md",
+      "source_git_blob_sha": "791dbc7ddff5fe69f6622ae19a5376cbe1a887a9",
+      "source_mode": "100644",
+      "bytes": 429
+    },
+    {
+      "source_path": "STATUS.md",
+      "destination_path": "imports/grok-v8/STATUS.md",
+      "source_git_blob_sha": "f374b7afc9027dfa2ba39f94f11114a45a41dd9d",
+      "source_mode": "100644",
+      "bytes": 746
+    },
+    {
+      "source_path": "taskgrok.md",
+      "destination_path": "imports/grok-v8/taskgrok.md",
+      "source_git_blob_sha": "150a029a74918b49128c3bef63aecbe5bd2b28d7",
+      "source_mode": "100644",
+      "bytes": 907
+    },
+    {
+      "source_path": "tools/__init__.py",
+      "destination_path": "imports/grok-v8/tools/__init__.py",
+      "source_git_blob_sha": "925f814b8754cfd363b1baf0472fc5f63f82bf0b",
+      "source_mode": "100644",
+      "bytes": 33
+    },
+    {
+      "source_path": "tools/abs_helpers.py",
+      "destination_path": "imports/grok-v8/tools/abs_helpers.py",
+      "source_git_blob_sha": "4dd8f8375e461348e2b691f2cdb0cef6d388e916",
+      "source_mode": "100644",
+      "bytes": 117
+    },
+    {
+      "source_path": "tools/automation.py",
+      "destination_path": "imports/grok-v8/tools/automation.py",
+      "source_git_blob_sha": "ec3b87ef0e16e1f8747e18578c25c67c55b81616",
+      "source_mode": "100644",
+      "bytes": 734
+    },
+    {
+      "source_path": "tools/avg_helpers.py",
+      "destination_path": "imports/grok-v8/tools/avg_helpers.py",
+      "source_git_blob_sha": "bb55c227c5d2b6963884f40b7507f7a19c1a864b",
+      "source_mode": "100644",
+      "bytes": 216
+    },
+    {
+      "source_path": "tools/bool_helpers.py",
+      "destination_path": "imports/grok-v8/tools/bool_helpers.py",
+      "source_git_blob_sha": "c7d25c37fcc96cf9b2e0e7296706f34947143d7e",
+      "source_mode": "100644",
+      "bytes": 184
+    },
+    {
+      "source_path": "tools/bool_not_helpers.py",
+      "destination_path": "imports/grok-v8/tools/bool_not_helpers.py",
+      "source_git_blob_sha": "6d8257e6c9089aae52dd08f841ae79a012179c6e",
+      "source_mode": "100644",
+      "bytes": 120
+    },
+    {
+      "source_path": "tools/browser.py",
+      "destination_path": "imports/grok-v8/tools/browser.py",
+      "source_git_blob_sha": "0666e6cdda254272ec5d5368b9a6b1ac790ea7a7",
+      "source_mode": "100644",
+      "bytes": 632
+    },
+    {
+      "source_path": "tools/bytes_helpers.py",
+      "destination_path": "imports/grok-v8/tools/bytes_helpers.py",
+      "source_git_blob_sha": "b33d0bf8390443315f05998a8eb1a08d43abee0e",
+      "source_mode": "100644",
+      "bytes": 311
+    },
+    {
+      "source_path": "tools/case_helpers.py",
+      "destination_path": "imports/grok-v8/tools/case_helpers.py",
+      "source_git_blob_sha": "f91d6401ca1122c51d4abc8edb150a0d55ae32cb",
+      "source_mode": "100644",
+      "bytes": 213
+    },
+    {
+      "source_path": "tools/const_helpers.py",
+      "destination_path": "imports/grok-v8/tools/const_helpers.py",
+      "source_git_blob_sha": "086cb2f4be0721c6ce72b806a84168054d895e06",
+      "source_mode": "100644",
+      "bytes": 156
+    },
+    {
+      "source_path": "tools/count_helpers.py",
+      "destination_path": "imports/grok-v8/tools/count_helpers.py",
+      "source_git_blob_sha": "9cb2f377c37d424a65d773cc34371972bed06d5e",
+      "source_mode": "100644",
+      "bytes": 192
+    },
+    {
+      "source_path": "tools/div_helpers.py",
+      "destination_path": "imports/grok-v8/tools/div_helpers.py",
+      "source_git_blob_sha": "5b85440e74e96e06083bf635bd2bb62bcbdaa4ee",
+      "source_mode": "100644",
+      "bytes": 194
+    },
+    {
+      "source_path": "tools/email.py",
+      "destination_path": "imports/grok-v8/tools/email.py",
+      "source_git_blob_sha": "5a46b72cf89401237343a2dc6c3f0937f4cacadb",
+      "source_mode": "100644",
+      "bytes": 1215
+    },
+    {
+      "source_path": "tools/empty_helpers.py",
+      "destination_path": "imports/grok-v8/tools/empty_helpers.py",
+      "source_git_blob_sha": "4b29907cba533ed65ee352eebdd5ddab6e892706",
+      "source_mode": "100644",
+      "bytes": 267
+    },
+    {
+      "source_path": "tools/env_helpers.py",
+      "destination_path": "imports/grok-v8/tools/env_helpers.py",
+      "source_git_blob_sha": "b579495c4630876f8717fab29590da0024729127",
+      "source_mode": "100644",
+      "bytes": 168
+    },
+    {
+      "source_path": "tools/files.py",
+      "destination_path": "imports/grok-v8/tools/files.py",
+      "source_git_blob_sha": "13bb175c7179bfe154b6395aa56d83b00ab69596",
+      "source_mode": "100644",
+      "bytes": 4098
+    },
+    {
+      "source_path": "tools/first_helpers.py",
+      "destination_path": "imports/grok-v8/tools/first_helpers.py",
+      "source_git_blob_sha": "219bfb7e6ba4cdd38031f93dbb503b71dd38c4d5",
+      "source_mode": "100644",
+      "bytes": 411
+    },
+    {
+      "source_path": "tools/flag_helpers.py",
+      "destination_path": "imports/grok-v8/tools/flag_helpers.py",
+      "source_git_blob_sha": "6adb5478523706338265075de243518a369e7f88",
+      "source_mode": "100644",
+      "bytes": 148
+    },
+    {
+      "source_path": "tools/floor_helpers.py",
+      "destination_path": "imports/grok-v8/tools/floor_helpers.py",
+      "source_git_blob_sha": "8bfe3f370b5c08bf1239e4b6ef8a0bdda26c0972",
+      "source_mode": "100644",
+      "bytes": 193
+    },
+    {
+      "source_path": "tools/hash_helpers.py",
+      "destination_path": "imports/grok-v8/tools/hash_helpers.py",
+      "source_git_blob_sha": "8dd2693cdd7b20106573a9ec076ba6c980b874f7",
+      "source_mode": "100644",
+      "bytes": 256
+    },
+    {
+      "source_path": "tools/id_helpers.py",
+      "destination_path": "imports/grok-v8/tools/id_helpers.py",
+      "source_git_blob_sha": "609e4a549b372af3eefdd8d7c7a4db664fc0971b",
+      "source_mode": "100644",
+      "bytes": 260
+    },
+    {
+      "source_path": "tools/identity_helpers.py",
+      "destination_path": "imports/grok-v8/tools/identity_helpers.py",
+      "source_git_blob_sha": "a210690273f3f4ea1cd07518dce488d0759dd7df",
+      "source_mode": "100644",
+      "bytes": 143
+    },
+    {
+      "source_path": "tools/inc_helpers.py",
+      "destination_path": "imports/grok-v8/tools/inc_helpers.py",
+      "source_git_blob_sha": "f7c4e5c3bf2870f5834016ef21c529a5b64332e8",
+      "source_mode": "100644",
+      "bytes": 210
+    },
+    {
+      "source_path": "tools/json_helpers.py",
+      "destination_path": "imports/grok-v8/tools/json_helpers.py",
+      "source_git_blob_sha": "521ff2a01d83522fcd98d42effc608b51550b256",
+      "source_mode": "100644",
+      "bytes": 341
+    },
+    {
+      "source_path": "tools/len_helpers.py",
+      "destination_path": "imports/grok-v8/tools/len_helpers.py",
+      "source_git_blob_sha": "a01d60b0ee28b9b22b2546017e8269ad658bb0be",
+      "source_mode": "100644",
+      "bytes": 138
+    },
+    {
+      "source_path": "tools/list_helpers.py",
+      "destination_path": "imports/grok-v8/tools/list_helpers.py",
+      "source_git_blob_sha": "253dcae1b466375dc2f26fb7f80b308df4b5fc85",
+      "source_mode": "100644",
+      "bytes": 514
+    },
+    {
+      "source_path": "tools/math_helpers.py",
+      "destination_path": "imports/grok-v8/tools/math_helpers.py",
+      "source_git_blob_sha": "d537b9e4491575fde092a15cdfc96b11a34caa74",
+      "source_mode": "100644",
+      "bytes": 648
+    },
+    {
+      "source_path": "tools/minmax_helpers.py",
+      "destination_path": "imports/grok-v8/tools/minmax_helpers.py",
+      "source_git_blob_sha": "54b225d95d42acf6834608d9f9d96b425afbef09",
+      "source_mode": "100644",
+      "bytes": 377
+    },
+    {
+      "source_path": "tools/mod_helpers.py",
+      "destination_path": "imports/grok-v8/tools/mod_helpers.py",
+      "source_git_blob_sha": "affda23beaa506fc639c5f2c16c997d8f57f67ec",
+      "source_mode": "100644",
+      "bytes": 175
+    },
+    {
+      "source_path": "tools/neg_helpers.py",
+      "destination_path": "imports/grok-v8/tools/neg_helpers.py",
+      "source_git_blob_sha": "88d8caf92700b0a8889368b689288c488616d51d",
+      "source_mode": "100644",
+      "bytes": 109
+    },
+    {
+      "source_path": "tools/os_control.py",
+      "destination_path": "imports/grok-v8/tools/os_control.py",
+      "source_git_blob_sha": "90abb568eb5e43652336b26209bb0ab67fec86c5",
+      "source_mode": "100644",
+      "bytes": 691
+    },
+    {
+      "source_path": "tools/path_helpers.py",
+      "destination_path": "imports/grok-v8/tools/path_helpers.py",
+      "source_git_blob_sha": "4ab9a2ff2f22f8d44a20a547d9848dd09e11bb4d",
+      "source_mode": "100644",
+      "bytes": 259
+    },
+    {
+      "source_path": "tools/pct_helpers.py",
+      "destination_path": "imports/grok-v8/tools/pct_helpers.py",
+      "source_git_blob_sha": "2f2bd38607303ed0d965510f8958a7a438a3fdee",
+      "source_mode": "100644",
+      "bytes": 195
+    },
+    {
+      "source_path": "tools/pow_helpers.py",
+      "destination_path": "imports/grok-v8/tools/pow_helpers.py",
+      "source_git_blob_sha": "23d5bb77540851df5e7486cb6f93d7dc0c56f2ec",
+      "source_mode": "100644",
+      "bytes": 139
+    },
+    {
+      "source_path": "tools/range_helpers.py",
+      "destination_path": "imports/grok-v8/tools/range_helpers.py",
+      "source_git_blob_sha": "757c47f5b1ca76b033d1724d59c611591d64fa8a",
+      "source_mode": "100644",
+      "bytes": 214
+    },
+    {
+      "source_path": "tools/repeat_helpers.py",
+      "destination_path": "imports/grok-v8/tools/repeat_helpers.py",
+      "source_git_blob_sha": "86e32f131ef11919c826db44e60598ac6953189b",
+      "source_mode": "100644",
+      "bytes": 142
+    },
+    {
+      "source_path": "tools/retry_helpers.py",
+      "destination_path": "imports/grok-v8/tools/retry_helpers.py",
+      "source_git_blob_sha": "b01dba27f98a3ebfce91997302a4af4fbf21ff89",
+      "source_mode": "100644",
+      "bytes": 553
+    },
+    {
+      "source_path": "tools/round_helpers.py",
+      "destination_path": "imports/grok-v8/tools/round_helpers.py",
+      "source_git_blob_sha": "cc8ab831f975372954d3c90ade7098c64ae9b22c",
+      "source_mode": "100644",
+      "bytes": 158
+    },
+    {
+      "source_path": "tools/sign_helpers.py",
+      "destination_path": "imports/grok-v8/tools/sign_helpers.py",
+      "source_git_blob_sha": "269a5e1d9645170278b26332a9506609ea8972f0",
+      "source_mode": "100644",
+      "bytes": 159
+    },
+    {
+      "source_path": "tools/sort_helpers.py",
+      "destination_path": "imports/grok-v8/tools/sort_helpers.py",
+      "source_git_blob_sha": "36e95521aa1e05017b1c83994f162de91a506e49",
+      "source_mode": "100644",
+      "bytes": 183
+    },
+    {
+      "source_path": "tools/sqrt_helpers.py",
+      "destination_path": "imports/grok-v8/tools/sqrt_helpers.py",
+      "source_git_blob_sha": "c37fff591e9f8eafd3399bd2c836d3eadfa8f1c6",
+      "source_mode": "100644",
+      "bytes": 185
+    },
+    {
+      "source_path": "tools/startswith_helpers.py",
+      "destination_path": "imports/grok-v8/tools/startswith_helpers.py",
+      "source_git_blob_sha": "a5a31fc9509f8ad04eba29c40ef7d4f3b0461c4a",
+      "source_mode": "100644",
+      "bytes": 256
+    },
+    {
+      "source_path": "tools/string_helpers.py",
+      "destination_path": "imports/grok-v8/tools/string_helpers.py",
+      "source_git_blob_sha": "830f8e52d7cfca9b98e8c8ddc2bf717faf9f07ef",
+      "source_mode": "100644",
+      "bytes": 304
+    },
+    {
+      "source_path": "tools/strip_helpers.py",
+      "destination_path": "imports/grok-v8/tools/strip_helpers.py",
+      "source_git_blob_sha": "e71909439a251e92aae5ff5284dfb6350e2bcbb4",
+      "source_mode": "100644",
+      "bytes": 115
+    },
+    {
+      "source_path": "tools/sum_helpers.py",
+      "destination_path": "imports/grok-v8/tools/sum_helpers.py",
+      "source_git_blob_sha": "012a3ca93b5f7f8f047d9f07d627f6bba011f062",
+      "source_mode": "100644",
+      "bytes": 158
+    },
+    {
+      "source_path": "tools/text_stats.py",
+      "destination_path": "imports/grok-v8/tools/text_stats.py",
+      "source_git_blob_sha": "f050d104d0ea68c03e360c60cf0da828a6198881",
+      "source_mode": "100644",
+      "bytes": 260
+    },
+    {
+      "source_path": "tools/time_helpers.py",
+      "destination_path": "imports/grok-v8/tools/time_helpers.py",
+      "source_git_blob_sha": "ea417367d31efecec34c28ddc3fe969bcb77c142",
+      "source_mode": "100644",
+      "bytes": 245
+    },
+    {
+      "source_path": "tools/title_helpers.py",
+      "destination_path": "imports/grok-v8/tools/title_helpers.py",
+      "source_git_blob_sha": "930a359ddbce282370c4a4d3de03b69941488c25",
+      "source_mode": "100644",
+      "bytes": 119
+    },
+    {
+      "source_path": "tools/truthy_helpers.py",
+      "destination_path": "imports/grok-v8/tools/truthy_helpers.py",
+      "source_git_blob_sha": "8481a969cb222b2f175d4d9a27d089a386bead63",
+      "source_mode": "100644",
+      "bytes": 139
+    },
+    {
+      "source_path": "tools/unit_helpers.py",
+      "destination_path": "imports/grok-v8/tools/unit_helpers.py",
+      "source_git_blob_sha": "ec44c3514a4aedd808c8f190c8c80b9823f69425",
+      "source_mode": "100644",
+      "bytes": 184
+    },
+    {
+      "source_path": "tools/upper_helpers.py",
+      "destination_path": "imports/grok-v8/tools/upper_helpers.py",
+      "source_git_blob_sha": "c4b37d666141168963d63f9575035bb385b5cd02",
+      "source_mode": "100644",
+      "bytes": 184
+    },
+    {
+      "source_path": "tools/url_helpers.py",
+      "destination_path": "imports/grok-v8/tools/url_helpers.py",
+      "source_git_blob_sha": "cf6300063c899923cd3c012978e6b5db6a3a0f4c",
+      "source_mode": "100644",
+      "bytes": 245
+    },
+    {
+      "source_path": "tools/validate_helpers.py",
+      "destination_path": "imports/grok-v8/tools/validate_helpers.py",
+      "source_git_blob_sha": "b3ca93928d723df72094dd1298bf07e39d8c7290",
+      "source_mode": "100644",
+      "bytes": 279
+    },
+    {
+      "source_path": "tools/version_helpers.py",
+      "destination_path": "imports/grok-v8/tools/version_helpers.py",
+      "source_git_blob_sha": "4370b437c2473240bb4cff44400629c5483ba310",
+      "source_mode": "100644",
+      "bytes": 373
+    },
+    {
+      "source_path": "tools/websearch.py",
+      "destination_path": "imports/grok-v8/tools/websearch.py",
+      "source_git_blob_sha": "74c4949c8a81cf1d35a400b6b57740612a84a8ac",
+      "source_mode": "100644",
+      "bytes": 705
+    }
+  ]
+}

@@ -39,6 +39,16 @@ starting the next session; do not infer it from chat:
 > resume point if the next concrete action changes. Grok must return the exact
 > append blocks even when it has no direct GitHub write access.
 
+## Grok v8 source snapshot — not an admitted task result
+
+- Imported review-only snapshot: `imports/grok-v8/` from
+  `carnascialichristian-wq/UltraJarvis_v8-grok@e3311c46a394a6dd1ef89c4e9415f2e257450605`.
+- Read `docs/program/GROK_V8_SNAPSHOT_IMPORT.md` before inspecting it. It is
+  Python, unexecuted, and incompatible with the active TypeScript baseline until
+  a reviewed porting decision exists.
+- It does **not** change `UJ-RED-001`, task weight, backlog status, or the
+  requirement for a schema-valid Grok ResponsePacket and independent review.
+
 ## Prepared next actions
 
 | Actor | Task | Immediate action |
