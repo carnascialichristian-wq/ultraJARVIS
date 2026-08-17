@@ -1,1 +1,1 @@
-UJ-SEC-003 published to ultraJARVIS. 215 green. Next: Phase 2 adapters or auto-register.
+216 green. Optional auto-register after promote published. Next: Phase 2 LLM adapters.
