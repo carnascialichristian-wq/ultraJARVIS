@@ -162,7 +162,7 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 | UJ-MCP-001 — ToolManifest + MCP admission | 8 | **REVIEW** | 0/8 | 7/8 | review di Gemini | — |
 | UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **REVIEW** | 0/8 | 6/8 | review di ChatGPT | — |
 | UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | **REVIEW** | 0/13 | 11/13 | review di ChatGPT | — |
-| UJ-REV-001 — Review del Program OS di ChatGPT | 5 | BLOCKED | 0/5 | — | 5 | UJ-INT-001 non esiste |
+| UJ-REV-001 — Review del Program OS di ChatGPT | 5 | **REVIEW** | 0/5 | 4/5 | review di Christian | — (sbloccato: UJ-INT-001 esiste) |
 | UJ-REV-002 — Security review Website Team | 8 | BLOCKED | 0/8 | — | 8 | UJ-INT-007 non esiste |
 
 ## Progresso — formula §7.4, mai a occhio
@@ -171,10 +171,18 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 portafoglio CLAUDE = 76 unità
 
 accettato formalmente = 0 / 76  = 0%      nessun reviewer ha ancora accettato
-proposto in review    = 53 / 76 = 69,7%   11 UJ-RUN-001 + 11 UJ-SEC-001
+proposto in review    = 57 / 76 = 75,0%   11 UJ-RUN-001 + 11 UJ-SEC-001
                                           + 11 UJ-SKL-001 + 7 UJ-MCP-001
                                           + 7 UJ-CLD-001 + 6 UJ-RCV-001
+                                          + 4 UJ-REV-001  (sessione 3)
 ```
+
+Ricalcolo di fine sessione 3: `53 + 4 = 57`. Le 4 unità di UJ-REV-001 coprono AC-01
+(la review esiste e rispetta l'output contract); **la quinta resta a Christian**, che è
+il reviewer designato del task e non si è ancora espresso.
+
+**7 task su 8 sono ora in REVIEW.** L'unico ancora fermo è UJ-REV-002 (peso 8), che
+aspetta `UJ-INT-007` da ChatGPT — non ancora esistente, verificato al ref `31f31b99`.
 
 **IL PORTAFOGLIO È ESAURITO.** 6 task su 8 sono in REVIEW. Restano:
 - 1 unità di UJ-CLD-001, che richiede un HUMAN_BRIDGE con Christian (billing account);
@@ -726,11 +734,109 @@ Dettaglio suite: runtime 34 · policy 28 · tools 30 · recovery 9 · skills 37.
   UJ-INT-006 era esplicitamente richiesta e bloccava un altro portafoglio;
 - non ho commentato la PR #1 né aperto PR: azioni verso l'esterno non autorizzate.
 
-### Decisione lasciata aperta
+### Decisione lasciata aperta *(risolta più avanti nella stessa sessione)*
 
-`UJ-REV-001` è **lavorabile adesso** (UJ-INT-001 esiste). Non l'ho preso per non
-sovrapporlo alla review appena consegnata e perché il RESUME_POINT va aggiornato prima.
-È il primo candidato della sessione 4.
+`UJ-REV-001` è **lavorabile adesso** (UJ-INT-001 esiste). Non l'ho preso subito per non
+sovrapporlo alla review appena consegnata e perché il RESUME_POINT andava aggiornato prima.
+
+→ **Preso ed eseguito nella stessa sessione**, su istruzione di Christian *"CONTINUA IL TUO
+LAVORO"*. Vedi sotto.
+
+---
+
+## Sessione 3, seconda parte — UJ-REV-001 consegnato, stato REVIEW
+
+**Controllo preliminare (trappola 11, applicata):** `git fetch` di tutti i branch prima di
+iniziare. Nessuna nuova consegna: il branch di ChatGPT era fermo a `31f31b9`, nessun branch
+di Gemini o Grok esiste. Questa volta l'attesa *sarebbe* stata la risposta corretta per gli
+altri — ma UJ-REV-001 era mio e lavorabile.
+
+### File prodotti
+
+| File | Contenuto |
+|---|---|
+| `docs/program/reviews/UJ-REV-001-PROGRAM-OS-REVIEW.md` | review completa, 11 sezioni, 6 findings |
+| `docs/program/reviews/UJ-REV-001-CLAUDE-REVIEWRESULT-CANDIDATE.json` | packet in forma `ReviewResult`, **non importabile** — vedi F-003 |
+
+**Esito: `PASS_WITH_ACTIONS`.** Peso proposto per UJ-INT-001: **0/13 invariato** — non sono
+io il reviewer canonico (è Grok), quindi la mia review non muove il suo ledger.
+
+### Metodo — cosa ho fatto di diverso da una lettura
+
+Un Program OS si revisiona **ricalcolando il ledger**, non ammirando la prosa. Ho
+ri-derivato in modo indipendente, senza fidarmi del validatore:
+
+- somma dei pesi per `task_ids` di ogni baseline vs `declared_weight` → **3 su 3 esatte**;
+- `remaining_weight == weight − completed_weight` su tutti i 43 task → **43 su 43**;
+- risoluzione di ogni dipendenza + DFS per i cicli → **nessuna rotta, nessun ciclo**;
+- task fuori da ogni baseline → **9, tutti `PROPOSED` e di peso 0**. Lo scope proposto non
+  gonfia il denominatore: è la disciplina promessa in PROGRESS.md §5, applicata davvero.
+
+**L'aritmetica di ChatGPT è corretta.** Il difetto non era nei numeri, era in **una regola
+violata dai numeri**.
+
+### I due difetti che bloccano il PASS
+
+**F-001 — l'unico peso parziale del ledger è vietato dal sistema stesso.**
+`UJ-META-002` porta **5/8** con **1 criterio su 3** passato. Ma:
+- `PROGRESS.md` regola 3 impone tutto-o-niente **senza una mappatura di sottocriteri**, e
+  ho cercato quella mappatura in tutto `BACKLOG.json`: **zero occorrenze**;
+- `validate-council-packets.mjs` riga 388 **rifiuterebbe** un `ReviewResult` che proponga
+  5/8.
+
+Il ledger contiene un valore che il gate del programma non può produrre né riprodurre.
+Effetto misurato: `meta-bootstrap` passa da **89,66% a 72,41%** (−17,24 punti) applicando
+la regola scritta accanto.
+
+**F-002 — la difesa anti-gaming non può girare prima di ciò che deve controllare.**
+`PROGRESS.md` riga 93: *"Grok UJ-REV-004 challenges the formula and examples **before
+acceptance**"*. `BACKLOG.json`: `UJ-REV-004` è `BLOCKED` con causa *"Required dependency is
+not accepted: UJ-INT-001"*. **La review che deve precedere l'accettazione è bloccata fino
+all'accettazione.**
+
+Vale identicamente per il task che stavo eseguendo: `UJ-REV-001` era formalmente `BLOCKED`
+per la stessa causa. **L'ho eseguito perché ho verificato che l'artefatto esiste, non
+perché il backlog lo consentisse** — e questo è esattamente il punto della trappola 11.
+
+### F-003 — il mio deliverable non è rappresentabile, dimostrato
+
+`UJ-REV-001` deve produrre *"a review of UJ-INT-001"*. Ho costruito il `ReviewResult` e
+l'ho sottoposto all'intake:
+
+```
+Council packet validation: FAIL
+- candidates/rev001.json reviewer must be GROK.
+```
+
+Due task dello stesso `BACKLOG.json` sono **mutuamente incoerenti**: uno mi incarica di
+revisionare UJ-INT-001, l'altro rifiuta per costruzione ogni review non firmata GROK.
+Per questo il deliverable è Markdown e il JSON è marcato **candidato non importabile**:
+consegnarlo come `ReviewResult` valido sarebbe una dichiarazione falsa.
+
+### Ho scritto contro me stesso, di nuovo
+
+**F-005** riguarda in parte me. Il ledger non vede i miei 6 task consegnati, e una delle
+due cause è mia: `GOVERNANCE.md` prescrive branch `agent/<task-id>-<slug>`, e il mio si
+chiama `claude/ultrajarvis-repo-analysis-li6vvj`. **Un branch fuori pattern è un branch
+che l'integratore non pensa di guardare.** L'ho scritto nella review invece di attribuire
+tutta la causa a ChatGPT.
+
+### Errori commessi in questa parte
+
+| # | Errore | Nota |
+|---|---|---|
+| E12 | Nessun errore tecnico. Ma segnalo un **errore di concetto evitato**: stavo per marcare AC-01 di UJ-INT-001 come `PASS` verificato da me. **Non l'ho verificato io**: l'esistenza dei dodici gruppi di deliverable l'ha confermata il validatore, e io non ho letto integralmente 8 dei documenti. L'ho scritto nella nota del criterio e in §10. Dopo aver contestato a ChatGPT le prove insufficienti (F-001 di UJ-INT-006), citare documenti non letti sarebbe stato lo stesso difetto commesso mentre lo si denuncia |
+
+### Prove eseguite
+
+| Verifica | Esito |
+|---|---|
+| `node scripts/validate-program-os.mjs` al ref `31f31b99` | **PASS** — 43 task, peso 311 |
+| Riconciliazione delle 3 baseline (mia, indipendente) | **3 su 3 esatte** |
+| Coerenza `remaining_weight` su 43 task | **43 su 43** |
+| Integrità dipendenze + ricerca cicli | **nessuna rotta, nessun ciclo** |
+| Rifiuto del mio ReviewResult (F-003) | **riproducibile**: *"reviewer must be GROK"* |
+| Suite contratti dopo le modifiche | **138/138**, typecheck exit 0 |
 
 ---
 
@@ -818,8 +924,8 @@ STATO     : UJ-RUN-001  REVIEW        attende Gemini, 11/13 proposti
             UJ-RCV-001  REVIEW        attende ChatGPT, 6/8 proposti
             UJ-SKL-001  REVIEW        attende ChatGPT, 11/13 proposti
             UJ-CLD-001  REVIEW        attende Gemini,   7/8  proposti
-            UJ-REV-001  BLOCKED       aspetta ChatGPT
-            UJ-REV-002  BLOCKED       aspetta ChatGPT
+            UJ-REV-001  REVIEW        attende Christian, 4/5 proposti  <-- sessione 3
+            UJ-REV-002  BLOCKED       aspetta UJ-INT-007 di ChatGPT
 
 TUTTI E TRE I P0 DEL PROGRAMMA SONO CHIUSI.
 6 TASK SU 8 SONO IN REVIEW. IL PORTAFOGLIO DI PRODUZIONE È ESAURITO,
@@ -832,18 +938,24 @@ FATTO NUOVO (sessione 3): ChatGPT ha consegnato il 2026-08-17 fra le 09:44 e
               PASS_WITH_ACTIONS, 0/8, in docs/program/reviews/
             - PR #2 esiste per il mio branch (decisione aperta n. 4 superata)
 
-PROSSIMO  : UJ-REV-001 — Review indipendente del Program OS di ChatGPT (peso 5).
-            È il primo task lavorabile. Il suo blocker storico era "UJ-INT-001
-            non esiste": ora esiste, commit 8f31a37.
-            Attenzione: in BACKLOG.json risulta ancora BLOCKED perché ChatGPT
-            non ha rigenerato lo snapshot. Il blocco è formale, non reale.
-            Materiale: docs/program/{PROJECT_STATE,STATUS,PROGRESS,GOVERNANCE,
-            WORKSTREAMS,RECONCILIATION}.md + BACKLOG.json + validate-program-os.mjs
-            al ref 31f31b99ad7e63bf581161ce9cd12b11f83a945f.
+PROSSIMO  : IL PORTAFOGLIO È ORA DAVVERO ESAURITO. 7 task su 8 in REVIEW.
+            Resta solo UJ-REV-002 (peso 8), bloccato da UJ-INT-007 che NON
+            esiste — verificato al ref 31f31b99, non assunto.
+
+            Se apri una sessione nuova:
+            1. ESEGUI PRIMA LA TRAPPOLA 11 — git fetch di tutti i branch e
+               controlla se qualcuno ha consegnato. Nella sessione 3 questo
+               controllo ha trovato due task che aspettavano me.
+            2. Se esiste UJ-INT-007  -> prendi UJ-REV-002.
+            3. Se Gemini/Grok hanno consegnato -> hai doveri da reviewer su
+               UJ-CAP-001, UJ-MEM-001, UJ-ADK-001, UJ-RSK-001, UJ-ALT-001.
+            4. Se NIENTE di tutto questo -> ALLORA registra l'attesa. Questa
+               volta è la risposta corretta, ma solo dopo i punti 1-3.
 
             METODO CHE HA FUNZIONATO, da riusare: eseguire i validatori PRIMA di
             leggere il codice, costruire una suite avversariale invece di
-            ispezionare a occhio, e citare solo artefatti davvero aperti.
+            ispezionare a occhio, RICALCOLARE il ledger invece di leggerlo, e
+            citare solo artefatti davvero aperti.
 
 POI       : - Gemini: review di UJ-RUN-001, UJ-MCP-001, UJ-CLD-001
             - Grok:   review di UJ-SEC-001
@@ -860,7 +972,8 @@ DECISIONI DI BASELINE IN SOSPESO PRESSO CHATGPT:
 
 NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
             approval policy, critica Costituzione, tool plane, source manifest,
-            capability record UJ-CLD-001, E LA REVIEW DI UJ-INT-006.
+            capability record UJ-CLD-001, LA REVIEW DI UJ-INT-006,
+            E LA REVIEW DEL PROGRAM OS (UJ-REV-001).
             Verifica prima, DALLA ROOT del repo:
               for f in tests/contracts/*.test.mjs; do node --test "$f"; done
               totale atteso: 138/138 (runtime 34 · policy 28 · tools 30 ·

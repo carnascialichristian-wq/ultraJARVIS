@@ -1,0 +1,123 @@
+{
+  "schema_version": "ultrajarvis.review-result/v1",
+  "review_id": "UJ-REVIEW-INT-001-CLAUDE-20260817-ADVISORY",
+  "created_at": "2026-08-17T12:22:06Z",
+  "repository": {
+    "full_name": "carnascialichristian-wq/ultraJARVIS",
+    "commit_sha": "31f31b99ad7e63bf581161ce9cd12b11f83a945f"
+  },
+  "task_id": "UJ-INT-001",
+  "task_owner": "CHATGPT",
+  "reviewer": {
+    "ai_id": "CLAUDE",
+    "product": "Claude Code"
+  },
+  "artifacts_reviewed": [
+    {
+      "ref": "docs/program/BACKLOG.json",
+      "sha256": "4bb1f131592318522e50177c68bd871e96edc306f6f935253c631b969a3004d9"
+    },
+    {
+      "ref": "docs/program/PROGRESS.md",
+      "sha256": "a1f0829ead81660aefda566c54c6e62d07ad915316eeff06c0c244b1056e1fab"
+    },
+    {
+      "ref": "docs/program/GOVERNANCE.md",
+      "sha256": "2dbca970aa6e5618813daed6898f86d7d55a986066ed3a75a704d8b29d67c84b"
+    },
+    {
+      "ref": "docs/program/STATUS.md",
+      "sha256": "4dccf507b609690211dc915f227ad6c5bf8d9a5e8e7eb8ca401beb85a0883a5a"
+    },
+    {
+      "ref": "docs/program/RESUME_POINT.md",
+      "sha256": "acdb1cd785e9605f66e266aa6d9be7413d2bd06d1f297764ff57f0b023610d38"
+    },
+    {
+      "ref": "scripts/validate-program-os.mjs",
+      "sha256": "6b26aafa35c3afce8a9741d8ff6134babce2b2b6fca8a935bdc1bbd402216ca9"
+    },
+    {
+      "ref": "scripts/validate-council-packets.mjs",
+      "sha256": "7b88f6819cedccb3baf7cb03a0358f0ec652d99837261db9a4a313c49acdbfb8"
+    }
+  ],
+  "outcome": "PASS_WITH_ACTIONS",
+  "criteria": [
+    {
+      "criterion_id": "AC-01",
+      "result": "PASS",
+      "evidence_refs": [
+        "scripts/validate-program-os.mjs",
+        "docs/program/BACKLOG.json"
+      ],
+      "note": "Existence of the twelve deliverable groups verified through validate-program-os.mjs at the reviewed ref, not by my own full reading of each document; stated as such in section 10 of the Markdown review."
+    },
+    {
+      "criterion_id": "AC-02",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/BACKLOG.json",
+        "scripts/validate-program-os.mjs"
+      ],
+      "note": "Independently re-derived rather than taken from the validator: all three baselines reconcile exactly (311=311, 94=94, 29=29), remaining_weight equals weight minus completed_weight on all 43 tasks, every dependency resolves, DFS finds no cycle, and the 9 PROPOSED tasks carry weight 0 outside every baseline so proposed scope cannot inflate a denominator."
+    },
+    {
+      "criterion_id": "AC-03",
+      "result": "NOT_REVIEWED",
+      "evidence_refs": [
+        "docs/program/BACKLOG.json"
+      ],
+      "note": "Grok has published no review at this ref. UJ-REV-004, the task that PROGRESS.md line 93 requires to challenge the formula before acceptance, is itself BLOCKED until UJ-INT-001 is accepted. Recorded as F-002."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-001",
+      "severity": "HIGH",
+      "description": "UJ-META-002 carries 5 of 8 accepted units with one of three acceptance criteria PASSED, while no partial-weight subcriterion mapping exists anywhere in BACKLOG.json. PROGRESS.md rule 3 makes acceptance all-or-nothing without that mapping, rule 2 says REVIEW work is not automatically accepted, and validate-council-packets.mjs line 388 would reject a ReviewResult proposing the same partial award. The published meta-bootstrap figure of 89.66% becomes 72.41% under the program own rule, and M0 moves from 27.66% to 22.34%.",
+      "required_action": "Either reduce UJ-META-002 to 0/8 until AC-02 and AC-03 pass, or define binary subcriteria with proof refs in BACKLOG.json so the 5/8 award becomes derivable and reproducible by the importer."
+    },
+    {
+      "finding_id": "F-002",
+      "severity": "HIGH",
+      "description": "PROGRESS.md line 93 requires Grok UJ-REV-004 to challenge the progress formula before acceptance, but BACKLOG.json blocks UJ-REV-004 with cause Required dependency is not accepted: UJ-INT-001. The anti-gaming review cannot run until after the acceptance it is meant to gate. UJ-REV-001 is blocked identically, so the independent Program OS review would also arrive after acceptance. The next_action of UJ-REV-004 says review the submitted Program OS, contradicting its own blocker.",
+      "required_action": "Express review dependencies on artifact existence rather than acceptance: unblock UJ-REV-001 and UJ-REV-004 when UJ-INT-001 reaches REVIEW at a verified ref."
+    },
+    {
+      "finding_id": "F-003",
+      "severity": "MEDIUM",
+      "description": "UJ-REV-001 has output_contract PASS, PASS_WITH_ACTIONS, or FAIL review of UJ-INT-001, but the Council intake rejects any ReviewResult for UJ-INT-001 not authored by the canonical reviewer GROK. Reproduced at this ref: validator returns reviewer must be GROK. Two tasks in the same backlog are mutually inconsistent, and the packet layer has no representation for a second independent review.",
+      "required_action": "Add a non-canonical advisory review packet type that carries findings without moving the ledger and without requiring canonical-reviewer identity."
+    },
+    {
+      "finding_id": "F-004",
+      "severity": "MEDIUM",
+      "description": "All 18 BLOCKED tasks share blocker.kind DEPENDENCY, conflating an input that does not exist with an input that exists but is not yet accepted. UJ-REV-001 and UJ-REV-004, 10 units combined, are marked BLOCKED while their input has been available in REVIEW since 09:44 on the same day.",
+      "required_action": "Split the blocker kind into DEPENDENCY_MISSING and DEPENDENCY_UNACCEPTED, or add a workable_now boolean, so planning can distinguish cannot start from cannot close."
+    },
+    {
+      "finding_id": "F-005",
+      "severity": "MEDIUM",
+      "description": "BACKLOG.json marks six CLAUDE tasks as READY or BLOCKED with proof none yet, while all six were delivered and are verifiable at commits 5d96017, 9315d11, f82f65e, ceac749, 77edee8 and e1656ec with 138 of 138 contract tests passing. Contributing cause on my side: my working branch claude/ultrajarvis-repo-analysis-li6vvj does not follow the agent/<task-id>-<slug> pattern that GOVERNANCE.md prescribes, and the Program OS has no discovery step telling the integrator where specialist work lives.",
+      "required_action": "Record an AI-to-branch map in PROJECT_STATE.md and have snapshot regeneration read those branches, not only the integration branch."
+    },
+    {
+      "finding_id": "F-006",
+      "severity": "LOW",
+      "description": "GOVERNANCE.md states that the author may not self-approve, with no written exception for the owner, yet both rows carrying accepted weight have reviewer Christian and UJ-META-002 additionally has owner Christian. All 26 accepted units of the program therefore sit on rows that the rule as written forbids, although the same document names Christian the final approver.",
+      "required_action": "Write the exception explicitly: the owner may accept his own work when the decision is recorded as an OWNER_DECISION with date and rationale."
+    }
+  ],
+  "policy_checks": {
+    "zero_cost": "PASS",
+    "data_class": "PASS",
+    "side_effect": "PASS",
+    "secret_handling": "PASS",
+    "consumer_ui_automation": "PASS"
+  },
+  "accepted_weight_before": 0,
+  "accepted_weight_after": 0,
+  "proposed_task_status": "REVIEW",
+  "next_action": "GROK still owes the canonical review of UJ-INT-001; this advisory review does not substitute for it. ChatGPT to resolve F-001 and F-002, which are the two that block a PASS."
+}

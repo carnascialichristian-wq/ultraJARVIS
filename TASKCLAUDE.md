@@ -28,10 +28,11 @@
 | UJ-MCP-001 — ToolManifest e MCP admission | 8 | **REVIEW** | **GEMINI** | **Gemini deve revisionarlo** |
 | UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **REVIEW** | **CHATGPT** | **ChatGPT deve revisionarlo** |
 | UJ-SKL-001 — Skill Forge | 13 | **REVIEW** | **CHATGPT** | **ChatGPT deve revisionarlo** |
-| UJ-REV-001 — Review del Program OS | 5 | **BLOCKED: aspetto ChatGPT** | Christian | **ChatGPT mi blocca** |
-| UJ-REV-002 — Security review Website Team | 8 | **BLOCKED: aspetto ChatGPT** | GROK | **ChatGPT mi blocca** |
+| UJ-REV-001 — Review del Program OS | 5 | **REVIEW** (4/5) | Christian | **consegnata: PASS_WITH_ACTIONS su UJ-INT-001** |
+| UJ-REV-002 — Security review Website Team | 8 | **BLOCKED: aspetto ChatGPT** | GROK | **UJ-INT-007 non esiste ancora** |
 
-**Progresso onesto:** 0/76 accettato, 53/76 proposto. Nessun task DONE.
+**Progresso onesto:** 0/76 accettato, **57/76 proposto**. Nessun task DONE.
+**7 task su 8 in REVIEW**: resta solo UJ-REV-002, bloccato da `UJ-INT-007`.
 
 **6 task su 8 sono in REVIEW e aspettano voi.** Il mio portafoglio è **esaurito**:
 non c'è altro che io possa iniziare in autonomia. Restano 1 unità di UJ-CLD-001 dietro
@@ -516,6 +517,70 @@ giusta.**
 `artifacts_reviewed` copra i `proof_refs` di quel criterio, e che ogni `evidence_refs`
 risolva a un path esistente col guard `resolveRepositoryFile` che hai già scritto.
 
+### 4.19 Program OS revisionato (UJ-REV-001): l'aritmetica è esatta, due regole no
+
+**→ CHATGPT.** Ho consegnato `UJ-REV-001`, la review indipendente del tuo Program OS, al
+ref `31f31b99`. Esito **`PASS_WITH_ACTIONS`**. Peso proposto per UJ-INT-001: **0/13
+invariato** — non sono il tuo reviewer canonico, è Grok. La mia review **non muove il tuo
+ledger** e non sostituisce la sua.
+
+**Prima il merito, verificato ricalcolando e non leggendo:** le tre baseline riconciliano
+all'unità (311=311, 94=94, 29=29), `remaining_weight` è coerente su tutti i 43 task, nessuna
+dipendenza rotta, nessun ciclo, e i 9 task `PROPOSED` hanno peso 0 fuori da ogni baseline —
+**lo scope proposto non gonfia il denominatore**, che è il punto in cui quasi tutti i
+sistemi di avanzamento barano. `GOVERNANCE.md`: *"A commit is proof of production, not
+proof of acceptance."* È la formulazione migliore del principio in tutto il repository.
+
+**`F-001` (HIGH) — l'unico peso parziale del ledger è vietato dal ledger stesso.**
+`UJ-META-002` porta **5/8** con **1 criterio su 3** passato. Ma `PROGRESS.md` regola 3
+impone tutto-o-niente senza una mappatura di sottocriteri, e quella mappatura **non esiste
+da nessuna parte** in `BACKLOG.json` (cercata: zero occorrenze). E il tuo stesso
+`validate-council-packets.mjs` riga 388 **rifiuterebbe** un `ReviewResult` che proponga 5/8.
+
+> Applicando la regola scritta accanto al numero, `meta-bootstrap` passa da
+> **89,66% a 72,41%** (−17,24 punti) e M0 da **27,66% a 22,34%**.
+
+**`F-002` (HIGH) — la difesa anti-gaming è bloccata da ciò che deve controllare.**
+`PROGRESS.md` riga 93 impone che **GROK** contesti la formula con `UJ-REV-004` *"before
+acceptance"*. `BACKLOG.json` marca `UJ-REV-004` `BLOCKED` con causa *"Required dependency is
+not accepted: UJ-INT-001"*. **La review che deve precedere l'accettazione non può iniziare
+prima dell'accettazione.**
+
+**→ GROK, ti riguarda direttamente:** `UJ-REV-004` è tuo, ed è formalmente bloccato da una
+condizione che si autoavvera. Il suo `next_action` dice *"Review the **submitted** Program
+OS"*, che è la cosa giusta e contraddice il suo stesso blocker. **Il blocker è l'errore.**
+Se aspetti che si sblocchi da solo, contesterai una formula già accettata.
+
+**`F-003` (MEDIUM) — due task del tuo backlog sono mutuamente incoerenti.** `UJ-REV-001`
+mi incarica di produrre *"a review of UJ-INT-001"*; l'intake rifiuta ogni `ReviewResult` su
+UJ-INT-001 non firmato GROK (*"reviewer must be GROK"*, riprodotto). Il layer Council non ha
+una rappresentazione per la **seconda review indipendente**. Serve un tipo advisory che
+porti findings senza muovere il ledger.
+
+**`F-004` (MEDIUM):** tutti i 18 blocker hanno `kind: DEPENDENCY`, confondendo *"l'input non
+esiste"* con *"l'input esiste ma non è accettato"*. 10 unità (UJ-REV-001 + UJ-REV-004)
+risultavano ferme mentre il loro input era disponibile.
+
+**`F-006` (LOW), e riguarda Christian:** `GOVERNANCE.md` vieta l'autoapprovazione senza
+eccezioni scritte, ma **tutte e 26 le unità accettate del programma** stanno su righe con
+`reviewer = Christian`, e su `UJ-META-002` anche `owner = Christian`. La sostanza è
+legittima — Christian è il proprietario — ma l'eccezione va **scritta**, non lasciata tacita.
+
+### 4.20 `F-005`: la causa della divergenza è anche mia
+
+Il ledger non vede i miei 6 task consegnati (§9). Indagando per UJ-REV-001 ho trovato che
+**metà della causa è mia**: `GOVERNANCE.md` prescrive branch `agent/<task-id>-<slug>`, e il
+mio si chiama `claude/ultrajarvis-repo-analysis-li6vvj`. Un branch fuori pattern è un branch
+che l'integratore non pensa di guardare.
+
+L'altra metà è che il Program OS **non ha un passo di discovery**: nessun artefatto dice
+all'integratore *dove cercare* il lavoro degli specialisti, e `HANDOFFS.md` presume che il
+pacchetto arrivi, non che vada cercato.
+
+**→ TUTTI:** se lavorate su un branch che non segue il pattern di `GOVERNANCE.md`,
+il vostro lavoro sarà invisibile allo snapshot **anche se è perfetto e pushato**.
+Serve una mappa `AI → branch` in `PROJECT_STATE.md`.
+
 ---
 
 ## 5. Handoff specifico per ciascuno di voi
@@ -711,3 +776,4 @@ riproducibili.
 | Data | Sessione | Cosa è cambiato |
 |---|---|---|
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-03` | **Revisionato UJ-INT-006** (owner ChatGPT) come reviewer canonico: `PASS_WITH_ACTIONS`, **0/8**, AC-02 `FAIL`. Aggiunte §4.17 (una review vuota ottiene peso pieno — **TH-10 nel layer Council**) e §4.18 (autenticità ≠ sufficienza, quarto caso della stessa forma). Nuova §9: il `BACKLOG.json` di ChatGPT non vede i 6 deliverable consegnati. Prove rieseguite: 138/138, typecheck exit 0, tre validatori di ChatGPT PASS, 19 attacchi su 20 respinti |
+| 2026-08-17 | `UJ-CLAUDE-2026-08-17-03` | **Consegnato UJ-REV-001** — review indipendente del Program OS: `PASS_WITH_ACTIONS`, UJ-INT-001 resta 0/13. Aggiunte §4.19 (aritmetica esatta su 3 baseline, ma `UJ-META-002` porta un 5/8 che le regole del programma vietano — **89,66% → 72,41%**; e la review anti-gaming di **GROK** è bloccata da ciò che deve controllare) e §4.20 (`F-005`: il mio branch non segue il pattern di `GOVERNANCE.md`, ed è metà della causa della divergenza §9). Portafoglio: **57/76 proposto, 7 task su 8 in REVIEW** |
