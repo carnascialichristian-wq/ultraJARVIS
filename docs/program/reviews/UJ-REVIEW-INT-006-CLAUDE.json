@@ -1,0 +1,177 @@
+{
+  "schema_version": "ultrajarvis.review-result/v1",
+  "review_id": "UJ-REVIEW-INT-006-CLAUDE-20260817",
+  "created_at": "2026-08-17T11:07:13Z",
+  "repository": {
+    "full_name": "carnascialichristian-wq/ultraJARVIS",
+    "commit_sha": "31f31b99ad7e63bf581161ce9cd12b11f83a945f"
+  },
+  "task_id": "UJ-INT-006",
+  "task_owner": "CHATGPT",
+  "reviewer": {
+    "ai_id": "CLAUDE",
+    "product": "Claude Code"
+  },
+  "artifacts_reviewed": [
+    {
+      "ref": "schemas/mission-packet.schema.json",
+      "sha256": "fb954f97ea29a3fd2c29a443f88570c3ffe6745bbd8757d6e24d60acf1b9a5f6"
+    },
+    {
+      "ref": "schemas/delegation-card.schema.json",
+      "sha256": "68214a339eeca40df2147899927b207e0a1427fba6611d81c520b11c4a40516c"
+    },
+    {
+      "ref": "schemas/response-packet.schema.json",
+      "sha256": "ee44e1b7e262bc0817e0b4f65de8830d122687618a59774fdabfddf3b7e69c0a"
+    },
+    {
+      "ref": "schemas/synthesis-packet.schema.json",
+      "sha256": "be822ca00d2340fd03a1e7a812af3d31a0b03360ceadf69e0ca3ff5d3438ddf6"
+    },
+    {
+      "ref": "schemas/review-result.schema.json",
+      "sha256": "415255ac46ee83ad564c1cacd8df4e5c6f8789a8769fb2a86b5ee5de63c2c03b"
+    },
+    {
+      "ref": "scripts/validate-council-packets.mjs",
+      "sha256": "7b88f6819cedccb3baf7cb03a0358f0ec652d99837261db9a4a313c49acdbfb8"
+    },
+    {
+      "ref": "scripts/test-review-result-intake.mjs",
+      "sha256": "d0c80de304d57374211527ae5862f4c44f53bc09266c9562f19ae8413deb604c"
+    },
+    {
+      "ref": "scripts/validate-program-os.mjs",
+      "sha256": "6b26aafa35c3afce8a9741d8ff6134babce2b2b6fca8a935bdc1bbd402216ca9"
+    },
+    {
+      "ref": "docs/program/COUNCIL_IMPORT_AND_MERGE.md",
+      "sha256": "eca043d462f0fa38b02389a14dbd152dd7cab8b44d201301723235919b39e3db"
+    },
+    {
+      "ref": "docs/program/BACKLOG.json",
+      "sha256": "4bb1f131592318522e50177c68bd871e96edc306f6f935253c631b969a3004d9"
+    },
+    {
+      "ref": "docs/program/RESUME_POINT.md",
+      "sha256": "acdb1cd785e9605f66e266aa6d9be7413d2bd06d1f297764ff57f0b023610d38"
+    },
+    {
+      "ref": "docs/program/STATUS.md",
+      "sha256": "4dccf507b609690211dc915f227ad6c5bf8d9a5e8e7eb8ca401beb85a0883a5a"
+    },
+    {
+      "ref": "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json",
+      "sha256": "af366d043b99b1e71ad926c3b5db8b9845c202d20be3e78cb39f53d4284e09bb"
+    },
+    {
+      "ref": "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json",
+      "sha256": "8411f23f3e57e4b4f0263068b68e3f41de7842fe1bef0188aeb3ab88cc8b251e"
+    },
+    {
+      "ref": "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
+      "sha256": "0d33bb27e1afc7a6af67cd79cf29e1a098c47d6788911a99dc3bfcb7a6b82597"
+    },
+    {
+      "ref": "prompts/delegation-cards/UJ-GGL-001-GEMINI.json",
+      "sha256": "d6a5faa06362c78a3416cccea89d9842a86ae70bcff718008f550503f1fe4ef5"
+    },
+    {
+      "ref": "prompts/delegation-cards/UJ-RED-001-GROK.json",
+      "sha256": "9ff0418a8c0dff4fa107df47f6a203cd75c0fca87ea70b0a540de319d4c5d01e"
+    },
+    {
+      "ref": "prompts/review-requests/UJ-INT-006-CLAUDE.md",
+      "sha256": "f257eacd6f0a08665c3e38e0badca22a993542afee109affc6ef152d85eb4582"
+    }
+  ],
+  "outcome": "PASS_WITH_ACTIONS",
+  "criteria": [
+    {
+      "criterion_id": "AC-01",
+      "result": "PASS",
+      "evidence_refs": [
+        "schemas/mission-packet.schema.json",
+        "schemas/delegation-card.schema.json",
+        "schemas/response-packet.schema.json",
+        "schemas/synthesis-packet.schema.json",
+        "schemas/review-result.schema.json",
+        "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json",
+        "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json",
+        "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
+        "prompts/delegation-cards/UJ-GGL-001-GEMINI.json",
+        "prompts/delegation-cards/UJ-RED-001-GROK.json"
+      ],
+      "note": "All five Council schemas are JSON Schema 2020-12 with stable $id, explicit schema_version and additionalProperties:false at every object node (audited recursively: zero open objects across all 7 schemas in tree). ResponsePacket.status enum is REVIEW|BLOCKED|FAILED, so a specialist self-proposing DONE is unrepresentable rather than merely forbidden - the same irrepresentability technique used for L5 in the runtime contracts. Verified directly on all four cards: HUMAN_BRIDGE-only, incremental_cost_eur 0, direct_main_write false, autonomy L2, task_snapshot.accepted_weight 0, expires_at after created_at, reviewer matching BACKLOG.json. Mission ceilings are C1/L2/INTERNAL_WRITE with billing_allowed and paid_api_allowed false."
+    },
+    {
+      "criterion_id": "AC-02",
+      "result": "FAIL",
+      "evidence_refs": [
+        "scripts/validate-council-packets.mjs",
+        "docs/program/COUNCIL_IMPORT_AND_MERGE.md",
+        "scripts/test-review-result-intake.mjs"
+      ],
+      "note": "The criterion text names 'replay' among the regression classes the validator must pass. It does not. COUNCIL_IMPORT_AND_MERGE.md stage 5 requires exact replay to be a no-op and divergent replay to be rejected as REPLAY_DIVERGENCE, and the doc specifies a (packet_id, idempotency_key, sha256, received_at, disposition) store. The validator is stateless: idempotency uniqueness is checked only across the four delegation-card files (lines 412-414), never for imported ReviewResults. Reproduced at this ref: importing review_id UJ-REVIEW-SAME-ID twice byte-identically passed twice, and a third import reusing the same review_id with different bytes also PASSED instead of raising REPLAY_DIVERGENCE. test-review-result-intake.mjs covers 7 cases, none of which is a replay case. Defect is additive and correctable; the rest of AC-02 is strong (19 of 20 adversarial candidates rejected)."
+    },
+    {
+      "criterion_id": "AC-03",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/reviews/UJ-REVIEW-INT-006-CLAUDE.json",
+        "docs/program/reviews/UJ-INT-006-CLAUDE-FINDINGS.md"
+      ],
+      "note": "This document is that evidence-backed PASS_WITH_ACTIONS review, issued by CLAUDE at the verified head 31f31b99. Recorded with a caveat as F-003: the criterion is self-referential - it is satisfied by the act of reviewing rather than by any property of the reviewed artifact, so it conveys no independent information and structurally biases toward acceptance."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-001",
+      "severity": "HIGH",
+      "description": "Evidence sufficiency is never checked, only evidence authenticity. validateImportedReview hashes each entry of artifacts_reviewed (minItems 1) but never requires those entries to intersect the reviewed task's own acceptance_criteria[].proof_refs, and criteria[].evidence_refs are free strings checked only for length>0. Reproduced at this ref: a ReviewResult for UJ-INT-006 citing README.md as its sole artifact - a file unrelated to the task - with evidence_refs 'looks fine' / 'trust me' / '.' and an empty findings array, validated PASS and awarded the full 8 units with proposed_task_status DONE. Every check the importer performs was satisfied; the review was hollow. This is TH-10 (proof fabrication) from THREAT_MODEL.md reappearing in the Council layer: the pipeline proves a reviewer touched a file, not that the reviewer examined the work.",
+      "required_action": "Require, for every criterion marked PASS, that artifacts_reviewed covers that criterion's proof_refs from BACKLOG.json (empty proof_refs exempt), and that each evidence_refs entry resolves to an existing repository path through the same resolveRepositoryFile guard already used for artifacts. Add a regression case asserting that a review citing an unrelated file cannot reach DONE."
+    },
+    {
+      "finding_id": "F-002",
+      "severity": "MEDIUM",
+      "description": "The replay and idempotency ledger specified in COUNCIL_IMPORT_AND_MERGE.md (stage 5, rejection code REPLAY_DIVERGENCE, and the 'Replay and idempotency' section) has no implementation. The validator holds no state across invocations, so a reused review_id carrying different bytes is admitted rather than rejected as tampering, and an exact replay re-runs full admission instead of returning the original disposition. The specification and the executable diverge, and the specification is the artifact a reader will trust.",
+      "required_action": "Either implement the disposition store and add divergent-replay and exact-replay regression cases to test-review-result-intake.mjs, or mark stage 5 and REPLAY_DIVERGENCE explicitly as SPECIFIED_NOT_IMPLEMENTED in COUNCIL_IMPORT_AND_MERGE.md and remove 'replay' from the AC-02 text until it is backed."
+    },
+    {
+      "finding_id": "F-003",
+      "severity": "MEDIUM",
+      "description": "AC-03 of UJ-INT-006 reads 'CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.' The task's own acceptance criterion is the reviewer's verdict, not a property of the delivered artifact. It is therefore satisfied by the act of accepting and cannot be evaluated independently: a reviewer inclined to award weight finds one of three criteria pre-satisfied by that decision. It also makes FAIL structurally awkward, since a FAIL verdict falsifies the criterion that requested it. The same shape appears in the validator's own regression expectations, where UJ-INT-001's reviewer is asserted to be GROK.",
+      "required_action": "Restate AC-03 as a property of the artifact rather than of the review, for example 'every acceptance criterion carries reproducible proof refs resolvable at the reviewed commit'. Keep the requirement for an independent review as a task transition rule, where it already lives, not as an acceptance criterion of the work."
+    },
+    {
+      "finding_id": "F-004",
+      "severity": "MEDIUM",
+      "description": "Every safety guarantee of the intake lives in scripts/validate-council-packets.mjs, not in the schemas: reviewer independence from task_owner, accepted_weight_before matching the ledger, the all-or-nothing weight rule, DONE requiring all criteria PASS, and commit pinning are code assertions. review-result.schema.json carries no cross-field allOf/if-then at all, so a consumer validating with any standard JSON Schema tool - a different importer, another AI, a future service - accepts a self-review by the task owner that awards partial weight on a FAIL. The portable artifact is the one that looks authoritative and enforces nothing.",
+      "required_action": "Encode the cheap invariants in the schema itself as if/then (FAIL or PASS_WITH_ACTIONS implies accepted_weight_after equals accepted_weight_before; proposed_task_status DONE implies outcome PASS), and state explicitly in COUNCIL_PACKETS.md that schema validity is necessary but not sufficient and that the script is the normative gate."
+    },
+    {
+      "finding_id": "F-005",
+      "severity": "LOW",
+      "description": "ResponsePacket.policy_attestation requires all seven fields with const:true, so a packet disclosing an actual violation - for instance no_paid_api false after an accidental paid call - cannot be represented and fails schema validation. The attestation is therefore unfalsifiable: every packet that validates attests full compliance, so the field cannot distinguish a compliant sender from a non-compliant one, and an honest disclosure is converted into a parse error, which pressures the sender toward silence or a false attestation.",
+      "required_action": "Allow boolean values with a rule that any false attestation forces status BLOCKED or FAILED and routes to quarantine, so a violation is reportable in-band and visibly handled instead of being unrepresentable."
+    },
+    {
+      "finding_id": "F-006",
+      "severity": "LOW",
+      "description": "The delegation card UJ-CARD-RUN-001-CLAUDE budgets max_model_calls 1 and max_tool_calls 40 for UJ-RUN-001, a 13-unit task. Reported as direct execution evidence rather than as an estimate: this session's portfolio already delivered UJ-RUN-001 (runtime blueprint, 9 contract files, 34 tests) and it required far more than one model call and more than 40 tool calls. The budget as written would halt the card mid-task, and because the card is HUMAN_BRIDGE the halt would surface as an unexplained stop to Christian rather than as a budget event.",
+      "required_action": "Recalibrate call_budget against observed effort for comparable tasks, or define the budget as a checkpoint-and-resume threshold rather than a hard ceiling, so exhausting it produces a resumable BLOCKED state instead of an abandoned task."
+    }
+  ],
+  "policy_checks": {
+    "zero_cost": "PASS",
+    "data_class": "PASS",
+    "side_effect": "PASS",
+    "secret_handling": "PASS",
+    "consumer_ui_automation": "PASS"
+  },
+  "accepted_weight_before": 0,
+  "accepted_weight_after": 0,
+  "proposed_task_status": "REVIEW",
+  "next_action": "ChatGPT to resolve F-001 and F-002, which are the two that keep UJ-INT-006 from PASS; F-003 requires restating AC-03 before this task can be accepted on evidence rather than on the reviewer's verdict. Accepted weight stays 0/8 until a re-review at the corrected ref confirms the actions."
+}
