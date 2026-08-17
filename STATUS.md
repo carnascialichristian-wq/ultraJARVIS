@@ -3,32 +3,28 @@
 **Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Target:** ultraJARVIS (not UltraJarvis_v8-grok)
 
-## Published (2026-08-17 evening)
+## Published (2026-08-17 evening — Grok continue)
 
 ### Core (complete)
-health, job_worker, memory, planner, metrics, skills, registry, natural_tasks,  
+health, job_worker, memory, planner, metrics, skills, registry (now **135** ToolSpec), natural_tasks,  
 gates, verify, utils, reliability, config, logging_uj
 
 ### CLI
 bin/uj — health status seed run tools memory snapshot skills **promote**
 
-### Tools (large set)
-files, math (+lcm/is_prime), list, dict, string, time, json, hash, validate, path,  
-bool, text_stats, websearch, browser, email, automation, os_control,  
-abs/neg/strip/title/isdigit/isalpha/isspace/isalnum/isdecimal/isnumeric,  
-capitalize/casefold/swapcase/rev, upper/lower, starts/ends, replace, join, split,  
-find, contains, trim, zfill, center, lstrip/rstrip, inc/dec, mod, floor/ceil,  
-sqrt, round, sum, avg
+### Tools (large set on remote)
+files, math (+lcm/is_prime/abs/neg/inc/mod/floor/sqrt/round/sum/avg/pow/sign/pct/div/minmax/range), list, dict, string (many helpers), time, json, hash, validate, path, bool, text_stats, websearch, browser, email, automation, os_control, + dozens of *_helpers.py
 
-### Tests
-math_helpers, list_helpers, validate_helpers
+### Tests (growing)
+math_helpers, list_helpers, validate_helpers + Grok batches: abs, avg, bool, bool_not, bytes, capitalize, case, casefold, center, const, contains, count, count_str, dict, div, empty, encode, env, expandtabs, find, first, flag, floor, format, hash, id, identity, inc, index, isalnum, isalpha, ...
 
 ### Docs
 README, STATUS, taskgrok, GROK_CONTINUITY, Makefile, pytest.ini, advisors/*
 
 ## Remaining
-- More tools/* still local (~40+)
-- Full tests suite (~200 local)
-- Expand registry entries to match every published helper
+- More tests/* (~70+ still local-only)
+- Callable-name alignment if drift
+- Real gates when ruff/black available
+- Phase 2
 
 Continues until user says **stop**.
