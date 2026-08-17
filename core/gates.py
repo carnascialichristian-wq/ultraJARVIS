@@ -10,7 +10,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 def _which(cmd: str) -> Optional[str]:
@@ -18,8 +18,15 @@ def _which(cmd: str) -> Optional[str]:
 
 
 def _run(cmd: List[str], cwd: Path, timeout: float = 60.0) -> Tuple[int, str]:
+    """Run a command and return (returncode, combined output)."""
     try:
-        proc = subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(
+            cmd,
+            cwd=str(cwd),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
         out = (proc.stdout or "") + (proc.stderr or "")
         return proc.returncode, out.strip()
     except FileNotFoundError:
@@ -33,36 +40,48 @@ def _run(cmd: List[str], cwd: Path, timeout: float = 60.0) -> Tuple[int, str]:
 def run_gates(
     target_dir: Path,
     *,
-    files: Optional[List] = None,
+    files: Optional[List[str]] = None,
     use_real: bool = True,
-) -> str:
+) -> Dict[str, Any]:
+    """
+    Run quality gates against target_dir.
+
+    Returns a structured dict:
+      - ok: True | False | None  (None = stub / no real tools run)
+      - any_real: whether real tools were invoked
+      - text: human-readable report
+    Callers must use the boolean, not parse the text (FIX-6).
+    """
     target_dir = Path(target_dir)
-    file_names = []
-    if files:
-        file_names = [str(f) if not hasattr(f, "name") else Path(f).name for f in files]
     lines: List[str] = [
         "=== UltraJarvis Gates ===",
         f"Target: {target_dir}",
-        f"Files: {', '.join(file_names) if file_names else '(all)'}",
+        f"Files: {', '.join(files) if files else '(all)'}",
         "",
     ]
+
     if not use_real:
         lines += [
-            "ruff check ........ PASS (forced stub)",
-            "black --check ..... PASS (forced stub)",
-            "pytest ............ PASS (forced stub)",
+            "ruff check ........ STUB (not executed)",
+            "black --check ..... STUB (not executed)",
+            "pytest ............ STUB (not executed)",
             "",
-            "Overall: PASS",
+            "Overall: STUB (use_real=False)",
         ]
-        return "\n".join(lines)
+        return {
+            "ok": None,  # not a real pass – caller must not treat as success of quality
+            "any_real": False,
+            "text": "\n".join(lines),
+        }
 
     any_real = False
     any_fail = False
 
+    # --- ruff ---
     ruff = _which("ruff")
     if ruff:
         any_real = True
-        targets = file_names if file_names else ["."]
+        targets = files if files else ["."]
         code, out = _run([ruff, "check", *targets], cwd=target_dir)
         status = "PASS" if code == 0 else "FAIL"
         if code != 0:
@@ -73,10 +92,11 @@ def run_gates(
     else:
         lines.append("ruff check ........ SKIP (ruff not installed)")
 
+    # --- black ---
     black = _which("black")
     if black:
         any_real = True
-        targets = file_names if file_names else ["."]
+        targets = files if files else ["."]
         code, out = _run([black, "--check", "--quiet", *targets], cwd=target_dir)
         status = "PASS" if code == 0 else "FAIL"
         if code != 0:
@@ -87,9 +107,10 @@ def run_gates(
     else:
         lines.append("black --check ..... SKIP (black not installed)")
 
+    # --- pytest ---
     pytest_cmd = [sys.executable, "-m", "pytest", "-q", "--tb=no"]
-    if file_names:
-        test_files = [f for f in file_names if "test" in Path(f).name]
+    if files:
+        test_files = [f for f in files if "test" in Path(f).name]
         if test_files:
             pytest_cmd.extend(test_files)
             any_real = True
@@ -115,8 +136,15 @@ def run_gates(
 
     lines.append("")
     if not any_real:
-        lines.append("No real tools available – treating as PASS (stub fallback)")
-        lines.append("Overall: PASS")
+        lines.append("No real tools available – treating as STUB (no quality signal)")
+        lines.append("Overall: STUB")
+        ok: Optional[bool] = None
     else:
+        ok = not any_fail
         lines.append(f"Overall: {'FAIL' if any_fail else 'PASS'}")
-    return "\n".join(lines)
+
+    return {
+        "ok": ok,
+        "any_real": any_real,
+        "text": "\n".join(lines),
+    }
