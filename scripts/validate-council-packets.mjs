@@ -9,6 +9,17 @@ const schemasOnly = process.argv.includes("--schemas-only");
 const failures = [];
 const notes = [];
 
+function cliValue(flag) {
+  const index = process.argv.indexOf(flag);
+  if (index === -1) return null;
+  const value = process.argv[index + 1];
+  return value && !value.startsWith("--") ? value : null;
+}
+
+const reviewResultPath = cliValue("--review-result");
+const expectedReviewCommit = cliValue("--expected-commit");
+const reviewSelfTest = process.argv.includes("--review-self-test");
+
 const schemaPaths = {
   mission: "schemas/mission-packet.schema.json",
   delegation: "schemas/delegation-card.schema.json",
@@ -257,19 +268,95 @@ for (const [name, instance, schema] of [
 }
 
 const backlog = parse("docs/program/BACKLOG.json");
+const taskById = new Map(backlog?.tasks?.map((task) => [task.task_id, task]) ?? []);
 if (backlog) {
-  const byId = new Map(backlog.tasks.map((task) => [task.task_id, task]));
   const reviewerRegression = {
     "UJ-INT-001": "GROK",
     "UJ-INT-002": "CLAUDE",
     "UJ-INT-006": "CLAUDE"
   };
   for (const [taskId, reviewer] of Object.entries(reviewerRegression)) {
-    assert(byId.get(taskId)?.reviewer === reviewer, `${taskId} canonical reviewer must be ${reviewer}.`);
+    assert(taskById.get(taskId)?.reviewer === reviewer, `${taskId} canonical reviewer must be ${reviewer}.`);
   }
-  const councilTask = byId.get("UJ-INT-006");
+  const councilTask = taskById.get("UJ-INT-006");
   assert(councilTask?.status === "REVIEW", "UJ-INT-006 must be REVIEW after instances are published.");
   assert(councilTask?.weight === 8 && councilTask?.completed_weight === 0, "UJ-INT-006 must remain 0/8 until Claude review.");
+}
+
+function verifyReviewedArtifact(artifact, sourceLabel) {
+  const absolute = resolve(root, artifact.ref);
+  const insideRoot = absolute !== root && absolute.startsWith(`${root}/`);
+  assert(insideRoot, `${sourceLabel} artifact ref must stay inside the repository: ${artifact.ref}.`);
+  if (!insideRoot) return;
+  if (!existsSync(absolute)) {
+    fail(`${sourceLabel} reviewed artifact is missing: ${artifact.ref}.`);
+    return;
+  }
+  const actual = createHash("sha256").update(readFileSync(absolute)).digest("hex");
+  assert(actual === artifact.sha256, `${sourceLabel} artifact hash mismatch for ${artifact.ref}.`);
+}
+
+function validateImportedReview(review, sourceLabel, options = {}) {
+  const schemaErrors = schemas.review ? validate(review, schemas.review, schemas.review) : ["review schema unavailable"];
+  schemaErrors.forEach((error) => fail(`${sourceLabel}: ${error}`));
+  if (!review || typeof review !== "object") return;
+
+  const task = taskById.get(review.task_id);
+  assert(task, `${sourceLabel} references an unknown task: ${review.task_id}.`);
+  if (!task) return;
+
+  assert(task.status === "REVIEW", `${sourceLabel} may only be imported for a task currently in REVIEW; ${task.task_id} is ${task.status}.`);
+  assert(review.task_owner === task.owner, `${sourceLabel} task_owner differs from backlog owner.`);
+  assert(review.reviewer?.ai_id === task.reviewer, `${sourceLabel} reviewer must be ${task.reviewer}.`);
+  assert(review.reviewer?.ai_id !== task.owner, `${sourceLabel} reviewer must be independent of task owner.`);
+  if (options.expectedCommit) {
+    assert(review.repository?.commit_sha === options.expectedCommit, `${sourceLabel} commit must equal --expected-commit.`);
+  }
+
+  const expectedCriteria = new Set(task.acceptance_criteria.map((criterion) => criterion.criterion_id));
+  const reportedCriteria = new Map((review.criteria ?? []).map((criterion) => [criterion.criterion_id, criterion]));
+  assert(reportedCriteria.size === (review.criteria ?? []).length, `${sourceLabel} must not report duplicate criterion IDs.`);
+  for (const criterion of review.criteria ?? []) {
+    assert(expectedCriteria.has(criterion.criterion_id), `${sourceLabel} reports unknown criterion ${criterion.criterion_id}.`);
+    assert((criterion.evidence_refs ?? []).length > 0, `${sourceLabel} criterion ${criterion.criterion_id} has no evidence reference.`);
+  }
+  for (const criterionId of expectedCriteria) {
+    assert(reportedCriteria.has(criterionId), `${sourceLabel} omits required criterion ${criterionId}.`);
+  }
+
+  const allCriteriaPass = [...expectedCriteria].every((criterionId) => reportedCriteria.get(criterionId)?.result === "PASS");
+  const anyCriterionFail = [...expectedCriteria].some((criterionId) => reportedCriteria.get(criterionId)?.result === "FAIL");
+  const allPolicyPass = Object.values(review.policy_checks ?? {}).every((result) => result === "PASS");
+  const before = review.accepted_weight_before;
+  const after = review.accepted_weight_after;
+
+  assert(before === task.completed_weight, `${sourceLabel} accepted_weight_before must equal the current ledger value ${task.completed_weight}.`);
+  assert(after >= before && after <= task.weight, `${sourceLabel} accepted_weight_after is outside the task range.`);
+  if (review.outcome === "PASS") {
+    assert(allCriteriaPass, `${sourceLabel} PASS requires every acceptance criterion to PASS.`);
+    assert(allPolicyPass, `${sourceLabel} PASS requires every policy check to PASS.`);
+  }
+  if (review.outcome === "PASS_WITH_ACTIONS") {
+    assert(after === before, `${sourceLabel} PASS_WITH_ACTIONS must not change accepted weight.`);
+    assert(review.proposed_task_status !== "DONE", `${sourceLabel} PASS_WITH_ACTIONS must not propose DONE.`);
+  }
+  if (review.outcome === "FAIL") {
+    assert(anyCriterionFail, `${sourceLabel} FAIL must identify at least one failed acceptance criterion.`);
+    assert(after === before, `${sourceLabel} FAIL must not change accepted weight.`);
+    assert(review.proposed_task_status !== "DONE", `${sourceLabel} FAIL must not propose DONE.`);
+  }
+  if (after > before) {
+    assert(after === task.weight, `${sourceLabel} has no approved partial-weight mapping; accepted weight must remain ${before} or become ${task.weight}.`);
+    assert(review.outcome === "PASS" && review.proposed_task_status === "DONE", `${sourceLabel} accepted-weight increase requires PASS and proposed DONE.`);
+  }
+  if (review.proposed_task_status === "DONE") {
+    assert(review.outcome === "PASS" && allCriteriaPass, `${sourceLabel} DONE requires PASS on every acceptance criterion.`);
+    assert(after === task.weight, `${sourceLabel} DONE must propose full accepted weight ${task.weight}.`);
+  }
+
+  if (options.verifyArtifacts) {
+    for (const artifact of review.artifacts_reviewed ?? []) verifyReviewedArtifact(artifact, sourceLabel);
+  }
 }
 
 if (!schemasOnly) {
@@ -320,6 +407,52 @@ if (!schemasOnly) {
 
   const assigned = new Set(mission?.assigned_task_ids ?? []);
   assert(expectedTargets.size === assigned.size && [...expectedTargets.keys()].every((id) => assigned.has(id)), "Mission assigned tasks must be exactly the first four specialist tasks.");
+}
+
+const reviewResultRequested = process.argv.includes("--review-result");
+const expectedCommitRequested = process.argv.includes("--expected-commit");
+assert(!reviewResultRequested || reviewResultPath, "--review-result requires a repository-relative JSON file path.");
+assert(!expectedCommitRequested || expectedReviewCommit, "--expected-commit requires a 40-character commit SHA.");
+assert(!expectedReviewCommit || /^[0-9a-f]{40}$/.test(expectedReviewCommit), "--expected-commit must be a lowercase 40-character SHA.");
+assert(!reviewResultPath || !schemasOnly, "--review-result cannot be combined with --schemas-only.");
+assert(!reviewResultPath || expectedReviewCommit, "--review-result requires --expected-commit to prevent cross-ref review import.");
+
+if (reviewResultPath && !schemasOnly && expectedReviewCommit) {
+  const review = parse(reviewResultPath);
+  if (review) validateImportedReview(review, reviewResultPath, { expectedCommit: expectedReviewCommit, verifyArtifacts: true });
+  notes.push(`review_result=${reviewResultPath}`);
+}
+
+if (reviewSelfTest) {
+  const selfTestTask = taskById.get("UJ-INT-001");
+  const selfTestCommit = "c".repeat(40);
+  const selfTestArtifactHash = sha256("docs/program/BACKLOG.json");
+  const selfTestReview = selfTestTask ? {
+    schema_version: "ultrajarvis.review-result/v1",
+    review_id: "UJ-REVIEW-SELFTEST-001",
+    created_at: "2026-08-17T00:00:00Z",
+    repository: { full_name: "carnascialichristian-wq/ultraJARVIS", commit_sha: selfTestCommit },
+    task_id: "UJ-INT-001",
+    task_owner: "CHATGPT",
+    reviewer: { ai_id: "GROK", product: "validator self-test" },
+    artifacts_reviewed: [{ ref: "docs/program/BACKLOG.json", sha256: selfTestArtifactHash }],
+    outcome: "PASS_WITH_ACTIONS",
+    criteria: selfTestTask.acceptance_criteria.map((criterion, index) => ({
+      criterion_id: criterion.criterion_id,
+      result: index < 2 ? "PASS" : "NOT_REVIEWED",
+      evidence_refs: ["docs/program/BACKLOG.json"],
+      note: "Validator self-test only; no acceptance is proposed."
+    })),
+    findings: [],
+    policy_checks: { zero_cost: "PASS", data_class: "PASS", side_effect: "PASS", secret_handling: "PASS", consumer_ui_automation: "PASS" },
+    accepted_weight_before: selfTestTask.completed_weight,
+    accepted_weight_after: selfTestTask.completed_weight,
+    proposed_task_status: "REVIEW",
+    next_action: "Run an independent human-bridge review."
+  } : null;
+  if (!selfTestReview) fail("Review self-test cannot find UJ-INT-001.");
+  else validateImportedReview(selfTestReview, "review self-test", { expectedCommit: selfTestCommit, verifyArtifacts: true });
+  notes.push("review_self_test=PASS");
 }
 
 const scannedPaths = [

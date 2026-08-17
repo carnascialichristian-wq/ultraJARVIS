@@ -60,8 +60,8 @@ checkpoint.
 
 | Responsabile | Lavoro | Stato | Regola |
 |---|---|---:|---|
-| Grok | Review di `UJ-INT-001` / UJ-REV-004 | REVIEW richiesta | inviare `prompts/review-requests/UJ-INT-001-GROK.md`; controlla anti-gaming, coerenza ledger e prove; non assegnare peso senza criterio e evidenza |
-| Claude | Review di `UJ-INT-006` | REVIEW richiesta | inviare `prompts/review-requests/UJ-INT-006-CLAUDE.md`; controlla schemi, missione, card, import/merge e limiti di sicurezza |
+| Grok | Review di `UJ-INT-001` / UJ-REV-004 | REVIEW richiesta | inviare `prompts/review-requests/UJ-INT-001-GROK.md`; dopo il ritorno usare `--review-result` con `--expected-commit`; controlla anti-gaming, coerenza ledger e prove |
+| Claude | Review di `UJ-INT-006` | REVIEW richiesta | inviare `prompts/review-requests/UJ-INT-006-CLAUDE.md`; dopo il ritorno usare `--review-result` con `--expected-commit`; controlla schemi, missione, card, import/merge e limiti di sicurezza |
 | ChatGPT | `UJ-INT-002` | BLOCKED | si attiva solo dopo quattro risposte ammesse, almeno REVIEW |
 | Christian | UJ-META-002 e decisioni protette | REVIEW | costituzione, STRICT_ZERO_CARD, baseline M0 e merge restano decisioni del proprietario |
 
@@ -168,3 +168,19 @@ conflitto va registrato, non eliminato.
   M0 26/94, UJ-INT-001 0/13 REVIEW, UJ-INT-006 0/8 REVIEW.
 - Prossimo passo: inviare i review request tramite HUMAN_BRIDGE prima di
   tentare import o aggiornamenti del ledger.
+
+### 2026-08-17 — ChatGPT/Codex — validazione sicura dei ReviewResult
+
+- Ref iniziale osservato: `6b0a24b921ba903ff5913c2f170a1c0b854f0d25`; ref
+  finale: leggere la head della PR #1 che contiene questa voce.
+- Nuovo comando di import: `node scripts/validate-council-packets.mjs
+  --review-result <candidate.json> --expected-commit <verified-SHA>`.
+- Il candidato viene rifiutato se schema, task/reviewer/owner, commit, hash,
+  criteri, policy, peso o DONE non sono coerenti. `PASS_WITH_ACTIONS` e `FAIL`
+  restano a peso invariato.
+- Documento da leggere prima dell'import: `docs/program/REVIEW_RESULT_IMPORT.md`.
+- Controlli: self-test positivo e JSON non-ReviewResult rifiutato correttamente;
+  validator Council/Program OS, JSON, Markdown e controllo segreti — PASS.
+- Stato: nessuna review reale è arrivata e nessun peso è cambiato.
+- Prossimo passo: quando Grok/Claude rispondono, inviare il loro JSON esatto a
+  ChatGPT per lo staging non fidato e la validazione al commit verificato.

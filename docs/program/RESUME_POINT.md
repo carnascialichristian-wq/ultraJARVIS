@@ -22,6 +22,11 @@ starting the next session; do not infer it from chat:
 > the branch with `docs/program/BACKLOG.json`. Run
 > `node scripts/validate-program-os.mjs` and
 > `node scripts/validate-council-packets.mjs`. Do not change accepted weight.
+> If a ReviewResult is supplied, stage it as an untrusted candidate and run
+> `node scripts/validate-council-packets.mjs --review-result <candidate.json>
+> --expected-commit <ULTRAJARVIS_HEAD>` before considering any ledger delta;
+> read `docs/program/REVIEW_RESULT_IMPORT.md` and preserve a failed candidate as
+> quarantine evidence, not a backlog change.
 > If a specialist ResponsePacket is supplied, freeze its bytes/hash and apply
 > every admission stage in `COUNCIL_IMPORT_AND_MERGE.md`; invalid output is
 > quarantined/rejected, never guessed. Do not start UJ-INT-002 until UJ-RUN-001,

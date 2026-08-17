@@ -65,3 +65,8 @@ Store a reusable human-bridge review request at
 `prompts/review-requests/<task-id>-<reviewer>.md`. A review request is not a
 state transition: the reviewer must return a schema-valid ReviewResult with
 evidence before the importer considers any ledger delta.
+
+Stage every returned ReviewResult as untrusted input and follow
+`REVIEW_RESULT_IMPORT.md`. The validator requires the exact reviewed commit,
+task/owner/reviewer match, local artifact hashes, all acceptance criteria, and
+the no-partial-weight rule before a separate reviewed commit can update state.

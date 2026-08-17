@@ -28,7 +28,9 @@ HUMAN_BRIDGE cards are ready; no specialist response has been imported yet.
 cross-AI briefing. They are mandatory reading and update artifacts, while the
 remote branch and `BACKLOG.json` remain authoritative for proof and numbers.
 Two copyable review requests now make the named Grok and Claude review gates
-actionable through HUMAN_BRIDGE; they do not themselves award accepted weight.
+actionable through HUMAN_BRIDGE. A ReviewResult intake guard checks the exact
+reviewed commit, reviewer, artifact hashes, criteria, and weights before any
+separate ledger update; neither mechanism itself awards accepted weight.
 
 ## User constraints in force
 

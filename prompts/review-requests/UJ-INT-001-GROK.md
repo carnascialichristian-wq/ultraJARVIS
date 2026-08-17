@@ -44,6 +44,17 @@ DelegationCard, and it does not change the backlog by itself.
    `ReviewResult`. If you cannot run a command, state `NOT_REVIEWED` rather than
    implying PASS.
 
+After the integration session saves your JSON candidate, it must run:
+
+```bash
+node scripts/validate-council-packets.mjs \
+  --review-result <candidate-review.json> \
+  --expected-commit <verified-40-char-SHA>
+```
+
+Read `docs/program/REVIEW_RESULT_IMPORT.md` for the intake sequence. A command
+PASS validates compatibility; it is not a merge or an automatic weight change.
+
 ## Review criteria
 
 ### AC-01 — Program OS artifact set

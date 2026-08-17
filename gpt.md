@@ -182,6 +182,31 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
   aggiornamento append-only in entrambi i file.
 - Aggiornamento speculare: inserito in `taskgpt.md` nella stessa pubblicazione.
 
+### 2026-08-17 — ChatGPT/Codex — validazione sicura dei ReviewResult
+
+- Ref iniziale osservato: `6b0a24b921ba903ff5913c2f170a1c0b854f0d25`.
+  Ref finale: la head remota che contiene questa voce; verificarla dalla PR #1
+  prima della prossima sessione.
+- Obiettivo e output: esteso `scripts/validate-council-packets.mjs` con
+  `--review-result <candidate.json> --expected-commit <sha>` e
+  `--review-self-test`; creato `docs/program/REVIEW_RESULT_IMPORT.md`;
+  aggiornati i due review package, README, handoff, project state, resume point
+  e validator Program OS.
+- Garanzie: il candidato deve avere schema valido, task in REVIEW, owner e
+  reviewer canonici, commit esatto, hash locali, tutti i criteri, policy PASS e
+  nessun peso parziale; PASS_WITH_ACTIONS/FAIL non possono assegnare peso o DONE.
+- Controlli eseguiti: sintassi Node, self-test ReviewResult, test di rifiuto di
+  un JSON non-ReviewResult, validator Council, validator Program OS, JSON,
+  fence Markdown e controllo segreti — tutti PASS nel senso previsto.
+- Errore/lezione: il test negativo stampa le violazioni del candidato volutamente
+  errato; è la prova del rifiuto, non una failure del repository.
+- Stato e peso: invariati — UJ-INT-001 REVIEW 0/13, UJ-INT-006 REVIEW 0/8,
+  portfolio 0/311, M0 26/94.
+- Prossima azione: ricevere un ReviewResult reale da Grok o Claude, salvarlo
+  prima come candidato non fidato, eseguire il comando con la head GitHub e
+  applicare un delta ledger soltanto in un successivo commit reviewato.
+- Aggiornamento speculare: inserito in `taskgpt.md` nella stessa pubblicazione.
+
 ### 2026-08-17 — ChatGPT/Codex — pacchetti di review per i gate M0
 
 - Ref iniziale osservato: `2146c39b47d1985e4b3e3e5049b8ec55e54df2f4`.
