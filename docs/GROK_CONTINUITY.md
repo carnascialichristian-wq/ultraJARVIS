@@ -10,21 +10,15 @@
 3. Continue until user says **stop**.
 4. Publish to **ultraJARVIS** unless user says otherwise.
 
-## State 2026-08-17 ~20:00 CEST (session continue)
-- **Local:** 206 tests green · 135 tools in registry
-- **Remote ultraJARVIS:** registry expanded to 135 ToolSpec entries
-- Published multiple test batches: abs..isalpha + empty..first + flag..isalpha
-- Core, advisors, bin/uj, large tools/* already on remote
-- Concurrent work with other agents (Claude etc.) — push carefully
+## State 2026-08-17 ~20:20 CEST (continuous)
+- **Local:** 206 tests green · 135 tools
+- **Remote:** registry 135 ToolSpec; nearly complete helper test suite; core tests for memory, registry, planner, gates, reliability, files, health, verify, utils
+- Concurrent agents active — push on top of main
 
 ## Remaining
-1. Publish remaining ~70+ test_*.py files to ultraJARVIS
-2. Verify remote helpers match local callable names (some may diverge)
-3. Real gates (ruff/black) when available
-4. Phase 2: LLM adapters, richer memory, auto-register after promote
-5. Prefer quality / integration over pure stub volume
+1. Remaining core/advisors tests (natural_tasks, metrics, skills, critic, safety, style, job_worker, logging, config, text_stats, email_automation, tools_stubs, developer_docs, registry_math)
+2. Callable-name alignment if drift
+3. Real gates (ruff/black)
+4. Phase 2 LLM adapters / auto-register
 
-## Session note
-User: CONTINUA CON LE TASK FINCHE NON TI DICO STOP
-
-*Last updated: 2026-08-17 ~20:00 CEST by Grok*
+*Last updated: 2026-08-17 ~20:20 CEST by Grok*
