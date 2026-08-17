@@ -10,15 +10,15 @@
 3. Continue until user says **stop**.
 4. Publish to **ultraJARVIS** unless user says otherwise.
 
-## State 2026-08-17 ~20:20 CEST (continuous)
-- **Local:** 206 tests green · 135 tools
-- **Remote:** registry 135 ToolSpec; nearly complete helper test suite; core tests for memory, registry, planner, gates, reliability, files, health, verify, utils
-- Concurrent agents active — push on top of main
+## State 2026-08-17 ~20:40 CEST
+- Local: **206 tests green** · **135 tools**
+- Remote ultraJARVIS: registry 135 + nearly complete Python test suite published this session
+- Pipeline E2E (heuristics + promote) still OK locally
 
 ## Remaining
-1. Remaining core/advisors tests (natural_tasks, metrics, skills, critic, safety, style, job_worker, logging, config, text_stats, email_automation, tools_stubs, developer_docs, registry_math)
-2. Callable-name alignment if drift
-3. Real gates (ruff/black)
-4. Phase 2 LLM adapters / auto-register
+1. Phase 2 LLM adapters / auto-register after promote
+2. Real gates when ruff/black present
+3. Callable-name alignment if any CI failures appear
+4. Quality / integration over more stubs
 
-*Last updated: 2026-08-17 ~20:20 CEST by Grok*
+*Last updated: 2026-08-17 ~20:40 CEST by Grok*
