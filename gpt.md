@@ -81,8 +81,8 @@ sessione successiva: non sostituire questo controllo con un SHA scritto in chat.
 
 | Task | Stato | Peso accettato / totale | Cosa manca per completarla correttamente |
 |---|---|---:|---|
-| `UJ-INT-001` | REVIEW | 0/13 | Review indipendente di Grok con prove; nessun peso può cambiare prima |
-| `UJ-INT-006` | REVIEW | 0/8 | Review indipendente di Claude su schemi, missione, card e import rules |
+| `UJ-INT-001` | REVIEW | 0/13 | Inviare `prompts/review-requests/UJ-INT-001-GROK.md`; nessun peso può cambiare prima della review con prove |
+| `UJ-INT-006` | REVIEW | 0/8 | Inviare `prompts/review-requests/UJ-INT-006-CLAUDE.md` e ottenere review Claude su schemi, missione, card e import rules |
 | `UJ-RUN-001` | READY | 0/13 | Claude esegue la card, restituisce artefatti e `ResponsePacket` valido |
 | `UJ-CAP-001` | READY | 0/13 | Gemini esegue la card e registra capacità realmente osservate |
 | `UJ-GGL-001` | READY | 0/13 | Gemini restituisce inventario con fonti e `ResponsePacket` separato |
@@ -180,4 +180,26 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Prossima azione: consegnare una sola DelegationCard al relativo AI tramite
   HUMAN_BRIDGE, importare soltanto un ResponsePacket valido e ripetere questo
   aggiornamento append-only in entrambi i file.
+- Aggiornamento speculare: inserito in `taskgpt.md` nella stessa pubblicazione.
+
+### 2026-08-17 — ChatGPT/Codex — pacchetti di review per i gate M0
+
+- Ref iniziale osservato: `2146c39b47d1985e4b3e3e5049b8ec55e54df2f4`.
+  Ref finale: la head remota che contiene questa voce; verificarla dalla PR #1
+  prima della prossima sessione.
+- Obiettivo e output: creati
+  `prompts/review-requests/UJ-INT-001-GROK.md` e
+  `prompts/review-requests/UJ-INT-006-CLAUDE.md`. Entrambi richiedono criteri,
+  attacchi/falsificazioni, hash, comandi, ReviewResult v1 e append per i due
+  registri.
+- Collegamenti: aggiornati README, STATUS, PROJECT_STATE, HANDOFFS,
+  RESUME_POINT, `taskgpt.md`, questo registro e il validator Program OS.
+- Controlli eseguiti: sintassi Node, validator Program OS, validator Council,
+  parsing JSON, fence Markdown e controllo pattern di segreti — tutti PASS.
+- Stato e peso: le richieste rendono i gate eseguibili ma non sono review;
+  UJ-INT-001 resta REVIEW 0/13 e UJ-INT-006 resta REVIEW 0/8. Portfolio 0/311,
+  M0 26/94.
+- Prossima azione: inviare prima i due review-request tramite HUMAN_BRIDGE a
+  Grok e Claude; importare soltanto ReviewResult v1 valido. Le quattro card di
+  produzione restano pronte e non vengono simulate.
 - Aggiornamento speculare: inserito in `taskgpt.md` nella stessa pubblicazione.

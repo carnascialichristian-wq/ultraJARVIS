@@ -60,3 +60,8 @@ and is not an acceptance mechanism.
 
 Use `docs/program/handoffs/<task-id>/<timestamp>-<from>-to-<target>.json` when
 handoff instances begin. Do not create empty placeholder packets.
+
+Store a reusable human-bridge review request at
+`prompts/review-requests/<task-id>-<reviewer>.md`. A review request is not a
+state transition: the reviewer must return a schema-valid ReviewResult with
+evidence before the importer considers any ledger delta.

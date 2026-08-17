@@ -8,6 +8,7 @@ canonical constitutional contract remains
 |---|---|---|---|
 | `../../gpt.md` | Append-only ChatGPT session ledger, errors, proof, remaining work, and exact next action | ChatGPT; Grok must also append | every session/task end |
 | `../../taskgpt.md` | Cross-AI briefing, card queue, constraints, failures, and handoff template | ChatGPT; every delegated AI supplies an append | every session/task end |
+| `../../prompts/review-requests/` | Copyable independent-review requests and ReviewResult templates for submitted critical tasks | ChatGPT | a task enters REVIEW or review scope changes |
 | `PROJECT_STATE.md` | Current baseline, constraints, decisions, and critical path | ChatGPT | accepted task or owner decision |
 | `BACKLOG.json` | Machine-readable task ledger | task owners via reviewed PR | any task delta |
 | `STATUS.md` | Human-readable status snapshot | ChatGPT | ledger change |

@@ -60,6 +60,8 @@ const requiredArtifacts = [
   "schemas/response-packet.schema.json",
   "schemas/synthesis-packet.schema.json",
   "schemas/review-result.schema.json",
+  "prompts/review-requests/UJ-INT-001-GROK.md",
+  "prompts/review-requests/UJ-INT-006-CLAUDE.md",
   "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json",
   "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json",
   "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
@@ -87,6 +89,8 @@ const agentInstructions = read("AGENTS.md");
 const gptLedger = read("gpt.md");
 const crossAiBrief = read("taskgpt.md");
 const resumePoint = read("docs/program/RESUME_POINT.md");
+const grokReviewRequest = read("prompts/review-requests/UJ-INT-001-GROK.md");
+const claudeReviewRequest = read("prompts/review-requests/UJ-INT-006-CLAUDE.md");
 
 assert(schema?.$schema === "https://json-schema.org/draft/2020-12/schema", "Backlog schema must use JSON Schema 2020-12.");
 assert(handoffSchema?.properties?.schema_version?.const === "ultrajarvis.handoff-packet/v1", "Handoff schema version is invalid.");
@@ -98,6 +102,10 @@ assert(crossAiBrief.includes("ULTRAJARVIS_CROSS_AI_HANDOFF"), "taskgpt.md must c
 assert(crossAiBrief.includes("ResponsePacket"), "taskgpt.md must explain the required ResponsePacket handoff.");
 assert(agentInstructions.includes("gpt.md") && agentInstructions.includes("taskgpt.md"), "AGENTS.md must require the continuity ledgers.");
 assert(resumePoint.includes("gpt.md") && resumePoint.includes("taskgpt.md"), "RESUME_POINT.md must require the continuity ledgers.");
+assert(grokReviewRequest.includes("UJ-INT-001") && grokReviewRequest.includes("GROK"), "Grok review request must target UJ-INT-001.");
+assert(claudeReviewRequest.includes("UJ-INT-006") && claudeReviewRequest.includes("CLAUDE"), "Claude review request must target UJ-INT-006.");
+assert(grokReviewRequest.includes("ultrajarvis.review-result/v1"), "Grok review request must require ReviewResult v1.");
+assert(claudeReviewRequest.includes("ultrajarvis.review-result/v1"), "Claude review request must require ReviewResult v1.");
 
 const continuitySecretPatterns = [
   /ghp_[A-Za-z0-9]{20,}/,
@@ -107,6 +115,8 @@ const continuitySecretPatterns = [
 ];
 assert(continuitySecretPatterns.every((pattern) => !pattern.test(gptLedger)), "gpt.md contains a value resembling a secret.");
 assert(continuitySecretPatterns.every((pattern) => !pattern.test(crossAiBrief)), "taskgpt.md contains a value resembling a secret.");
+assert(continuitySecretPatterns.every((pattern) => !pattern.test(grokReviewRequest)), "Grok review request contains a value resembling a secret.");
+assert(continuitySecretPatterns.every((pattern) => !pattern.test(claudeReviewRequest)), "Claude review request contains a value resembling a secret.");
 
 if (backlog) {
   const tasks = backlog.tasks ?? [];

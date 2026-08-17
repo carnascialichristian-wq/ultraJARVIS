@@ -36,8 +36,8 @@ from this table.
 |---|---|---|---:|---|---|---|
 | UJ-META-001 | ChatGPT | DONE | 21/21 | canonical prompt + PR #1 | none | preserve hash/change control |
 | UJ-META-002 | Christian | REVIEW | 5/8 | draft PR #1 | owner decisions and merge | accept/amend named decisions |
-| UJ-INT-001 | ChatGPT | REVIEW | 0/13 | Program OS artifact set on PR #1 branch | independent review | Grok reviews progress/system; Claude reviews Program OS |
-| UJ-INT-006 | ChatGPT | REVIEW | 0/8 | five packet schemas, admission rules, one mission, four cards | independent Claude review | validate/import specialist responses; do not award weight |
+| UJ-INT-001 | ChatGPT | REVIEW | 0/13 | Program OS artifact set on PR #1 branch | independent review | send `prompts/review-requests/UJ-INT-001-GROK.md`; Grok reviews progress/system |
+| UJ-INT-006 | ChatGPT | REVIEW | 0/8 | five packet schemas, admission rules, one mission, four cards | independent Claude review | send `prompts/review-requests/UJ-INT-006-CLAUDE.md`; do not award weight |
 | UJ-RUN-001 | Claude | READY | 0/13 | none yet | none | produce provider-neutral runtime blueprint |
 | UJ-CAP-001 | Gemini | READY | 0/13 | none yet | none | produce four-AI Capability Registry |
 | UJ-GGL-001 | Gemini | READY | 0/13 | none yet | none | produce coordinated Google evidence pack |

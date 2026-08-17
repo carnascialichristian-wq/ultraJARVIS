@@ -60,8 +60,8 @@ checkpoint.
 
 | Responsabile | Lavoro | Stato | Regola |
 |---|---|---:|---|
-| Grok | Review di `UJ-INT-001` / UJ-REV-004 | REVIEW richiesta | controlla anti-gaming, coerenza ledger e prove; non assegnare peso senza criterio e evidenza |
-| Claude | Review di `UJ-INT-006` | REVIEW richiesta | controlla schemi, missione, card, import/merge e limiti di sicurezza |
+| Grok | Review di `UJ-INT-001` / UJ-REV-004 | REVIEW richiesta | inviare `prompts/review-requests/UJ-INT-001-GROK.md`; controlla anti-gaming, coerenza ledger e prove; non assegnare peso senza criterio e evidenza |
+| Claude | Review di `UJ-INT-006` | REVIEW richiesta | inviare `prompts/review-requests/UJ-INT-006-CLAUDE.md`; controlla schemi, missione, card, import/merge e limiti di sicurezza |
 | ChatGPT | `UJ-INT-002` | BLOCKED | si attiva solo dopo quattro risposte ammesse, almeno REVIEW |
 | Christian | UJ-META-002 e decisioni protette | REVIEW | costituzione, STRICT_ZERO_CARD, baseline M0 e merge restano decisioni del proprietario |
 
@@ -102,6 +102,8 @@ schemi sono chiusi (`additionalProperties: false`).
 - Nessuna review o commento è ancora presente sulla PR #1.
 - `UJ-INT-001` è 0/13 in REVIEW: serve Grok.
 - `UJ-INT-006` è 0/8 in REVIEW: serve Claude.
+- Le richieste di review pronte sono `prompts/review-requests/UJ-INT-001-GROK.md`
+  e `prompts/review-requests/UJ-INT-006-CLAUDE.md`; non sono un'approvazione.
 - Le quattro card M0 esistono ma nessuna ResponsePacket è stata importata.
 - `UJ-INT-002` non può iniziare; non chiedere a ChatGPT di sintetizzare output
   non ancora ricevuti.
@@ -149,3 +151,20 @@ conflitto va registrato, non eliminato.
   restituire ResponsePacket validi via HUMAN_BRIDGE.
 - Prossimo passo: usare una sola card pronta per volta; includere nel ritorno il
   prossimo blocco append-only per entrambi i registri.
+
+### 2026-08-17 — ChatGPT/Codex — pacchetti di review per i gate M0
+
+- Ref iniziale osservato: `2146c39b47d1985e4b3e3e5049b8ec55e54df2f4`; ref
+  finale: leggere la head della PR #1 che contiene questa voce.
+- Artefatti: pronti
+  `prompts/review-requests/UJ-INT-001-GROK.md` e
+  `prompts/review-requests/UJ-INT-006-CLAUDE.md`.
+- Cosa fare: Grok deve usare il primo per UJ-INT-001; Claude deve usare il
+  secondo per UJ-INT-006. Entrambi devono ritornare un ReviewResult v1 completo
+  con hash, prove, outcome e blocchi append-only per i due registri.
+- Controlli: sintassi Node, Program OS validator, Council validator, JSON,
+  fence Markdown e controllo segreti — PASS.
+- Stato: nessuna review è ancora arrivata e nessun peso è cambiato: 0/311,
+  M0 26/94, UJ-INT-001 0/13 REVIEW, UJ-INT-006 0/8 REVIEW.
+- Prossimo passo: inviare i review request tramite HUMAN_BRIDGE prima di
+  tentare import o aggiornamenti del ledger.

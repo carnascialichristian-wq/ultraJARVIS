@@ -27,6 +27,8 @@ HUMAN_BRIDGE cards are ready; no specialist response has been imported yet.
 `gpt.md` and `taskgpt.md` are now the append-only cross-session ledger and
 cross-AI briefing. They are mandatory reading and update artifacts, while the
 remote branch and `BACKLOG.json` remain authoritative for proof and numbers.
+Two copyable review requests now make the named Grok and Claude review gates
+actionable through HUMAN_BRIDGE; they do not themselves award accepted weight.
 
 ## User constraints in force
 
@@ -78,6 +80,10 @@ must not be represented as final decisions:
 5. Activate UJ-INT-002 and produce architecture v1 plus approved ADRs.
 6. Merge only after PR #1 review gates and M0 ownership/status baseline are
    accepted.
+
+Independent review requests are stored at
+`prompts/review-requests/UJ-INT-001-GROK.md` and
+`prompts/review-requests/UJ-INT-006-CLAUDE.md`.
 
 ## Active blockers
 

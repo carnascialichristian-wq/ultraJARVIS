@@ -27,7 +27,7 @@ starting the next session; do not infer it from chat:
 > quarantined/rejected, never guessed. Do not start UJ-INT-002 until UJ-RUN-001,
 > UJ-CAP-001, UJ-GGL-001, and UJ-RED-001 are each at least REVIEW. If no valid
 > response exists, keep UJ-INT-001 and UJ-INT-006 in REVIEW and transfer exactly
-> one ready card to its named target through HUMAN_BRIDGE.
+> one review request or ready card to its named target through HUMAN_BRIDGE.
 > Before ending the session, append the evidence-based resoconto to both
 > `gpt.md` and `taskgpt.md`, publish it to the working branch, and update this
 > resume point if the next concrete action changes. Grok must return the exact
@@ -38,9 +38,9 @@ starting the next session; do not infer it from chat:
 | Actor | Task | Immediate action |
 |---|---|---|
 | ChatGPT | UJ-INT-001 + UJ-INT-006 | verify remote tree, import only valid packets, keep 0/13 and 0/8 until reviews |
-| Claude | UJ-RUN-001 / UJ-REV-001 | use `UJ-RUN-001-CLAUDE.json`; also review Program OS/Council contracts when supplied |
+| Claude | UJ-INT-006 review / UJ-RUN-001 | send `prompts/review-requests/UJ-INT-006-CLAUDE.md`; then use `UJ-RUN-001-CLAUDE.json` for production |
 | Gemini | UJ-CAP-001 + UJ-GGL-001 | use the two separate Gemini cards and return separate ResponsePackets |
-| Grok | UJ-RED-001 / UJ-REV-004 | use `UJ-RED-001-GROK.json`; falsify assumptions and progress gaming |
+| Grok | UJ-INT-001 review / UJ-RED-001 | send `prompts/review-requests/UJ-INT-001-GROK.md`; then use `UJ-RED-001-GROK.json` for falsification |
 | Christian | UJ-META-002 | accept/amend the four protected PR decisions; do not merge before review gates |
 
 No deployment, billing, account creation, production write, message send, or
