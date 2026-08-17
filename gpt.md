@@ -383,3 +383,10 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Stato/peso: `UJ-CAP-001 READY 0/13`, `UJ-GGL-001 READY 0/13`; task Gemini dipendenti ancora BLOCKED; nessuna scrittura su `main`, merge o retarget.
 - Prossima azione: ricevere il resend originale, congelare bytes/ref, verificare JSON/schema/fonti/hash/ResponsePacket e pubblicare solo branch/PR dedicate se l’intake passa.
 - Aggiornamento speculare: stessa voce append-only inserita in `taskgpt.md`.
+### 2026-08-18 — ChatGPT/Codex — correzione fotografia main dopo il resend prompt
+
+- Verifica successiva: `main` è avanzata a `6af4a3721ab0d7f3272fd6e4e872b1331da99aa5`; la base di PR #3, #5 e #6 è ancora `a9e83ee2fdd5b165d90d1217079882b02abc29d3`.
+- Correzione: aggiornato `prompts/handoffs/GEMINI_RESEND_REQUEST_20260818.md` per distinguere main corrente e base storica delle PR. Nessun rebase, retarget o merge eseguito.
+- Controlli: riletti prompt/ledger/resume remoti e metadati delle PR; nessun output Gemini o peso importato.
+- Stato: `UJ-CAP-001` e `UJ-GGL-001` READY 0/13; PR #3/#5/#6 aperte draft; main non modificata da questa sessione.
+- Prossima azione: ricevere il resend e validarlo contro il commit reale degli input e la head GitHub corrente.

@@ -71,3 +71,9 @@ remoto osservato; lo storico non viene cancellato.
 - PR #5 resta OPEN/DRAFT di quarantena; il precedente handoff Gemini non è stato ammesso. PR #3 resta OPEN/DRAFT sulla base storica e non viene retargettata o fusa. PR #6 resta un candidato di review Grok separato e non fidato.
 - `UJ-CAP-001` e `UJ-GGL-001` sono le sole task Gemini READY, entrambe 0/13; le task Gemini dipendenti restano BLOCKED. Nessun peso, stato backlog o `main` cambia.
 - Prossimo comando: ricevere esattamente 3 artifact e 2 ResponsePacket dal nuovo prompt; congelare hash/ref, validare schema, fonti, policy e criteri; poi pubblicare branch/PR dedicate oppure quarantena in caso di failure.
+
+## Latest remote reconciliation — 2026-08-18 — main advancement correction
+
+- `main` corrente osservata: `6af4a3721ab0d7f3272fd6e4e872b1331da99aa5`. La base storica `a9e83ee2fdd5b165d90d1217079882b02abc29d3` resta sulle PR #3, #5 e #6; non sono state riallineate.
+- Il prompt Gemini e i ledger sono stati corretti per questa differenza di refs. Nessun merge, rebase, retarget, backlog delta o peso è stato applicato.
+- Prossimo comando invariato: ricevere 3 artifact e 2 ResponsePacket, congelare la head/input ref e validare tutto prima di branch/PR dedicate.

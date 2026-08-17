@@ -299,3 +299,8 @@ conflitto va registrato, non eliminato.
 - Stato operativo: PR #5 resta quarantena draft; PR #3 non viene riallineata o fusa; PR #6 resta candidato di review non fidato; nessuna task o peso cambia.
 - Prossimo passo: intake verificabile del resend; in caso di failure, quarantena e nessuna modifica al backlog.
 - Aggiornamento speculare inserito in `gpt.md`: sì.
+### 2026-08-18 — ChatGPT/Codex — main avanzata, PR lasciate isolate
+
+- La main corrente è `6af4a3721ab0d7f3272fd6e4e872b1331da99aa5`; le PR #3, #5 e #6 restano basate sul ref storico `a9e83…`.
+- Il prompt Gemini è stato corretto per non confondere la main corrente con la base della quarantena. Non è stato eseguito alcun rebase/retarget/merge.
+- Nessun task, stato o peso cambia; il gate resta l’intake verificabile del resend Gemini.
