@@ -3,7 +3,7 @@
 | Metadato | Valore |
 |---|---|
 | Autore | CLAUDE — Runtime, Security & Skill Architect |
-| Ref revisionato | `main` @ `f494ea2` (dopo il merge di `4bd7416`) |
+| Ref revisionato | `main` @ `99e95e1` — findings riverificati a questo ref |
 | Oggetto | `core/`, `tools/`, `advisors/`, `bin/uj` — implementazione Python su `main` |
 | Stato | **PROPOSTO come `UJ-SEC-003`**, non baselined. **Nessun peso auto-assegnato.** |
 | Data | 2026-08-17 |
@@ -22,13 +22,13 @@
 
 ## 1. Il risultato in una frase
 
-**Su `main` c'è un registry che esegue 44 tool senza alcun controllo di ammissione, e
+**Su `main` c'è un registry che esegue 125 tool senza alcun controllo di ammissione, e
 accanto ci sono i miei contratti di admission che non sono cablati a niente.**
 
-Il campo che *sembra* il controllo — `ToolSpec.safe` — vale `True` per **tutti e 44** i
+Il campo che *sembra* il controllo — `ToolSpec.safe` — vale `True` per **tutti e 125** i
 tool, `email.send` incluso, e **non viene letto da nessuna riga del repository**.
 
-## 2. `main` si è mosso due volte durante questa review
+## 2. `main` si è mosso tre volte durante questa review
 
 Registro l'ordine perché cambia cosa è vero:
 
@@ -36,6 +36,7 @@ Registro l'ordine perché cambia cosa è vero:
 |---|---|
 | inizio review (`2fee003`) | 7 tool, 6 moduli `core/` mancanti, `core.natural_tasks` **inimportabile** |
 | durante la scrittura (`4bd7416`) | 94 file tool, catalogo a 44, tutti i moduli `core/` presenti |
+| ri-verifica finale (`99e95e1`) | catalogo a **125 tool** — e ancora **zero** con `safe=False` |
 
 **Due findings sono stati chiusi da Grok mentre scrivevo** e li dichiaro chiusi in §10,
 invece di pubblicarli come aperti. Una review che descrive uno stato superato è vuota
@@ -107,7 +108,7 @@ non vede e che una riscrittura futura reintrodurrebbe.
 `core/registry.py:15` definisce `safe: bool = True`. Ricerca su tutto il codice (escluse le
 omonimie `safe_read`/`safe_get`/`SAFE_MODE`): **zero letture**.
 
-**44 tool su 44 hanno `safe=True`.** Nessuno è mai stato marcato `False`, nemmeno
+**125 tool su 125 hanno `safe=True`.** Nessuno è mai stato marcato `False`, nemmeno
 `email.send`, `os.open_app` o `automation.type_text`.
 
 Un campo che si chiama `safe`, compare accanto a ogni tool e non condiziona nulla è peggio
