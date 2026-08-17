@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ultrajarvis.local/schemas/handoff-packet.schema.json",
+  "title": "ultraJARVIS handoff packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "handoff_id",
+    "session_id",
+    "created_at",
+    "from",
+    "to",
+    "repository",
+    "task",
+    "executive_delta",
+    "artifacts",
+    "facts",
+    "assumptions",
+    "decisions_proposed",
+    "checks",
+    "risks",
+    "blockers",
+    "next_action",
+    "resume_point",
+    "data_class",
+    "side_effect"
+  ],
+  "properties": {
+    "schema_version": { "const": "ultrajarvis.handoff-packet/v1" },
+    "handoff_id": { "type": "string", "pattern": "^UJ-HANDOFF-[A-Z0-9-]+$" },
+    "session_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "from": { "$ref": "#/$defs/party" },
+    "to": { "$ref": "#/$defs/party" },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["full_name", "ref", "commit_sha"],
+      "properties": {
+        "full_name": { "const": "carnascialichristian-wq/ultraJARVIS" },
+        "ref": { "type": "string", "minLength": 1 },
+        "commit_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "previous_status",
+        "proposed_status",
+        "weight",
+        "accepted_weight_before",
+        "accepted_weight_after"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^UJ-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{3}$"
+        },
+        "previous_status": { "$ref": "#/$defs/status" },
+        "proposed_status": { "$ref": "#/$defs/status" },
+        "weight": { "type": "integer", "minimum": 0 },
+        "accepted_weight_before": { "type": "integer", "minimum": 0 },
+        "accepted_weight_after": { "type": "integer", "minimum": 0 },
+        "review_outcome": {
+          "enum": ["NOT_REVIEWED", "PASS", "PASS_WITH_ACTIONS", "FAIL"]
+        },
+        "reviewer": { "type": "string" },
+        "review_proof_ref": { "type": "string" }
+      }
+    },
+    "executive_delta": { "type": "string", "minLength": 1 },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "facts": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "decisions_proposed": { "type": "array", "items": { "type": "string" } },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "result", "proof_ref"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "result": { "enum": ["PASS", "FAIL", "NOT_RUN"] },
+          "proof_ref": { "type": "string" }
+        }
+      }
+    },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "cause", "resolver", "safe_continuation"],
+        "properties": {
+          "kind": { "type": "string", "minLength": 1 },
+          "cause": { "type": "string", "minLength": 1 },
+          "resolver": { "type": "string", "minLength": 1 },
+          "safe_continuation": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "next_action": { "type": "string", "minLength": 1 },
+    "resume_point": { "type": "string", "minLength": 1 },
+    "data_class": { "enum": ["C0", "C1", "C2", "C3", "C4"] },
+    "side_effect": {
+      "enum": ["NONE", "INTERNAL_WRITE", "EXTERNAL_WRITE", "DESTRUCTIVE"]
+    }
+  },
+  "$defs": {
+    "party": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ai_id", "product"],
+      "properties": {
+        "ai_id": {
+          "enum": ["CHATGPT", "CLAUDE", "GEMINI", "GROK", "AUXILIARY_AI", "CHRISTIAN"]
+        },
+        "product": { "type": "string", "minLength": 1 }
+      }
+    },
+    "status": {
+      "enum": [
+        "PROPOSED",
+        "TRIAGED",
+        "READY",
+        "IN_PROGRESS",
+        "REVIEW",
+        "DONE",
+        "BLOCKED",
+        "DEFERRED",
+        "CANCELLED",
+        "SUPERSEDED"
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "sha256", "media_type", "summary"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "media_type": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim", "source_ref", "verified_at"],
+      "properties": {
+        "claim": { "type": "string", "minLength": 1 },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "verified_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}
