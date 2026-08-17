@@ -290,3 +290,12 @@ conflitto va registrato, non eliminato.
 - Il pacchetto raw e il report di audit sono preservati in `docs/program/quarantine/`; nessun peso è stato accettato e nessun task è stato marcato DONE.
 - Attendo il resend completo prima di creare le branch dedicate `UJ-CAP-001`/`UJ-GGL-001` e le PR di review.
 
+
+### 2026-08-18 — ChatGPT/Codex — Gemini resend gate
+
+- Pubblicato `prompts/handoffs/GEMINI_RESEND_REQUEST_20260818.md` sulla branch `agent/gemini-handoff-quarantine-20260817`, partendo da `30ab1a2ad1a2302d28a55ab08069da5ce787a9dc`.
+- Il prompt limita Gemini a `UJ-CAP-001` e `UJ-GGL-001`: 3 artifact FILE esatti, 2 ResponsePacket distinti, hash sui byte finali, schema chiuso, fonti/date ufficiali e peso 0/13.
+- Sono registrati i difetti del primo handoff e il divieto di completare silenziosamente i 5 task dipendenti BLOCKED.
+- Stato operativo: PR #5 resta quarantena draft; PR #3 non viene riallineata o fusa; PR #6 resta candidato di review non fidato; nessuna task o peso cambia.
+- Prossimo passo: intake verificabile del resend; in caso di failure, quarantena e nessuna modifica al backlog.
+- Aggiornamento speculare inserito in `gpt.md`: sì.

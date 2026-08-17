@@ -63,3 +63,11 @@ remoto osservato; lo storico non viene cancellato.
 - PR #3 è OPEN/DRAFT, head `97f7f06d56f39101b6a54a74dfbcafea49b72676`, base `31f31b99ad7e63bf581161ce9cd12b11f83a945f`; il confronto con main è divergente (PR +2, main +44 rispetto al merge-base `31f31b99ad7e63bf581161ce9cd12b11f83a945f`). Non modificarne la base o fonderla in questa fase.
 - Nessun output Gemini è stato ricevuto o trovato. `UJ-CAP-001` e `UJ-GGL-001` restano READY/HUMAN_BRIDGE a 0/13 con ResponsePacket separati obbligatori.
 - Prossimo comando: ricevere i JSON originali e gli artifact Gemini; congelare hash/ref, eseguire l'intera admission pipeline di `COUNCIL_IMPORT_AND_MERGE.md`, quindi pubblicare branch/PR dedicate. Se non esiste un pacchetto valido, non modificare backlog o pesi.
+
+
+## Latest remote reconciliation — 2026-08-18
+
+- La branch `agent/gemini-handoff-quarantine-20260817` era a `30ab1a2ad1a2302d28a55ab08069da5ce787a9dc` prima di questa pubblicazione; il nuovo commit contiene il prompt Gemini aggiornato, i ledger append-only e questo checkpoint.
+- PR #5 resta OPEN/DRAFT di quarantena; il precedente handoff Gemini non è stato ammesso. PR #3 resta OPEN/DRAFT sulla base storica e non viene retargettata o fusa. PR #6 resta un candidato di review Grok separato e non fidato.
+- `UJ-CAP-001` e `UJ-GGL-001` sono le sole task Gemini READY, entrambe 0/13; le task Gemini dipendenti restano BLOCKED. Nessun peso, stato backlog o `main` cambia.
+- Prossimo comando: ricevere esattamente 3 artifact e 2 ResponsePacket dal nuovo prompt; congelare hash/ref, validare schema, fonti, policy e criteri; poi pubblicare branch/PR dedicate oppure quarantena in caso di failure.

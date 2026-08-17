@@ -373,3 +373,13 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - La consegna è stata conservata in quarantena sulla branch `agent/gemini-handoff-quarantine-20260817`; i dettagli sono in `docs/program/quarantine/GEMINI_HANDOFF_AUDIT_20260817.md`.
 - Prossimo passo: ricevere il resend completo, con 8 blocchi, fonti/date per claim, hash sui byte committati e due ResponsePacket distinti validi allo schema.
 
+
+### 2026-08-18 — ChatGPT/Codex — prompt Gemini di resend aggiornato
+
+- Ref iniziale: branch quarantine `agent/gemini-handoff-quarantine-20260817` a `30ab1a2ad1a2302d28a55ab08069da5ce787a9dc`; nuovo output: `prompts/handoffs/GEMINI_RESEND_REQUEST_20260818.md`.
+- Obiettivo: fornire a Gemini una richiesta versionata per le sole task READY `UJ-CAP-001` e `UJ-GGL-001`, con 3 artifact FILE, 2 ResponsePacket separati, fonti/date, hash byte-stabili e schema chiuso.
+- Input e pin riletti: card CAP/GGL, schema ResponsePacket, `SPECIALIST_INPUTS`, `COUNCIL_PACKETS`, prompt canonico e `RESUME_POINT`. Il prompt registra anche i difetti del primo handoff: blocchi mancanti/troncati, 0 packet e claim dinamici senza evidenza sufficiente.
+- Controlli remoti: head PR #5, PR #3, PR #6, ledger e resume riletti integralmente; nessun validator Node locale eseguito perché il checkout Git non è disponibile. Nessun output Gemini è stato ammesso.
+- Stato/peso: `UJ-CAP-001 READY 0/13`, `UJ-GGL-001 READY 0/13`; task Gemini dipendenti ancora BLOCKED; nessuna scrittura su `main`, merge o retarget.
+- Prossima azione: ricevere il resend originale, congelare bytes/ref, verificare JSON/schema/fonti/hash/ResponsePacket e pubblicare solo branch/PR dedicate se l’intake passa.
+- Aggiornamento speculare: stessa voce append-only inserita in `taskgpt.md`.
