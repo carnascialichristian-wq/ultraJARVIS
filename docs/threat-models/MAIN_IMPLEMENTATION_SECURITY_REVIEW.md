@@ -103,6 +103,100 @@ if host.startswith("www."):
 Vale la pena aggiungere un test di regressione con `wexample.com`: è il caso che l'occhio
 non vede e che una riscrittura futura reintrodurrebbe.
 
+## 4-bis. S-10 — `files.safe_read` legge qualunque file del sistema. **HIGH.**
+
+Il registry descrive il tool così:
+
+```
+ToolSpec("files.safe_read", "Read a text file under the project root", ...)
+```
+
+**Il contenimento nella root non esiste.** `safe_read` controlla esistenza, che sia un
+file e l'estensione — mai che il path resti dentro `PROJECT_ROOT`:
+
+```python
+def safe_read(path, *, encoding="utf-8", root=PROJECT_ROOT) -> str:
+    target = _resolve(path, root)
+    if not target.exists(): raise FileNotFoundError(...)
+    if not target.is_file(): raise ValueError(...)
+    if target.suffix.lower() in {".pyc", ".so", ...}: raise ValueError(...)
+    return target.read_text(encoding=encoding)      # nessun relative_to(root)
+```
+
+Misurato:
+
+| Input | Esito |
+|---|---|
+| `/tmp/.../finto_segreto.txt` (assoluto, fuori root) | **LETTO** |
+| `../../../tmp/.../finto_segreto.txt` (traversal) | **LETTO** |
+| lo stesso path via `safe_write` | **bloccato**, `PermissionError: Path escapes project root` |
+
+**È un'omissione, non una scelta di design.** Il controllo giusto esiste già nel file
+accanto, dentro `safe_write`:
+
+```python
+try:
+    target.relative_to(root)
+except ValueError:
+    raise PermissionError(f"Path escapes project root: {target}") from None
+```
+
+`safe_read` non lo ha. Le tre righe vanno copiate.
+
+**Perché è grave:** `files.safe_read` è un tool **registrato e `safe=True`**, chiamabile
+via `Registry.call()` che non ha ammissione (S-02). Qualunque percorso che arrivi a
+chiamarlo con un path controllato legge chiavi SSH, `.env`, credenziali, cronologie — tutto
+ciò che l'utente del processo può leggere. Il filtro sulle estensioni binarie **non
+protegge**: i segreti stanno in file di testo.
+
+## 4-ter. S-11 — `force=True` aggira la lista PROTECTED, e il registry lo inoltra. **HIGH.**
+
+`tools/files.py` definisce `PROTECTED`, 15 path fra cui `core/registry.py`,
+`core/job_worker.py`, `bin/uj`, `grok.md`, `.git`, `pyproject.toml`.
+
+`safe_write` la applica — **salvo `force`**:
+
+```python
+if _is_protected(target, root) and not force:
+    raise PermissionError(f"Refusing to write to protected path: {rel}")
+```
+
+Dimostrato su una root di prova, per non toccare il repository reale:
+
+```
+senza force  -> bloccato: "Refusing to write to protected path: grok.md"
+con force=True -> scrittura RIUSCITA, contenuto sostituito
+```
+
+**E `force` è raggiungibile dall'esterno**, perché `Registry.call()` inoltra `**kwargs`
+senza filtrarli:
+
+```python
+return fn(*args, **kwargs)      # force=True passa di qui intatto
+```
+
+Quindi:
+
+```python
+registry.call("files.safe_write", "core/registry.py", "<contenuto arbitrario>", force=True)
+```
+
+sovrascrive **il registry stesso**, cioè il file che definisce quali tool esistono e con
+quali permessi. Nessun gate attraversato, perché non ce n'è nessuno.
+
+> `PROTECTED` non è un permesso: è un valore di default, e il chiamante può cambiarlo.
+
+**Correzione:** `force` non deve essere un parametro del tool. Deve essere una decisione
+del **chiamante privilegiato**, quindi va tolto dalla firma esposta al registry e
+concesso, se serve, da un gate di approvazione — che è esattamente ciò che descrive
+`APPROVAL_POLICY.md`. In alternativa minima, `Registry.call()` deve rifiutare le kwargs
+non dichiarate nel `ToolSpec`.
+
+**Composizione con S-01 e S-02.** Presi insieme, i tre difetti si sommano invece di
+sovrapporsi: il campo `safe` non è letto (S-01), non c'è ammissione (S-02), e la lista
+PROTECTED si disattiva con una parola chiave che il registry inoltra (S-11). Il risultato
+è che **le tre difese del piano di tool non ne compongono una**.
+
 ## 5. S-01 — `ToolSpec.safe` è dichiarato e mai letto. **HIGH.**
 
 `core/registry.py:15` definisce `safe: bool = True`. Ricerca su tutto il codice (escluse le
@@ -206,6 +300,8 @@ controllo di sicurezza, e **non deve ricevere crediti di mitigazione nel risk re
 
 | ID | Severità | Sintesi | Stato |
 |---|---|---|---|
+| S-10 | **HIGH** | `files.safe_read` legge **qualunque file del sistema**: nessun contenimento nella root | **aperto** |
+| S-11 | **HIGH** | `force=True` aggira `PROTECTED` e `Registry.call()` lo inoltra → sovrascrittura di `core/registry.py` | **aperto** |
 | S-09 | **HIGH** | `lstrip("www.")`: `wexample.com` passa la allowlist del browser | **aperto, sfruttabile** |
 | S-01 | HIGH | `ToolSpec.safe` dichiarato e mai letto; 44/44 `safe=True` | aperto |
 | S-02 | HIGH | `Registry.call()` senza ammissione, tetto o evento | aperto |
@@ -216,13 +312,30 @@ controllo di sicurezza, e **non deve ricevere crediti di mitigazione nel risk re
 
 ### Ordine consigliato
 
-1. **S-09** — è l'unico difetto **sfruttabile da un terzo** senza accesso al repository.
-   Correzione di due righe più un test su `wexample.com`.
-2. **S-03 + S-01** — rimuovere `force` o implementarlo, rendere `SAFE_MODE` non
-   riscrivibile, e far leggere `safe` a `Registry.call()` oppure eliminare il campo. Tre
-   manopole finte nello stesso albero sono un pattern, non una svista.
-3. **S-02 + S-07** — un punto di ammissione unico davanti a `call()` che emetta gli eventi.
-   È il punto in cui i miei contratti `ToolManifest` smetterebbero di essere decorativi.
+1. **S-10** — tre righe: copiare in `safe_read` il controllo `relative_to(root)` che
+   `safe_write` ha già. È il difetto con l'impatto peggiore, perché espone segreti che non
+   appartengono al progetto.
+2. **S-11** — togliere `force` dalla firma esposta al registry, oppure far rifiutare a
+   `Registry.call()` le kwargs non dichiarate nel `ToolSpec`. Finché `force` passa,
+   `PROTECTED` è un default, non un permesso.
+3. **S-09** — è l'unico difetto **sfruttabile da un terzo** senza accesso al repository.
+   Due righe più un test di regressione su `wexample.com`.
+4. **S-03 + S-01** — rimuovere `force` da `email.send` o implementarlo, rendere `SAFE_MODE`
+   non riscrivibile, e far leggere `safe` a `Registry.call()` oppure eliminare il campo.
+5. **S-02 + S-07** — un punto di ammissione unico davanti a `call()` che emetta gli eventi.
+   È il punto in cui i miei contratti `ToolManifest` smetterebbero di essere decorativi, e
+   chiude in un colpo la composizione S-01 + S-02 + S-11.
+
+### Il filo comune
+
+Sei findings su nove sono **manopole di sicurezza che non girano nulla**: `ToolSpec.safe`
+mai letto, `force` di `email.send` mai referenziato, `SAFE_MODE` riscrivibile, `PROTECTED`
+disattivabile da kwarg, `lstrip` che non fa quello che il nome dice, scanner che non
+rileva. Ognuna, letta da sola, **sembra** una difesa.
+
+È la stessa lezione delle mie review precedenti, e ormai la quinta occorrenza nel
+programma: **un controllo va verificato eseguendolo contro il caso che deve fermare**, non
+leggendone il nome.
 
 ## 10. Chiusi durante la review, da Grok
 

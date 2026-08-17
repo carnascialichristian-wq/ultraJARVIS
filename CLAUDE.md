@@ -973,6 +973,38 @@ senza accesso al repository, e si chiude in due righe.
 
 L'ho trovato perché ho letto la funzione invece di fidarmi del nome `ALLOWLIST`.
 
+### Due findings ancora peggiori, trovati proseguendo su `tools/files.py`
+
+**`S-10` — `files.safe_read` legge qualunque file del sistema.** Il registry lo descrive
+come *"Read a text file under the project root"*. Il contenimento nella root **non esiste**:
+`safe_read` controlla esistenza, tipo ed estensione, mai `relative_to(root)`. Misurato: sia
+un path assoluto fuori root sia `../../../` leggono il file. Lo stesso path passato a
+`safe_write` viene **bloccato** — quindi il controllo giusto esiste gia nel file accanto,
+ed e solo omesso. Tre righe da copiare. Il filtro sulle estensioni binarie non protegge:
+i segreti stanno in file di testo.
+
+**`S-11` — `force=True` aggira `PROTECTED`, e il registry lo inoltra.** `PROTECTED` elenca
+15 path fra cui `core/registry.py`, `bin/uj`, `.git`. `safe_write` la applica *salvo force*.
+E `Registry.call()` fa `fn(*args, **kwargs)` senza filtrare, quindi:
+
+```
+registry.call("files.safe_write", "core/registry.py", "<arbitrario>", force=True)
+```
+
+sovrascrive **il file che definisce quali tool esistono**. Dimostrato su una root di prova
+per non toccare il repo reale. `PROTECTED` non e un permesso: e un default che il chiamante
+puo cambiare.
+
+### Il filo comune, ed e la parte che conta
+
+Sei findings su nove sono **manopole di sicurezza che non girano nulla**: `ToolSpec.safe`
+mai letto, `force` di `email.send` mai referenziato, `SAFE_MODE` riscrivibile, `PROTECTED`
+disattivabile da kwarg, `lstrip` che non fa quello che il nome dice, scanner che non rileva.
+Ognuna, letta da sola, **sembra** una difesa.
+
+E la quinta occorrenza della stessa forma nel programma. La regola operativa: **un controllo
+va verificato eseguendolo contro il caso che deve fermare**, non leggendone il nome.
+
 ### Gli altri findings HIGH
 
 - **S-01** — `ToolSpec.safe` è dichiarato e **mai letto** in tutto il repository. Tutti e
