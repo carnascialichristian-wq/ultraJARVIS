@@ -26,12 +26,16 @@
 | UJ-SEC-001 — Threat model, approval policy, critica Costituzione | 13 | **REVIEW** | **GROK** | **Grok deve revisionarlo** |
 | UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | IN_PROGRESS (2/8) | GEMINI | Gemini incrocia con UJ-CAP-001 |
 | UJ-MCP-001 — ToolManifest e MCP admission | 8 | **REVIEW** | **GEMINI** | **Gemini deve revisionarlo** |
-| UJ-RCV-001 — Checkpoint/retry/recovery | 8 | READY | ChatGPT | prossimo che prendo |
-| UJ-SKL-001 — Skill Forge | 13 | READY | ChatGPT | — |
+| UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **REVIEW** | **CHATGPT** | **ChatGPT deve revisionarlo** |
+| UJ-SKL-001 — Skill Forge | 13 | READY | ChatGPT | prossimo che prendo |
 | UJ-REV-001 — Review del Program OS | 5 | **BLOCKED: aspetto ChatGPT** | Christian | **ChatGPT mi blocca** |
 | UJ-REV-002 — Security review Website Team | 8 | **BLOCKED: aspetto ChatGPT** | GROK | **ChatGPT mi blocca** |
 
-**Progresso onesto:** 0/76 accettato, 31/76 proposto. Nessun task DONE.
+**Progresso onesto:** 0/76 accettato, 37/76 proposto. Nessun task DONE.
+
+**Tutti e tre i P0 del programma sono chiusi.** Restano due `CRITICA` senza owner
+attivo (`R-SEC-01`, `R-SEC-02`): dipendono da `UJ-SEC-002`, che ChatGPT deve accettare.
+
 `completed_weight` resta 0 finché un reviewer non accetta (§7.3): non mi auto-assegno peso.
 **ETA: UNKNOWN** — manca velocity su due cicli (§7.4). Non chiedetemi una data.
 
@@ -52,6 +56,11 @@
 | `docs/constitution/CONSTITUTION_CRITIQUE.md` | 3 lacune strutturali, 12 emendamenti proposti | **Grok**, Christian |
 | `packages/contracts/src/policy/` | policy engine eseguibile | ChatGPT, Gemini |
 | `docs/program/handoffs/HANDOFF-UJ-SEC-001.md` | task delta e handoff di UJ-SEC-001 | ChatGPT |
+| `docs/architecture/TOOL_PLANE.md` | ToolManifest, 18 regole di admission, ordine P0 | **Gemini** |
+| `packages/contracts/src/tools/` | admission eseguibile, P0-1 e P0-2 | Gemini |
+| `docs/runbooks/DISASTER_RECOVERY.md` | procedura di ripresa, 9 scenari D1–D9 | **ChatGPT** |
+| `packages/contracts/src/recovery/` | contatore atomico e CAS | ChatGPT |
+| `docs/program/handoffs/HANDOFF-UJ-MCP-001.md`, `HANDOFF-UJ-RCV-001.md` | task delta | ChatGPT |
 | `CLAUDE.md` | continuità interna di CLAUDE | nessuno di voi, ma è pubblico |
 
 ### Come verificare che il mio lavoro sia vero
@@ -63,9 +72,10 @@ cd packages/contracts && npx tsc --noEmit && npx tsc && cd ../..
 node --test tests/contracts/runtime-invariants.test.mjs   # atteso 34/34
 node --test tests/contracts/approval-policy.test.mjs      # atteso 28/28
 node --test tests/contracts/tool-admission.test.mjs       # atteso 30/30
+node --test tests/contracts/recovery.test.mjs             # atteso  9/9
 ```
 
-Atteso: typecheck exit 0, **92 test / 92 pass** in totale. Se non torna, il mio lavoro è
+Atteso: typecheck exit 0, **101 test / 101 pass** in totale. Se non torna, il mio lavoro è
 da rifiutare, non da interpretare.
 
 > Trappola dell'ambiente: eseguite i test **dalla root del repository**. Se fate `cd` in
@@ -274,6 +284,48 @@ richiede una riverifica di piano**: due cicli di vita diversi legati a forza.
 Un `ToolManifest` **cita** un `capability_id`, non lo duplica. Se non sei d'accordo, è
 il momento di dirlo — dopo costa.
 
+### 4.11 Il limite che vi lega davvero si rompeva in silenzio. Ora no.
+
+Da `DISASTER_RECOVERY.md` (UJ-RCV-001). **`R-RUN-01` è chiuso**, e il modo in cui si
+rompeva riguarda chiunque di voi scriva un contatore, una quota o un lock.
+
+Un contatore implementato come *leggi → scrivi* si rompe sotto concorrenza. In Node il
+varco è **qualunque `await` fra la lettura e la scrittura**. Con 20 task attivi, tetto
+25 e 10 spawn concorrenti:
+
+| Contatore | Ammessi | Contatore finale | Realtà |
+|---|---:|---:|---|
+| Ingenuo | **10** | **21** | 30 attivi |
+| Atomico | **5** | 25 | 25 attivi |
+
+Il danno è doppio, e **la seconda metà è peggiore della prima**:
+
+1. il tetto viene sfondato, e **nessun controllo di invariante fallisce** — ognuno dei
+   dieci ha letto 20 e ha risposto correttamente a "20 è sotto 25?";
+2. tutti scrivono `osservato + 1` dalla stessa lettura stantia, quindi **9 incrementi su
+   10 si perdono**. Il contatore segna 21 mentre i task attivi sono 30, e da lì ogni
+   ammissione successiva è giudicata su un dato falso.
+
+**→ TUTTI, regola riutilizzabile:** fra il controllo di un limite e il suo incremento non
+deve esistere un `await`. Su database serve un update condizionale
+(`UPDATE ... WHERE valore = ?`), mai `SELECT` seguita da `UPDATE`.
+
+**→ GEMINI, vincolo per `UJ-INF-001`:** il contatore distribuito presuppone che il
+database offra **compare-and-swap**. Se la tua scelta di storage non lo supporta, la
+soluzione va riprogettata. È `R-RCV-01`, e ti serve saperlo **prima** di scegliere.
+
+**→ GROK:** puoi togliere `R-RUN-01` dai P0 aperti, con prova eseguibile. Nuovo:
+`R-RCV-01`.
+
+### 4.12 Il rischio operativo più concreto non è tecnico
+
+Lo scenario **D9** del runbook: il container di sessione è **effimero**. Tutto ciò che
+non è committato e pushato **non esiste** per la sessione successiva.
+
+Vale per tutte e quattro noi, con qualunque strumento. Il push non è burocrazia: **è il
+checkpoint del lavoro umano-IA**, esattamente come `checkpoint.written` lo è per un run.
+Per questo la Regola 2 impone commit e push a fine di **ogni task**, non a fine sessione.
+
 ---
 
 ## 5. Handoff specifico per ciascuno di voi
@@ -411,5 +463,6 @@ Derivano dal prompt canonico, ma le ho rese operative e le rispetto in modo veri
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | creazione; consegna di UJ-RUN-001 in REVIEW, scoperte §4.1 e §4.2, handoff alle tre IA |
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-SEC-001** in REVIEW; aggiunte §4.6 (proof fabrication), §4.7 (8 difese su 15), §4.8 (Costituzione); Grok è ora reviewer anche di UJ-SEC-001 con 3 domande dirette; UJ-SKL-001 e UJ-MCP-001 sbloccati; proposto `UJ-SEC-002` a ChatGPT |
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-MCP-001** in REVIEW; aggiunte §4.9 (MCP non è sicurezza; **TH-10 non è chiusa**) e §4.10 (ToolManifest ≠ CapabilityRecord, per Gemini); chiuso `R-RUN-03`, chiuso parzialmente `R-RUN-04`, nuovo `R-MCP-01`; 92 test totali |
+| 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-RCV-001** in REVIEW; aggiunte §4.11 (la race del contatore, con vincolo CAS per Gemini) e §4.12 (D9, il container effimero); **chiuso `R-RUN-01`, ultimo P0**; nuovo `R-RCV-01`; 101 test totali |
 
 *(Regola 2 di `CLAUDE.md`: questo file va esteso a fine di ogni task, non riscritto.)*

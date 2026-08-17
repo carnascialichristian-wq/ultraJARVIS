@@ -153,7 +153,7 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 | UJ-SEC-001 — Threat model + approval policy + critica Costituzione | 13 | **REVIEW** | 0/13 | 11/13 | review di Grok | — |
 | UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | IN_PROGRESS | 0/8 | 2/8 | 6 | S-10 richiede login → HUMAN_BRIDGE |
 | UJ-MCP-001 — ToolManifest + MCP admission | 8 | **REVIEW** | 0/8 | 7/8 | review di Gemini | — |
-| UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **READY** | 0/8 | — | 8 | sbloccato da UJ-RUN-001 |
+| UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **REVIEW** | 0/8 | 6/8 | review di ChatGPT | — |
 | UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | **READY** | 0/13 | — | 13 | sbloccato da UJ-SEC-001 |
 | UJ-REV-001 — Review del Program OS di ChatGPT | 5 | BLOCKED | 0/5 | — | 5 | UJ-INT-001 non esiste |
 | UJ-REV-002 — Security review Website Team | 8 | BLOCKED | 0/8 | — | 8 | UJ-INT-007 non esiste |
@@ -164,9 +164,13 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 portafoglio CLAUDE = 76 unità
 
 accettato formalmente = 0 / 76  = 0%      nessun reviewer ha ancora accettato
-proposto in review    = 31 / 76 = 40,8%   11 UJ-RUN-001 + 11 UJ-SEC-001
-                                          + 7 UJ-MCP-001 + 2 UJ-CLD-001
+proposto in review    = 37 / 76 = 48,7%   11 UJ-RUN-001 + 11 UJ-SEC-001
+                                          + 7 UJ-MCP-001 + 6 UJ-RCV-001
+                                          + 2 UJ-CLD-001
 ```
+
+**Tutti e tre i P0 del programma sono chiusi.** Restano due `CRITICA` (`R-SEC-01`,
+`R-SEC-02`) che richiedono `UJ-SEC-002`, non ancora accettato da ChatGPT.
 
 **Perché "accettato" è zero.** §7.3 impone `completed_weight = 0` finché non c'è
 accettazione dimostrata da un reviewer. I reviewer sono **Gemini** (UJ-RUN-001) e
@@ -423,6 +427,37 @@ scomposta in "attestazione" e "resoconto" ha mostrato che copro solo la prima.
 |---|---|---|
 | E9 | Ho **ripetuto E4**: concatenato `npx tsc` e `node --test` dopo un `cd packages/contracts`, e il test runner non ha trovato il file | La trappola era già scritta in PARTE 7 e l'ho commessa comunque. **Scrivere una trappola non basta: va riletta prima di comporre comandi con `cd`.** Correzione: eseguire sempre i test da `/home/user/ultraJARVIS` con path assoluto o `cd` esplicito |
 
+### UJ-RCV-001 — consegnato, stato REVIEW. **Ultimo P0 chiuso.**
+
+| Deliverable | File |
+|---|---|
+| Contatore atomico + CAS | `packages/contracts/src/recovery/active-task-counter.ts` |
+| Runbook di ripresa | `docs/runbooks/DISASTER_RECOVERY.md` |
+| Test `T-DG-4b` | `tests/contracts/recovery.test.mjs` — 9/9 |
+| Handoff | `docs/program/handoffs/HANDOFF-UJ-RCV-001.md` |
+
+**`R-RUN-01` chiuso.** Non descrivendolo: ho scritto **prima il test che dimostra che
+il bug esiste**, poi la correzione. Con 20 task attivi e 10 spawn concorrenti:
+
+| Contatore | Ammessi | Contatore finale | Realtà |
+|---|---:|---:|---|
+| Ingenuo (`leggi → await → scrivi`) | **10** | **21** | 30 attivi |
+| Atomico | **5** | 25 | 25 attivi |
+
+Il danno è doppio e la seconda metà è peggiore: tutti scrivono `osservato + 1` dalla
+stessa lettura stantia, quindi **9 incrementi su 10 vanno persi**. Il contatore segna 21
+mentre i task attivi sono 30, e da lì **ogni ammissione successiva viene giudicata su un
+dato falso**. Non è un problema di prestazioni sotto carico: corrompe permanentemente lo
+stato su cui poggia l'unico limite che regge davvero.
+
+**Regola in una frase:** fra il controllo del limite e l'incremento non deve esistere un
+`await`. Su database, serve un update condizionale, non `SELECT` + `UPDATE`.
+
+**Scelta deliberata:** ho lasciato `NaiveActiveTaskCounter` nel repository, marcato
+"WRONG ON PURPOSE" e mai cablato. Una correzione dimostrata contro nessun fallimento non
+dimostra nulla; e se un domani qualcuno "semplificasse" il contatore rendendolo asincrono
+fra check e incremento, quei due test sono la spiegazione già scritta del perché non si può.
+
 ### Prove finali della sessione 2
 
 | Suite | Esito |
@@ -430,7 +465,8 @@ scomposta in "attestazione" e "resoconto" ha mostrato che copro solo la prima.
 | `runtime-invariants.test.mjs` | 34/34 |
 | `approval-policy.test.mjs` | 28/28 |
 | `tool-admission.test.mjs` | 30/30 |
-| **Totale** | **92/92 pass, 0 fail** |
+| `recovery.test.mjs` | 9/9 |
+| **Totale** | **101/101 pass, 0 fail** |
 | `npx tsc --noEmit` (strict + 6 flag) | exit 0 |
 
 ---
@@ -460,7 +496,8 @@ Dettagli in `docs/architecture/RUNTIME_BLUEPRINT.md` §12.
 |---|---|---|---|
 | `R-SEC-01` | TH-08: un segreto può finire nel **contenuto** di un artifact valido; nessun postflight scanning | **CRITICA** | UJ-SEC-002 (da accettare) |
 | `R-SEC-02` | TH-18: approval fatigue non mitigata meccanicamente; `AF-2` senza soglia | **CRITICA** | UJ-SEC-002 + Christian |
-| `R-RUN-01` | contatore task attivi non atomico → fan-out concorrente supera 25 | ALTA | UJ-RCV-001, test `T-DG-4b` — **ULTIMO P0 APERTO** |
+| ~~`R-RUN-01`~~ | contatore task attivi non atomico | — | **CHIUSO** da `AtomicActiveTaskCounter` + `T-DG-4b` (UJ-RCV-001) |
+| `R-RCV-01` | `CasActiveTaskCounter` presuppone un update condizionale nel DB: se Gemini sceglie uno storage senza CAS, va riscritto | MEDIA | vincolo per `UJ-INF-001` |
 | `R-MCP-01` | un server MCP remoto può cambiare condotta a parità di manifest; `ADM-18` avverte ma non impedisce | MEDIA | UJ-SKL-001 (sandbox) |
 | ~~`R-RUN-03`~~ | tool senza lookup idempotency | — | **CHIUSO** da `ADM-13` (UJ-MCP-001) |
 | ~~`R-RUN-04`~~ | emissione eventi `tool.*` da parte dell'agente | — | **CHIUSO PARZIALMENTE** da P0-1: copre l'attestazione, non il resoconto |
@@ -499,18 +536,21 @@ PROMPT    : agent/ultrajarvis-master-prompt-v1 (PR #1)
 STATO     : UJ-RUN-001  REVIEW        attende Gemini, 11/13 proposti
             UJ-SEC-001  REVIEW        attende Grok,   11/13 proposti
             UJ-MCP-001  REVIEW        attende Gemini,  7/8  proposti
+            UJ-RCV-001  REVIEW        attende ChatGPT, 6/8 proposti
             UJ-CLD-001  IN_PROGRESS   2/8 proposti, verifica fonti da fare
-            UJ-RCV-001  READY
             UJ-SKL-001  READY
             UJ-REV-001  BLOCKED       aspetta ChatGPT
             UJ-REV-002  BLOCKED       aspetta ChatGPT
 
-PROSSIMO  : UJ-RCV-001 — checkpoint, retry, cancellation, idempotency, disaster
-            recovery. Peso 8. Reviewer ChatGPT. READY, nessun blocco.
-            MOTIVO: contiene T-DG-4b, l'ULTIMO P0 residuo (contatore atomico).
-            È l'unico modo di chiudere R-RUN-01.
-            Dopo: UJ-SKL-001 (13) oppure completare UJ-CLD-001 (6 restanti,
-            in parte bloccato da HUMAN_BRIDGE per il login console).
+TUTTI E TRE I P0 DEL PROGRAMMA SONO CHIUSI.
+
+PROSSIMO  : UJ-SKL-001 — Skill Forge: threat model, pipeline, contratto sandbox.
+            Peso 13 (il più grande residuo). Reviewer ChatGPT. READY.
+            MOTIVO: è l'unico task READY rimasto del mio portafoglio, ed è anche
+            dove vive la sandbox che chiuderebbe R-MCP-01.
+            Alternativa: completare UJ-CLD-001 (6 restanti), ma è in parte
+            bloccato da HUMAN_BRIDGE per il login console.
+            Poi resta solo l'attesa dei reviewer e di ChatGPT.
 
 NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
             approval policy, critica Costituzione, tool plane, source manifest.
