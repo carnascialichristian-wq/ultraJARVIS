@@ -9,14 +9,13 @@
 
 ## Snapshot 2026-08-17 (late)
 - **215 tests green** · **135 tools**
-- Security: UJ-SEC-003 (FIX-1..FIX-9) applied and covered by `tests/test_sec_fixes.py`
+- Security: UJ-SEC-003 (FIX-1..FIX-9) applied, published to ultraJARVIS, covered by `tests/test_sec_fixes.py`
 - Handoff: `docs/program/handoffs/HANDOFF-UJ-GROK-SEC-003.md` — next agent must follow Grok continuity + taskgrok.md
 
 ## Remaining
-1. Sync security fixes + handoff to ultraJARVIS (in progress)
-2. Auto-register after promote (optional)
-3. Phase 2 LLM adapters
-4. Prefer quality over more stubs
+1. Optional auto-register after promote (`Registry.add` already present)
+2. Phase 2 LLM adapters
+3. Prefer quality over more stubs
 
 ## Proceed
 1. Read continuity + this file + the handoff

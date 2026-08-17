@@ -34,3 +34,12 @@ def test_unknown_tool():
     reg = get_registry()
     with pytest.raises(KeyError):
         reg.call("does.not.exist")
+
+
+def test_add_tool():
+    from core.registry import Registry, ToolSpec
+    reg = Registry(catalog=[])
+    assert len(reg.list_tools()) == 0
+    reg.add(ToolSpec("demo.echo", "Echo", "tools.identity_helpers", "identity", tags=["demo"]))
+    assert reg.get("demo.echo") is not None
+    assert reg.call("demo.echo", 42) == 42
