@@ -70,3 +70,16 @@ until provenance/licensing is independently resolved.
 
 This is additive and branch-only: close the import PR or delete its branch.
 The source repository and `main` are untouched.
+
+## Post-publish verification
+
+- Published branch/commit: `agent/uj-red-001-grok-v8-snapshot` /
+  `b7fed1221e1217b84630e481cc9f7fe7602c2273`.
+- Compared source `carnascialichristian-wq/UltraJarvis_v8-grok@e3311c46a394a6dd1ef89c4e9415f2e257450605` with the target import
+  tree: **84/84 blobs present; 0 SHA mismatches**.
+- The commit differs from its parent in exactly 90 expected paths: the 84 source
+  files, import manifest, this guide, and the four continuity/discovery files.
+  No unexpected path changed.
+- This validates byte preservation only. It does not validate the source's
+  claimed tests/tools, execute it, resolve licensing, admit a packet, or change
+  task status/weight.

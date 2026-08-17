@@ -241,3 +241,12 @@ conflitto va registrato, non eliminato.
 - Prossima azione: controllo SHA post-publish, ResponsePacket Grok schema-valid,
   poi porting TypeScript solo con ADR/test/review.
 - Stesso aggiornamento aggiunto a `gpt.md`: sì.
+
+### 2026-08-17 — ChatGPT/Codex — verifica copy Grok v8
+
+- Commit/branch: `b7fed1221e1217b84630e481cc9f7fe7602c2273` su `agent/uj-red-001-grok-v8-snapshot`.
+- Integrità: 84/84 blob corrispondono alla fonte, 0 mismatch; 90 sole modifiche
+  attese, 0 file inattesi.
+- Stato: import riuscito ma snapshot ancora NON attivo; nessuna task/peso cambia.
+- Prossima azione: PR draft/review e ResponsePacket Grok UJ-RED-001 separato.
+- Stesso aggiornamento aggiunto a `gpt.md`: sì.

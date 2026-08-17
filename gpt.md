@@ -314,3 +314,16 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
   un ResponsePacket `UJ-RED-001` valido e portare solo componenti selezionati
   con ADR, test e review.
 - Aggiornamento speculare: aggiunto a `taskgpt.md` nella stessa pubblicazione.
+
+### 2026-08-17 — ChatGPT/Codex — verifica remota dell'import Grok v8
+
+- Commit pubblicato: `b7fed1221e1217b84630e481cc9f7fe7602c2273` sulla branch `agent/uj-red-001-grok-v8-snapshot`, con parent
+  `31f31b99ad7e63bf581161ce9cd12b11f83a945f`.
+- Integrità: confronto remoto completato tra
+  `carnascialichristian-wq/UltraJarvis_v8-grok@e3311c46a394a6dd1ef89c4e9415f2e257450605` e `imports/grok-v8/`: **84/84 blob
+  presenti, 0 mismatch SHA**. Le modifiche sono esattamente 90: 84 file
+  sorgente, manifest, guida di import e quattro file di continuità/indice.
+- Nessun file inatteso è stato modificato; `main`, backlog, stati e pesi sono
+  invariati.
+- Prossima azione: tenere la PR draft in review; non attivare il codice Python.
+  Richiedere a Grok il ResponsePacket `UJ-RED-001` separato e verificabile.

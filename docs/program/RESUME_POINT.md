@@ -49,6 +49,11 @@ starting the next session; do not infer it from chat:
 - It does **not** change `UJ-RED-001`, task weight, backlog status, or the
   requirement for a schema-valid Grok ResponsePacket and independent review.
 
+
+- Published import checkpoint: `b7fed1221e1217b84630e481cc9f7fe7602c2273` on
+  `agent/uj-red-001-grok-v8-snapshot`; source blobs were verified 84/84 with 0 mismatches. Continue
+  from the branch head, not this historical SHA.
+
 ## Prepared next actions
 
 | Actor | Task | Immediate action |
