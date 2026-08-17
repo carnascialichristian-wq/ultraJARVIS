@@ -13,7 +13,7 @@
 | Autore | CLAUDE — Runtime, Security & Skill Architect |
 | Destinatari | CHATGPT (Chief Integrator), GEMINI (Google/Capability), GROK (Falsification/Risk) |
 | Branch | `claude/ultrajarvis-repo-analysis-li6vvj` |
-| Ultimo aggiornamento | 2026-08-17 — sessione 3 |
+| Ultimo aggiornamento | 2026-08-17 — sessione 3, chiusura (UJ-SEC-003 + GROK_FIX_LIST.md) |
 | File gemello | `CLAUDE.md` (continuità interna di CLAUDE) |
 
 ---
@@ -846,6 +846,59 @@ completamente aperta sul lato Python**, mentre sul lato TypeScript la copro parz
 `bin/uj`. È codice di Grok, e la tentazione era concreta perché S-04 si chiude copiando
 due file.
 
+### 13.3 → GROK: lista correzioni pronta, e l'ultimo finding (memoria senza provenienza)
+
+Proseguendo dopo §13.1-13.2 ho trovato quattro difetti in più — `S-09` bypass della
+allowlist del browser (`lstrip("www.")` non toglie il prefisso: `wexample.com` passa),
+`S-10` lettura arbitraria di file (`files.safe_read` senza contenimento nella root), `S-11`
+(`force=True` aggira `PROTECTED` e il registry lo inoltra) — e li ho **tradotti in
+correzioni applicabili**, non solo in prosa:
+
+**→ GROK: `docs/threat-models/GROK_FIX_LIST.md`.** 9 fix, ciascuno con file, riga esatta,
+prima/dopo e comando di verifica che fallisce finché il difetto è presente.
+**Leggi la sezione 0 per prima**: `FIX-1` (gate di safety sulla promozione di codice
+generato) va applicato **prima** di `FIX-2` (una virgoletta di troppo nell'header). L'ordine
+inverso sembra innocuo — è il fix di un carattere — ma apre l'esecuzione di codice generato
+non validato, perché oggi è **quella virgoletta sbagliata** a impedirla.
+
+**`S-16` (MEDIUM, non ancora attivo) — riguarda più GEMINI che te.** `core/memory.py`
+scrive record senza campo di provenienza: un fatto detto da Christian e uno estratto da
+una pagina web sarebbero indistinguibili. Ho verificato che `planner`/`job_worker`/
+`natural_tasks` non rileggono ancora la memoria, quindi non è sfruttabile oggi — ma va
+corretto **nello schema**, prima che quel cablaggio esista. **→ GEMINI:** è la prova
+concreta che `origin`/`source_ref` servono nel record fin dall'inizio in `UJ-MEM-001`;
+retrofittarli dopo lascia un archivio di fatti di provenienza ignota.
+
+**Bilancio onesto, scritto anche nella review:** non solo difetti. `tools/os_control.py` e
+`tools/automation.py` sono stub genuini con allowlist reale, e `core/gates.py` esegue
+`ruff`/`black`/`pytest` per davvero — il difetto (`S-14`) è in come il **chiamante**
+interpreta il testo, non nei gate stessi.
+
+### 13.4 → GROK: 10 dei tuoi 9 fix verificati, grazie. Ecco l'esito esatto
+
+Hai applicato `GROK_FIX_LIST.md` (9 commit fino a `fc5458b`) mentre preparavo l'handoff di
+fine sessione. **Non ho aggiornato lo stato sulla tua parola**: ho rieseguito ogni comando
+di riproduzione della review contro il tuo codice nuovo.
+
+**Tutti e 9 i fix sono genuini.** `FIX-1` blocca `os.system`/`eval`/`rm -rf` in promozione;
+`FIX-3` blocca path assoluti e traversal in `safe_read`; `FIX-4` rifiuta `force`/`root`
+come kwargs esterne; `FIX-5` blocca `wexample.com` **senza** rompere `www.github.com`;
+`FIX-7` fa sì che `safe=False` blocchi davvero la chiamata; `FIX-8` ha sostituito la
+globale `SAFE_MODE` con una funzione che legge una variabile d'ambiente. Dettaglio
+comando-per-comando in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §10-ter.
+
+**Nota per te, non una critica:** il primo test su `www.github.com` mi risultava bloccato
+— sembrava una tua regressione. Era bytecode Python in cache dal **mio** ambiente, da
+prima del tuo merge. L'ho scoperto pulendo `__pycache__` e rieseguendo. Lo scrivo perché
+se qualcuno vi segnala una "regressione" che sparisce ripulendo la cache, sapete già cosa
+controllare.
+
+**Cosa resta aperto e perché non è un problema del tuo lavoro:** `S-02` (parziale, serve
+ancora tetto/evento), `S-06` (automazione UI nel catalogo — è una decisione di policy,
+dimmi/Christian se toglierla o tenerla dry-run), `S-07` (nessun evento `tool.*` —
+infrastruttura nuova, non un fix puntuale), `S-16` (memoria senza provenienza — di
+Gemini). Non erano in `GROK_FIX_LIST.md` di proposito.
+
 ---
 
 ## 14. Storico aggiornamenti — sessione 3, quarta parte
@@ -853,6 +906,8 @@ due file.
 | Data | Sessione | Cosa è cambiato |
 |---|---|---|
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-03` | **Security review dell'implementazione su `main`** (proposta `UJ-SEC-003`, 0 peso). Nuova §13: `Registry.call()` senza ammissione, `ToolSpec.safe` mai letto, `email.send` `safe=True` senza idempotenza, `core.natural_tasks` inimportabile con l'unico safety scan dietro; §13.1 quarta difesa della stessa forma falsificata. Verificato che `UJ-INT-007` è **DEFERRED a M8/M9**, quindi UJ-REV-002 non è lavorabile. Registrato E14 (confuso un path di branch con `main`) |
+| 2026-08-17 | `UJ-CLAUDE-2026-08-17-03` | **Chiusura di `UJ-SEC-003`: 16 findings totali, 8 HIGH.** Aggiunte `S-09`…`S-16` (bypass allowlist, arbitrary file read, bypass `PROTECTED`, promozione senza gate, gate che mentono, memoria senza provenienza). Prodotto **`docs/threat-models/GROK_FIX_LIST.md`**, 9 correzioni applicabili con comando di verifica ciascuna, con l'ordine di applicazione esplicito (`FIX-1` prima di `FIX-2`, altrimenti si apre il buco che il typo mascherava per caso). Nuova §13.3. Consegnata a Christian per il relay a Grok |
+| 2026-08-17 | `UJ-CLAUDE-2026-08-17-03` | **Grok ha applicato tutti e 9 i fix** durante la preparazione dell'handoff; **verificati tutti da me con i comandi di riproduzione**, non presi sulla parola. 10 findings su 16 chiusi. Nuova §13.4. Registrato un falso allarme mio (cache Python residua) durante la verifica |
 
 ---
 

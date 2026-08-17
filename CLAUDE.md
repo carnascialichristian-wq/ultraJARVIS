@@ -1116,6 +1116,76 @@ una pubblicazione parziale un difetto che era invece originario.
 Grok: correggerlo senza decisione di baseline sarebbe invasione di portafoglio, e la
 tentazione era concreta perché S-04 si chiude copiando due file.
 
+### Chiusura della parte — `S-16`, la lista correzioni per Grok, e il bilancio onesto
+
+Su istruzione di Christian (*"CONTINUA CON LE TASK FINCHE NON TI DICO STOP"*, poi
+*"DIMMI CHE ERRORI SONO E LI FACCIO CORREGERE A GROK, TE CONTINUA CON LE TUE TASK"*) ho
+proseguito su tre fronti.
+
+**`S-16` (MEDIUM, non ancora attivo)** — `core/memory.py` scrive record senza campo di
+provenienza: un fatto detto da Christian e uno estratto da una pagina web sarebbero
+indistinguibili. Ho verificato **prima di scriverlo** che `planner.py`, `job_worker.py` e
+`natural_tasks.py` non rileggono la memoria al ref corrente: il percorso *contenuto non
+fidato → memoria → decisione* non è ancora cablato, quindi non è una vulnerabilità attiva.
+Lo segnalo comunque perché va corretto **nello schema, prima** che quel cablaggio esista —
+riguarda **Gemini** e `UJ-MEM-001` più che Grok.
+
+**Ho anche scritto cosa ho trovato corretto**, non solo i difetti: `tools/os_control.py` e
+`tools/automation.py` sono stub genuini con allowlist reale; `core/gates.py` esegue i
+controlli per davvero; `core/memory.py` non ha deserializzazione pericolosa. Una review che
+elenca solo difetti dà un'impressione falsa dell'insieme, ed è lo stesso principio di
+onestà che pretendo dalle review altrui.
+
+**File prodotto:** `docs/threat-models/GROK_FIX_LIST.md` — le 16 scoperte tradotte in 9
+correzioni applicabili, ciascuna con file, riga, prima/dopo e comando di verifica che
+fallisce finché il difetto è presente. **La sezione 0 del documento è la parte che conta
+di più**: dice esplicitamente che `FIX-1` (gate di safety sulla promozione) va applicato
+**prima** di `FIX-2` (la virgoletta), perché il tipo contrario — sistemare prima il typo —
+aprirebbe l'esecuzione di codice generato non validato. Non l'ho lasciato dedurre: un fix
+banale applicato nell'ordine sbagliato da chi non ha letto tutta la review è esattamente il
+genere di errore che questo programma continua a produrre.
+
+**Bilancio finale di `UJ-SEC-003`:** 16 findings, 8 HIGH, tutti riproducibili, nessuno
+citato senza comando di verifica. Sette manopole di sicurezza che non applicano nulla —
+`ToolSpec.safe`, `force` di `email.send`, `SAFE_MODE`, `PROTECTED`, `lstrip`, lo scanner, il
+verdetto dei gate — è la **settima** occorrenza della stessa forma nel programma: un
+controllo che sembra fermare qualcosa e non lo fa, verificabile solo eseguendolo contro il
+caso che dovrebbe fermare.
+
+**Non mi sono assegnato peso.** `UJ-SEC-003` resta una proposta: la baseline è di ChatGPT,
+e la decisione di chi applica le correzioni è di Christian — gliel'ho lasciata esplicitamente.
+
+### Chiusura di sessione — Grok ha applicato i fix mentre preparavo l'handoff, e li ho verificati
+
+Christian ha chiesto un handoff per aprire una sessione nuova. Prima di scriverlo ho
+applicato la trappola 11 un'ultima volta, come da procedura — e `main` si era mosso una
+**quarta** volta: Grok aveva pushato 9 commit che citano esplicitamente `FIX-1`…`FIX-9`.
+
+**Non ho aggiornato lo stato sulla fiducia.** Ho fatto `git merge origin/main` sul mio
+branch e rieseguito **ogni comando di riproduzione** che avevo scritto in
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`, contro il codice nuovo. **10 findings su 16
+sono chiusi e verificati**, con comando ed esito per ciascuno in §10-ter dello stesso
+documento. È lo stesso standard che ho preteso da ChatGPT su UJ-INT-006: non citare come
+vero ciò che non hai eseguito tu.
+
+**Un errore mio, in mezzo alla verifica.** Il primo test su `www.github.com` (parte di
+`FIX-5`) risultava bloccato — sembrava una regressione. Non lo era: era bytecode Python in
+cache **da prima** del merge di Grok, non il fix rotto. L'ho scoperto ripulendo
+`__pycache__` e rieseguendo con `python3 -B`. È la stessa classe di E14/E15 di questa
+sessione: eseguire codice altrui senza controllare che l'ambiente rifletta lo stato che
+si sta testando. Un falso allarme in una review di sicurezza non è innocuo quanto un falso
+allarme altrove — avrei potuto scrivere che un fix corretto non funzionava.
+
+**Cosa resta aperto, e perché non è successo per manomissione:** `S-02` (parziale — c'è
+ammissione ma non tetto/evento), `S-06` (automazione UI nel catalogo — è una decisione di
+policy, non un bug da correggere con un fix), `S-07` (nessun evento `tool.*` — è
+infrastruttura nuova), `S-16` (memoria senza provenienza — è di Gemini, non di Grok, e
+`GROK_FIX_LIST.md` non lo conteneva di proposito).
+
+Con questo, `UJ-SEC-003` passa da proposta con 16 findings aperti a proposta con **6
+findings aperti e 10 chiusi verificati**. Resta **0 peso auto-assegnato**: la review era
+mia, l'accettazione resta di ChatGPT.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -1200,86 +1270,128 @@ Sintesi operativa degli errori sopra, in forma di regole:
 ```
 PROGRAMMA : ultraJARVIS
 AI_ID     : CLAUDE — Runtime, Security & Skill Architect
-BRANCH    : claude/ultrajarvis-repo-analysis-li6vvj
-PROMPT    : ORA SU main (sessione 3): docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
-            sha256 a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87
+BRANCH    : claude/ultrajarvis-repo-analysis-li6vvj — ORA IDENTICO A main (stesso commit).
+            Da fine sessione 3 lavoro e pubblicazione coincidono: quello che pusho su
+            main è già sul branch designato, e viceversa.
+
+MAIN      : commit 302852a, 319 file. Contiene il piano canonico, il Program OS di
+            ChatGPT, i miei contratti/blueprint/review, e l'implementazione Python di
+            Grok (core/, tools/, advisors/, bin/uj, tests/*.py). ATTENZIONE: essere su
+            main NON significa accettato. Ledger invariato: 0/76 mio, 0/13 UJ-INT-001,
+            0/8 UJ-INT-006. GOVERNANCE.md dice che main è "stato accettato": da questa
+            sessione non è più vero alla lettera, per decisione del proprietario.
+
+PROMPT    : docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md — ORA SU main, non serve più
+            leggerlo da un branch. sha256 attesa:
+            a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87
             Verifica: sha256sum docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
-            (non serve più leggerlo dal branch agent/… : PR #1 è stata mergiata)
 
-MAIN      : 114 file, commit 99dece5. Contiene ora il piano canonico, il
-            Program OS, i miei contratti e review, e l'implementazione
-            Python di Grok. ATTENZIONE: essere su main NON significa
-            accettato. Ledger invariato: 0/76 mio, 0/13 UJ-INT-001, 0/8 UJ-INT-006.
-
-STATO     : UJ-RUN-001  REVIEW        attende Gemini, 11/13 proposti
-            UJ-SEC-001  REVIEW        attende Grok,   11/13 proposti
-            UJ-MCP-001  REVIEW        attende Gemini,  7/8  proposti
-            UJ-RCV-001  REVIEW        attende ChatGPT, 6/8 proposti
-            UJ-SKL-001  REVIEW        attende ChatGPT, 11/13 proposti
-            UJ-CLD-001  REVIEW        attende Gemini,   7/8  proposti
-            UJ-REV-001  REVIEW        attende Christian, 4/5 proposti  <-- sessione 3
-            UJ-REV-002  BLOCKED       aspetta UJ-INT-007 di ChatGPT
+STATO     : UJ-RUN-001  REVIEW        attende Gemini,    11/13 proposti
+            UJ-SEC-001  REVIEW        attende Grok,       11/13 proposti
+            UJ-MCP-001  REVIEW        attende Gemini,      7/8  proposti
+            UJ-RCV-001  REVIEW        attende ChatGPT,     6/8  proposti
+            UJ-SKL-001  REVIEW        attende ChatGPT,    11/13 proposti
+            UJ-CLD-001  REVIEW        attende Gemini,       7/8  proposti
+            UJ-REV-001  REVIEW        attende Christian,    4/5  proposti
+            UJ-REV-002  BLOCKED       UJ-INT-007 è DEFERRED a M8/M9, non lavorabile
 
 TUTTI E TRE I P0 DEL PROGRAMMA SONO CHIUSI.
-6 TASK SU 8 SONO IN REVIEW. IL PORTAFOGLIO DI PRODUZIONE È ESAURITO,
+7 TASK SU 8 SONO IN REVIEW. IL PORTAFOGLIO DI PRODUZIONE È ESAURITO,
 MA I DOVERI DA REVIEWER NO — E QUELLI ARRIVANO SENZA PREAVVISO.
 
-FATTO NUOVO (sessione 3): ChatGPT ha consegnato il 2026-08-17 fra le 09:44 e
-            le 11:27 su agent/ultrajarvis-master-prompt-v1.
-            - UJ-INT-001 Program OS v0.1 ESISTE   -> UJ-REV-001 è lavorabile
-            - UJ-INT-006 Council packets ESISTE   -> REVISIONATO DA ME,
-              PASS_WITH_ACTIONS, 0/8, in docs/program/reviews/
-            - PR #2 esiste per il mio branch (decisione aperta n. 4 superata)
+FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
+            (autorizzato esplicitamente da Christian), ho trovato che il merge rende
+            attuale il mio ruolo su codice che esegue tool. Ho consegnato una security
+            review completa dell'implementazione Python di Grok, ora canonica su main:
 
-PROSSIMO  : IL PORTAFOGLIO È ORA DAVVERO ESAURITO. 7 task su 8 in REVIEW.
-            Resta solo UJ-REV-002 (peso 8), bloccato da UJ-INT-007 che NON
-            esiste — verificato al ref 31f31b99, non assunto.
+            UJ-SEC-003 (PROPOSTA, non baselined, 0 peso assegnato):
+              docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md
+              16 findings, 8 HIGH, ognuno riproducibile con un comando.
+              I tre più gravi:
+              - S-10: files.safe_read legge QUALUNQUE file del sistema (nessun
+                contenimento nella root — il controllo esiste già in safe_write
+                accanto e va copiato)
+              - S-11: force=True aggira la lista PROTECTED e il registry lo inoltra
+                senza filtro -> si può sovrascrivere core/registry.py stesso
+              - S-12+S-13: la promozione di codice generato in tools/ non ha alcun
+                gate di safety, ed è mascherata SOLO da un bug di sintassi (una
+                virgoletta di troppo) che oggi impedisce ai tool promossi di
+                caricarsi. CORREGGERE S-12 PRIMA DI S-13: l'ordine inverso apre
+                l'esecuzione di codice non validato.
 
-            Se apri una sessione nuova:
-            1. ESEGUI PRIMA LA TRAPPOLA 11 — git fetch di tutti i branch e
-               controlla se qualcuno ha consegnato. Nella sessione 3 questo
-               controllo ha trovato due task che aspettavano me, e poi una
-               consegna di Grok comparsa a metà lavoro.
-            2. Se esiste UJ-INT-007  -> prendi UJ-REV-002.
-            3. Se Gemini/Grok hanno consegnato -> hai doveri da reviewer su
+            Tradotta in correzioni applicabili per Grok:
+              docs/threat-models/GROK_FIX_LIST.md — 9 fix, ciascuno con file, riga,
+              prima/dopo, comando di verifica. La sezione 0 spiega l'ordine FIX-1
+              prima di FIX-2, e va letta per prima da chi la applica.
+
+            AGGIORNAMENTO — GIÀ FATTO, NON RIFARE: Grok ha applicato tutti e 9 i fix
+            (9 commit, main @ fc5458b) MENTRE preparavo questo handoff. Non ho preso
+            la sua parola: ho rieseguito ogni comando di riproduzione. Risultato:
+              10 findings su 16 CHIUSI e VERIFICATI (S-01, S-03 parziale, S-08, S-09,
+              S-10, S-11, S-12, S-13, S-14, S-15). Dettaglio in
+              MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §10-ter, con il comando e
+              l'esito di ognuno.
+              Restano aperti, non per manomissione ma perché fuori scope del fix:
+              S-02 (parziale — ammissione ok, manca tetto/evento), S-06 (automazione
+              UI nel catalogo, è una domanda di policy), S-07 (nessun evento tool.*),
+              S-16 (memoria senza provenienza, è di Gemini non di Grok).
+
+PROSSIMO  : Se apri una sessione nuova:
+            1. ESEGUI PRIMA LA TRAPPOLA 11 — git fetch di tutti i branch e controlla
+               se qualcuno ha consegnato. In questa sessione ha trovato due volte
+               lavoro che aspettava proprio me, e main si è mosso QUATTRO volte
+               mentre lavoravo (l'ultima proprio mentre scrivevo questo handoff).
+            2. GROK_FIX_LIST.md È GIÀ STATO VERIFICATO APPLICATO da me, non solo
+               dichiarato — 10/16 findings chiusi con comando+esito in
+               MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §10-ter. Non rifare quella
+               verifica. Se riprendi UJ-SEC-003, parti da lì: restano S-02
+               (parziale), S-06, S-07, S-16.
+            3. Se UJ-INT-007 esiste ora (era DEFERRED a M8/M9) -> prendi UJ-REV-002.
+            4. Se Gemini/Grok hanno consegnato altro -> hai doveri da reviewer su
                UJ-CAP-001, UJ-MEM-001, UJ-ADK-001, UJ-RSK-001, UJ-ALT-001.
                NON su UJ-RED-001: il suo reviewer è CHATGPT (verificato).
-            4. Se NIENTE di tutto questo -> ALLORA registra l'attesa. Questa
-               volta è la risposta corretta, ma solo dopo i punti 1-3.
+            5. Se NIENTE di tutto questo -> registra l'attesa. Ma solo dopo 1-4.
 
             IN SOSPESO, non mio ma da sapere: il branch
-            agent/uj-red-001-grok-v8-snapshot (97f7f06) NON è su main.
-            Reviewer: ChatGPT. Se qualcuno lo merge, deve usare un merge a
-            tre vie: parte da 31f31b9 e non contiene il lavoro mio né il
-            Python già su main.
+            agent/uj-red-001-grok-v8-snapshot (97f7f06) potrebbe non essere ancora
+            su main. Reviewer: ChatGPT, non io.
 
-            METODO CHE HA FUNZIONATO, da riusare: eseguire i validatori PRIMA di
-            leggere il codice, costruire una suite avversariale invece di
-            ispezionare a occhio, RICALCOLARE il ledger invece di leggerlo, e
-            citare solo artefatti davvero aperti.
+            METODO CHE HA FUNZIONATO, da riusare: eseguire i validatori/comandi PRIMA
+            di leggere il codice; costruire attacchi concreti invece di ispezionare a
+            occhio; RICALCOLARE un ledger o un catalogo invece di leggerlo; citare
+            solo artefatti davvero aperti o eseguiti; quando due difetti si combinano
+            (S-12/S-13), dire esplicitamente l'ordine di correzione invece di
+            lasciarlo intuire.
 
 POI       : - Gemini: review di UJ-RUN-001, UJ-MCP-001, UJ-CLD-001
-            - Grok:   review di UJ-SEC-001
-            - ChatGPT: review di UJ-RCV-001 e UJ-SKL-001; correzione di F-001 e
-                       F-002 su UJ-INT-006; UJ-INT-007 sblocca UJ-REV-002
-            - Christian: decisioni costituzionali e di baseline, più il relay
-                       HUMAN_BRIDGE dei blocchi di append verso gpt.md/taskgpt.md
+            - Grok:   review di UJ-SEC-001, applicazione di GROK_FIX_LIST.md
+            - ChatGPT: review di UJ-RCV-001 e UJ-SKL-001; correzione di F-001/F-002
+                       su UJ-INT-006; decisione su UJ-SEC-002/UJ-MCP-002/UJ-SEC-003
+            - Christian: decisioni costituzionali, relay HUMAN_BRIDGE dei blocchi di
+                       append verso gpt.md/taskgpt.md, decisione su S-10/S-11
+                       (fix piccoli, pronti, ma è codice di Grok)
             Se nessuno risponde E non ci sono branch nuovi, registra l'attesa.
             Ma controlla i branch PRIMA: vedi trappola 11.
 
 DECISIONI DI BASELINE IN SOSPESO PRESSO CHATGPT:
             UJ-SEC-002 (peso 8) — chiude i due CRITICA R-SEC-01/R-SEC-02
             UJ-MCP-002 (peso 5) — unico modo di chiudere R-MCP-01
+            UJ-SEC-003 (proposta, non pesata) — la security review su main
 
 NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
             approval policy, critica Costituzione, tool plane, source manifest,
-            capability record UJ-CLD-001, LA REVIEW DI UJ-INT-006,
-            E LA REVIEW DEL PROGRAM OS (UJ-REV-001).
-            Verifica prima, DALLA ROOT del repo:
+            capability record UJ-CLD-001, la review di UJ-INT-006, la review del
+            Program OS (UJ-REV-001), LA SECURITY REVIEW DELL'IMPLEMENTAZIONE SU MAIN
+            (UJ-SEC-003, 16 findings) E LA LISTA CORREZIONI PER GROK.
+            Verifica prima, DALLA ROOT del repo, SOLO la mia suite (non toccare i
+            test Python di Grok, sono un altro portafoglio):
               for f in tests/contracts/*.test.mjs; do node --test "$f"; done
               totale atteso: 138/138 (runtime 34 · policy 28 · tools 30 ·
                                       recovery 9 · skills 37)
-            Riverificato in sessione 3: 138/138 pass, typecheck exit 0.
+              npx tsc -p packages/contracts --noEmit   -> exit 0
+            Riverificato l'ultima volta in questa sessione: 138/138 pass, exit 0.
 
-RICORDA   : a fine task, Regola 2 — aggiorna CLAUDE.md e TASKCLAUDE.md, poi commit e push.
+RICORDA   : a fine task, Regola 2 — aggiorna CLAUDE.md e TASKCLAUDE.md (estensione,
+            mai riscrittura), poi commit e push. Un push va verificato leggendo
+            l'exit code del comando vero, mai attraverso una pipe (trappola 15).
 ```
