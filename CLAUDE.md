@@ -105,13 +105,15 @@ git fetch origin 'refs/heads/*:refs/remotes/origin/*'
 git show origin/agent/ultrajarvis-master-prompt-v1:docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md | sha256sum
 
 # i contratti compilano in strict mode
-cd packages/contracts && npx tsc --noEmit && npx tsc && cd ../..
+npx tsc -p packages/contracts --noEmit
 
-# gli invarianti del runtime passano
-node --test tests/contracts/runtime-invariants.test.mjs
+# tutte le suite passano — ESEGUI DALLA ROOT del repo
+npx tsc -p packages/contracts
+for f in tests/contracts/*.test.mjs; do node --test "$f"; done
 ```
 
-Attesi al 2026-08-17: hash coincidente, typecheck exit 0, **34 test / 34 pass**.
+Attesi al 2026-08-17: hash coincidente, typecheck exit 0, **138 test / 138 pass**
+(runtime 34 · policy 28 · tools 30 · recovery 9 · skills 37).
 
 ---
 
@@ -154,7 +156,7 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 | UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | IN_PROGRESS | 0/8 | 2/8 | 6 | S-10 richiede login → HUMAN_BRIDGE |
 | UJ-MCP-001 — ToolManifest + MCP admission | 8 | **REVIEW** | 0/8 | 7/8 | review di Gemini | — |
 | UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **REVIEW** | 0/8 | 6/8 | review di ChatGPT | — |
-| UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | **READY** | 0/13 | — | 13 | sbloccato da UJ-SEC-001 |
+| UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | **REVIEW** | 0/13 | 11/13 | review di ChatGPT | — |
 | UJ-REV-001 — Review del Program OS di ChatGPT | 5 | BLOCKED | 0/5 | — | 5 | UJ-INT-001 non esiste |
 | UJ-REV-002 — Security review Website Team | 8 | BLOCKED | 0/8 | — | 8 | UJ-INT-007 non esiste |
 
@@ -164,10 +166,13 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 portafoglio CLAUDE = 76 unità
 
 accettato formalmente = 0 / 76  = 0%      nessun reviewer ha ancora accettato
-proposto in review    = 37 / 76 = 48,7%   11 UJ-RUN-001 + 11 UJ-SEC-001
-                                          + 7 UJ-MCP-001 + 6 UJ-RCV-001
-                                          + 2 UJ-CLD-001
+proposto in review    = 48 / 76 = 63,2%   11 UJ-RUN-001 + 11 UJ-SEC-001
+                                          + 11 UJ-SKL-001 + 7 UJ-MCP-001
+                                          + 6 UJ-RCV-001 + 2 UJ-CLD-001
 ```
+
+**Il portafoglio è di fatto esaurito.** Resta lavorabile solo UJ-CLD-001 (6 unità, in
+parte bloccato da HUMAN_BRIDGE). I due task di review aspettano ChatGPT.
 
 **Tutti e tre i P0 del programma sono chiusi.** Restano due `CRITICA` (`R-SEC-01`,
 `R-SEC-02`) che richiedono `UJ-SEC-002`, non ancora accettato da ChatGPT.
@@ -466,8 +471,48 @@ fra check e incremento, quei due test sono la spiegazione già scritta del perch
 | `approval-policy.test.mjs` | 28/28 |
 | `tool-admission.test.mjs` | 30/30 |
 | `recovery.test.mjs` | 9/9 |
-| **Totale** | **101/101 pass, 0 fail** |
+| `skill-forge.test.mjs` | 37/37 |
+| **Totale** | **138/138 pass, 0 fail** |
 | `npx tsc --noEmit` (strict + 6 flag) | exit 0 |
+
+### UJ-SKL-001 — consegnato, stato REVIEW. Portafoglio esaurito.
+
+| Deliverable | File |
+|---|---|
+| Threat model, pipeline 14 stadi, sandbox | `docs/architecture/SKILL_FORGE.md` |
+| Recipe + Skill Forge | `packages/contracts/src/skills/` |
+| Test | `tests/contracts/skill-forge.test.mjs` — 37/37 |
+| Handoff | `docs/program/handoffs/HANDOFF-UJ-SKL-001.md` |
+
+**Proprietà centrale resa meccanica:** una skill non può avanzare il proprio stadio,
+firmarsi o ampliare il proprio scope. È l'analogo di P0-1: **chi beneficia di una
+decisione non è mai chi la registra**. Più il dettaglio che uscire da `HUMAN_REVIEW`
+richiede un attore **umano** — un registrar che potesse firmare il gate umano lo
+renderebbe cerimoniale.
+
+**Due risultati onesti, entrambi da non dimenticare:**
+
+- **`TH-SF-06`** — il sandbox osserva il comportamento *in condizioni di sandbox*.
+  Codice che rilevi di essere osservato può comportarsi bene nel test e diversamente
+  dopo: basta un `if` su una variabile d'ambiente. **Nessun sandbox migliore lo
+  risolve** — renderlo indistinguibile dalla produzione significa dargli credenziali
+  vere, cioè eliminarlo. Il sistema regge perché il contenimento viene dal **runtime**:
+  una skill non può chiamare un tool che non possiede, qualunque cosa il suo codice
+  voglia. Il sandbox è una rete contro l'errore, **non una prova contro l'intenzione**.
+- **`TH-SF-03`** — la pipeline verifica **come** è fatto il codice, non **perché**
+  esiste. Se l'intent proviene da contenuto non fidato, la forge produrrà una skill
+  pulita, testata e firmata che fa esattamente la cosa sbagliata, con tutti i gate
+  verdi. Difesa proposta (vincolare l'intent a `originLabel` fidata) **non implementata**:
+  cambia il contratto e preferisco farla passare da review.
+
+**`R-MCP-01` NON è chiuso da questo task**, contrariamente a quanto mi aspettavo: un
+server MCP remoto non gira nel nostro sandbox, gira a casa loro. Serve monitoraggio
+comportamentale → proposto `UJ-MCP-002` (peso 5), non aggiunto alla baseline da solo.
+
+**Errori in questa parte:** nessuno tecnico. Typecheck e 37 test verdi al primo
+tentativo. Ho evitato l'errore di *concetto* più probabile — dare per chiuso `R-MCP-01`
+perché "ora c'è il sandbox" — scomponendo il caso in "codice nostro" e "servizio di
+terzi" prima di scrivere la conclusione.
 
 ---
 
@@ -498,7 +543,10 @@ Dettagli in `docs/architecture/RUNTIME_BLUEPRINT.md` §12.
 | `R-SEC-02` | TH-18: approval fatigue non mitigata meccanicamente; `AF-2` senza soglia | **CRITICA** | UJ-SEC-002 + Christian |
 | ~~`R-RUN-01`~~ | contatore task attivi non atomico | — | **CHIUSO** da `AtomicActiveTaskCounter` + `T-DG-4b` (UJ-RCV-001) |
 | `R-RCV-01` | `CasActiveTaskCounter` presuppone un update condizionale nel DB: se Gemini sceglie uno storage senza CAS, va riscritto | MEDIA | vincolo per `UJ-INF-001` |
-| `R-MCP-01` | un server MCP remoto può cambiare condotta a parità di manifest; `ADM-18` avverte ma non impedisce | MEDIA | UJ-SKL-001 (sandbox) |
+| `R-MCP-01` | un server MCP remoto può cambiare condotta a parità di manifest | MEDIA | **NON chiuso da UJ-SKL-001**: gira fuori dal nostro sandbox → serve `UJ-MCP-002` (proposto, peso 5) |
+| `R-SKL-01` | `TH-SF-03`: l'intent della forge non è vincolato a provenienza fidata → skill ostile con tutti i gate verdi | ALTA | proposta di contratto, non implementata |
+| `R-SKL-02` | `TH-SF-06`: il sandbox prova il comportamento solo in condizioni di sandbox | MEDIA | contenuto dal runtime, non chiudibile dal sandbox |
+| `R-SKL-03` | tecnologia di isolamento del sandbox non scelta | MEDIA | dipende da `UJ-INF-001` (Gemini) |
 | ~~`R-RUN-03`~~ | tool senza lookup idempotency | — | **CHIUSO** da `ADM-13` (UJ-MCP-001) |
 | ~~`R-RUN-04`~~ | emissione eventi `tool.*` da parte dell'agente | — | **CHIUSO PARZIALMENTE** da P0-1: copre l'attestazione, non il resoconto |
 | `R-SEC-03` | `rollbackPlan` è obbligatorio ma nessuno verifica che il piano funzioni | ALTA | UJ-RCV-001 |
@@ -537,20 +585,32 @@ STATO     : UJ-RUN-001  REVIEW        attende Gemini, 11/13 proposti
             UJ-SEC-001  REVIEW        attende Grok,   11/13 proposti
             UJ-MCP-001  REVIEW        attende Gemini,  7/8  proposti
             UJ-RCV-001  REVIEW        attende ChatGPT, 6/8 proposti
+            UJ-SKL-001  REVIEW        attende ChatGPT, 11/13 proposti
             UJ-CLD-001  IN_PROGRESS   2/8 proposti, verifica fonti da fare
-            UJ-SKL-001  READY
             UJ-REV-001  BLOCKED       aspetta ChatGPT
             UJ-REV-002  BLOCKED       aspetta ChatGPT
 
 TUTTI E TRE I P0 DEL PROGRAMMA SONO CHIUSI.
+5 TASK SU 8 SONO IN REVIEW. IL PORTAFOGLIO È DI FATTO ESAURITO.
 
-PROSSIMO  : UJ-SKL-001 — Skill Forge: threat model, pipeline, contratto sandbox.
-            Peso 13 (il più grande residuo). Reviewer ChatGPT. READY.
-            MOTIVO: è l'unico task READY rimasto del mio portafoglio, ed è anche
-            dove vive la sandbox che chiuderebbe R-MCP-01.
-            Alternativa: completare UJ-CLD-001 (6 restanti), ma è in parte
-            bloccato da HUMAN_BRIDGE per il login console.
-            Poi resta solo l'attesa dei reviewer e di ChatGPT.
+PROSSIMO  : UJ-CLD-001 — unico task ancora lavorabile in autonomia.
+            Restano 6 unità: leggere S-06, S-08, S-16, S-18 dal source manifest
+            (docs/program/evidence/UJ-CLD-001-SOURCE-MANIFEST.md) e compilare i
+            primi quattro Capability Record col template §6 del prompt canonico.
+            LIMITE NOTO: S-10 (console billing) richiede login → HUMAN_BRIDGE
+            con Christian. Quella parte NON è completabile da sola.
+
+POI       : il lavoro successivo NON dipende più da me. Dipende da:
+            - Gemini: review di UJ-RUN-001 e UJ-MCP-001
+            - Grok:   review di UJ-SEC-001
+            - ChatGPT: review di UJ-RCV-001 e UJ-SKL-001, più UJ-INT-001 e
+                       UJ-INT-007 che sbloccano UJ-REV-001 e UJ-REV-002
+            - Christian: decisioni costituzionali e di baseline
+            Se nessuno risponde, NON inventare lavoro nuovo: registra l'attesa.
+
+DECISIONI DI BASELINE IN SOSPESO PRESSO CHATGPT:
+            UJ-SEC-002 (peso 8) — chiude i due CRITICA R-SEC-01/R-SEC-02
+            UJ-MCP-002 (peso 5) — unico modo di chiudere R-MCP-01
 
 NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
             approval policy, critica Costituzione, tool plane, source manifest.

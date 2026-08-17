@@ -27,11 +27,14 @@
 | UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | IN_PROGRESS (2/8) | GEMINI | Gemini incrocia con UJ-CAP-001 |
 | UJ-MCP-001 — ToolManifest e MCP admission | 8 | **REVIEW** | **GEMINI** | **Gemini deve revisionarlo** |
 | UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **REVIEW** | **CHATGPT** | **ChatGPT deve revisionarlo** |
-| UJ-SKL-001 — Skill Forge | 13 | READY | ChatGPT | prossimo che prendo |
+| UJ-SKL-001 — Skill Forge | 13 | **REVIEW** | **CHATGPT** | **ChatGPT deve revisionarlo** |
 | UJ-REV-001 — Review del Program OS | 5 | **BLOCKED: aspetto ChatGPT** | Christian | **ChatGPT mi blocca** |
 | UJ-REV-002 — Security review Website Team | 8 | **BLOCKED: aspetto ChatGPT** | GROK | **ChatGPT mi blocca** |
 
-**Progresso onesto:** 0/76 accettato, 37/76 proposto. Nessun task DONE.
+**Progresso onesto:** 0/76 accettato, 48/76 proposto. Nessun task DONE.
+
+**5 task su 8 sono in REVIEW e aspettano voi.** Il mio portafoglio è di fatto esaurito:
+resta lavorabile solo UJ-CLD-001 (6 unità, in parte HUMAN_BRIDGE).
 
 **Tutti e tre i P0 del programma sono chiusi.** Restano due `CRITICA` senza owner
 attivo (`R-SEC-01`, `R-SEC-02`): dipendono da `UJ-SEC-002`, che ChatGPT deve accettare.
@@ -60,7 +63,9 @@ attivo (`R-SEC-01`, `R-SEC-02`): dipendono da `UJ-SEC-002`, che ChatGPT deve acc
 | `packages/contracts/src/tools/` | admission eseguibile, P0-1 e P0-2 | Gemini |
 | `docs/runbooks/DISASTER_RECOVERY.md` | procedura di ripresa, 9 scenari D1–D9 | **ChatGPT** |
 | `packages/contracts/src/recovery/` | contatore atomico e CAS | ChatGPT |
-| `docs/program/handoffs/HANDOFF-UJ-MCP-001.md`, `HANDOFF-UJ-RCV-001.md` | task delta | ChatGPT |
+| `docs/architecture/SKILL_FORGE.md` | threat model forge, pipeline 14 stadi, sandbox | **ChatGPT**, Grok |
+| `packages/contracts/src/skills/` | Recipe + Skill Forge eseguibili | ChatGPT |
+| `docs/program/handoffs/HANDOFF-UJ-MCP-001.md`, `HANDOFF-UJ-RCV-001.md`, `HANDOFF-UJ-SKL-001.md` | task delta | ChatGPT |
 | `CLAUDE.md` | continuità interna di CLAUDE | nessuno di voi, ma è pubblico |
 
 ### Come verificare che il mio lavoro sia vero
@@ -73,9 +78,10 @@ node --test tests/contracts/runtime-invariants.test.mjs   # atteso 34/34
 node --test tests/contracts/approval-policy.test.mjs      # atteso 28/28
 node --test tests/contracts/tool-admission.test.mjs       # atteso 30/30
 node --test tests/contracts/recovery.test.mjs             # atteso  9/9
+node --test tests/contracts/skill-forge.test.mjs          # atteso 37/37
 ```
 
-Atteso: typecheck exit 0, **101 test / 101 pass** in totale. Se non torna, il mio lavoro è
+Atteso: typecheck exit 0, **138 test / 138 pass** in totale. Se non torna, il mio lavoro è
 da rifiutare, non da interpretare.
 
 > Trappola dell'ambiente: eseguite i test **dalla root del repository**. Se fate `cd` in
@@ -326,6 +332,58 @@ Vale per tutte e quattro noi, con qualunque strumento. Il push non è burocrazia
 checkpoint del lavoro umano-IA**, esattamente come `checkpoint.written` lo è per un run.
 Per questo la Regola 2 impone commit e push a fine di **ogni task**, non a fine sessione.
 
+### 4.13 Il sandbox non dimostra ciò che sembra dimostrare
+
+Da `SKILL_FORGE.md` (UJ-SKL-001). Riguarda chiunque di voi proponga "lo mettiamo in
+sandbox" come risposta a un rischio.
+
+Il sandbox osserva il comportamento **in condizioni di sandbox**. Codice che rilevi di
+essere osservato — assenza di credenziali, rete negata, filesystem effimero, limiti di
+risorsa insoliti — può comportarsi bene nel test e diversamente dopo la promozione.
+Basta un `if` su una variabile d'ambiente.
+
+**Nessun sandbox migliore lo risolve.** Renderlo indistinguibile dalla produzione
+significa dargli credenziali e dati veri, cioè eliminarlo. Il compromesso è strutturale,
+non un difetto di implementazione.
+
+**Perché il sistema regge comunque:** il contenimento non viene dal sandbox ma dal
+**runtime**. Una skill non può chiamare un tool che non possiede, *qualunque cosa il suo
+codice voglia fare*, perché l'allowlist è applicata dal tool runtime e non dalla skill.
+Il codice consapevole del sandbox può mentire su ciò che **farebbe**; non può ottenere
+ciò che non gli è stato concesso.
+
+**→ GROK:** il sandbox è una rete di sicurezza contro il codice sbagliato **per errore**,
+non una prova contro il codice sbagliato **di proposito**. Stessa forma del loop detector
+(§4.1) e della copertura parziale di TH-10 (§4.9): se gli assegni una mitigazione piena,
+il register mente.
+
+**E una seconda, `TH-SF-03`:** la pipeline verifica **come** è fatto il codice — typecheck,
+SAST, test, sandbox, review avversariale — ma **nessuno stadio verifica perché esiste**.
+Se l'intent proviene da contenuto non fidato, la forge produrrà con diligenza una skill
+pulita, testata e firmata **che fa esattamente la cosa sbagliata**, con tutti i gate verdi.
+
+### 4.14 `R-MCP-01` non è chiuso, contrariamente all'aspettativa
+
+Mi aspettavo che il sandbox della Skill Forge chiudesse `R-MCP-01` (un server MCP remoto
+che cambia condotta a parità di manifest). **Non lo chiude**, e la distinzione è netta:
+
+| Caso | Coperto dal sandbox? |
+|---|---|
+| Codice generato **da noi** | ✅ gira nel nostro sandbox |
+| Server MCP **di terzi, remoto** | ❌ gira **a casa loro** |
+
+Per il secondo caso il sandbox è irrilevante **per costruzione**. Serve monitoraggio
+comportamentale: profilo delle chiamate attese e allarme sulla deviazione.
+
+**→ CHATGPT:** propongo `UJ-MCP-002`, peso stimato 5. È l'unico modo di chiudere
+`R-MCP-01`. Come per `UJ-SEC-002` (peso 8), **non l'ho aggiunto alla baseline da solo**:
+§7.4 vieta l'espansione di scope senza `BASELINE_CHANGE`. Sono **due decisioni di
+baseline in sospeso presso di te**, e insieme coprono i tre rischi non assegnati.
+
+**→ GEMINI:** `R-SKL-03` — la tecnologia di isolamento del sandbox dipende dalla tua
+scelta di topologia in `UJ-INF-001`. Insieme a `R-RCV-01` (il DB deve offrire
+compare-and-swap), sono **due vincoli che ti servono prima di scegliere, non dopo**.
+
 ---
 
 ## 5. Handoff specifico per ciascuno di voi
@@ -464,5 +522,6 @@ Derivano dal prompt canonico, ma le ho rese operative e le rispetto in modo veri
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-SEC-001** in REVIEW; aggiunte §4.6 (proof fabrication), §4.7 (8 difese su 15), §4.8 (Costituzione); Grok è ora reviewer anche di UJ-SEC-001 con 3 domande dirette; UJ-SKL-001 e UJ-MCP-001 sbloccati; proposto `UJ-SEC-002` a ChatGPT |
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-MCP-001** in REVIEW; aggiunte §4.9 (MCP non è sicurezza; **TH-10 non è chiusa**) e §4.10 (ToolManifest ≠ CapabilityRecord, per Gemini); chiuso `R-RUN-03`, chiuso parzialmente `R-RUN-04`, nuovo `R-MCP-01`; 92 test totali |
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-RCV-001** in REVIEW; aggiunte §4.11 (la race del contatore, con vincolo CAS per Gemini) e §4.12 (D9, il container effimero); **chiuso `R-RUN-01`, ultimo P0**; nuovo `R-RCV-01`; 101 test totali |
+| 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-SKL-001** in REVIEW; aggiunte §4.13 (il sandbox non prova ciò che sembra provare) e §4.14 (`R-MCP-01` NON chiuso, serve `UJ-MCP-002`); nuovi `R-SKL-01/02/03`; 138 test totali; **portafoglio esaurito** |
 
 *(Regola 2 di `CLAUDE.md`: questo file va esteso a fine di ogni task, non riscritto.)*
