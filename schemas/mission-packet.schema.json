@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ultrajarvis.local/schemas/mission-packet.schema.json",
+  "title": "ultraJARVIS MissionPacket",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mission_id",
+    "created_at",
+    "created_by",
+    "repository",
+    "title",
+    "objective",
+    "non_goals",
+    "inputs",
+    "constraints",
+    "data_class",
+    "allowed_modes",
+    "side_effect_limit",
+    "autonomy_ceiling",
+    "success_criteria",
+    "assigned_task_ids",
+    "delegation_card_ids",
+    "deadline",
+    "approval_policy_ref",
+    "budget",
+    "stop_conditions",
+    "status"
+  ],
+  "properties": {
+    "schema_version": { "const": "ultrajarvis.mission-packet/v1" },
+    "mission_id": { "type": "string", "pattern": "^UJ-MISSION-[A-Z0-9-]+$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "created_by": { "$ref": "#/$defs/party" },
+    "repository": { "$ref": "#/$defs/repository" },
+    "title": { "type": "string", "minLength": 3, "maxLength": 160 },
+    "objective": { "type": "string", "minLength": 10 },
+    "non_goals": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 3 }
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "constraints": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/constraint" }
+    },
+    "data_class": { "$ref": "#/$defs/dataClass" },
+    "allowed_modes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/providerMode" }
+    },
+    "side_effect_limit": { "$ref": "#/$defs/sideEffect" },
+    "autonomy_ceiling": { "enum": ["L0", "L1", "L2", "L3", "L4"] },
+    "success_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/criterion" }
+    },
+    "assigned_task_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/taskId" }
+    },
+    "delegation_card_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^UJ-CARD-[A-Z0-9-]+$" }
+    },
+    "deadline": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "format": "date-time" }
+      ]
+    },
+    "approval_policy_ref": { "type": "string", "minLength": 1 },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["incremental_cost_eur", "billing_allowed", "paid_api_allowed"],
+      "properties": {
+        "incremental_cost_eur": { "const": 0 },
+        "billing_allowed": { "const": false },
+        "paid_api_allowed": { "const": false }
+      }
+    },
+    "stop_conditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 3 }
+    },
+    "status": {
+      "enum": ["DRAFT", "READY", "IN_PROGRESS", "REVIEW", "BLOCKED", "COMPLETED", "CANCELLED"]
+    }
+  },
+  "$defs": {
+    "taskId": {
+      "type": "string",
+      "pattern": "^UJ-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{3}$"
+    },
+    "party": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ai_id", "product"],
+      "properties": {
+        "ai_id": {
+          "enum": ["CHATGPT", "CLAUDE", "GEMINI", "GROK", "AUXILIARY_AI", "CHRISTIAN"]
+        },
+        "product": { "type": "string", "minLength": 1 }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["full_name", "ref", "commit_sha"],
+      "properties": {
+        "full_name": { "const": "carnascialichristian-wq/ultraJARVIS" },
+        "ref": { "type": "string", "minLength": 1 },
+        "commit_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "sha256", "media_type", "data_class"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "media_type": { "type": "string", "minLength": 1 },
+        "data_class": { "$ref": "#/$defs/dataClass" }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["constraint_id", "classification", "text"],
+      "properties": {
+        "constraint_id": { "type": "string", "pattern": "^[A-Z]+-[0-9]{3}$" },
+        "classification": {
+          "enum": ["USER_CONSTRAINT", "VERIFIED_FACT", "OBSERVATION", "ASSUMPTION", "PROPOSAL", "UNKNOWN", "BLOCKER"]
+        },
+        "text": { "type": "string", "minLength": 3 }
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["criterion_id", "text", "verification"],
+      "properties": {
+        "criterion_id": { "type": "string", "pattern": "^SC-[0-9]{2}$" },
+        "text": { "type": "string", "minLength": 3 },
+        "verification": { "type": "string", "minLength": 3 }
+      }
+    },
+    "dataClass": { "enum": ["C0", "C1", "C2", "C3", "C4"] },
+    "providerMode": {
+      "enum": ["AUTO_VERIFIED", "HUMAN_BRIDGE", "MANUAL_TOOL", "EXPERIMENTAL_SANDBOX"]
+    },
+    "sideEffect": {
+      "enum": ["NONE", "INTERNAL_WRITE", "EXTERNAL_WRITE", "DESTRUCTIVE"]
+    }
+  }
+}
+

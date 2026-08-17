@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ultrajarvis.local/schemas/synthesis-packet.schema.json",
+  "title": "ultraJARVIS SynthesisPacket",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "synthesis_id",
+    "created_at",
+    "mission_id",
+    "integrator",
+    "repository",
+    "input_responses",
+    "accepted_parts",
+    "rejected_or_deferred_parts",
+    "contradictions",
+    "evidence",
+    "adr_candidates",
+    "task_ledger_delta",
+    "progress_snapshot",
+    "owner_decisions_required",
+    "reviews_required",
+    "new_risks",
+    "status",
+    "resume_point"
+  ],
+  "properties": {
+    "schema_version": { "const": "ultrajarvis.synthesis-packet/v1" },
+    "synthesis_id": { "type": "string", "pattern": "^UJ-SYNTHESIS-[A-Z0-9-]+$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "mission_id": { "type": "string", "pattern": "^UJ-MISSION-[A-Z0-9-]+$" },
+    "integrator": { "const": "CHATGPT" },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["full_name", "base_commit_sha", "output_ref"],
+      "properties": {
+        "full_name": { "const": "carnascialichristian-wq/ultraJARVIS" },
+        "base_commit_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "output_ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "input_responses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["response_id", "task_id", "artifact_ref", "sha256", "admission_status"],
+        "properties": {
+          "response_id": { "type": "string", "pattern": "^UJ-RESPONSE-[A-Z0-9-]+$" },
+          "task_id": { "$ref": "#/$defs/taskId" },
+          "artifact_ref": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "admission_status": { "enum": ["ADMITTED", "QUARANTINED", "REJECTED"] }
+        }
+      }
+    },
+    "accepted_parts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourcedPart" }
+    },
+    "rejected_or_deferred_parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_response_id",
+          "source_artifact_ref",
+          "summary",
+          "proof_refs",
+          "disposition",
+          "reason"
+        ],
+        "properties": {
+          "source_response_id": { "type": "string", "pattern": "^UJ-RESPONSE-[A-Z0-9-]+$" },
+          "source_artifact_ref": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 3 },
+          "proof_refs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "disposition": { "enum": ["REJECTED", "DEFERRED"] },
+          "reason": { "type": "string", "minLength": 3 }
+        }
+      }
+    },
+    "contradictions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["conflict_id", "record_refs", "classification", "resolution_path", "status"],
+        "properties": {
+          "conflict_id": { "type": "string", "pattern": "^C-[0-9]{3}$" },
+          "record_refs": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+          "classification": { "enum": ["CONTRADICTS", "OVERLAPS", "STALE", "INSUFFICIENT_EVIDENCE"] },
+          "resolution_path": { "enum": ["PRIMARY_EVIDENCE", "REVERSIBLE_EXPERIMENT", "OWNER_DECISION", "DEFER"] },
+          "status": { "enum": ["OPEN", "RESOLVED", "DEFERRED"] }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim_ref", "source_ref", "verified_at", "classification"],
+        "properties": {
+          "claim_ref": { "type": "string", "minLength": 1 },
+          "source_ref": { "type": "string", "minLength": 1 },
+          "verified_at": { "type": "string", "format": "date-time" },
+          "classification": { "enum": ["VERIFIED_FACT", "OBSERVATION", "EXPERIMENT_RESULT", "ASSUMPTION", "UNKNOWN"] }
+        }
+      }
+    },
+    "adr_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["adr_id", "title", "status", "artifact_ref"],
+        "properties": {
+          "adr_id": { "type": "string", "pattern": "^ADR-[0-9]{4}$" },
+          "title": { "type": "string", "minLength": 3 },
+          "status": { "enum": ["DRAFT", "PROPOSED", "DECISION_REQUIRED", "BLOCKED"] },
+          "artifact_ref": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "task_ledger_delta": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/taskDelta" }
+    },
+    "progress_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline_id", "accepted_weight", "total_weight", "remaining_weight", "percent"],
+      "properties": {
+        "baseline_id": { "type": "string", "minLength": 1 },
+        "accepted_weight": { "type": "integer", "minimum": 0 },
+        "total_weight": { "type": "integer", "minimum": 1 },
+        "remaining_weight": { "type": "integer", "minimum": 0 },
+        "percent": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "owner_decisions_required": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision_id", "question", "options", "default_safe_action"],
+        "properties": {
+          "decision_id": { "type": "string", "pattern": "^DEC-[A-Z0-9-]+$" },
+          "question": { "type": "string", "minLength": 3 },
+          "options": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+          "default_safe_action": { "type": "string", "minLength": 3 }
+        }
+      }
+    },
+    "reviews_required": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reviewer", "scope", "artifact_ref"],
+        "properties": {
+          "reviewer": { "enum": ["CLAUDE", "GEMINI", "GROK", "CHRISTIAN"] },
+          "scope": { "type": "string", "minLength": 3 },
+          "artifact_ref": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "new_risks": { "type": "array", "items": { "type": "string", "minLength": 3 } },
+    "status": { "enum": ["REVIEW", "BLOCKED"] },
+    "resume_point": { "type": "string", "minLength": 10 }
+  },
+  "$defs": {
+    "taskId": {
+      "type": "string",
+      "pattern": "^UJ-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{3}$"
+    },
+    "sourcedPart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_response_id", "source_artifact_ref", "summary", "proof_refs"],
+      "properties": {
+        "source_response_id": { "type": "string", "pattern": "^UJ-RESPONSE-[A-Z0-9-]+$" },
+        "source_artifact_ref": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 3 },
+        "proof_refs": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+      }
+    },
+    "taskDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "previous_status", "proposed_status", "accepted_weight_before", "proposed_accepted_weight", "proof_refs"],
+      "properties": {
+        "task_id": { "$ref": "#/$defs/taskId" },
+        "previous_status": { "type": "string", "minLength": 1 },
+        "proposed_status": { "type": "string", "minLength": 1 },
+        "accepted_weight_before": { "type": "integer", "minimum": 0 },
+        "proposed_accepted_weight": { "type": "integer", "minimum": 0 },
+        "proof_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}

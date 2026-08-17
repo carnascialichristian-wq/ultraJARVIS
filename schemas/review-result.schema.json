@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ultrajarvis.local/schemas/review-result.schema.json",
+  "title": "ultraJARVIS ReviewResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "review_id",
+    "created_at",
+    "repository",
+    "task_id",
+    "task_owner",
+    "reviewer",
+    "artifacts_reviewed",
+    "outcome",
+    "criteria",
+    "findings",
+    "policy_checks",
+    "accepted_weight_before",
+    "accepted_weight_after",
+    "proposed_task_status",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": { "const": "ultrajarvis.review-result/v1" },
+    "review_id": { "type": "string", "pattern": "^UJ-REVIEW-[A-Z0-9-]+$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["full_name", "commit_sha"],
+      "properties": {
+        "full_name": { "const": "carnascialichristian-wq/ultraJARVIS" },
+        "commit_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
+    "task_id": { "$ref": "#/$defs/taskId" },
+    "task_owner": { "enum": ["CHATGPT", "CLAUDE", "GEMINI", "GROK", "AUXILIARY_AI"] },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ai_id", "product"],
+      "properties": {
+        "ai_id": { "enum": ["CHATGPT", "CLAUDE", "GEMINI", "GROK", "CHRISTIAN"] },
+        "product": { "type": "string", "minLength": 1 }
+      }
+    },
+    "artifacts_reviewed": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref", "sha256"],
+        "properties": {
+          "ref": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "outcome": { "enum": ["PASS", "PASS_WITH_ACTIONS", "FAIL"] },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["criterion_id", "result", "evidence_refs", "note"],
+        "properties": {
+          "criterion_id": { "type": "string", "pattern": "^AC-[0-9]{2}$" },
+          "result": { "enum": ["PASS", "FAIL", "NOT_REVIEWED"] },
+          "evidence_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "note": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["finding_id", "severity", "description", "required_action"],
+        "properties": {
+          "finding_id": { "type": "string", "pattern": "^F-[0-9]{3}$" },
+          "severity": { "enum": ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+          "description": { "type": "string", "minLength": 3 },
+          "required_action": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "policy_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["zero_cost", "data_class", "side_effect", "secret_handling", "consumer_ui_automation"],
+      "properties": {
+        "zero_cost": { "enum": ["PASS", "FAIL", "NOT_APPLICABLE"] },
+        "data_class": { "enum": ["PASS", "FAIL", "NOT_APPLICABLE"] },
+        "side_effect": { "enum": ["PASS", "FAIL", "NOT_APPLICABLE"] },
+        "secret_handling": { "enum": ["PASS", "FAIL", "NOT_APPLICABLE"] },
+        "consumer_ui_automation": { "enum": ["PASS", "FAIL", "NOT_APPLICABLE"] }
+      }
+    },
+    "accepted_weight_before": { "type": "integer", "minimum": 0 },
+    "accepted_weight_after": { "type": "integer", "minimum": 0 },
+    "proposed_task_status": { "enum": ["IN_PROGRESS", "REVIEW", "DONE", "BLOCKED"] },
+    "next_action": { "type": "string", "minLength": 3 }
+  },
+  "$defs": {
+    "taskId": {
+      "type": "string",
+      "pattern": "^UJ-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{3}$"
+    }
+  }
+}

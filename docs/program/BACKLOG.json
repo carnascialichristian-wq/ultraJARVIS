@@ -1,0 +1,2489 @@
+{
+  "schema_version": "ultrajarvis.backlog/v1",
+  "program": "ultraJARVIS",
+  "generated_at": "2026-08-17T08:10:13.713Z",
+  "source_ref": "agent/ultrajarvis-master-prompt-v1",
+  "scope_note": "The four-AI initial portfolio is baselined at 311 accepted-weight units. Meta-bootstrap and zero-weight auxiliary candidates are tracked separately. The total lifetime scope of ultraJARVIS remains UNKNOWN.",
+  "baselines": [
+    {
+      "baseline_id": "initial-four-ai-portfolio",
+      "title": "Initial portfolios for ChatGPT, Claude, Gemini, and Grok",
+      "scope_status": "BASELINED",
+      "declared_weight": 311,
+      "task_ids": [
+        "UJ-INT-001",
+        "UJ-INT-002",
+        "UJ-INT-003",
+        "UJ-INT-004",
+        "UJ-INT-005",
+        "UJ-INT-006",
+        "UJ-INT-007",
+        "UJ-INT-008",
+        "UJ-RUN-001",
+        "UJ-SEC-001",
+        "UJ-SKL-001",
+        "UJ-MCP-001",
+        "UJ-RCV-001",
+        "UJ-CLD-001",
+        "UJ-REV-001",
+        "UJ-REV-002",
+        "UJ-CAP-001",
+        "UJ-GGL-001",
+        "UJ-INF-001",
+        "UJ-MEM-001",
+        "UJ-KNW-001",
+        "UJ-MED-001",
+        "UJ-ADK-001",
+        "UJ-REV-003",
+        "UJ-RED-001",
+        "UJ-RSK-001",
+        "UJ-OSS-001",
+        "UJ-ALT-001",
+        "UJ-INJ-001",
+        "UJ-MED-RED-001",
+        "UJ-LIVE-001",
+        "UJ-REV-004"
+      ],
+      "notes": "81 ChatGPT + 76 Claude + 81 Gemini + 73 Grok."
+    },
+    {
+      "baseline_id": "m0-bootstrap-snapshot",
+      "title": "M0 initial state tasks named in master prompt section 38",
+      "scope_status": "DRAFT",
+      "declared_weight": 94,
+      "task_ids": [
+        "UJ-META-001",
+        "UJ-META-002",
+        "UJ-INT-001",
+        "UJ-RUN-001",
+        "UJ-CAP-001",
+        "UJ-GGL-001",
+        "UJ-RED-001"
+      ],
+      "notes": "Requires owner acceptance with PR #1; 26 weight is currently accepted."
+    },
+    {
+      "baseline_id": "meta-bootstrap",
+      "title": "Canonical prompt production and publication",
+      "scope_status": "DRAFT",
+      "declared_weight": 29,
+      "task_ids": [
+        "UJ-META-001",
+        "UJ-META-002"
+      ],
+      "notes": "Publication remains in REVIEW until owner decision and merge."
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "UJ-META-001",
+      "title": "Fuse the Claude, Gemini, Grok, and ChatGPT plans into one canonical prompt",
+      "epic": "Program bootstrap",
+      "milestones": [
+        "M0"
+      ],
+      "owner": "CHATGPT",
+      "reviewer": "Christian",
+      "status": "DONE",
+      "priority": "P0",
+      "dependencies": [],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Canonical universal master prompt v1.0",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "Canonical prompt contains the merged program contract and four portfolios.",
+          "state": "PASSED",
+          "proof_refs": [
+            "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md"
+          ]
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Prompt structure and declared hash were validated in PR #1.",
+          "state": "PASSED",
+          "proof_refs": [
+            "https://github.com/carnascialichristian-wq/ultraJARVIS/pull/1"
+          ]
+        }
+      ],
+      "proof": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        },
+        {
+          "ref": "https://github.com/carnascialichristian-wq/ultraJARVIS/pull/1"
+        }
+      ],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 21,
+      "completed_weight": 21,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "HIGH",
+        "reason": "The artifact and its review PR are directly observable."
+      },
+      "blocker": null,
+      "next_action": "Preserve the prompt hash and route amendments through change control.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-META-002",
+      "title": "Publish and review the canonical prompt in the repository",
+      "epic": "Program bootstrap",
+      "milestones": [
+        "M0"
+      ],
+      "owner": "Christian",
+      "reviewer": "Christian",
+      "status": "REVIEW",
+      "priority": "P0",
+      "dependencies": [
+        "UJ-META-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Accepted and merged canonical prompt pull request",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "Prompt and launch README exist on a reviewable branch and draft PR.",
+          "state": "PASSED",
+          "proof_refs": [
+            "https://github.com/carnascialichristian-wq/ultraJARVIS/pull/1"
+          ]
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Christian accepts or amends the Constitution, infrastructure default, and M0 baseline.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-03",
+          "text": "PR #1 is merged and the default branch contains the canonical artifacts.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [
+        {
+          "ref": "https://github.com/carnascialichristian-wq/ultraJARVIS/pull/1"
+        },
+        {
+          "ref": "agent/ultrajarvis-master-prompt-v1",
+          "version": "b8a7697ca69722fe1947e24350752907ee58cfd2"
+        }
+      ],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 5,
+      "remaining_weight": 3,
+      "confidence": {
+        "level": "HIGH",
+        "reason": "Branch and PR are observed; owner acceptance and merge are still absent."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "PR #1 is draft and requires owner decisions on Constitution, strict zero-card mode, and M0 baseline.",
+        "resolver": "Christian"
+      },
+      "next_action": "Review the named decisions in PR #1; amend or approve before merge.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-INT-001",
+      "title": "Create the canonical Program OS",
+      "epic": "Program integration",
+      "milestones": [
+        "M0"
+      ],
+      "owner": "CHATGPT",
+      "reviewer": "GROK",
+      "status": "REVIEW",
+      "priority": "P0",
+      "dependencies": [
+        "UJ-META-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Program state, backlog, status, workstreams, handoff, governance, reconciliation, resume, and durable cross-session ledger artifacts",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "All twelve deliverable groups in master prompt §39.1 exist as repository artifacts.",
+          "state": "PENDING",
+          "proof_refs": [
+            "docs/program/PROJECT_STATE.md",
+            "schemas/backlog.schema.json",
+            "docs/program/BACKLOG.json",
+            "docs/program/STATUS.md",
+            "docs/program/WORKSTREAMS.md",
+            "docs/program/HANDOFFS.md",
+            "schemas/handoff-packet.schema.json",
+            "docs/adrs/ADR_TEMPLATE.md",
+            "docs/adrs/README.md",
+            "docs/program/CONFLICTS_AND_ASSUMPTIONS.md",
+            "docs/program/PROGRESS.md",
+            "docs/program/GOVERNANCE.md",
+            "docs/program/SPECIALIST_INPUTS.md",
+            "docs/program/RECONCILIATION.md",
+            "docs/program/RESUME_POINT.md",
+            "gpt.md",
+            "taskgpt.md",
+            "scripts/validate-program-os.mjs"
+          ]
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Standalone validation confirms unique task IDs, dependency integrity, weight arithmetic, portfolio total 311, and baseline totals.",
+          "state": "PENDING",
+          "proof_refs": [
+            "scripts/validate-program-os.mjs"
+          ]
+        },
+        {
+          "criterion_id": "AC-03",
+          "text": "Grok independently reviews progress resistance and Program OS consistency.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [
+        {
+          "ref": "docs/program/PROJECT_STATE.md"
+        },
+        {
+          "ref": "schemas/backlog.schema.json"
+        },
+        {
+          "ref": "docs/program/BACKLOG.json"
+        },
+        {
+          "ref": "docs/program/STATUS.md"
+        },
+        {
+          "ref": "docs/program/WORKSTREAMS.md"
+        },
+        {
+          "ref": "docs/program/HANDOFFS.md"
+        },
+        {
+          "ref": "schemas/handoff-packet.schema.json"
+        },
+        {
+          "ref": "docs/adrs/ADR_TEMPLATE.md"
+        },
+        {
+          "ref": "docs/adrs/README.md"
+        },
+        {
+          "ref": "docs/program/CONFLICTS_AND_ASSUMPTIONS.md"
+        },
+        {
+          "ref": "docs/program/PROGRESS.md"
+        },
+        {
+          "ref": "docs/program/GOVERNANCE.md"
+        },
+        {
+          "ref": "docs/program/SPECIALIST_INPUTS.md"
+        },
+        {
+          "ref": "docs/program/RECONCILIATION.md"
+        },
+        {
+          "ref": "docs/program/RESUME_POINT.md"
+        },
+        {
+          "ref": "gpt.md"
+        },
+        {
+          "ref": "taskgpt.md"
+        },
+        {
+          "ref": "scripts/validate-program-os.mjs"
+        }
+      ],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "HIGH",
+        "reason": "The complete draft artifact set exists; acceptance remains intentionally external."
+      },
+      "blocker": {
+        "kind": "EVIDENCE",
+        "cause": "Artifacts are submitted but accepted weight requires independent Grok review.",
+        "resolver": "GROK via UJ-REV-004 and UJ-INT-001 review"
+      },
+      "next_action": "Ask Grok to review progress gaming and Program OS consistency; record PASS, PASS_WITH_ACTIONS, or FAIL.",
+      "updated_at": "2026-08-17T08:29:57.000Z"
+    },
+    {
+      "task_id": "UJ-INT-002",
+      "title": "Synthesize architecture v1 and the ADR index",
+      "epic": "Program integration",
+      "milestones": [
+        "M0",
+        "M2"
+      ],
+      "owner": "CHATGPT",
+      "reviewer": "CLAUDE",
+      "status": "BLOCKED",
+      "priority": "P0",
+      "dependencies": [
+        "UJ-RUN-001",
+        "UJ-CAP-001",
+        "UJ-GGL-001",
+        "UJ-RED-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Architecture v1 synthesis and populated ADR index",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Architecture v1 synthesis and populated ADR index artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Claude, Gemini, and Grok specialist ResponsePackets do not exist yet.",
+        "resolver": "CLAUDE, GEMINI, and GROK"
+      },
+      "next_action": "Validate the four specialist packets when all are at least in REVIEW.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-INT-003",
+      "title": "Design dashboard information architecture and manual bridge UX",
+      "epic": "Program integration",
+      "milestones": [
+        "M5"
+      ],
+      "owner": "CHATGPT",
+      "reviewer": "GEMINI",
+      "status": "BLOCKED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-INT-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Dashboard IA, user flows, and manual bridge UX specification",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Dashboard IA, user flows, and manual bridge UX specification artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GEMINI issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Program OS must be independently accepted first.",
+        "resolver": "GROK reviewer"
+      },
+      "next_action": "Start after UJ-INT-001 passes review.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-INT-004",
+      "title": "Specify the TypeScript and pnpm monorepo foundation",
+      "epic": "Program integration",
+      "milestones": [
+        "M3"
+      ],
+      "owner": "CHATGPT",
+      "reviewer": "CLAUDE",
+      "status": "BLOCKED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-INT-002"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Monorepo foundation specification and contracts package plan",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Monorepo foundation specification and contracts package plan artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Architecture v1 is not available.",
+        "resolver": "CHATGPT via UJ-INT-002"
+      },
+      "next_action": "Start after architecture v1 is reviewed.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-INT-005",
+      "title": "Build the evaluation harness and golden task catalog",
+      "epic": "Program integration",
+      "milestones": [
+        "M2"
+      ],
+      "owner": "CHATGPT",
+      "reviewer": "GROK",
+      "status": "BLOCKED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-CAP-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Evaluation harness specification and versioned golden task catalog",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Evaluation harness specification and versioned golden task catalog artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Capability Registry is not available.",
+        "resolver": "GEMINI via UJ-CAP-001"
+      },
+      "next_action": "Define golden tasks after capability modes are verified.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-INT-006",
+      "title": "Define Council packet schemas and import/merge rules",
+      "epic": "Program integration",
+      "milestones": [
+        "M6"
+      ],
+      "owner": "CHATGPT",
+      "reviewer": "CLAUDE",
+      "status": "REVIEW",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-INT-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Versioned Mission, Delegation, Response, Synthesis, and Review packet contracts with deterministic import and merge rules",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "Five versioned Council packet schemas, import/merge rules, one M0 mission, and four ready Delegation Cards exist.",
+          "state": "PENDING",
+          "proof_refs": [
+            "schemas/mission-packet.schema.json",
+            "schemas/delegation-card.schema.json",
+            "schemas/response-packet.schema.json",
+            "schemas/synthesis-packet.schema.json",
+            "schemas/review-result.schema.json",
+            "docs/program/COUNCIL_PACKETS.md",
+            "docs/program/COUNCIL_IMPORT_AND_MERGE.md",
+            "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json",
+            "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json",
+            "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
+            "prompts/delegation-cards/UJ-GGL-001-GEMINI.json",
+            "prompts/delegation-cards/UJ-RED-001-GROK.json"
+          ]
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "The dependency-free validator passes schema, cross-reference, policy, replay, reviewer, and ledger regressions.",
+          "state": "PENDING",
+          "proof_refs": [
+            "scripts/validate-council-packets.mjs"
+          ]
+        },
+        {
+          "criterion_id": "AC-03",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [
+        { "ref": "schemas/mission-packet.schema.json" },
+        { "ref": "schemas/delegation-card.schema.json" },
+        { "ref": "schemas/response-packet.schema.json" },
+        { "ref": "schemas/synthesis-packet.schema.json" },
+        { "ref": "schemas/review-result.schema.json" },
+        { "ref": "docs/program/COUNCIL_PACKETS.md" },
+        { "ref": "docs/program/COUNCIL_IMPORT_AND_MERGE.md" },
+        { "ref": "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json" },
+        { "ref": "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json" },
+        { "ref": "prompts/delegation-cards/UJ-CAP-001-GEMINI.json" },
+        { "ref": "prompts/delegation-cards/UJ-GGL-001-GEMINI.json" },
+        { "ref": "prompts/delegation-cards/UJ-RED-001-GROK.json" },
+        { "ref": "scripts/validate-council-packets.mjs" }
+      ],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "HIGH",
+        "reason": "The full packet family and ready delegation instances are submitted; independent Claude acceptance is pending."
+      },
+      "blocker": {
+        "kind": "EVIDENCE",
+        "cause": "Artifacts are submitted but accepted weight requires independent Claude review.",
+        "resolver": "CLAUDE"
+      },
+      "next_action": "Claude validates the packet contracts and import rules; keep accepted weight at 0/8 until review proof exists.",
+      "updated_at": "2026-08-17T07:57:49.726Z"
+    },
+    {
+      "task_id": "UJ-INT-007",
+      "title": "Define the Website Team supervisor and end-to-end acceptance plan",
+      "epic": "Program integration",
+      "milestones": [
+        "M10"
+      ],
+      "owner": "CHATGPT",
+      "reviewer": "GEMINI",
+      "status": "DEFERRED",
+      "priority": "P2",
+      "dependencies": [
+        "UJ-MCP-001",
+        "UJ-SKL-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Website Team supervisor contract and end-to-end acceptance plan",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Website Team supervisor contract and end-to-end acceptance plan artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GEMINI issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "MCP Tool Platform and Skill Forge foundations are future dependencies.",
+        "resolver": "M8 and M9 owners"
+      },
+      "next_action": "Keep deferred until M8 and M9 exit gates are met.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-INT-008",
+      "title": "Define the quarterly capability and roadmap synthesis process",
+      "epic": "Program integration",
+      "milestones": [
+        "M17"
+      ],
+      "owner": "CHATGPT",
+      "reviewer": "GROK",
+      "status": "DEFERRED",
+      "priority": "P3",
+      "dependencies": [],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Quarterly capability, deprecation, risk, and roadmap synthesis process",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Quarterly capability, deprecation, risk, and roadmap synthesis process artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 5,
+      "completed_weight": 0,
+      "remaining_weight": 5,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "EVIDENCE",
+        "cause": "Operational data and accepted velocity do not yet exist.",
+        "resolver": "Program operations"
+      },
+      "next_action": "Baseline after at least one operational program increment.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-RUN-001",
+      "title": "Design the provider-neutral agent runtime blueprint",
+      "epic": "Runtime and security",
+      "milestones": [
+        "M0",
+        "M2"
+      ],
+      "owner": "CLAUDE",
+      "reviewer": "GEMINI",
+      "status": "READY",
+      "priority": "P0",
+      "dependencies": [],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Runtime blueprint with AgentManifest, TeamSpec, Supervisor, DepthGuard, and RunLedger",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Runtime blueprint with AgentManifest, TeamSpec, Supervisor, DepthGuard, and RunLedger artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GEMINI issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": null,
+      "next_action": "Produce the schema-first runtime blueprint and ResponsePacket.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-SEC-001",
+      "title": "Create the threat model, approval policy, and Constitution critique",
+      "epic": "Runtime and security",
+      "milestones": [
+        "M0",
+        "M1"
+      ],
+      "owner": "CLAUDE",
+      "reviewer": "GROK",
+      "status": "READY",
+      "priority": "P0",
+      "dependencies": [],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Threat model, approval policy, and evidence-backed Constitution critique",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Threat model, approval policy, and evidence-backed Constitution critique artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": null,
+      "next_action": "Start after the runtime primary task or as the single next primary task.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-SKL-001",
+      "title": "Specify the Skill Forge threat model, pipeline, and sandbox contract",
+      "epic": "Runtime and security",
+      "milestones": [
+        "M9"
+      ],
+      "owner": "CLAUDE",
+      "reviewer": "CHATGPT",
+      "status": "BLOCKED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-SEC-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Skill Forge security specification and sandbox contract",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Skill Forge security specification and sandbox contract artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CHATGPT issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-SEC-001.",
+        "resolver": "UJ-SEC-001"
+      },
+      "next_action": "Start after UJ-SEC-001 is accepted.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-MCP-001",
+      "title": "Specify ToolManifest, MCP admission, and P0 tool architecture",
+      "epic": "Runtime and security",
+      "milestones": [
+        "M8"
+      ],
+      "owner": "CLAUDE",
+      "reviewer": "GEMINI",
+      "status": "BLOCKED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-SEC-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "MCP ToolManifest, admission pipeline, and P0 architecture",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The MCP ToolManifest, admission pipeline, and P0 architecture artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GEMINI issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-SEC-001.",
+        "resolver": "UJ-SEC-001"
+      },
+      "next_action": "Start after UJ-SEC-001 is accepted.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-RCV-001",
+      "title": "Specify checkpoint, retry, cancellation, idempotency, and recovery",
+      "epic": "Runtime and security",
+      "milestones": [
+        "M2",
+        "M15"
+      ],
+      "owner": "CLAUDE",
+      "reviewer": "CHATGPT",
+      "status": "BLOCKED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-RUN-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Recovery semantics and disaster recovery specification",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Recovery semantics and disaster recovery specification artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CHATGPT issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-RUN-001.",
+        "resolver": "UJ-RUN-001"
+      },
+      "next_action": "Start after UJ-RUN-001 is accepted.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-CLD-001",
+      "title": "Verify Claude Pro, Claude Code, Agent SDK, and OAuth access modes",
+      "epic": "Runtime and security",
+      "milestones": [
+        "M1",
+        "M7"
+      ],
+      "owner": "CLAUDE",
+      "reviewer": "GEMINI",
+      "status": "READY",
+      "priority": "P1",
+      "dependencies": [],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Official-source Claude access and automation capability matrix",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Official-source Claude access and automation capability matrix artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GEMINI issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": null,
+      "next_action": "Collect current official sources without treating subscription access as API rights.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-REV-001",
+      "title": "Review the ChatGPT Program OS independently",
+      "epic": "Runtime and security",
+      "milestones": [
+        "M0"
+      ],
+      "owner": "CLAUDE",
+      "reviewer": "Christian",
+      "status": "BLOCKED",
+      "priority": "P0",
+      "dependencies": [
+        "UJ-INT-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "PASS, PASS_WITH_ACTIONS, or FAIL review of UJ-INT-001",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The PASS, PASS_WITH_ACTIONS, or FAIL review of UJ-INT-001 artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Christian issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 5,
+      "completed_weight": 0,
+      "remaining_weight": 5,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-INT-001.",
+        "resolver": "UJ-INT-001"
+      },
+      "next_action": "Review once the UJ-INT-001 commit is available.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-REV-002",
+      "title": "Review Website Team security and runtime",
+      "epic": "Runtime and security",
+      "milestones": [
+        "M10"
+      ],
+      "owner": "CLAUDE",
+      "reviewer": "GROK",
+      "status": "DEFERRED",
+      "priority": "P2",
+      "dependencies": [
+        "UJ-INT-007"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Security and runtime review of Website Team v1",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Security and runtime review of Website Team v1 artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-INT-007.",
+        "resolver": "UJ-INT-007"
+      },
+      "next_action": "Keep deferred until UJ-INT-007 exists.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-CAP-001",
+      "title": "Verify the Capability Registry for the four primary AIs",
+      "epic": "Capability, infrastructure, and knowledge",
+      "milestones": [
+        "M1"
+      ],
+      "owner": "GEMINI",
+      "reviewer": "CLAUDE",
+      "status": "READY",
+      "priority": "P0",
+      "dependencies": [],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Official-source Capability Registry with access modes and freshness",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Official-source Capability Registry with access modes and freshness artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": null,
+      "next_action": "Produce a coordinated evidence pack with UJ-GGL-001.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-GGL-001",
+      "title": "Build the living Google AI, Cloud, Workspace, Labs, and media inventory",
+      "epic": "Capability, infrastructure, and knowledge",
+      "milestones": [
+        "M1"
+      ],
+      "owner": "GEMINI",
+      "reviewer": "GROK",
+      "status": "READY",
+      "priority": "P0",
+      "dependencies": [],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Official-source Google capability evidence pack",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Official-source Google capability evidence pack artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": null,
+      "next_action": "Produce a coordinated evidence pack with UJ-CAP-001 while keeping weights separate.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-INF-001",
+      "title": "Decide the strict zero-card infrastructure topology",
+      "epic": "Capability, infrastructure, and knowledge",
+      "milestones": [
+        "M1"
+      ],
+      "owner": "GEMINI",
+      "reviewer": "CHATGPT",
+      "status": "BLOCKED",
+      "priority": "P0",
+      "dependencies": [
+        "UJ-CAP-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "ADR comparing Firebase, Supabase, Neon, GitHub, and free hosting",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The ADR comparing Firebase, Supabase, Neon, GitHub, and free hosting artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CHATGPT issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-CAP-001.",
+        "resolver": "UJ-CAP-001"
+      },
+      "next_action": "Start after UJ-CAP-001 has current billing and quota evidence.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-MEM-001",
+      "title": "Specify database, memory, provenance, and search strategy",
+      "epic": "Capability, infrastructure, and knowledge",
+      "milestones": [
+        "M4"
+      ],
+      "owner": "GEMINI",
+      "reviewer": "CLAUDE",
+      "status": "BLOCKED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-INF-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Database and memory architecture with lexical-first strategy",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Database and memory architecture with lexical-first strategy artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-INF-001.",
+        "resolver": "UJ-INF-001"
+      },
+      "next_action": "Start after the infrastructure ADR is accepted.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-KNW-001",
+      "title": "Define the NotebookLM source-pack manual bridge",
+      "epic": "Capability, infrastructure, and knowledge",
+      "milestones": [
+        "M11"
+      ],
+      "owner": "GEMINI",
+      "reviewer": "CHATGPT",
+      "status": "BLOCKED",
+      "priority": "P2",
+      "dependencies": [
+        "UJ-GGL-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "NotebookLM source manifest, bridge, export, and freshness protocol",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The NotebookLM source manifest, bridge, export, and freshness protocol artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CHATGPT issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-GGL-001.",
+        "resolver": "UJ-GGL-001"
+      },
+      "next_action": "Start after the Google inventory is accepted.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-MED-001",
+      "title": "Build the Google and media capability rights registry",
+      "epic": "Capability, infrastructure, and knowledge",
+      "milestones": [
+        "M12"
+      ],
+      "owner": "GEMINI",
+      "reviewer": "GROK",
+      "status": "BLOCKED",
+      "priority": "P2",
+      "dependencies": [
+        "UJ-GGL-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Media capability, rights, provenance, and fallback registry",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Media capability, rights, provenance, and fallback registry artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-GGL-001.",
+        "resolver": "UJ-GGL-001"
+      },
+      "next_action": "Start after the Google inventory is accepted.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-ADK-001",
+      "title": "Evaluate ADK TypeScript and A2A against project contracts",
+      "epic": "Capability, infrastructure, and knowledge",
+      "milestones": [
+        "M2"
+      ],
+      "owner": "GEMINI",
+      "reviewer": "CLAUDE",
+      "status": "BLOCKED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-CAP-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "ADK and A2A evaluation with adopt/adapt/reference decision",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The ADK and A2A evaluation with adopt/adapt/reference decision artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-CAP-001.",
+        "resolver": "UJ-CAP-001"
+      },
+      "next_action": "Start after capability access and constraints are verified.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-REV-003",
+      "title": "Review factual and access assumptions in Claude and ChatGPT artifacts",
+      "epic": "Capability, infrastructure, and knowledge",
+      "milestones": [
+        "M0"
+      ],
+      "owner": "GEMINI",
+      "reviewer": "Christian",
+      "status": "BLOCKED",
+      "priority": "P0",
+      "dependencies": [
+        "UJ-RUN-001",
+        "UJ-INT-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Fact and access-assumption review with primary sources",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Fact and access-assumption review with primary sources artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Christian issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 5,
+      "completed_weight": 0,
+      "remaining_weight": 5,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-RUN-001, UJ-INT-001.",
+        "resolver": "UJ-RUN-001, UJ-INT-001"
+      },
+      "next_action": "Review after both required artifacts are submitted.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-RED-001",
+      "title": "Falsify zero-cost, cloud-only, subscription, and automation assumptions",
+      "epic": "Falsification, risk, and alternatives",
+      "milestones": [
+        "M0",
+        "M1"
+      ],
+      "owner": "GROK",
+      "reviewer": "CHATGPT",
+      "status": "READY",
+      "priority": "P0",
+      "dependencies": [],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Falsification report with evidence requirements, mitigations, owners, and STOP/GO conditions",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Falsification report with evidence requirements, mitigations, owners, and STOP/GO conditions artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CHATGPT issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": null,
+      "next_action": "Produce the falsification ResponsePacket without generic criticism.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-RSK-001",
+      "title": "Prioritize the risk register with testable triggers and mitigations",
+      "epic": "Falsification, risk, and alternatives",
+      "milestones": [
+        "M0"
+      ],
+      "owner": "GROK",
+      "reviewer": "CLAUDE",
+      "status": "BLOCKED",
+      "priority": "P0",
+      "dependencies": [
+        "UJ-RED-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Prioritized risk register with severity, probability, detectability, trigger, mitigation, and owner",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Prioritized risk register with severity, probability, detectability, trigger, mitigation, and owner artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-RED-001.",
+        "resolver": "UJ-RED-001"
+      },
+      "next_action": "Start after UJ-RED-001 is submitted.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-OSS-001",
+      "title": "Evaluate the initial GitHub repository shortlist",
+      "epic": "Falsification, risk, and alternatives",
+      "milestones": [
+        "M1",
+        "M2"
+      ],
+      "owner": "GROK",
+      "reviewer": "GEMINI",
+      "status": "TRIAGED",
+      "priority": "P1",
+      "dependencies": [],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Repository intake decisions: ADOPT, ADAPT, REFERENCE_ONLY, REJECT, or RECHECK_LATER",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Repository intake decisions: ADOPT, ADAPT, REFERENCE_ONLY, REJECT, or RECHECK_LATER artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GEMINI issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": null,
+      "next_action": "Keep as secondary; start only after the primary falsification task.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-ALT-001",
+      "title": "Propose simpler alternative architectures and migration paths",
+      "epic": "Falsification, risk, and alternatives",
+      "milestones": [
+        "M2"
+      ],
+      "owner": "GROK",
+      "reviewer": "CLAUDE",
+      "status": "BLOCKED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-RUN-001",
+        "UJ-CAP-001",
+        "UJ-RED-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Alternative architectures with reversible migration paths and trade-offs",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Alternative architectures with reversible migration paths and trade-offs artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-RUN-001, UJ-CAP-001, UJ-RED-001.",
+        "resolver": "UJ-RUN-001, UJ-CAP-001, UJ-RED-001"
+      },
+      "next_action": "Start when the initial specialist reports exist.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-INJ-001",
+      "title": "Build the prompt, tool, and memory injection red-team suite",
+      "epic": "Falsification, risk, and alternatives",
+      "milestones": [
+        "M8",
+        "M9"
+      ],
+      "owner": "GROK",
+      "reviewer": "CHATGPT",
+      "status": "DEFERRED",
+      "priority": "P1",
+      "dependencies": [
+        "UJ-MCP-001",
+        "UJ-SKL-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Versioned adversarial injection suite and expected policy outcomes",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Versioned adversarial injection suite and expected policy outcomes artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CHATGPT issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 13,
+      "completed_weight": 0,
+      "remaining_weight": 13,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-MCP-001, UJ-SKL-001.",
+        "resolver": "UJ-MCP-001, UJ-SKL-001"
+      },
+      "next_action": "Keep deferred until tool and skill contracts exist.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-MED-RED-001",
+      "title": "Threat-model media rights, impersonation, and provenance",
+      "epic": "Falsification, risk, and alternatives",
+      "milestones": [
+        "M12"
+      ],
+      "owner": "GROK",
+      "reviewer": "GEMINI",
+      "status": "BLOCKED",
+      "priority": "P2",
+      "dependencies": [
+        "UJ-MED-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Media rights and provenance threat model",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Media rights and provenance threat model artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "GEMINI issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 8,
+      "completed_weight": 0,
+      "remaining_weight": 8,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-MED-001.",
+        "resolver": "UJ-MED-001"
+      },
+      "next_action": "Start after the media registry exists.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-LIVE-001",
+      "title": "Define the deprecation and policy watch protocol",
+      "epic": "Falsification, risk, and alternatives",
+      "milestones": [
+        "M17"
+      ],
+      "owner": "GROK",
+      "reviewer": "CHATGPT",
+      "status": "DEFERRED",
+      "priority": "P3",
+      "dependencies": [
+        "UJ-CAP-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Primary-source deprecation and policy revalidation protocol",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Primary-source deprecation and policy revalidation protocol artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "CHATGPT issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 5,
+      "completed_weight": 0,
+      "remaining_weight": 5,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-CAP-001.",
+        "resolver": "UJ-CAP-001"
+      },
+      "next_action": "Baseline after the Capability Registry exists.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-REV-004",
+      "title": "Review the progress and ETA system against gaming",
+      "epic": "Falsification, risk, and alternatives",
+      "milestones": [
+        "M0"
+      ],
+      "owner": "GROK",
+      "reviewer": "Christian",
+      "status": "BLOCKED",
+      "priority": "P0",
+      "dependencies": [
+        "UJ-INT-001"
+      ],
+      "inputs": [
+        {
+          "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+          "version": "1.0",
+          "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
+        }
+      ],
+      "output_contract": "Independent anti-gaming review of progress formulas and status rules",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Independent anti-gaming review of progress formulas and status rules artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Christian issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C0",
+      "side_effect": "INTERNAL_WRITE",
+      "approval_gate": "REVIEWED_BRANCH_PR",
+      "weight": 5,
+      "completed_weight": 0,
+      "remaining_weight": 5,
+      "confidence": {
+        "level": "MEDIUM",
+        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+      },
+      "blocker": {
+        "kind": "DEPENDENCY",
+        "cause": "Required dependency is not accepted: UJ-INT-001.",
+        "resolver": "UJ-INT-001"
+      },
+      "next_action": "Review the submitted Program OS and record PASS, PASS_WITH_ACTIONS, or FAIL.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-AUX-LIB-001",
+      "title": "NotebookLM source-grounded evidence digest",
+      "epic": "Auxiliary execution",
+      "milestones": [
+        "M11"
+      ],
+      "owner": "AUXILIARY_AI: Source Librarian",
+      "reviewer": "Core task owner named on DelegationCard",
+      "status": "PROPOSED",
+      "priority": "P2",
+      "dependencies": [],
+      "inputs": [],
+      "output_contract": "Source manifest and source-grounded evidence digest",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Source manifest and source-grounded evidence digest artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "NONE",
+      "approval_gate": "DELEGATION_CARD_REQUIRED",
+      "weight": 0,
+      "completed_weight": 0,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "LOW",
+        "reason": "No card, provider capability proof, or scoped weight exists yet."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "Auxiliary tasks activate only through an approved DelegationCard tied to a READY core task.",
+        "resolver": "Christian or authorized core owner"
+      },
+      "next_action": "Do not start until a schema-valid DelegationCard names the core task, data class, and acceptance criteria.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-AUX-CODE-001",
+      "title": "Jules implementation of one READY task",
+      "epic": "Auxiliary execution",
+      "milestones": [
+        "M3"
+      ],
+      "owner": "AUXILIARY_AI: Coding Executor",
+      "reviewer": "Core task owner named on DelegationCard",
+      "status": "PROPOSED",
+      "priority": "P2",
+      "dependencies": [],
+      "inputs": [],
+      "output_contract": "Tested implementation on an isolated branch",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Tested implementation on an isolated branch artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "NONE",
+      "approval_gate": "DELEGATION_CARD_REQUIRED",
+      "weight": 0,
+      "completed_weight": 0,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "LOW",
+        "reason": "No card, provider capability proof, or scoped weight exists yet."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "Auxiliary tasks activate only through an approved DelegationCard tied to a READY core task.",
+        "resolver": "Christian or authorized core owner"
+      },
+      "next_action": "Do not start until a schema-valid DelegationCard names the core task, data class, and acceptance criteria.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-AUX-CODE-002",
+      "title": "Codex implementation of one READY task",
+      "epic": "Auxiliary execution",
+      "milestones": [
+        "M3"
+      ],
+      "owner": "AUXILIARY_AI: Coding Executor",
+      "reviewer": "Core task owner named on DelegationCard",
+      "status": "PROPOSED",
+      "priority": "P2",
+      "dependencies": [],
+      "inputs": [],
+      "output_contract": "Patch or pull request with tests",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Patch or pull request with tests artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "NONE",
+      "approval_gate": "DELEGATION_CARD_REQUIRED",
+      "weight": 0,
+      "completed_weight": 0,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "LOW",
+        "reason": "No card, provider capability proof, or scoped weight exists yet."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "Auxiliary tasks activate only through an approved DelegationCard tied to a READY core task.",
+        "resolver": "Christian or authorized core owner"
+      },
+      "next_action": "Do not start until a schema-valid DelegationCard names the core task, data class, and acceptance criteria.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-AUX-CODE-003",
+      "title": "Claude Code runtime or security implementation",
+      "epic": "Auxiliary execution",
+      "milestones": [
+        "M3",
+        "M8"
+      ],
+      "owner": "AUXILIARY_AI: Coding Executor",
+      "reviewer": "Core task owner named on DelegationCard",
+      "status": "PROPOSED",
+      "priority": "P2",
+      "dependencies": [],
+      "inputs": [],
+      "output_contract": "Runtime/security implementation or review",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Runtime/security implementation or review artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "NONE",
+      "approval_gate": "DELEGATION_CARD_REQUIRED",
+      "weight": 0,
+      "completed_weight": 0,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "LOW",
+        "reason": "No card, provider capability proof, or scoped weight exists yet."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "Auxiliary tasks activate only through an approved DelegationCard tied to a READY core task.",
+        "resolver": "Christian or authorized core owner"
+      },
+      "next_action": "Do not start until a schema-valid DelegationCard names the core task, data class, and acceptance criteria.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-AUX-CODE-004",
+      "title": "Gemini CLI Google adapter implementation",
+      "epic": "Auxiliary execution",
+      "milestones": [
+        "M7"
+      ],
+      "owner": "AUXILIARY_AI: Coding Executor",
+      "reviewer": "Core task owner named on DelegationCard",
+      "status": "PROPOSED",
+      "priority": "P2",
+      "dependencies": [],
+      "inputs": [],
+      "output_contract": "Google adapter or test implementation",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Google adapter or test implementation artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "NONE",
+      "approval_gate": "DELEGATION_CARD_REQUIRED",
+      "weight": 0,
+      "completed_weight": 0,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "LOW",
+        "reason": "No card, provider capability proof, or scoped weight exists yet."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "Auxiliary tasks activate only through an approved DelegationCard tied to a READY core task.",
+        "resolver": "Christian or authorized core owner"
+      },
+      "next_action": "Do not start until a schema-valid DelegationCard names the core task, data class, and acceptance criteria.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-AUX-DES-001",
+      "title": "Dashboard or website visual prototype",
+      "epic": "Auxiliary execution",
+      "milestones": [
+        "M5",
+        "M10"
+      ],
+      "owner": "AUXILIARY_AI: Visual Designer",
+      "reviewer": "Core task owner named on DelegationCard",
+      "status": "PROPOSED",
+      "priority": "P2",
+      "dependencies": [],
+      "inputs": [],
+      "output_contract": "Design artifact following an approved brief",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Design artifact following an approved brief artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "NONE",
+      "approval_gate": "DELEGATION_CARD_REQUIRED",
+      "weight": 0,
+      "completed_weight": 0,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "LOW",
+        "reason": "No card, provider capability proof, or scoped weight exists yet."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "Auxiliary tasks activate only through an approved DelegationCard tied to a READY core task.",
+        "resolver": "Christian or authorized core owner"
+      },
+      "next_action": "Do not start until a schema-valid DelegationCard names the core task, data class, and acceptance criteria.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-AUX-MED-001",
+      "title": "Media asset pack from an approved manifest",
+      "epic": "Auxiliary execution",
+      "milestones": [
+        "M12"
+      ],
+      "owner": "AUXILIARY_AI: Media Generator",
+      "reviewer": "Core task owner named on DelegationCard",
+      "status": "PROPOSED",
+      "priority": "P2",
+      "dependencies": [],
+      "inputs": [],
+      "output_contract": "Draft asset pack with provenance metadata",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Draft asset pack with provenance metadata artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "NONE",
+      "approval_gate": "DELEGATION_CARD_REQUIRED",
+      "weight": 0,
+      "completed_weight": 0,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "LOW",
+        "reason": "No card, provider capability proof, or scoped weight exists yet."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "Auxiliary tasks activate only through an approved DelegationCard tied to a READY core task.",
+        "resolver": "Christian or authorized core owner"
+      },
+      "next_action": "Do not start until a schema-valid DelegationCard names the core task, data class, and acceptance criteria.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-AUX-RES-001",
+      "title": "Independent C0 source discovery",
+      "epic": "Auxiliary execution",
+      "milestones": [
+        "M1",
+        "M11"
+      ],
+      "owner": "AUXILIARY_AI: Source Librarian",
+      "reviewer": "Core task owner named on DelegationCard",
+      "status": "PROPOSED",
+      "priority": "P2",
+      "dependencies": [],
+      "inputs": [],
+      "output_contract": "C0 source discovery report",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The C0 source discovery report artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "NONE",
+      "approval_gate": "DELEGATION_CARD_REQUIRED",
+      "weight": 0,
+      "completed_weight": 0,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "LOW",
+        "reason": "No card, provider capability proof, or scoped weight exists yet."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "Auxiliary tasks activate only through an approved DelegationCard tied to a READY core task.",
+        "resolver": "Christian or authorized core owner"
+      },
+      "next_action": "Do not start until a schema-valid DelegationCard names the core task, data class, and acceptance criteria.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    },
+    {
+      "task_id": "UJ-AUX-SEC-001",
+      "title": "Machine-readable security scan",
+      "epic": "Auxiliary execution",
+      "milestones": [
+        "M3",
+        "M8",
+        "M9"
+      ],
+      "owner": "AUXILIARY_AI: Security Reviewer",
+      "reviewer": "Core task owner named on DelegationCard",
+      "status": "PROPOSED",
+      "priority": "P2",
+      "dependencies": [],
+      "inputs": [],
+      "output_contract": "Machine-readable security scan report",
+      "acceptance_criteria": [
+        {
+          "criterion_id": "AC-01",
+          "text": "The Machine-readable security scan report artifact exists and conforms to its declared contract.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-02",
+          "text": "Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "state": "PENDING",
+          "proof_refs": []
+        }
+      ],
+      "proof": [],
+      "data_class": "C1",
+      "side_effect": "NONE",
+      "approval_gate": "DELEGATION_CARD_REQUIRED",
+      "weight": 0,
+      "completed_weight": 0,
+      "remaining_weight": 0,
+      "confidence": {
+        "level": "LOW",
+        "reason": "No card, provider capability proof, or scoped weight exists yet."
+      },
+      "blocker": {
+        "kind": "AWAITING_HUMAN",
+        "cause": "Auxiliary tasks activate only through an approved DelegationCard tied to a READY core task.",
+        "resolver": "Christian or authorized core owner"
+      },
+      "next_action": "Do not start until a schema-valid DelegationCard names the core task, data class, and acceptance criteria.",
+      "updated_at": "2026-08-17T07:36:19.727Z"
+    }
+  ]
+}

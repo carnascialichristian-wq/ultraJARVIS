@@ -1,0 +1,135 @@
+{
+  "schema_version": "ultrajarvis.mission-packet/v1",
+  "mission_id": "UJ-MISSION-M0-COUNCIL-001",
+  "created_at": "2026-08-17T08:05:23.159Z",
+  "created_by": {
+    "ai_id": "CHATGPT",
+    "product": "ChatGPT Work Mode with GitHub connector"
+  },
+  "repository": {
+    "full_name": "carnascialichristian-wq/ultraJARVIS",
+    "ref": "agent/ultrajarvis-master-prompt-v1",
+    "commit_sha": "3611b1b400cf57b5021bab228a3de9470d6eca5c"
+  },
+  "title": "M0 first specialist council cycle",
+  "objective": "Collect four distinct, schema-valid specialist artifacts needed to review the Program OS and unlock evidence-backed architecture synthesis without paid APIs or consumer UI automation.",
+  "non_goals": [
+    "Do not merge PR #1 or write directly to main.",
+    "Do not enable billing, paid APIs, production infrastructure, or external messages.",
+    "Do not synthesize architecture v1 before all four specialist tasks are at least REVIEW.",
+    "Do not let one AI impersonate or complete another AI's task."
+  ],
+  "inputs": [
+    {
+      "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
+      "sha256": "a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87",
+      "media_type": "text/markdown",
+      "data_class": "C1"
+    },
+    {
+      "ref": "docs/program/SPECIALIST_INPUTS.md",
+      "sha256": "72edc3952585fb2c31cafd0fa206ab2e66647d49d3190202adf2eba71593590a",
+      "media_type": "text/markdown",
+      "data_class": "C1"
+    },
+    {
+      "ref": "docs/program/COUNCIL_PACKETS.md",
+      "sha256": "eb4d0d0dd46ebdaf07b7ab70380ee80fe0b35da222953f80576749cd3d29ff88",
+      "media_type": "text/markdown",
+      "data_class": "C1"
+    },
+    {
+      "ref": "schemas/response-packet.schema.json",
+      "sha256": "ee44e1b7e262bc0817e0b4f65de8830d122687618a59774fdabfddf3b7e69c0a",
+      "media_type": "application/schema+json",
+      "data_class": "C1"
+    }
+  ],
+  "constraints": [
+    {
+      "constraint_id": "UC-001",
+      "classification": "USER_CONSTRAINT",
+      "text": "Incremental monetary cost is zero and billing remains disabled."
+    },
+    {
+      "constraint_id": "UC-002",
+      "classification": "USER_CONSTRAINT",
+      "text": "Heavy inference is cloud-side; the owner computer is not an inference host."
+    },
+    {
+      "constraint_id": "UC-003",
+      "classification": "USER_CONSTRAINT",
+      "text": "Consumer UI, cookie, and session automation is forbidden."
+    },
+    {
+      "constraint_id": "POL-001",
+      "classification": "PROPOSAL",
+      "text": "STRICT_ZERO_CARD remains the safe draft infrastructure default pending Christian's acceptance."
+    },
+    {
+      "constraint_id": "OBS-001",
+      "classification": "OBSERVATION",
+      "text": "PR #1 is draft, conflict-free, and has no independent reviews at mission creation."
+    }
+  ],
+  "data_class": "C1",
+  "allowed_modes": [
+    "HUMAN_BRIDGE"
+  ],
+  "side_effect_limit": "INTERNAL_WRITE",
+  "autonomy_ceiling": "L2",
+  "success_criteria": [
+    {
+      "criterion_id": "SC-01",
+      "text": "Claude returns UJ-RUN-001 as a schema-valid ResponsePacket with a runtime blueprint artifact.",
+      "verification": "Importer admits the packet and Gemini can independently review it."
+    },
+    {
+      "criterion_id": "SC-02",
+      "text": "Gemini returns separate UJ-CAP-001 and UJ-GGL-001 ResponsePackets with primary-source evidence.",
+      "verification": "Importer admits both packets and preserves their separate weights."
+    },
+    {
+      "criterion_id": "SC-03",
+      "text": "Grok returns UJ-RED-001 with a testable falsification report and remediation for each material finding.",
+      "verification": "Importer admits the packet and ChatGPT can independently review it."
+    },
+    {
+      "criterion_id": "SC-04",
+      "text": "No packet reports paid API, billing, consumer UI automation, secret handling, direct main write, or heavy local inference.",
+      "verification": "Policy attestations and import checks pass."
+    },
+    {
+      "criterion_id": "SC-05",
+      "text": "All accepted synthesis claims preserve source response, artifact hash, and unresolved dissent.",
+      "verification": "A later SynthesisPacket passes deterministic reconciliation; this mission does not self-declare that result."
+    }
+  ],
+  "assigned_task_ids": [
+    "UJ-RUN-001",
+    "UJ-CAP-001",
+    "UJ-GGL-001",
+    "UJ-RED-001"
+  ],
+  "delegation_card_ids": [
+    "UJ-CARD-RUN-001-CLAUDE",
+    "UJ-CARD-CAP-001-GEMINI",
+    "UJ-CARD-GGL-001-GEMINI",
+    "UJ-CARD-RED-001-GROK"
+  ],
+  "deadline": null,
+  "approval_policy_ref": "docs/program/GOVERNANCE.md#pull-request-gate",
+  "budget": {
+    "incremental_cost_eur": 0,
+    "billing_allowed": false,
+    "paid_api_allowed": false
+  },
+  "stop_conditions": [
+    "A secret value, billing prompt, paid API requirement, or unauthorized external side effect is encountered.",
+    "The target cannot distinguish its actual capabilities from unverified product claims.",
+    "The card is expired, revoked, replayed with different bytes, or its input hashes do not match.",
+    "The task would require consumer UI automation, direct main write, or heavy local inference."
+  ],
+  "status": "READY"
+}
+
