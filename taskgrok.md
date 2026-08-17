@@ -7,15 +7,16 @@
 
 **Rule:** Update continuity files at the end of every session. Export future work to ultraJARVIS only.
 
-## Snapshot 2026-08-17 (late)
+## Snapshot 2026-08-17 (~21:45 CEST)
 - **215 tests green** · **135 tools**
-- Security: UJ-SEC-003 (FIX-1..FIX-9) applied, published to ultraJARVIS, covered by `tests/test_sec_fixes.py`
-- Handoff: `docs/program/handoffs/HANDOFF-UJ-GROK-SEC-003.md` — next agent must follow Grok continuity + taskgrok.md
+- Security: UJ-SEC-003 (FIX-1..FIX-9) applied + published to ultraJARVIS
+- Regression suite `tests/test_sec_fixes.py` live on remote
+- Handoff: `docs/program/handoffs/HANDOFF-UJ-GROK-SEC-003.md`
 
 ## Remaining
-1. Optional auto-register after promote (`Registry.add` already present)
-2. Phase 2 LLM adapters
-3. Prefer quality over more stubs
+1. Optional auto-register after promote (Registry.add ready)
+2. Phase 2 LLM adapters (cloud_bridge)
+3. Prefer quality / integration over pure stubs
 
 ## Proceed
 1. Read continuity + this file + the handoff
