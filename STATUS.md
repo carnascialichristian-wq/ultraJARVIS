@@ -3,20 +3,19 @@
 **Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Target:** ultraJARVIS (not UltraJarvis_v8-grok)
 
-## Published (2026-08-18 ~00:30 CEST)
+## Published (2026-08-18 ~00:35 CEST)
 
-### Security (UJ-SEC-003) — COMPLETE
-All FIX-1..FIX-9 + `tests/test_sec_fixes.py`
+### Security + promote
+UJ-SEC-003 complete · optional `register=True` on promote
 
-### Promote auto-register (this session)
-`promote_job_to_tools(..., register=True)` → `Registry.add`  
-Default off. Safety gate still enforced before write/register.
-
-### Continuity
-docs/GROK_CONTINUITY.md · taskgrok.md · STATUS.md · grok.md
+### Phase 2 (started)
+- `cloud_bridge.ask_cloud_ai(..., system=)` optional system prompt
+- `core.planner._plan_via_llm` + `plan()` opt-in via `UJ_PLANNER_LLM=1`
+- Heuristic fallback always available
+- Tests: opt-in path + default-off path
 
 ## Remaining
-- Phase 2 LLM adapters behind cloud_bridge
+- Writer LLM adapter
 - Real gates when ruff/black available
 
 Continues until user says **stop**.

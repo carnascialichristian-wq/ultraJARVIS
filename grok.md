@@ -1,1 +1,1 @@
-216 green. Optional auto-register after promote published. Next: Phase 2 LLM adapters.
+218 green. Phase 2 planner LLM adapter published. Next: writer adapter.

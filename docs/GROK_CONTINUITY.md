@@ -10,15 +10,15 @@
 3. Continue until user says **stop**.
 4. Publish to **ultraJARVIS** unless user says otherwise.
 
-## State 2026-08-18 ~00:30 CEST
-- **216 tests green** · **135 tools**
-- **UJ-SEC-003 fully published** (FIX-1 → FIX-9)
-- **Optional auto-register after promote** implemented (`register=True` → `Registry.add`)
-- Regression + promote tests green
+## State 2026-08-18 ~00:35 CEST
+- **218 tests green** · **135 tools**
+- UJ-SEC-003 published
+- Optional auto-register after promote (`register=True`)
+- **Phase 2 started:** planner LLM adapter behind `cloud_bridge` (opt-in `UJ_PLANNER_LLM=1`)
 
 ## Remaining
-1. Phase 2 LLM adapters behind cloud_bridge (planner / writer)
+1. Writer LLM adapter (replace heuristics in natural_tasks / _code_for_prompt)
 2. Real gates when ruff/black available
 3. Prefer quality / integration over pure stubs
 
-*Last updated: 2026-08-18 ~00:30 by Grok — auto-register after promote*
+*Last updated: 2026-08-18 ~00:35 by Grok — Phase 2 planner adapter*
