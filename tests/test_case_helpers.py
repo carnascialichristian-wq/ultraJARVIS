@@ -1,4 +1,5 @@
-from tools.case_helpers import to_case
+from tools.case_helpers import to_upper, to_lower
 
-def test_to_case():
-    assert to_case("Hi", "upper") == "HI"
+def test_case():
+    assert to_upper("a") == "A"
+    assert to_lower("A") == "a"

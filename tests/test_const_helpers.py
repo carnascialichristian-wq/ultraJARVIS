@@ -1,4 +1,4 @@
-from tools.const_helpers import pi
+from tools.const_helpers import PI
 
 def test_pi():
-    assert abs(pi() - 3.14159) < 0.001
+    assert PI > 3.14

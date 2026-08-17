@@ -1,5 +1,5 @@
-from tools.avg_helpers import avg
+from tools.avg_helpers import mean
 
-def test_avg():
-    assert avg([1, 2, 3]) == 2.0
-    assert avg([10]) == 10.0
+def test_mean():
+    assert mean([1, 2, 3]) == 2.0
+    assert mean([]) == 0.0
