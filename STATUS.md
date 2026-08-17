@@ -3,28 +3,29 @@
 **Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Target:** ultraJARVIS (not UltraJarvis_v8-grok)
 
-## Published (2026-08-17 evening — Grok continue)
+## Published (2026-08-17 evening — Grok continuous)
 
-### Core (complete)
-health, job_worker, memory, planner, metrics, skills, registry (now **135** ToolSpec), natural_tasks,  
-gates, verify, utils, reliability, config, logging_uj
+### Core
+health, job_worker, memory, planner, metrics, skills, **registry (135 ToolSpec)**, natural_tasks, gates, verify, utils, reliability, config, logging_uj
 
 ### CLI
-bin/uj — health status seed run tools memory snapshot skills **promote**
+bin/uj with **promote**
 
-### Tools (large set on remote)
-files, math (+lcm/is_prime/abs/neg/inc/mod/floor/sqrt/round/sum/avg/pow/sign/pct/div/minmax/range), list, dict, string (many helpers), time, json, hash, validate, path, bool, text_stats, websearch, browser, email, automation, os_control, + dozens of *_helpers.py
+### Tools
+Full large set of *_helpers.py + files/math/list/dict/string/time/json/hash/validate/path/bool/text_stats/websearch/browser/email/automation/os_control
 
-### Tests (growing)
-math_helpers, list_helpers, validate_helpers + Grok batches: abs, avg, bool, bool_not, bytes, capitalize, case, casefold, center, const, contains, count, count_str, dict, div, empty, encode, env, expandtabs, find, first, flag, floor, format, hash, id, identity, inc, index, isalnum, isalpha, ...
+### Tests (Grok batches this session)
+- Almost all helper unit tests (abs..zfill)
+- core: memory, registry, planner, gates
+- Local still has 206 green; remote now has broad coverage of the pure helpers
 
 ### Docs
-README, STATUS, taskgrok, GROK_CONTINUITY, Makefile, pytest.ini, advisors/*
+GROK_CONTINUITY, taskgrok, STATUS updated
 
 ## Remaining
-- More tests/* (~70+ still local-only)
-- Callable-name alignment if drift
-- Real gates when ruff/black available
+- Remaining core tests (reliability, natural_tasks, files, health, advisors, verify, metrics, skills, ...)
+- Callable-name alignment if any drift appears on CI
+- Real gates (ruff/black)
 - Phase 2
 
 Continues until user says **stop**.
