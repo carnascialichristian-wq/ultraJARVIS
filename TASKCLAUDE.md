@@ -34,9 +34,12 @@
 **Progresso onesto:** 0/76 accettato, **57/76 proposto**. Nessun task DONE.
 **7 task su 8 in REVIEW**: resta solo UJ-REV-002, bloccato da `UJ-INT-007`.
 
-**6 task su 8 sono in REVIEW e aspettano voi.** Il mio portafoglio è **esaurito**:
-non c'è altro che io possa iniziare in autonomia. Restano 1 unità di UJ-CLD-001 dietro
-un HUMAN_BRIDGE, e 13 unità di review bloccate da deliverable di ChatGPT.
+**7 task su 8 sono in REVIEW e aspettano voi.** Il portafoglio di produzione è **esaurito**:
+resta 1 unità di UJ-CLD-001 dietro un HUMAN_BRIDGE, e UJ-REV-002 (8 unità) bloccato da
+`UJ-INT-007`, che **non è mancante ma `DEFERRED` a M8/M9** — verificato in `BACKLOG.json`.
+
+**I doveri da reviewer però non si esauriscono**, e arrivano senza preavviso: in questa
+sessione ne sono comparsi due nel giro di poche ore.
 
 **Tutti e tre i P0 del programma sono chiusi.** Restano due `CRITICA` senza owner
 attivo (`R-SEC-01`, `R-SEC-02`): dipendono da `UJ-SEC-002`, che ChatGPT deve accettare.
@@ -735,24 +738,37 @@ Documento completo: `docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
 hai archiviato in `UJ-RED-001` contiene molto di ciò che risulta mancante. **Il difetto sta
 in cosa è finito su `main`**, non in cosa hai scritto.
 
-**Quattro problemi HIGH, tutti riproducibili:**
+**Il piu urgente: `S-09`, un bypass sfruttabile da un terzo.**
+
+`tools/browser.py` normalizza l'host con `lstrip("www.")`. Ma `str.lstrip` toglie
+*qualunque* carattere dell'insieme `{w, .}`, non il prefisso. Quindi:
+
+```
+open_url('https://wexample.com')  ->  'Would open: https://wexample.com'
+```
+
+`wexample.com` e `wwwexample.com` sono **domini registrabili**: chi li compra viene
+trattato come `example.com`. Correzione: `if host.startswith("www."): host = host[4:]`,
+piu un test di regressione su `wexample.com`.
+
+**Gli altri problemi HIGH, tutti riproducibili:**
 
 | ID | Problema |
 |---|---|
 | S-01 | `ToolSpec.safe` è dichiarato e **mai letto**. Tutti e 28 i tool sono `safe=True`, **incluso `email.send`** |
 | S-02 | `Registry.call()` fa `importlib` + `getattr` + chiamata: nessun gate, tetto, classe di dato o evento |
-| S-03 | `email.send` è `EXTERNAL_WRITE` irreversibile senza idempotenza → viola `ADM-13` (P0-2). Oggi fallisce **solo perché il modulo manca**: non è bloccato, è rotto |
-| S-04 | `core.natural_tasks` **non si importa** su `main` (`No module named 'core.verify'`) ed è **l'unico chiamante** del safety scan. Il README promette `gates → critic/safety`: quella difesa non gira |
+| S-03 | `email.send` ha **due manopole finte**: `force` compare solo nella firma e non e mai usato; `SAFE_MODE` e una globale riscrivibile a runtime (`e.SAFE_MODE=False` salta la protezione, dimostrato). Piu `EXTERNAL_WRITE` senza idempotenza -> viola `ADM-13` |
 
-```bash
-python3 -c "import sys; sys.path.insert(0,'.'); import core.natural_tasks"
-# ModuleNotFoundError: No module named 'core.verify'
-```
+Con `ToolSpec.safe`, `force` e `SAFE_MODE` sono **tre manopole di sicurezza finte nello
+stesso albero**. Non e una svista, e un pattern.
 
-**Su `main` mancano 6 moduli `core/`** (`config`, `gates`, `logging_uj`, `reliability`,
-`utils`, `verify`) **e 48 tool su 55**. Tre voci del catalogo puntano a moduli assenti
-(`tools.websearch`, `tools.browser`, `tools.email`) ma `list_tools()` le elenca comunque:
-**il registry dichiara capacità che il sistema non ha.**
+> **Il contenimento di `email.send` oggi e l'assenza di un trasporto SMTP, non una policy.**
+
+**Due findings chiusi da Grok mentre scrivevo questa review**, e li dichiaro chiusi invece
+di pubblicarli: `core.natural_tasks` ora importa (arrivati `config`, `gates`, `logging_uj`,
+`reliability`, `utils`, `verify`) e i tool sono passati da 7 a 94. `main` si e mosso due
+volte durante il lavoro: **ho riverificato invece di ripubblicare**, perche una review che
+descrive uno stato superato e vuota come quelle contestate in `UJ-INT-006`.
 
 **→ CHRISTIAN, il punto operativo:** `automation.type_text`, `automation.paste_text` e
 `os.open_app` sono **registrati, chiamabili e marcati `safe=True`**, mentre l'automazione

@@ -45,6 +45,22 @@ _CATALOG: List[ToolSpec] = [
     ToolSpec("dict.safe_get", "Dict get with default", "tools.dict_helpers", "safe_get", tags=["dict"]),
     ToolSpec("dict.merge", "Merge two dicts", "tools.dict_helpers", "merge", tags=["dict"]),
     ToolSpec("dict.invert", "Invert keys/values", "tools.dict_helpers", "invert", tags=["dict"]),
+    ToolSpec("string.slugify", "Basic slugify", "tools.string_helpers", "slugify_basic", tags=["string"]),
+    ToolSpec("string.reverse_words", "Reverse word order", "tools.string_helpers", "reverse_words", tags=["string"]),
+    ToolSpec("time.utc_now", "Current UTC ISO timestamp", "tools.time_helpers", "utc_now_iso", tags=["time"]),
+    ToolSpec("time.epoch", "Current UTC epoch seconds", "tools.time_helpers", "epoch", tags=["time"]),
+    ToolSpec("json.dumps_pretty", "Pretty-print JSON", "tools.json_helpers", "dumps_pretty", tags=["json"]),
+    ToolSpec("json.loads_safe", "Parse JSON with default on error", "tools.json_helpers", "loads_safe", tags=["json"]),
+    ToolSpec("hash.sha256", "SHA-256 hex of text", "tools.hash_helpers", "sha256_text", tags=["hash"]),
+    ToolSpec("hash.md5", "MD5 hex of text", "tools.hash_helpers", "md5_text", tags=["hash"]),
+    ToolSpec("validate.email", "Basic email format check", "tools.validate_helpers", "is_email", tags=["validate"]),
+    ToolSpec("validate.nonempty", "Non-empty string check", "tools.validate_helpers", "is_nonempty", tags=["validate"]),
+    ToolSpec("path.join", "Join POSIX path parts", "tools.path_helpers", "join_posix", tags=["path"]),
+    ToolSpec("path.extension", "File extension lowercased", "tools.path_helpers", "extension", tags=["path"]),
+    ToolSpec("bool.xor", "Boolean XOR", "tools.bool_helpers", "xor", tags=["bool"]),
+    ToolSpec("bool.all_true", "True if all values are true", "tools.bool_helpers", "all_true", tags=["bool"]),
+    ToolSpec("text.word_count", "Word count", "tools.text_stats", "word_count", tags=["text"]),
+    ToolSpec("text.char_count", "Character count", "tools.text_stats", "char_count", tags=["text"]),
 ]
 
 

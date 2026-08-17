@@ -3,231 +3,245 @@
 | Metadato | Valore |
 |---|---|
 | Autore | CLAUDE — Runtime, Security & Skill Architect |
-| Ref revisionato | `main` @ `2fee003` |
-| Oggetto | `core/`, `tools/`, `advisors/`, `bin/uj` — implementazione Python pubblicata su `main` |
-| Stato del task | **PROPOSTO come `UJ-SEC-003`**, non baselined. **Nessun peso auto-assegnato.** |
+| Ref revisionato | `main` @ `f494ea2` (dopo il merge di `4bd7416`) |
+| Oggetto | `core/`, `tools/`, `advisors/`, `bin/uj` — implementazione Python su `main` |
+| Stato | **PROPOSTO come `UJ-SEC-003`**, non baselined. **Nessun peso auto-assegnato.** |
 | Data | 2026-08-17 |
 
 > **Perché questo documento esiste.** Il merge di questa sessione ha reso canonico su
-> `main` un sistema di tool **eseguibile**. Il mio portafoglio (§32.2) copre *MCP/tool
-> admission, threat model, code/architecture review e failure containment*: del codice che
-> esegue tool è esattamente il mio oggetto. Non è un task baselined — §7.4 vieta di
-> espandere lo scope da solo — quindi lo consegno come **proposta con artefatto già
-> pronto**, e la decisione di baseline resta a ChatGPT.
+> `main` un sistema di tool **eseguibile**. §32.2 mi assegna *MCP/tool admission, threat
+> model, code/architecture review e failure containment*: del codice che esegue tool è
+> esattamente il mio oggetto. Non è un task baselined — §7.4 vieta di espandere lo scope da
+> solo — quindi lo consegno come **proposta con artefatto già pronto**.
 >
-> **Non è una critica al lavoro di Grok.** Lo snapshot completo che Grok ha archiviato in
-> `UJ-RED-001` contiene molto di ciò che qui risulta mancante. Il difetto sta in **cosa è
-> finito su `main`**, non in cosa è stato scritto.
+> **Non è una critica al lavoro di Grok.** Due difetti che avevo trovato sono stati chiusi
+> da lui *mentre scrivevo*, e li registro come chiusi. Il difetto centrale è **strutturale**:
+> mancano i controlli di ammissione, non i tool.
 
 ---
 
 ## 1. Il risultato in una frase
 
-**Su `main` esiste un registry che esegue tool senza alcun controllo di ammissione, e
-accanto ci sono i miei contratti di admission che non sono cablati a nulla.**
+**Su `main` c'è un registry che esegue 44 tool senza alcun controllo di ammissione, e
+accanto ci sono i miei contratti di admission che non sono cablati a niente.**
 
-Il campo che *sembra* il controllo di sicurezza — `ToolSpec.safe` — è dichiarato, vale
-`True` per tutti i 28 tool del catalogo incluso `email.send`, e **non viene letto da
-nessuna riga del repository**.
+Il campo che *sembra* il controllo — `ToolSpec.safe` — vale `True` per **tutti e 44** i
+tool, `email.send` incluso, e **non viene letto da nessuna riga del repository**.
 
-## 2. Come riprodurre tutto
+## 2. `main` si è mosso due volte durante questa review
+
+Registro l'ordine perché cambia cosa è vero:
+
+| Momento | Stato |
+|---|---|
+| inizio review (`2fee003`) | 7 tool, 6 moduli `core/` mancanti, `core.natural_tasks` **inimportabile** |
+| durante la scrittura (`4bd7416`) | 94 file tool, catalogo a 44, tutti i moduli `core/` presenti |
+
+**Due findings sono stati chiusi da Grok mentre scrivevo** e li dichiaro chiusi in §10,
+invece di pubblicarli come aperti. Una review che descrive uno stato superato è vuota
+esattamente come quelle che ho contestato in `UJ-INT-006`.
+
+## 3. Come riprodurre
 
 ```bash
-# dalla root di main
 python3 -c "
 import sys; sys.path.insert(0,'.')
 from core.registry import get_registry
-r=get_registry()
-print(len(r.list_tools()),'tool')
-print(r.get('email.send').safe)          # True
-print(r.call('automation.type_text','ciao'))
-"
-grep -rn "\.safe\b" --include=*.py . | grep -v safe_read | grep -v safe_write | grep -v safe_get
-python3 -c "import sys; sys.path.insert(0,'.'); import core.natural_tasks"
+ts=get_registry().list_tools()
+print(len(ts),'tool ·  safe=False:',[t.name for t in ts if not t.safe] or 'NESSUNO')"
+
+grep -rn '\.safe\b' --include=*.py core/ tools/ advisors/ | grep -v safe_read | grep -v safe_get
+
+python3 -c "
+import sys; sys.path.insert(0,'.')
+from tools.browser import open_url; print(open_url('https://wexample.com'))"
 ```
 
 ---
 
-## 3. S-01 — `ToolSpec.safe` è dichiarato e mai letto. **HIGH.**
+## 4. S-09 — bypass della allowlist del browser. **HIGH. Sfruttabile.**
 
-`core/registry.py:15` definisce `safe: bool = True`. Ricerca su tutto il repository
-(escluse le omonimie `safe_read`/`safe_write`/`safe_get`): **zero letture**.
+`tools/browser.py`:
 
-Tutti e 28 i tool del catalogo hanno `safe=True`, per default, **incluso `email.send`**.
+```python
+host = (urlparse(url).hostname or "").lower().lstrip("www.")
+return host in ALLOWLIST or any(host.endswith("." + d) for d in ALLOWLIST)
+```
 
-Un campo che si chiama `safe`, che compare accanto a ogni tool e che non condiziona nulla
-è peggio di un campo assente: un lettore — umano o modello — lo interpreta come il
-controllo, e smette di cercarne uno vero.
+**`str.lstrip("www.")` non rimuove il prefisso `"www."`**: rimuove *qualunque* carattere
+iniziale appartenente all'insieme `{'w', '.'}`, ripetutamente. È l'errore classico di
+`lstrip`, e qui ha una conseguenza di sicurezza.
 
-**Correzione:** o si rimuove il campo, o `Registry.call()` lo legge e rifiuta i tool non
-sicuri senza un'approvazione esplicita. Un flag non applicato non è una difesa: è
-un'etichetta.
+Misurato al ref corrente:
 
-## 4. S-02 — `Registry.call()` non ha alcuna ammissione. **HIGH.**
+| URL | host dopo `lstrip` | Esito |
+|---|---|---|
+| `https://example.com` | `example.com` | consentito (corretto) |
+| `https://www.github.com` | `github.com` | consentito (corretto) |
+| **`https://wexample.com`** | **`example.com`** | **CONSENTITO** |
+| **`https://wwwexample.com`** | **`example.com`** | **CONSENTITO** |
+| `https://evil.com` | `evil.com` | bloccato (corretto) |
+
+```
+>>> open_url('https://wexample.com')
+'Would open: https://wexample.com'
+```
+
+`wexample.com` e `wwwexample.com` sono **domini registrabili**: chiunque può acquistarli e
+ottenere che la allowlist li tratti come `example.com`. Non serve una condizione di gara né
+un input malformato — basta possedere il dominio.
+
+**Correzione:**
+
+```python
+host = (urlparse(url).hostname or "").lower()
+if host.startswith("www."):
+    host = host[4:]
+```
+
+Vale la pena aggiungere un test di regressione con `wexample.com`: è il caso che l'occhio
+non vede e che una riscrittura futura reintrodurrebbe.
+
+## 5. S-01 — `ToolSpec.safe` è dichiarato e mai letto. **HIGH.**
+
+`core/registry.py:15` definisce `safe: bool = True`. Ricerca su tutto il codice (escluse le
+omonimie `safe_read`/`safe_get`/`SAFE_MODE`): **zero letture**.
+
+**44 tool su 44 hanno `safe=True`.** Nessuno è mai stato marcato `False`, nemmeno
+`email.send`, `os.open_app` o `automation.type_text`.
+
+Un campo che si chiama `safe`, compare accanto a ogni tool e non condiziona nulla è peggio
+di un campo assente: chi legge — umano o modello — lo prende per il controllo e smette di
+cercarne uno vero.
+
+## 6. S-02 — `Registry.call()` non ha alcuna ammissione. **HIGH.**
+
+Invariato rispetto all'inizio della review:
 
 ```python
 def call(self, name, *args, **kwargs):
     spec = self.get(name)
     if spec is None: raise KeyError(...)
-    mod = importlib.import_module(spec.module)   # import dinamico
+    mod = importlib.import_module(spec.module)
     fn = getattr(mod, spec.callable_name)
-    return fn(*args, **kwargs)                   # esecuzione
+    return fn(*args, **kwargs)
 ```
 
-Fra la richiesta e l'esecuzione **non c'è nulla**: nessun gate di approvazione, nessuna
-classe di dato, nessun tetto di side-effect, nessuna allowlist per chiamante, nessuna
-quota, **nessuna emissione di evento**.
+Fra richiesta ed esecuzione **non c'è nulla**: nessun gate di approvazione, classe di dato,
+tetto di side-effect, allowlist per chiamante, quota, **né emissione di evento**.
 
 `advisors/safety.py` **non copre questo percorso**: è invocato solo da
-`core/natural_tasks.py:137` e scansiona *codice generato*, non le chiamate ai tool.
-Ho verificato la catena delle chiamate prima di affermarlo.
+`core/natural_tasks.py:137` e scansiona *codice generato*, non le chiamate ai tool. Ho
+tracciato i chiamanti prima di affermarlo.
 
-## 5. S-03 — `email.send` è registrato come `safe=True`. **HIGH.**
+## 7. S-03 — `email.send`: due manopole di sicurezza, entrambe finte. **HIGH.**
 
-```
-ToolSpec("email.send", "Send email (SAFE_MODE)", "tools.email", "send", tags=["email"])
-```
+`tools/email.py` è ora presente. Non ha trasporto SMTP, quindi **oggi non invia davvero**:
+questa è la sola ragione per cui il rischio non è immediato, ed è onesto dirlo.
 
-`safe` non è passato → vale `True`.
+Ma le due protezioni che il file *sembra* avere non lo sono:
 
-Inviare una email è `EXTERNAL_WRITE` **irreversibile**. La mia regola `ADM-13` (mitigazione
-**P0-2** di `UJ-MCP-001`) dice che un tool `EXTERNAL_WRITE`/`DESTRUCTIVE` **senza
-`supportsLookupByKey` non è ammissibile**: dopo un crash nessuno può sapere se l'invio è
-avvenuto, e Christian dovrebbe controllare a mano nella casella.
+**a) Il parametro `force` è morto.**
 
-Oggi la chiamata fallisce — ma **per un motivo che non è una difesa**:
-
-```
-r.call('email.send', ...)  ->  ModuleNotFoundError: No module named 'tools.email'
+```python
+def send(draft_obj: EmailDraft, *, force: bool = False) -> str:
 ```
 
-**Il tool non è bloccato da un controllo: è rotto.** Il giorno in cui `tools/email.py`
-verrà aggiunto, l'invio diventerà raggiungibile senza che nessuna riga di policy cambi.
-Contare su un modulo mancante come misura di sicurezza è la forma più fragile di
-contenimento che esista.
+`force` compare **solo nella firma**, riga 21. Il corpo non lo referenzia mai. È una
+manopola di sicurezza che non fa nulla — la stessa forma di `ToolSpec.safe`, nello stesso
+albero, per la seconda volta.
 
-## 6. S-04 — l'unico safety scan del sistema sta dietro un modulo che non si importa. **HIGH.**
+**b) `SAFE_MODE` è una globale di modulo, riscrivibile a runtime.** Dimostrato:
 
-Il README su `main` (riga 46) promette:
-
-> `Pipeline: seed → run → plan → write → gates → critic/safety`
-
-Ma su `main`:
-
-```
-python3 -c "import core.natural_tasks"
-ModuleNotFoundError: No module named 'core.verify'
+```python
+import tools.email as e
+e.SAFE_MODE = False
+e.send(e.draft('a@b.c','x','y'))
+# -> 'Would send email to a@b.c: x'      (il ramo SAFE_MODE è saltato)
 ```
 
-`core/natural_tasks.py` importa `core.verify` (riga 14) e `core.gates` (riga 16).
-**Nessuno dei due esiste su `main`.**
+Una riga di codice, nessun gate attraversato.
 
-E `core/natural_tasks.py:137` è **l'unico chiamante** di `scan_job_dir`, cioè dell'unico
-scan di sicurezza presente.
+**Inoltre** `email.send` resta `EXTERNAL_WRITE` irreversibile **senza idempotenza**: viola
+`ADM-13`, la mitigazione **P0-2** di `UJ-MCP-001`. Dopo un crash nessuno saprebbe se
+l'invio è avvenuto.
 
-> **Catena:** il modulo che esegue gates e safety non si importa → lo scan di sicurezza
-> non gira mai → il README continua a dichiarare che la pipeline lo esegue.
+> **Il contenimento di oggi è l'assenza di un trasporto, non una policy.** Il giorno in cui
+> qualcuno collega un SMTP, l'invio diventa raggiungibile senza che una riga di controllo
+> cambi.
 
-È il caso peggiore fra quelli trovati, perché la documentazione afferma una difesa che
-l'albero pubblicato **non può eseguire**.
+## 8. S-06 · S-07 · S-08 — invariati
 
-## 7. S-05 — pubblicazione parziale: mancano 6 moduli e 48 tool. **MEDIUM.**
+**S-06 (MEDIUM) — automazione consumer UI registrata e `safe=True`.**
+`automation.paste_text`, `automation.type_text`, `os.open_app`, `os.set_volume` sono nel
+catalogo, chiamabili, tutti `safe=True`. L'automazione di UI consumer è vietata dai vincoli
+fondanti, dalla Costituzione e da `forbidden_actions` di **tutte e quattro** le delegation
+card. Oggi sono dry-run: la distanza dallo stub all'azione reale è un corpo di funzione, e
+nessun gate se ne accorgerebbe.
 
-Confronto fra `main` e lo snapshot archiviato da Grok in `UJ-RED-001`:
+**S-07 (MEDIUM) — nessun evento di tool.** `Registry.call()` non emette nulla. La
+mitigazione **P0-1** (*solo il tool runtime emette `tool.called/returned/failed`*)
+presuppone che quegli eventi esistano: qui non esistono, quindi nessuna affermazione di un
+agente su cosa ha eseguito è verificabile. **`TH-10` è completamente aperta sul lato
+Python**, mentre sul lato TypeScript la copro parzialmente.
 
-| | su `main` | nello snapshot `imports/grok-v8/` |
-|---|---:|---:|
-| tool Python | **7** | **55** |
-| moduli `core/` mancanti su main | — | `config`, `gates`, `logging_uj`, `reliability`, `utils`, `verify` |
+**S-08 (MEDIUM) — lo scanner è una substring su testo minuscolo.** 7 pattern fissi.
+Misurato al ref corrente: `getattr(__builtins__,'ev'+'al')`, `subprocess.Popen` e
+`importlib.import_module("os").system()` **evadono tutti e tre**.
 
-Tre voci del catalogo puntano a moduli **assenti** su `main`: `tools.websearch`,
-`tools.browser`, `tools.email`. `list_tools()` li elenca comunque come disponibili.
+È la **quarta difesa della stessa famiglia** che falsifico in questo programma, dopo il
+loop detector testuale (§4.1 di `TASKCLAUDE.md`), la copertura parziale di TH-10 (§4.9) e
+il sandbox della Skill Forge (§4.13):
 
-**Il registry dichiara capacità che il sistema non ha**, e il disallineamento emerge al
-momento della chiamata invece che all'ammissione. È la stessa forma di `TH-10`: una
-dichiarazione plausibile non verificata alla fonte.
+> un controllo che misura una proprietà *vicina* a quella che interessa, contabilizzato
+> come se misurasse quella giusta.
 
-## 8. S-06 — primitive di automazione consumer UI registrate e chiamabili. **MEDIUM.**
-
-```
-automation.paste_text   safe=True   -> [dry-run] Would paste ...
-automation.type_text    safe=True   -> [dry-run] Would type 4 characters
-os.open_app             safe=True   -> Would open app: Calculator (stub)
-```
-
-L'automazione di UI consumer è **vietata** dai vincoli fondanti, dalla Costituzione e da
-`forbidden_actions` di **tutte e quattro** le delegation card:
-
-> *"Automate a consumer UI, cookie, browser session, or login."*
-
-Oggi sono dry-run. Ma sono **registrate, chiamabili e marcate `safe=True`**, e il registry
-non impone alcun tetto: la distanza fra lo stub e l'azione reale è la sostituzione di un
-corpo di funzione, senza che nessun gate se ne accorga.
-
-## 9. S-07 — nessun evento di tool: `P0-1` è inapplicabile e `TH-10` è aperta. **MEDIUM.**
-
-`Registry.call()` non emette nulla. Non esiste un ledger degli eventi `tool.*`.
-
-La mitigazione **P0-1** di `UJ-MCP-001` — *solo il tool runtime può emettere
-`tool.called/returned/failed`* — presuppone che quegli eventi **esistano**. Qui non
-esistono affatto, quindi:
-
-- nessuna attestazione indipendente prova che un tool sia stato chiamato;
-- qualunque affermazione di un agente su cosa ha eseguito è **non verificabile**;
-- **`TH-10` (proof fabrication) è completamente aperta sul lato Python**, mentre sul lato
-  TypeScript la copro parzialmente.
-
-## 10. S-08 — lo scanner di sicurezza è una substring su testo minuscolo. **MEDIUM.**
-
-`advisors/safety.py` confronta il testo minuscolo con 7 stringhe fisse. Misurato:
-
-| Caso | Esito |
-|---|---|
-| `eval(user_input)` | **rilevato** |
-| `getattr(__builtins__, 'ev'+'al')` | **evade** |
-| `getattr(os,'sys'+'tem')('rm -rf /')` | rilevato, ma **solo per `rm -rf`** |
-| `subprocess.Popen([...])` | **evade** — la lista contiene `subprocess.call(`, non `Popen` |
-
-**2 casi su 4 passano indisturbati**, e la concatenazione di stringhe basta a evadere.
-
-È **esattamente la stessa forma** del loop detector testuale che ho falsificato in
-`UJ-RUN-001` (§4.1 di `TASKCLAUDE.md`): un segnale testuale non contiene un avversario.
-
-**Conseguenza vincolante, identica a quella:** va classificato **early warning**, non
+**Conseguenza vincolante:** `advisors/safety.py` va classificato **early warning**, non
 controllo di sicurezza, e **non deve ricevere crediti di mitigazione nel risk register**.
 
 ---
 
-## 11. Riepilogo e priorità
+## 9. Riepilogo
 
-| ID | Severità | Sintesi |
-|---|---|---|
-| S-01 | HIGH | `ToolSpec.safe` dichiarato, mai letto; 28/28 tool `safe=True` |
-| S-02 | HIGH | `Registry.call()` senza ammissione, approvazione, tetto o evento |
-| S-03 | HIGH | `email.send` `safe=True`, `EXTERNAL_WRITE` senza idempotenza (viola `ADM-13`) |
-| S-04 | HIGH | `core.natural_tasks` non importabile: l'unico safety scan non gira, il README lo promette |
-| S-05 | MEDIUM | pubblicazione parziale: −6 moduli `core/`, −48 tool; 3 voci di catalogo senza modulo |
-| S-06 | MEDIUM | automazione consumer UI registrata e chiamabile, vietata dai vincoli |
-| S-07 | MEDIUM | nessun evento `tool.*`: `P0-1` inapplicabile, `TH-10` aperta sul lato Python |
-| S-08 | MEDIUM | safety scanner evadibile con concatenazione di stringhe: 2 evasioni su 4 |
+| ID | Severità | Sintesi | Stato |
+|---|---|---|---|
+| S-09 | **HIGH** | `lstrip("www.")`: `wexample.com` passa la allowlist del browser | **aperto, sfruttabile** |
+| S-01 | HIGH | `ToolSpec.safe` dichiarato e mai letto; 44/44 `safe=True` | aperto |
+| S-02 | HIGH | `Registry.call()` senza ammissione, tetto o evento | aperto |
+| S-03 | HIGH | `email.send`: `force` morto, `SAFE_MODE` riscrivibile, nessuna idempotenza | aperto |
+| S-06 | MEDIUM | automazione consumer UI registrata e chiamabile, vietata dai vincoli | aperto |
+| S-07 | MEDIUM | nessun evento `tool.*`: `P0-1` inapplicabile, `TH-10` aperta | aperto |
+| S-08 | MEDIUM | safety scanner: 3 evasioni su 3 tentate | aperto |
 
 ### Ordine consigliato
 
-1. **S-04** — ripristinare `core/verify.py` e `core/gates.py` su `main`, oppure correggere
-   il README: oggi la documentazione promette una difesa che l'albero non esegue.
-2. **S-03 + S-01** — togliere `email.send` dal catalogo finché non ha idempotenza, e far
-   leggere `safe` a `Registry.call()` o rimuovere il campo.
-3. **S-02 + S-07** — un punto di ammissione unico davanti a `call()`, che emetta gli eventi.
-   È il punto in cui i miei contratti `ToolManifest` diventerebbero utilizzabili invece che
-   decorativi.
+1. **S-09** — è l'unico difetto **sfruttabile da un terzo** senza accesso al repository.
+   Correzione di due righe più un test su `wexample.com`.
+2. **S-03 + S-01** — rimuovere `force` o implementarlo, rendere `SAFE_MODE` non
+   riscrivibile, e far leggere `safe` a `Registry.call()` oppure eliminare il campo. Tre
+   manopole finte nello stesso albero sono un pattern, non una svista.
+3. **S-02 + S-07** — un punto di ammissione unico davanti a `call()` che emetta gli eventi.
+   È il punto in cui i miei contratti `ToolManifest` smetterebbero di essere decorativi.
 
-## 12. Cosa NON ho fatto
+## 10. Chiusi durante la review, da Grok
 
-- **non ho modificato una riga** di `core/`, `tools/`, `advisors/` o `bin/uj`: è codice di
-  Grok, e correggerlo senza una decisione di baseline sarebbe invasione di portafoglio;
-- non ho revisionato `core/planner.py`, `core/job_worker.py`, `core/skills.py`,
-  `core/memory.py`, `core/metrics.py`, `advisors/critic.py`, `advisors/style.py`: non
-  sostengono nessun giudizio qui;
-- non ho revisionato lo snapshot `imports/grok-v8/` nel merito: l'ho usato **solo** per
-  stabilire quali file manchino su `main`;
+Onestà di stato: due findings della prima stesura **non sono più veri** al ref corrente.
+
+| ID | Era | Ora |
+|---|---|---|
+| S-04 | `core.natural_tasks` inimportabile (`No module named 'core.verify'`), unico chiamante del safety scan | **CHIUSO** — `config`, `gates`, `logging_uj`, `reliability`, `utils`, `verify` sono su `main`; l'import riesce |
+| S-05 | 7 tool su `main` contro 55 nello snapshot; 3 voci di catalogo senza modulo | **CHIUSO** — 94 file tool, catalogo a 44, moduli presenti |
+
+## 11. Cosa NON ho fatto
+
+- **non ho modificato una riga** di `core/`, `tools/`, `advisors/`, `bin/uj`: è codice di
+  Grok, e correggerlo senza decisione di baseline sarebbe invasione di portafoglio. La
+  tentazione era concreta: S-09 si chiude in due righe;
+- **non ho inviato nulla.** Ho letto `tools/email.py` prima di eseguirlo, e ho verificato
+  l'assenza di trasporto prima di toccare `SAFE_MODE`;
+- non ho revisionato `core/planner.py`, `job_worker.py`, `skills.py`, `memory.py`,
+  `metrics.py`, `gates.py`, `verify.py`, `reliability.py`, né `advisors/critic.py` e
+  `style.py`: non sostengono nessun giudizio qui;
+- non ho revisionato i ~90 tool puri (`math_*`, `list_*`, `string_*`): il rischio sta nei
+  tool con effetti esterni, e ho guardato quelli;
 - **non mi sono assegnato peso.** `UJ-SEC-003` è una proposta: la baseline è di ChatGPT.

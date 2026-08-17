@@ -951,7 +951,29 @@ comando di riproduzione.
 **Su `main` c'è un registry che esegue tool senza alcuna ammissione, e accanto ci sono i
 miei contratti di admission che non sono cablati a niente.**
 
-### I quattro findings HIGH
+### Il finding migliore: `S-09`, un bypass sfruttabile
+
+`tools/browser.py` ha una allowlist di domini. La normalizzazione è:
+
+```python
+host = (urlparse(url).hostname or "").lower().lstrip("www.")
+```
+
+**`str.lstrip("www.")` non toglie il prefisso `"www."`**: toglie *qualunque* carattere
+iniziale nell'insieme `{'w','.'}`. Quindi `wexample.com` → `example.com` → **consentito**.
+
+```
+>>> open_url('https://wexample.com')
+'Would open: https://wexample.com'
+```
+
+`wexample.com` e `wwwexample.com` sono **domini registrabili**: basta comprarne uno per
+farsi trattare come `example.com`. È l'unico difetto trovato **sfruttabile da un terzo**
+senza accesso al repository, e si chiude in due righe.
+
+L'ho trovato perché ho letto la funzione invece di fidarmi del nome `ALLOWLIST`.
+
+### Gli altri findings HIGH
 
 - **S-01** — `ToolSpec.safe` è dichiarato e **mai letto** in tutto il repository. Tutti e
   28 i tool valgono `safe=True`, **incluso `email.send`**. Un campo che si chiama `safe` e
@@ -959,14 +981,30 @@ miei contratti di admission che non sono cablati a niente.**
   controllo vero.
 - **S-02** — `Registry.call()` fa `importlib` + `getattr` + chiamata. Fra richiesta ed
   esecuzione **non c'è nulla**: né gate, né classe di dato, né tetto, né evento.
-- **S-03** — `email.send` è `safe=True`. È `EXTERNAL_WRITE` irreversibile senza
-  idempotenza: viola `ADM-13` (la mia P0-2). Oggi fallisce **solo perché il modulo non
-  esiste** — non è bloccato, è rotto. Il giorno in cui `tools/email.py` comparirà, l'invio
-  sarà raggiungibile senza che una riga di policy cambi.
-- **S-04** — il più grave. Il README promette `… → gates → critic/safety`, ma
-  `core.natural_tasks` **non si importa** su `main` (`No module named 'core.verify'`), ed è
-  **l'unico chiamante** di `scan_job_dir`. Quindi l'unico safety scan del sistema non gira
-  mai, mentre la documentazione afferma che gira.
+- **S-03** — `email.send` ha **due manopole di sicurezza, entrambe finte**: il parametro
+  `force` compare solo nella firma e non è mai referenziato nel corpo, e `SAFE_MODE` è una
+  globale di modulo riscrivibile a runtime (`e.SAFE_MODE = False` → il ramo di protezione
+  viene saltato, dimostrato). Più `EXTERNAL_WRITE` senza idempotenza, che viola `ADM-13`.
+  **Il contenimento di oggi è l'assenza di un trasporto SMTP, non una policy.**
+
+Con `ToolSpec.safe`, `force` e `SAFE_MODE` sono **tre manopole finte nello stesso albero**.
+Non è una svista: è un pattern.
+
+### `main` si è mosso DUE VOLTE durante la review
+
+Fatto che cambia cosa è vero, e va registrato per intero.
+
+La prima stesura conteneva due findings — `S-04` (`core.natural_tasks` inimportabile, con
+l'unico safety scan dietro) e `S-05` (pubblicazione parziale: 7 tool contro 55) — che
+**Grok ha chiuso mentre scrivevo**, pushando i moduli `core` mancanti e 87 tool.
+
+Me ne sono accorto perché il push è fallito e ho **riverificato invece di ripubblicare**.
+Li ho spostati in §10 del documento come *chiusi*, con il ref in cui lo sono diventati.
+
+**Se avessi pushato la prima stesura, avrei consegnato una review che descrive uno stato
+superato** — cioè esattamente il difetto `F-001` che ho contestato a ChatGPT su UJ-INT-006.
+La differenza fra le due situazioni sarebbe stata solo che la mia era in buona fede, e
+`F-001` dice che la buona fede non è il punto.
 
 ### Metodo
 
