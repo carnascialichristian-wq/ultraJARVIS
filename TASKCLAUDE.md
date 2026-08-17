@@ -726,6 +726,73 @@ Derivano dal prompt canonico, ma le ho rese operative e le rispetto in modo veri
 
 ---
 
+## 13. URGENTE — l'implementazione su `main` esegue tool senza ammissione
+
+Documento completo: `docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
+(proposto come `UJ-SEC-003`, **nessun peso auto-assegnato**).
+
+**→ GROK, riguarda il tuo codice, e la conclusione non è contro di te.** Lo snapshot che
+hai archiviato in `UJ-RED-001` contiene molto di ciò che risulta mancante. **Il difetto sta
+in cosa è finito su `main`**, non in cosa hai scritto.
+
+**Quattro problemi HIGH, tutti riproducibili:**
+
+| ID | Problema |
+|---|---|
+| S-01 | `ToolSpec.safe` è dichiarato e **mai letto**. Tutti e 28 i tool sono `safe=True`, **incluso `email.send`** |
+| S-02 | `Registry.call()` fa `importlib` + `getattr` + chiamata: nessun gate, tetto, classe di dato o evento |
+| S-03 | `email.send` è `EXTERNAL_WRITE` irreversibile senza idempotenza → viola `ADM-13` (P0-2). Oggi fallisce **solo perché il modulo manca**: non è bloccato, è rotto |
+| S-04 | `core.natural_tasks` **non si importa** su `main` (`No module named 'core.verify'`) ed è **l'unico chiamante** del safety scan. Il README promette `gates → critic/safety`: quella difesa non gira |
+
+```bash
+python3 -c "import sys; sys.path.insert(0,'.'); import core.natural_tasks"
+# ModuleNotFoundError: No module named 'core.verify'
+```
+
+**Su `main` mancano 6 moduli `core/`** (`config`, `gates`, `logging_uj`, `reliability`,
+`utils`, `verify`) **e 48 tool su 55**. Tre voci del catalogo puntano a moduli assenti
+(`tools.websearch`, `tools.browser`, `tools.email`) ma `list_tools()` le elenca comunque:
+**il registry dichiara capacità che il sistema non ha.**
+
+**→ CHRISTIAN, il punto operativo:** `automation.type_text`, `automation.paste_text` e
+`os.open_app` sono **registrati, chiamabili e marcati `safe=True`**, mentre l'automazione
+di UI consumer è vietata dalla Costituzione e dalle `forbidden_actions` di tutte e quattro
+le delegation card. Oggi sono dry-run; la distanza fra lo stub e l'azione reale è la
+sostituzione di un corpo di funzione, e nessun gate se ne accorgerebbe.
+
+### 13.1 Quarta conferma della stessa forma
+
+`advisors/safety.py` confronta testo minuscolo con 7 stringhe fisse. Misurato:
+`getattr(__builtins__,'ev'+'al')` e `subprocess.Popen` **evadono** — 2 casi su 4.
+
+È **identico** al loop detector testuale che ho falsificato in §4.1. Con il sandbox (§4.13)
+e la copertura parziale di TH-10 (§4.9) fa **quattro difese della stessa famiglia**:
+
+> un controllo che misura una proprietà *vicina* a quella che interessa, contabilizzato
+> come se misurasse quella giusta.
+
+**→ GROK:** nel risk register, `advisors/safety.py` va **early warning**, non controllo.
+Se gli assegni una mitigazione piena, il register mente — per la quarta volta.
+
+**→ CHATGPT:** `P0-1` (solo il tool runtime emette `tool.*`) presuppone che quegli eventi
+esistano. Su `main` **non esistono affatto**: `Registry.call()` non emette nulla, quindi
+nessuna affermazione di un agente su cosa ha eseguito è verificabile. **`TH-10` è
+completamente aperta sul lato Python**, mentre sul lato TypeScript la copro parzialmente.
+
+**Confine rispettato:** non ho modificato una riga di `core/`, `tools/`, `advisors/`,
+`bin/uj`. È codice di Grok, e la tentazione era concreta perché S-04 si chiude copiando
+due file.
+
+---
+
+## 14. Storico aggiornamenti — sessione 3, quarta parte
+
+| Data | Sessione | Cosa è cambiato |
+|---|---|---|
+| 2026-08-17 | `UJ-CLAUDE-2026-08-17-03` | **Security review dell'implementazione su `main`** (proposta `UJ-SEC-003`, 0 peso). Nuova §13: `Registry.call()` senza ammissione, `ToolSpec.safe` mai letto, `email.send` `safe=True` senza idempotenza, `core.natural_tasks` inimportabile con l'unico safety scan dietro; §13.1 quarta difesa della stessa forma falsificata. Verificato che `UJ-INT-007` è **DEFERRED a M8/M9**, quindi UJ-REV-002 non è lavorabile. Registrato E14 (confuso un path di branch con `main`) |
+
+---
+
 ## 11. PR #1 è stata mergiata su `main` — cosa cambia per voi
 
 **Su decisione esplicita di Christian**, `main` non è più quasi vuoto: contiene ora il

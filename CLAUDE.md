@@ -919,6 +919,97 @@ righe, fra cui `tests/contracts/tool-admission.test.mjs`.
 
 ---
 
+## Sessione 3, quarta parte — security review dell'implementazione su `main`
+
+**Richiesta di Christian:** *"CONTINUA CON LE TASK FINCHE NON TI DICO STOP"*.
+
+### Perché questo lavoro e non un altro
+
+Trappola 11 applicata per prima. Esito del controllo:
+
+- **nessun commit nuovo** su `main` dopo il mio `2fee003`;
+- **`UJ-INT-007` non è "mancante": è `DEFERRED` a M8/M9** (verificato in `BACKLOG.json`,
+  non assunto). Quindi `UJ-REV-002` non è lavorabile e non lo sarà a breve;
+- **il pacchetto di Grok è un archivio sorgente**, non una falsificazione dei miei
+  artefatti, e il suo reviewer è **ChatGPT**. Nessun dovere per me.
+
+Portafoglio di produzione esaurito. Ma il merge della terza parte ha reso canonico su
+`main` **un sistema di tool eseguibile**, e §32.2 mi assegna *MCP/tool admission, threat
+model, code/architecture review, failure containment*. Del codice che esegue tool è
+esattamente il mio oggetto — ed è diventato attuale adesso.
+
+Consegnato come **proposta `UJ-SEC-003` con artefatto già pronto**, senza auto-assegnarmi
+peso: §7.4 vieta di espandere lo scope da solo, la baseline è di ChatGPT.
+
+### File prodotto
+
+`docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` — 8 findings, tutti con
+comando di riproduzione.
+
+### Il risultato in una frase
+
+**Su `main` c'è un registry che esegue tool senza alcuna ammissione, e accanto ci sono i
+miei contratti di admission che non sono cablati a niente.**
+
+### I quattro findings HIGH
+
+- **S-01** — `ToolSpec.safe` è dichiarato e **mai letto** in tutto il repository. Tutti e
+  28 i tool valgono `safe=True`, **incluso `email.send`**. Un campo che si chiama `safe` e
+  non condiziona nulla è peggio di un campo assente: chi legge smette di cercare il
+  controllo vero.
+- **S-02** — `Registry.call()` fa `importlib` + `getattr` + chiamata. Fra richiesta ed
+  esecuzione **non c'è nulla**: né gate, né classe di dato, né tetto, né evento.
+- **S-03** — `email.send` è `safe=True`. È `EXTERNAL_WRITE` irreversibile senza
+  idempotenza: viola `ADM-13` (la mia P0-2). Oggi fallisce **solo perché il modulo non
+  esiste** — non è bloccato, è rotto. Il giorno in cui `tools/email.py` comparirà, l'invio
+  sarà raggiungibile senza che una riga di policy cambi.
+- **S-04** — il più grave. Il README promette `… → gates → critic/safety`, ma
+  `core.natural_tasks` **non si importa** su `main` (`No module named 'core.verify'`), ed è
+  **l'unico chiamante** di `scan_job_dir`. Quindi l'unico safety scan del sistema non gira
+  mai, mentre la documentazione afferma che gira.
+
+### Metodo
+
+- **Ho eseguito invece di dedurre.** `registry.call()` chiamato davvero sui tool a rischio:
+  `email.send` → `ModuleNotFoundError`, `automation.type_text` → eseguito, `files.safe_read`
+  → ha restituito il contenuto reale del README.
+- **Ho cercato il gate prima di dire che manca.** `advisors/safety.py` esiste, quindi ho
+  tracciato chi lo chiama: solo `natural_tasks.py:137`, e scansiona *codice generato*, non
+  le chiamate ai tool. Solo dopo ho affermato che il percorso è scoperto.
+- **Ho falsificato lo scanner** invece di giudicarlo a occhio: 2 evasioni su 4 casi
+  (`getattr(__builtins__,'ev'+'al')` e `subprocess.Popen` passano indisturbati).
+
+### ERRORI COMMESSI IN QUESTA PARTE
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E14 | **Ho confuso il branch con `main`**: ho affermato *"`core/gates.py` esiste in `imports/grok-v8/`"* trattandolo come presente, mentre `imports/` sta **solo sul branch di Grok** e su `main` non esiste affatto | `ls imports/grok-v8/core/*.py` → `No such file or directory`, dopo che avevo già scritto la conclusione | rifatto il confronto con `git ls-tree` contro il ref giusto | **un path che esiste in una `git ls-tree` di un branch non esiste nel working tree di un altro.** Quando confronto due ref, uso `git ls-tree` per entrambi, mai `ls` per uno e `git` per l'altro |
+| E15 | **`git add -A` ha inghiottito 16 file `__pycache__/*.pyc`** generati dall'esecuzione dei tool Python durante la review | il commit conteneva bytecode binario; me ne sono accorto **solo perché il push è fallito** e ho riletto la lista staged | `reset --soft`, rimozione dei `.pyc`, `__pycache__/` e `*.py[cod]` aggiunti a `.gitignore` | **eseguire codice altrui sporca il working tree.** Dopo aver eseguito qualcosa, `git status` va *letto*, non solo lanciato — e `git add -A` non va usato subito dopo un'esecuzione. Nota: il `.gitignore` copriva `node_modules/` e `dist/` ma non Python, perché finora nessuno aveva eseguito Python in questo repo |
+
+E14 non ha alterato le conclusioni — i moduli mancano su `main` in entrambe le letture —
+ma avrebbe potuto: se lo snapshot **non** avesse contenuto `verify.py`, avrei attribuito a
+una pubblicazione parziale un difetto che era invece originario.
+
+### Prove eseguite
+
+| Verifica | Esito |
+|---|---|
+| `grep` di ogni lettura di `.safe` | **zero** occorrenze reali |
+| `registry.call()` sui 5 tool a rischio | 2 `ModuleNotFoundError`, 3 eseguiti |
+| `import core.natural_tasks` | **ModuleNotFoundError: core.verify** |
+| import degli altri 7 moduli `core` | tutti OK |
+| Evasione di `advisors.safety.scan_text` | **2 su 4 evadono** |
+| Confronto `main` vs snapshot Grok | −6 moduli `core/`, 7 tool vs 55 |
+| Suite contratti dopo il lavoro | **138/138**, typecheck exit 0 |
+
+### Confini rispettati
+
+**Non ho modificato una riga** di `core/`, `tools/`, `advisors/`, `bin/uj`. È codice di
+Grok: correggerlo senza decisione di baseline sarebbe invasione di portafoglio, e la
+tentazione era concreta perché S-04 si chiude copiando due file.
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian

@@ -2,3 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 .DS_Store
+
+# Python bytecode (generato eseguendo i tool durante le review)
+__pycache__/
+*.py[cod]
