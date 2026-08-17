@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ultrajarvis.local/schemas/response-packet.schema.json",
+  "title": "ultraJARVIS ResponsePacket",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "response_id",
+    "created_at",
+    "card_id",
+    "mission_id",
+    "ai_id",
+    "product",
+    "source_commit_sha",
+    "capabilities_actually_used",
+    "task_id",
+    "status",
+    "executive_delta",
+    "facts",
+    "assumptions",
+    "decisions_proposed",
+    "artifacts",
+    "verification",
+    "side_effects",
+    "risks",
+    "task_ledger_delta",
+    "remaining_work",
+    "confidence",
+    "policy_attestation",
+    "handoff"
+  ],
+  "properties": {
+    "schema_version": { "const": "ultrajarvis.response-packet/v1" },
+    "response_id": { "type": "string", "pattern": "^UJ-RESPONSE-[A-Z0-9-]+$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "card_id": { "type": "string", "pattern": "^UJ-CARD-[A-Z0-9-]+$" },
+    "mission_id": { "type": "string", "pattern": "^UJ-MISSION-[A-Z0-9-]+$" },
+    "ai_id": { "enum": ["CHATGPT", "CLAUDE", "GEMINI", "GROK", "AUXILIARY_AI"] },
+    "product": { "type": "string", "minLength": 1 },
+    "source_commit_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "capabilities_actually_used": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["capability", "access_path", "mode"],
+        "properties": {
+          "capability": { "type": "string", "minLength": 1 },
+          "access_path": { "type": "string", "minLength": 1 },
+          "mode": { "$ref": "#/$defs/providerMode" }
+        }
+      }
+    },
+    "task_id": { "$ref": "#/$defs/taskId" },
+    "status": { "enum": ["REVIEW", "BLOCKED", "FAILED"] },
+    "executive_delta": { "type": "string", "minLength": 10 },
+    "facts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fact" }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/assumption" }
+    },
+    "decisions_proposed": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/decision" }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checks_run", "passed", "failed", "not_run"],
+      "properties": {
+        "checks_run": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "passed": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "failed": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "not_run": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "side_effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["classification", "description", "approval_ref", "idempotency_key", "proof_ref"],
+        "properties": {
+          "classification": { "$ref": "#/$defs/sideEffect" },
+          "description": { "type": "string", "minLength": 1 },
+          "approval_ref": { "type": ["string", "null"] },
+          "idempotency_key": { "type": "string", "minLength": 1 },
+          "proof_ref": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["risk_id", "event", "severity", "trigger", "mitigation", "owner"],
+        "properties": {
+          "risk_id": { "type": "string", "pattern": "^R-[0-9]{3}$" },
+          "event": { "type": "string", "minLength": 3 },
+          "severity": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+          "trigger": { "type": "string", "minLength": 3 },
+          "mitigation": { "type": "string", "minLength": 3 },
+          "owner": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "task_ledger_delta": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/taskDelta" }
+    },
+    "remaining_work": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["weight", "blockers", "next_action"],
+      "properties": {
+        "weight": { "type": "integer", "minimum": 0 },
+        "blockers": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "reason"],
+      "properties": {
+        "level": { "enum": ["LOW", "MEDIUM", "HIGH"] },
+        "reason": { "type": "string", "minLength": 3 }
+      }
+    },
+    "policy_attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "no_secret_values",
+        "no_paid_api",
+        "no_billing_enabled",
+        "no_consumer_ui_automation",
+        "no_heavy_local_inference",
+        "within_data_class",
+        "within_side_effect_limit"
+      ],
+      "properties": {
+        "no_secret_values": { "const": true },
+        "no_paid_api": { "const": true },
+        "no_billing_enabled": { "const": true },
+        "no_consumer_ui_automation": { "const": true },
+        "no_heavy_local_inference": { "const": true },
+        "within_data_class": { "const": true },
+        "within_side_effect_limit": { "const": true }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "next_action", "resume_point"],
+      "properties": {
+        "target": { "type": "string", "minLength": 1 },
+        "next_action": { "type": "string", "minLength": 1 },
+        "resume_point": { "type": "string", "minLength": 10 }
+      }
+    }
+  },
+  "$defs": {
+    "taskId": {
+      "type": "string",
+      "pattern": "^UJ-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{3}$"
+    },
+    "providerMode": {
+      "enum": ["AUTO_VERIFIED", "HUMAN_BRIDGE", "MANUAL_TOOL", "EXPERIMENTAL_SANDBOX"]
+    },
+    "dataClass": { "enum": ["C0", "C1", "C2", "C3", "C4"] },
+    "sideEffect": { "enum": ["NONE", "INTERNAL_WRITE", "EXTERNAL_WRITE", "DESTRUCTIVE"] },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim", "classification", "source_ref", "verified_at"],
+      "properties": {
+        "claim": { "type": "string", "minLength": 3 },
+        "classification": { "enum": ["VERIFIED_FACT", "OBSERVATION", "EXPERIMENT_RESULT"] },
+        "source_ref": { "type": "string", "minLength": 1 },
+        "verified_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "assumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statement", "validation", "expiry"],
+      "properties": {
+        "statement": { "type": "string", "minLength": 3 },
+        "validation": { "type": "string", "minLength": 3 },
+        "expiry": { "type": ["string", "null"] }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_id", "proposal", "owner", "gate"],
+      "properties": {
+        "decision_id": { "type": "string", "pattern": "^DEC-[A-Z0-9-]+$" },
+        "proposal": { "type": "string", "minLength": 3 },
+        "owner": { "type": "string", "minLength": 1 },
+        "gate": { "type": "string", "minLength": 1 }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "sha256", "media_type", "data_class", "summary"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "media_type": { "type": "string", "minLength": 1 },
+        "data_class": { "$ref": "#/$defs/dataClass" },
+        "summary": { "type": "string", "minLength": 3 }
+      }
+    },
+    "taskDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "previous_status", "proposed_status", "weight", "accepted_weight_before", "proposed_accepted_weight", "proof_refs"],
+      "properties": {
+        "task_id": { "$ref": "#/$defs/taskId" },
+        "previous_status": { "enum": ["READY", "IN_PROGRESS", "BLOCKED"] },
+        "proposed_status": { "enum": ["REVIEW", "BLOCKED", "IN_PROGRESS"] },
+        "weight": { "type": "integer", "minimum": 0 },
+        "accepted_weight_before": { "type": "integer", "minimum": 0 },
+        "proposed_accepted_weight": { "type": "integer", "minimum": 0 },
+        "proof_refs": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}
+
