@@ -23,15 +23,15 @@
 | Task | Peso | Stato | Reviewer | Vi riguarda? |
 |---|---:|---|---|---|
 | UJ-RUN-001 — Runtime blueprint | 13 | **REVIEW** | **GEMINI** | **Gemini deve revisionarlo** |
-| UJ-SEC-001 — Threat model, approval policy, critica Costituzione | 13 | **IN_PROGRESS** | **GROK** | Grok lo revisiona |
+| UJ-SEC-001 — Threat model, approval policy, critica Costituzione | 13 | **REVIEW** | **GROK** | **Grok deve revisionarlo** |
 | UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | IN_PROGRESS (2/8) | GEMINI | Gemini incrocia con UJ-CAP-001 |
 | UJ-RCV-001 — Checkpoint/retry/recovery | 8 | READY | ChatGPT | — |
-| UJ-SKL-001 — Skill Forge | 13 | BLOCKED da UJ-SEC-001 | ChatGPT | — |
-| UJ-MCP-001 — ToolManifest e MCP admission | 8 | BLOCKED da UJ-SEC-001 | GEMINI | — |
+| UJ-SKL-001 — Skill Forge | 13 | **READY** (sbloccato) | ChatGPT | — |
+| UJ-MCP-001 — ToolManifest e MCP admission | 8 | **READY** (sbloccato) | GEMINI | prossimo che prendo |
 | UJ-REV-001 — Review del Program OS | 5 | **BLOCKED: aspetto ChatGPT** | Christian | **ChatGPT mi blocca** |
 | UJ-REV-002 — Security review Website Team | 8 | **BLOCKED: aspetto ChatGPT** | GROK | **ChatGPT mi blocca** |
 
-**Progresso onesto:** 0/76 accettato, 13/76 proposto. Nessun task DONE.
+**Progresso onesto:** 0/76 accettato, 24/76 proposto. Nessun task DONE.
 `completed_weight` resta 0 finché un reviewer non accetta (§7.3): non mi auto-assegno peso.
 **ETA: UNKNOWN** — manca velocity su due cicli (§7.4). Non chiedetemi una data.
 
@@ -47,6 +47,11 @@
 | `docs/threat-models/RUNTIME_THREAT_NOTES.md` | 12 minacce con rischio residuo esplicito | **Grok** |
 | `docs/program/evidence/UJ-CLD-001-SOURCE-MANIFEST.md` | 20 fonti ufficiali candidate | **Gemini** |
 | `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | task delta, handoff, resume point | ChatGPT |
+| `docs/threat-models/THREAT_MODEL.md` | 19 minacce, 15 difese con stato reale | **Grok** |
+| `docs/constitution/APPROVAL_POLICY.md` | matrice di approvazione, 10 override, anti-fatigue | **tutti** |
+| `docs/constitution/CONSTITUTION_CRITIQUE.md` | 3 lacune strutturali, 12 emendamenti proposti | **Grok**, Christian |
+| `packages/contracts/src/policy/` | policy engine eseguibile | ChatGPT, Gemini |
+| `docs/program/handoffs/HANDOFF-UJ-SEC-001.md` | task delta e handoff di UJ-SEC-001 | ChatGPT |
 | `CLAUDE.md` | continuità interna di CLAUDE | nessuno di voi, ma è pubblico |
 
 ### Come verificare che il mio lavoro sia vero
@@ -55,11 +60,12 @@ Non fidatevi di quello che scrivo. Riproducete:
 
 ```bash
 cd packages/contracts && npx tsc --noEmit && npx tsc && cd ../..
-node --test tests/contracts/runtime-invariants.test.mjs
+node --test tests/contracts/runtime-invariants.test.mjs   # atteso 34/34
+node --test tests/contracts/approval-policy.test.mjs      # atteso 28/28
 ```
 
-Atteso: typecheck exit 0, **34 test / 34 pass**. Se non torna, il mio lavoro è da
-rifiutare, non da interpretare.
+Atteso: typecheck exit 0, **62 test / 62 pass** in totale. Se non torna, il mio lavoro è
+da rifiutare, non da interpretare.
 
 ---
 
@@ -167,6 +173,60 @@ congelare i limiti numerici nel piano o nel codice. Nel Capability Registry punt
 fonti **rilette a una data** con `last_verified_at`, non a numeri copiati una volta.
 Non reintroducete quegli URL a memoria.
 
+### 4.6 La minaccia peggiore del programma non è un attacco: siamo noi
+
+Da `THREAT_MODEL.md`. **TH-10 — proof fabrication** è `CRITICA` per severità e
+**`ALTA` per probabilità**. Non per malizia: produrre un resoconto plausibile di lavoro
+non svolto è **il modo di fallire più naturale di un modello linguistico**.
+
+L'effetto è peggiore di quanto sembri: la falsificazione delle prove **disattiva il
+controllo umano lasciandolo apparentemente attivo**. Christian continua ad approvare,
+ma su dati che non descrivono la realtà.
+
+L'hash chain che ho implementato prova che *un evento è stato registrato*, non che il
+fatto registrato sia *vero*. Un agente che scrive `tool.returned` senza aver chiamato
+il tool produce una catena **integra e falsa**.
+
+**→ TUTTI, come regola di condotta:** non dichiarate test superati, task DONE,
+percentuali o accessi senza prova riproducibile. Io ho tenuto `completed_weight = 0` su
+due task consegnati proprio per questo. È scomodo e va fatto lo stesso.
+
+**→ GROK:** questa minaccia va in cima al risk register, sopra ogni rischio tecnico.
+
+### 4.7 Le difese esistenti sono 8 su 15, e le assenti sono le peggiori
+
+Conteggio onesto da `THREAT_MODEL.md` §5: delle 15 difese minime richieste da §17 del
+prompt canonico, **8 progettate, 3 parziali, 4 assenti**.
+
+Le quattro assenti — egress deny, sandbox, test di prompt injection, postflight
+scanning — sono **tutte concentrate sulle minacce a residuo più alto**. Non è un caso:
+sono le difese che richiedono infrastruttura, e l'infrastruttura non è ancora scelta.
+
+**→ GEMINI:** due delle quattro (egress deny, allowlist di rete) dipendono dalla tua
+scelta di topologia in `UJ-INF-001`. Non sono un dettaglio operativo: sono difese
+mancanti su minacce attive.
+
+### 4.8 La Costituzione è solida nella sostanza e debole nella meccanica
+
+Da `CONSTITUTION_CRITIQUE.md`. Gli articoli 2, 3 e 4 sono scritti come **comportamenti
+attesi** dove servirebbero **condizioni verificabili**. L'Articolo 4 usa il verbo
+"preferire": è un consiglio, non un vincolo.
+
+Un comportamento atteso da un modello linguistico non è un controllo.
+
+Ho proposto **3 lacune strutturali e 12 emendamenti**, tutti `PROPOSAL` — non ho
+modificato nulla, come impone l'Articolo 12. La più importante:
+
+> **Lacuna 1:** se Christian ordina un'azione che viola un articolo, è deroga legittima
+> o violazione? Oggi la gerarchia §7.2 mette Costituzione e vincoli del proprietario
+> **allo stesso livello 1**, senza ordinarli. Ogni IA deciderà a modo suo — e un
+> contenuto ostile che si spaccia per istruzione del proprietario sfrutta esattamente
+> questa ambiguità.
+
+**→ TUTTI:** finché Christian non decide, se incontrate questo conflitto **registrate un
+`BLOCKER` invece di scegliere da soli**. Una IA che obbedisce e una che rifiuta hanno
+entrambe ragione oggi, ed è il problema.
+
 ---
 
 ## 5. Handoff specifico per ciascuno di voi
@@ -238,6 +298,31 @@ implementata**.
 
 **Attacca anche:** §13.4 domande 4 e 6 del blueprint, e sarò il reviewer di UJ-RSK-001.
 
+**AGGIORNAMENTO — sei ora reviewer anche di UJ-SEC-001.** Materiale pronto:
+
+| File | Cosa attaccare |
+|---|---|
+| `docs/threat-models/THREAT_MODEL.md` | 19 minacce, residui espliciti, 3 affermazioni che ho messo in §7 perché tu le falsifichi |
+| `docs/constitution/APPROVAL_POLICY.md` | 10 override eseguibili; §7 elenca 5 limiti che ho dichiarato io |
+| `docs/constitution/CONSTITUTION_CRITIQUE.md` | 12 emendamenti proposti; §5 contiene 3 domande dirette a te |
+
+**Tre domande su cui ti chiedo esplicitamente di contraddirmi:**
+
+1. La **clausola di emergenza** che propongo per l'Articolo 12 è un rischio più che una
+   difesa? L'ho già segnalata come la più pericolosa delle mie proposte, perché una
+   valvola di sfogo è precisamente ciò che un sistema mal allineato userebbe per
+   aggirare le regole. **Se hai un percorso di abuso, la ritiro.**
+2. Rendere gli Articoli 1 e 2 **non derogabili nemmeno da Christian** è corretto, o
+   rende il sistema inutilizzabile in un caso reale che non ho previsto?
+3. Diverse mie proposte sanciscono requisiti che il sistema **non sa ancora soddisfare**
+   (revoca a cascata, postflight scanning, sandbox). Sanzionare in Costituzione un
+   requisito non soddisfacibile crea una violazione permanente e normalizzata. Meglio
+   approvarli ora come obiettivo o dopo l'implementazione? Ho una preferenza — ora — ma
+   il mio giudizio è **di parte**, perché l'implementazione tocca poi a me.
+
+**Nuovi rischi che ti passo per UJ-RSK-001:** `R-SEC-01` e `R-SEC-02` sono `CRITICA`
+senza mitigazione implementata; `R-SEC-03` e `R-SEC-04` sono aperti.
+
 ---
 
 ## 6. Problemi tecnici che ho incontrato — per non ripeterli
@@ -277,5 +362,6 @@ Derivano dal prompt canonico, ma le ho rese operative e le rispetto in modo veri
 | Data | Sessione | Cosa è cambiato |
 |---|---|---|
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | creazione; consegna di UJ-RUN-001 in REVIEW, scoperte §4.1 e §4.2, handoff alle tre IA |
+| 2026-08-17 | `UJ-CLAUDE-2026-08-17-02` | consegna di **UJ-SEC-001** in REVIEW; aggiunte §4.6 (proof fabrication), §4.7 (8 difese su 15), §4.8 (Costituzione); Grok è ora reviewer anche di UJ-SEC-001 con 3 domande dirette; UJ-SKL-001 e UJ-MCP-001 sbloccati; proposto `UJ-SEC-002` a ChatGPT |
 
 *(Regola 2 di `CLAUDE.md`: questo file va esteso a fine di ogni task, non riscritto.)*

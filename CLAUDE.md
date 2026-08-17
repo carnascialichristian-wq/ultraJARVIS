@@ -150,11 +150,11 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 | Task | Peso | Stato | Accettato | Proposto | Manca | Dipendenza bloccante |
 |---|---:|---|---:|---:|---:|---|
 | UJ-RUN-001 — Runtime blueprint | 13 | **REVIEW** | 0/13 | 11/13 | review di Gemini | — |
-| UJ-SEC-001 — Threat model + approval policy + critica Costituzione | 13 | **IN_PROGRESS** | 0/13 | — | 13 | — |
+| UJ-SEC-001 — Threat model + approval policy + critica Costituzione | 13 | **REVIEW** | 0/13 | 11/13 | review di Grok | — |
 | UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | IN_PROGRESS | 0/8 | 2/8 | 6 | S-10 richiede login → HUMAN_BRIDGE |
 | UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **READY** | 0/8 | — | 8 | sbloccato da UJ-RUN-001 |
-| UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | BLOCKED | 0/13 | — | 13 | UJ-SEC-001 |
-| UJ-MCP-001 — ToolManifest + MCP admission | 8 | BLOCKED | 0/8 | — | 8 | UJ-SEC-001 |
+| UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | **READY** | 0/13 | — | 13 | sbloccato da UJ-SEC-001 |
+| UJ-MCP-001 — ToolManifest + MCP admission | 8 | **READY** | 0/8 | — | 8 | sbloccato da UJ-SEC-001 |
 | UJ-REV-001 — Review del Program OS di ChatGPT | 5 | BLOCKED | 0/5 | — | 5 | UJ-INT-001 non esiste |
 | UJ-REV-002 — Security review Website Team | 8 | BLOCKED | 0/8 | — | 8 | UJ-INT-007 non esiste |
 
@@ -163,14 +163,16 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 ```
 portafoglio CLAUDE = 76 unità
 
-accettato formalmente = 0 / 76  = 0%     nessun reviewer ha ancora accettato
-proposto in review    = 13 / 76 = 17,1%  11 di UJ-RUN-001 + 2 di UJ-CLD-001
+accettato formalmente = 0 / 76  = 0%      nessun reviewer ha ancora accettato
+proposto in review    = 24 / 76 = 31,6%   11 UJ-RUN-001 + 11 UJ-SEC-001 + 2 UJ-CLD-001
 ```
 
 **Perché "accettato" è zero.** §7.3 impone `completed_weight = 0` finché non c'è
-accettazione dimostrata da un reviewer. Il reviewer di UJ-RUN-001 è **Gemini**, che non
-si è ancora espresso. Non mi assegno peso da solo: è esattamente il "falso avanzamento"
-vietato da §31.5.
+accettazione dimostrata da un reviewer. I reviewer sono **Gemini** (UJ-RUN-001) e
+**Grok** (UJ-SEC-001), nessuno dei due si è espresso. Non mi assegno peso da solo: è
+esattamente il "falso avanzamento" vietato da §31.5.
+
+**Solo 2 task su 8 restano BLOCKED**, ed entrambi aspettano ChatGPT, non me.
 
 **ETA globale: UNKNOWN.** §7.4 richiede una velocity osservata su almeno due cicli
 comparabili. Ne esiste uno. Non fornisco stime, e la prossima sessione non deve inventarne.
@@ -317,9 +319,71 @@ di ogni lavoro o task; poi continuare con le altre task.
 1. Creato **`CLAUDE.md`** (questo file) con le due regole primarie in cima, l'avvio
    rapido per sessioni nuove, lo stato dei task e il session log storico.
 2. Creato **`TASKCLAUDE.md`**, briefing per ChatGPT, Gemini e Grok.
-3. Ripreso il portafoglio con **UJ-SEC-001**, come previsto da §41.
+3. Ripreso il portafoglio con **UJ-SEC-001**, come previsto da §41, e completato.
 
-*(Questa voce viene estesa a fine sessione con esito, errori e prove — Regola 2.)*
+### UJ-SEC-001 — consegnato, stato REVIEW
+
+Il task richiedeva tre cose; tutte e tre sono file versionati.
+
+| Parte | File |
+|---|---|
+| Threat model completo | `docs/threat-models/THREAT_MODEL.md` |
+| Approval policy | `docs/constitution/APPROVAL_POLICY.md` + `packages/contracts/src/policy/approval.ts` |
+| Critica alla Costituzione | `docs/constitution/CONSTITUTION_CRITIQUE.md` |
+| Handoff | `docs/program/handoffs/HANDOFF-UJ-SEC-001.md` |
+
+**In numeri:** 19 minacce con severità/probabilità/rilevabilità e residuo esplicito;
+15 difese di §17 con stato reale (**8 progettate, 3 parziali, 4 assenti**); 10 regole
+di override eseguibili; 3 lacune strutturali della Costituzione e 12 emendamenti proposti;
+**28 nuovi test, tutti verdi**. Totale suite: **62/62**.
+
+### Metodo usato in UJ-SEC-001
+
+- **Ho reso la matrice di approvazione codice puro**, non una tabella che un modello
+  deve interpretare correttamente a runtime. Una tabella letta da un modello è una
+  tabella che può essere letta male.
+- **Ogni regola di override ha un test che la viola deliberatamente.** Una regola che
+  non si può falsificare non è una regola.
+- **Ho criticato la Costituzione sul serio**, incluse tre lacune che non sono debolezze
+  di un articolo ma assenze totali.
+- **Ho scritto contro me stesso** dove serviva: `OV-7` impone di dichiarare un piano di
+  rollback ma nessuno verifica che funzioni — l'ho annotato in due documenti invece di
+  lasciarlo passare come difesa tecnica.
+
+### Errori commessi in questa sessione
+
+| # | Errore | Correzione | Lezione |
+|---|---|---|---|
+| E8 | Nessun errore tecnico bloccante: typecheck e test verdi al primo tentativo | — | le trappole E1–E4 della sessione 1, una volta scritte qui, **non si sono ripetute**. Questo è il valore del file |
+
+Nota onesta: l'assenza di errori in questa sessione non è merito di maggiore attenzione,
+è merito del fatto che le trappole erano già registrate. È esattamente il motivo per cui
+la Regola 1 impone di scriverle.
+
+### Giudizio più importante emerso
+
+**TH-10 (proof fabrication) è la minaccia peggiore del programma**: `CRITICA` per
+severità e **`ALTA` per probabilità**. Non per malizia — produrre un resoconto plausibile
+di lavoro non svolto è il modo di fallire più naturale di un modello linguistico.
+
+L'hash chain prova che *un evento è stato registrato*, non che il fatto registrato sia
+*vero*. Serve una mitigazione meccanica: **solo il tool runtime può emettere eventi
+`tool.*`**, mai l'agente. È priorità **P0** e va in `UJ-MCP-001`.
+
+### Prove eseguite
+
+| Verifica | Esito |
+|---|---|
+| `npx tsc --noEmit` | exit 0 |
+| `node --test tests/contracts/approval-policy.test.mjs` | **28/28 pass** |
+| `node --test tests/contracts/runtime-invariants.test.mjs` | **34/34 pass** (nessuna regressione) |
+
+### Nuovo task proposto, NON aggiunto da solo
+
+`UJ-SEC-002` — postflight scanning e controllo dell'approval fatigue, peso stimato 8.
+Copre gli unici due residui `CRITICA` non assegnati (TH-08 contenuto, TH-18 fatigue).
+**Richiede accettazione di ChatGPT**: §7.4 vieta l'espansione di scope senza
+`BASELINE_CHANGE`, e la baseline è sua.
 
 ---
 
@@ -344,11 +408,15 @@ Dettagli in `docs/architecture/RUNTIME_BLUEPRINT.md` §12.
 
 ## Rischi aperti ad alta severità
 
-| ID | Rischio | Dove si risolve |
-|---|---|---|
-| `R-RUN-01` | contatore task attivi non atomico → fan-out concorrente supera 25 | UJ-RCV-001, test `T-DG-4b` |
-| `R-RUN-03` | tool senza lookup per idempotency key → resume non evita doppi effetti | UJ-MCP-001 |
-| `R-RUN-04` | se l'agente può emettere eventi `tool.*`, la proof fabrication resta possibile | UJ-MCP-001 |
+| ID | Rischio | Severità | Dove si risolve |
+|---|---|---|---|
+| `R-SEC-01` | TH-08: un segreto può finire nel **contenuto** di un artifact valido; nessun postflight scanning | **CRITICA** | UJ-SEC-002 (da accettare) |
+| `R-SEC-02` | TH-18: approval fatigue non mitigata meccanicamente; `AF-2` senza soglia | **CRITICA** | UJ-SEC-002 + Christian |
+| `R-RUN-04` | se l'agente può emettere eventi `tool.*`, la proof fabrication resta possibile | ALTA | UJ-MCP-001 — **P0** |
+| `R-RUN-03` | tool senza lookup per idempotency key → resume non evita doppi effetti | ALTA | UJ-MCP-001 — **P0** |
+| `R-RUN-01` | contatore task attivi non atomico → fan-out concorrente supera 25 | ALTA | UJ-RCV-001, test `T-DG-4b` — **P0** |
+| `R-SEC-03` | `rollbackPlan` è obbligatorio ma nessuno verifica che il piano funzioni | ALTA | UJ-RCV-001 |
+| `R-SEC-04` | la policy assume `dataClass` corretta: se è errata applica bene la regola sbagliata | MEDIA | GEMINI |
 
 ---
 
@@ -380,22 +448,27 @@ PROMPT    : agent/ultrajarvis-master-prompt-v1 (PR #1)
             sha256 a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87
 
 STATO     : UJ-RUN-001  REVIEW        attende Gemini, 11/13 proposti
-            UJ-SEC-001  IN_PROGRESS   in corso in questa sessione
+            UJ-SEC-001  REVIEW        attende Grok,   11/13 proposti
             UJ-CLD-001  IN_PROGRESS   2/8 proposti, verifica fonti da fare
-            UJ-RCV-001  READY         sbloccato
-            altri 4     BLOCKED
+            UJ-RCV-001  READY
+            UJ-SKL-001  READY         sbloccato da UJ-SEC-001
+            UJ-MCP-001  READY         sbloccato da UJ-SEC-001
+            UJ-REV-001  BLOCKED       aspetta ChatGPT
+            UJ-REV-002  BLOCKED       aspetta ChatGPT
 
-IN CORSO  : UJ-SEC-001 — threat model completo, approval policy, critica alla Costituzione.
-            Peso 13. Reviewer GROK.
-            Input pronto: docs/threat-models/RUNTIME_THREAT_NOTES.md
+PROSSIMO  : UJ-MCP-001 — ToolManifest, MCP admission, architettura tool P0. Peso 8.
+            Reviewer GEMINI.
+            MOTIVO della scelta fra i tre READY: contiene DUE mitigazioni P0
+              - solo il tool runtime può emettere eventi tool.*  (chiude TH-10)
+              - lookup obbligatoria per idempotency key nel ToolManifest (chiude R-RUN-03)
+            UJ-CLD-001 è in parte bloccato da HUMAN_BRIDGE (login console).
+            UJ-RCV-001 contiene il test P0 T-DG-4b ed è la naturale successiva.
 
-DOPO      : §41 impone, dopo UJ-SEC-001 → UJ-CLD-001 oppure UJ-MCP-001.
-            UJ-MCP-001 si sblocca appena UJ-SEC-001 entra in REVIEW.
-            UJ-RCV-001 è già READY e contiene il test P0 T-DG-4b.
-
-NON RIFARE: blueprint runtime, contratti TypeScript, threat notes, source manifest.
+NON RIFARE: blueprint runtime, contratti runtime e policy, threat model, approval
+            policy, critica Costituzione, source manifest.
             Verifica prima con:
               node --test tests/contracts/runtime-invariants.test.mjs   → atteso 34/34
+              node --test tests/contracts/approval-policy.test.mjs      → atteso 28/28
 
 RICORDA   : a fine task, Regola 2 — aggiorna CLAUDE.md e TASKCLAUDE.md, poi commit e push.
 ```
