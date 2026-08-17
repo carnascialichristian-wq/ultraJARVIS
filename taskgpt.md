@@ -281,3 +281,12 @@ conflitto va registrato, non eliminato.
 - Stato: nessuna modifica a task, status o peso; portfolio 0/311, M0 26/94, `UJ-INT-002` BLOCKED.
 - Prossimo passo: ricevere i due pacchetti Gemini separati, validare fonti, bytes, hash, schema, card/mission/task, policy e ResponsePacket; pubblicare poi due branch/PR dedicate e lasciare PR #3 separata fino a riallineamento/revisione.
 - Stesso aggiornamento aggiunto a `gpt.md`: sì.
+
+
+### 2026-08-17 — ChatGPT/Codex — Gemini intake blocked/quarantined
+
+- Il pacchetto HUMAN_BRIDGE ricevuto come “completo” non è ammissibile: 3 file completi, 1 file troncato, 4 file mancanti e 0 ResponsePacket.
+- Sono stati verificati parse JSON e hash dichiarati dei tre blocchi completi; le affermazioni dinamiche su quote/billing richiedono fonti ufficiali per claim e data di verifica.
+- Il pacchetto raw e il report di audit sono preservati in `docs/program/quarantine/`; nessun peso è stato accettato e nessun task è stato marcato DONE.
+- Attendo il resend completo prima di creare le branch dedicate `UJ-CAP-001`/`UJ-GGL-001` e le PR di review.
+

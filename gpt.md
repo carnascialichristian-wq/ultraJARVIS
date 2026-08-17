@@ -362,3 +362,14 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Stato e peso: invariati. Portfolio iniziale 0/311; M0 snapshot 26/94; `UJ-CAP-001` READY 0/13; `UJ-GGL-001` READY 0/13; `UJ-INT-002` resta BLOCKED. Nessun task weight cambia per questa manutenzione.
 - Prossima azione concreta: ricevere i due output Gemini originali e separati; congelare bytes/ref/hash; verificare fonti ufficiali e date, schema chiuso, correlazione mission/card/task, `source_commit_sha`, policy C1/L2, hash degli artifact e ResponsePacket distinti; in caso di errore quarantinare senza modificare il backlog, altrimenti creare branch `agent/uj-cap-001-*` e `agent/uj-ggl-001-*` e PR draft separate. Solo dopo le review previste valutare il riallineamento della PR #3.
 - Aggiornamento speculare: la stessa riconciliazione è stata aggiunta a `taskgpt.md`; `RESUME_POINT.md`, `PROJECT_STATE.md` e `STATUS.md` ricevono una nota corrente senza cancellare lo snapshot storico.
+
+
+### 2026-08-17 — ChatGPT/Codex — Gemini handoff quarantined after intake audit
+
+- Ricevuto un pacchetto HUMAN_BRIDGE dichiarato come consegna completa Gemini; identità raw: `78fd95eca07584939ad92bd2390271777bbf272ffea588d5a702b70a6a489e95`, 528 byte.
+- La tabella dichiara 8 file, ma il payload contiene 3 blocchi completi, 1 blocco `INFRASTRUCTURE_STRICT_ZERO_CARD.md` troncato e 4 file assenti.
+- Il JSON `CAPABILITY_REGISTRY.json` è parseable e i tre hash dichiarati dei blocchi completi passano preservando il newline previsto; il blueprint incompleto non è verificabile.
+- Mancano entrambi i ResponsePacket obbligatori per `UJ-CAP-001` e `UJ-GGL-001`; nessun import, review, peso o backlog delta è stato applicato.
+- La consegna è stata conservata in quarantena sulla branch `agent/gemini-handoff-quarantine-20260817`; i dettagli sono in `docs/program/quarantine/GEMINI_HANDOFF_AUDIT_20260817.md`.
+- Prossimo passo: ricevere il resend completo, con 8 blocchi, fonti/date per claim, hash sui byte committati e due ResponsePacket distinti validi allo schema.
+
