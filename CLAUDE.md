@@ -153,7 +153,7 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 |---|---:|---|---:|---:|---:|---|
 | UJ-RUN-001 — Runtime blueprint | 13 | **REVIEW** | 0/13 | 11/13 | review di Gemini | — |
 | UJ-SEC-001 — Threat model + approval policy + critica Costituzione | 13 | **REVIEW** | 0/13 | 11/13 | review di Grok | — |
-| UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | IN_PROGRESS | 0/8 | 2/8 | 6 | S-10 richiede login → HUMAN_BRIDGE |
+| UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | **REVIEW** | 0/8 | 7/8 | 1 | S-10 richiede login → HUMAN_BRIDGE |
 | UJ-MCP-001 — ToolManifest + MCP admission | 8 | **REVIEW** | 0/8 | 7/8 | review di Gemini | — |
 | UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **REVIEW** | 0/8 | 6/8 | review di ChatGPT | — |
 | UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | **REVIEW** | 0/13 | 11/13 | review di ChatGPT | — |
@@ -166,13 +166,17 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 portafoglio CLAUDE = 76 unità
 
 accettato formalmente = 0 / 76  = 0%      nessun reviewer ha ancora accettato
-proposto in review    = 48 / 76 = 63,2%   11 UJ-RUN-001 + 11 UJ-SEC-001
+proposto in review    = 53 / 76 = 69,7%   11 UJ-RUN-001 + 11 UJ-SEC-001
                                           + 11 UJ-SKL-001 + 7 UJ-MCP-001
-                                          + 6 UJ-RCV-001 + 2 UJ-CLD-001
+                                          + 7 UJ-CLD-001 + 6 UJ-RCV-001
 ```
 
-**Il portafoglio è di fatto esaurito.** Resta lavorabile solo UJ-CLD-001 (6 unità, in
-parte bloccato da HUMAN_BRIDGE). I due task di review aspettano ChatGPT.
+**IL PORTAFOGLIO È ESAURITO.** 6 task su 8 sono in REVIEW. Restano:
+- 1 unità di UJ-CLD-001, che richiede un HUMAN_BRIDGE con Christian (billing account);
+- UJ-REV-001 e UJ-REV-002 (13 unità), bloccati da deliverable di ChatGPT che non esistono.
+
+**Non c'è altro lavoro che io possa iniziare in autonomia.** Se una sessione futura non
+trova nuovi input, la risposta corretta è registrare l'attesa, NON inventare lavoro.
 
 **Tutti e tre i P0 del programma sono chiusi.** Restano due `CRITICA` (`R-SEC-01`,
 `R-SEC-02`) che richiedono `UJ-SEC-002`, non ancora accettato da ChatGPT.
@@ -514,6 +518,59 @@ tentativo. Ho evitato l'errore di *concetto* più probabile — dare per chiuso 
 perché "ora c'è il sandbox" — scomponendo il caso in "codice nostro" e "servizio di
 terzi" prima di scrivere la conclusione.
 
+### UJ-CLD-001 — completato, stato REVIEW. **Risultato che cambia il piano.**
+
+Deliverable: `docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md`.
+Metodo: lettura **diretta** delle fonti primarie, non citazione a memoria.
+
+**`VERIFIED_FACT`, con citazione:**
+
+> *"Unless previously approved, Anthropic does not allow third party developers to offer
+> claude.ai login or rate limits for their products, including agents built on the Claude
+> Agent SDK. Use the API key authentication methods described in the Quickstart instead."*
+> — `code.claude.com/docs/en/agent-sdk/overview`, letto 2026-08-17
+
+**Conseguenza per il programma:**
+
+| Percorso | Verdetto |
+|---|---|
+| ultraJARVIS come app autonoma su Agent SDK | ❌ `PAID_ONLY_DISABLED` — richiede chiave API = pay-per-token = Articolo 5 |
+| ultraJARVIS che automatizza la UI di Claude.ai | ❌ `UNAVAILABLE` — i termini consumer vietano l'accesso "attraverso mezzi automatizzati o non umani" |
+| Christian che usa Claude di persona | ✅ `HUMAN_BRIDGE` — **unico percorso a costo zero** |
+
+**Per Claude, `HUMAN_BRIDGE` non è un ripiego temporaneo: è la modalità definitiva**
+finché il budget resta zero. La review focus n. 3 della PR #1 chiedeva di tenere
+l'accesso automatico BLOCKED finché non verificato: ora è verificato, e la risposta non
+è "sbloccalo", è che il percorso automatico non esiste a costo zero.
+
+Gate §6.2 su CAP-CLD-002: **4 condizioni negative su 10**. Verdetto definitivo.
+
+**Il divieto del mio ruolo era una regola scritta, non una cautela.** §32.2 mi vieta di
+"trasformare una capacità Claude Code in una licenza universale per app terze". Ho
+scoperto che è esattamente ciò che la documentazione ufficiale vieta. Se avessi
+progettato assumendo il contrario, il programma avrebbe poggiato su un accesso inesistente.
+
+**`CLD-1` — controllo operativo per Christian:** in Claude Code, al raggiungimento del
+limite viene proposto di abilitare crediti API a tariffe API standard. **È l'unico modo
+in cui questo programma può generare un addebito.** La risposta è sempre **no**, salvo
+decisione esplicita e registrata. Raggiungere il limite è un `BLOCKED` legittimo, non un
+problema da risolvere spendendo.
+
+**Scoperta secondaria — le fonti si spostano in tempo reale.** L'URL dell'Agent SDK
+registrato **ieri** nel manifest ha prodotto due redirect consecutivi:
+`docs.claude.com` → 301 → `platform.claude.com` → 307 → `code.claude.com`.
+Sommato ai due 404 già trovati: **3 URL ufficiali instabili su 20 in 24 ore.** È la
+prova empirica del perché §4.1 punto 5 vieta di congelare URL e limiti nel codice.
+
+**Conferma di progetto:** il campo `QuotaCounter.source` che avevo definito con i valori
+`PROVIDER_COUNTER | OBSERVED_THRESHOLD | UNKNOWN` si è rivelato necessario — Claude non
+espone il residuo programmaticamente, solo via `/status` interattivo. Il contratto non ha
+dovuto cambiare, ed è una conferma che vale più di una previsione azzeccata.
+
+**Errori:** nessuno. Ma segnalo un rischio evitato: la tentazione di rispondere a Q1–Q10
+a memoria invece di leggere le fonti. Avrei sbagliato, perché il dominio della
+documentazione era cambiato da meno di 24 ore.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -586,19 +643,24 @@ STATO     : UJ-RUN-001  REVIEW        attende Gemini, 11/13 proposti
             UJ-MCP-001  REVIEW        attende Gemini,  7/8  proposti
             UJ-RCV-001  REVIEW        attende ChatGPT, 6/8 proposti
             UJ-SKL-001  REVIEW        attende ChatGPT, 11/13 proposti
-            UJ-CLD-001  IN_PROGRESS   2/8 proposti, verifica fonti da fare
+            UJ-CLD-001  REVIEW        attende Gemini,   7/8  proposti
             UJ-REV-001  BLOCKED       aspetta ChatGPT
             UJ-REV-002  BLOCKED       aspetta ChatGPT
 
 TUTTI E TRE I P0 DEL PROGRAMMA SONO CHIUSI.
-5 TASK SU 8 SONO IN REVIEW. IL PORTAFOGLIO È DI FATTO ESAURITO.
+6 TASK SU 8 SONO IN REVIEW. IL PORTAFOGLIO È ESAURITO.
 
-PROSSIMO  : UJ-CLD-001 — unico task ancora lavorabile in autonomia.
-            Restano 6 unità: leggere S-06, S-08, S-16, S-18 dal source manifest
-            (docs/program/evidence/UJ-CLD-001-SOURCE-MANIFEST.md) e compilare i
-            primi quattro Capability Record col template §6 del prompt canonico.
-            LIMITE NOTO: S-10 (console billing) richiede login → HUMAN_BRIDGE
-            con Christian. Quella parte NON è completabile da sola.
+PROSSIMO  : NIENTE che io possa iniziare in autonomia.
+
+            Se apri una sessione nuova e non ci sono input nuovi, la risposta
+            corretta è REGISTRARE L'ATTESA, non inventare lavoro. §41 dice di
+            prendere il prossimo task ammissibile o proporre un'estensione
+            compatibile: qui le due estensioni sono già proposte (UJ-SEC-002 e
+            UJ-MCP-002) e attendono una decisione di baseline di ChatGPT.
+
+            L'unico residuo mio è 1 unità di UJ-CLD-001, che richiede un
+            HUMAN_BRIDGE: Christian deve guardare lo stato di billing del suo
+            account e riportarlo. Non è urgente e non blocca nulla.
 
 POI       : il lavoro successivo NON dipende più da me. Dipende da:
             - Gemini: review di UJ-RUN-001 e UJ-MCP-001
