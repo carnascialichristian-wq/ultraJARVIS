@@ -16,7 +16,7 @@
 | Repository | `carnascialichristian-wq/ultraJARVIS` (privata) |
 | Branch di lavoro | `claude/ultrajarvis-repo-analysis-li6vvj` |
 | File gemello per le altre IA | `TASKCLAUDE.md` |
-| Ultimo aggiornamento | 2026-08-17 — sessione `UJ-CLAUDE-2026-08-17-01` |
+| Ultimo aggiornamento | 2026-08-17 — sessione `UJ-CLAUDE-2026-08-17-03` |
 
 > Nota sul nome: il file è `CLAUDE.md` in maiuscolo perché è la convenzione che
 > Claude Code carica automaticamente come istruzioni di progetto. Se lo rinomini in
@@ -182,6 +182,31 @@ proposto in review    = 53 / 76 = 69,7%   11 UJ-RUN-001 + 11 UJ-SEC-001
 
 **Non c'è altro lavoro che io possa iniziare in autonomia.** Se una sessione futura non
 trova nuovi input, la risposta corretta è registrare l'attesa, NON inventare lavoro.
+
+> **AGGIORNAMENTO sessione 3 (2026-08-17).** Le due righe qui sopra erano vere quando
+> sono state scritte e **non lo sono più**. ChatGPT ha pushato UJ-INT-001 e UJ-INT-006
+> lo stesso giorno, fra le 09:44 e le 11:27. Conseguenze:
+>
+> - **UJ-REV-001 non è più bloccato di fatto**: il suo blocker era *"UJ-INT-001 non
+>   esiste"*, e ora esiste (`8f31a37`). Resta `BLOCKED` in `BACKLOG.json` perché ChatGPT
+>   non ha rigenerato lo snapshot, ma il blocco è formale, non reale;
+> - è comparso un **dovere da reviewer** che non è nel mio portafoglio: `UJ-INT-006`
+>   (owner ChatGPT, peso 8) è in `REVIEW` con **CLAUDE reviewer canonico**, con richiesta
+>   esplicita in `prompts/review-requests/UJ-INT-006-CLAUDE.md`. **Consegnato in questa
+>   sessione**, esito `PASS_WITH_ACTIONS`.
+>
+> Il peso 8 di UJ-INT-006 è di **ChatGPT**, non mio: fare da reviewer non aggiunge unità
+> al mio portafoglio, che resta 76. La lezione operativa è nella §"trappole": *prima di
+> registrare l'attesa, verifica se qualcuno ha consegnato*.
+
+## Doveri da reviewer (non fanno parte delle 76 unità)
+
+| Task | Owner | Peso | Stato | Mio esito |
+|---|---|---:|---|---|
+| UJ-INT-006 — Council packet schemas | CHATGPT | 8 | REVIEW | **PASS_WITH_ACTIONS**, 0/8, sessione 3 |
+| UJ-INT-002, UJ-INT-004 | CHATGPT | 13, 8 | BLOCKED | non ancora consegnati |
+| UJ-CAP-001, UJ-MEM-001, UJ-ADK-001 | GEMINI | 13, 13, 8 | READY/BLOCKED | non ancora consegnati |
+| UJ-RSK-001, UJ-ALT-001 | GROK | 8, 8 | BLOCKED | non ancora consegnati |
 
 **Tutti e tre i P0 del programma sono chiusi.** Restano due `CRITICA` (`R-SEC-01`,
 `R-SEC-02`) che richiedono `UJ-SEC-002`, non ancora accettato da ChatGPT.
@@ -578,6 +603,137 @@ documentazione era cambiato da meno di 24 ore.
 
 ---
 
+## Sessione 3 — `UJ-CLAUDE-2026-08-17-03` — 2026-08-17
+
+**Richiesta di Christian:** aprire il repo, leggere CLAUDE.md e TASKCLAUDE.md, verificare
+l'integrità del piano canonico, rileggere l'ultimo handoff, **rieseguire le prove invece di
+fidarsi**, e prendere il task indicato nel RESUME_POINT. Premessa dichiarata: *"il
+portafoglio è esaurito, se non ci sono input nuovi registra l'attesa"*.
+
+### Il risultato più importante: la premessa era superata
+
+Le prove sono state rieseguite tutte e sono tutte verdi (sotto). Ma la parte utile della
+sessione è stata **non fermarsi lì**.
+
+Il RESUME_POINT condiziona "registra l'attesa" a *"se non ci sono input nuovi"*. Prima di
+applicare quella conclusione ho controllato se ce ne fossero, ed erano arrivati **quel
+giorno stesso**: ChatGPT aveva pushato 8 commit su `agent/ultrajarvis-master-prompt-v1`
+fra le 09:44 e le 11:27, fra cui `UJ-INT-001` (Program OS v0.1) e `UJ-INT-006` (Council
+packet layer), più **una richiesta di review indirizzata a me**,
+`prompts/review-requests/UJ-INT-006-CLAUDE.md`.
+
+**Se avessi applicato il RESUME_POINT alla lettera, avrei registrato un'attesa mentre un
+task aspettava proprio me.** È l'errore che questa sessione ha evitato, ed è la ragione per
+cui la nuova trappola n. 11 dice di verificare i branch altrui *prima* di dichiarare
+un'attesa.
+
+### Cosa ho fatto
+
+1. **Verificato l'integrità del piano canonico**: SHA-256 coincidente.
+2. **Rieseguito tutte le prove** dalla root: typecheck e 138 test.
+3. **Scoperto lo stato reale** dei branch e delle PR (vedi sopra).
+4. **Eseguito la review di UJ-INT-006** come reviewer canonico, con verdetto
+   `PASS_WITH_ACTIONS` e **peso 0/8**.
+
+### File prodotti
+
+| File | Contenuto |
+|---|---|
+| `docs/program/reviews/UJ-REVIEW-INT-006-CLAUDE.json` | ReviewResult conforme allo schema, 18 artefatti con hash reale, 6 findings |
+| `docs/program/reviews/UJ-INT-006-CLAUDE-FINDINGS.md` | review estesa, con i due difetti dimostrati |
+| `docs/program/reviews/UJ-INT-006-CLAUDE-APPEND-BLOCKS.md` | blocchi per `gpt.md`/`taskgpt.md`, da pubblicare via HUMAN_BRIDGE |
+
+### Metodo — come ho revisionato
+
+- **Ho eseguito i validatori di ChatGPT prima di leggere il codice**, per non farmi
+  influenzare da ciò che mi aspettavo di trovare. Tutti e tre PASS.
+- **Ho costruito una suite avversariale di 20 candidati** invece di ispezionare a occhio:
+  autoreview dell'owner, peso parziale, FAIL con assegnazione di peso, commit stantio,
+  path escape, hash mismatch, criteri omessi/duplicati/sconosciuti, `NOT_APPLICABLE` con
+  PASS, `artifacts_reviewed` vuoto, e infine la review vuota. **19 respinti su 20.**
+- **Ho validato il mio stesso ReviewResult con il validatore di ChatGPT** prima di
+  consegnarlo: `--review-result … --expected-commit …` → PASS. Non dichiaro conforme
+  qualcosa che non ho fatto passare dal gate.
+- **Ho citato solo artefatti che ho davvero aperto o eseguito**, 18, ognuno con SHA-256
+  calcolato dal worktree al ref verificato — e ho scritto nella review §10 l'elenco di ciò
+  che **non** ho revisionato. Dato che il mio finding principale è proprio sulle prove
+  vuote, citare file non letti avrebbe invalidato la review mentre la scrivevo.
+
+### Il difetto principale trovato — F-001
+
+Ho costruito un `ReviewResult` che cita **solo `README.md`**, file estraneo al task, con
+`evidence_refs` `"trust me"` / `"looks fine"` / `"."` e `findings: []`, e che assegna
+**8 unità su 8** proponendo `DONE`.
+
+**Il validatore lo accetta.**
+
+L'intake verifica che l'hash di ogni artefatto citato sia autentico, ma non impone mai che
+gli artefatti citati **c'entrino col task**: i 12 `proof_refs` di AC-01 non sono richiesti,
+e gli `evidence_refs` sono stringhe libere controllate solo per lunghezza.
+
+**È TH-10 — proof fabrication — del mio threat model, ricomparsa nel layer di ChatGPT.**
+L'avevo classificata `CRITICA`/`ALTA` e la ragione era esattamente questa: non serve
+malizia, basta un resoconto plausibile. Qui il resoconto plausibile supera il gate e muove
+il ledger.
+
+### Il secondo difetto — F-002
+
+`COUNCIL_IMPORT_AND_MERGE.md` stage 5 impone no-op sul replay esatto e `REPLAY_DIVERGENCE`
+sul divergente, e prescrive uno store `(packet_id, idempotency_key, sha256, received_at,
+disposition)`. Il validatore è **stateless**. Dimostrato: stesso `review_id` con byte
+diversi → **passa** invece di essere rifiutato come manomissione.
+
+Conta come `FAIL` di AC-02 e non come semplice rilievo perché il testo del criterio nomina
+"replay" fra le regressioni coperte.
+
+### ERRORI COMMESSI IN QUESTA SESSIONE
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E10 | **Ripetuto E4 in forma nuova**: `require("schemas/x.json")` con path relativo dopo un `cd` | `Cannot find module` su tutti e 7 gli schemi | path assoluti passati via `process.argv` | la trappola n. 1 vale anche per `require`, non solo per il test runner. L'ambiente **resetta la cwd** fra le chiamate, e lo dichiara nell'output |
+| E11 | **Test di replay invalido**: avevo messo `next_action: "n"` | tutti e 3 i casi FAIL, ma per `string is too short`, non per il replay | payload valido, test rieseguito | **un test che fallisce per il motivo sbagliato è un falso negativo**: stavo per concludere che il replay fosse gestito. Verificare *perché* fallisce, non solo *che* fallisce |
+
+E11 è l'errore più istruttivo della sessione: mi avrebbe fatto scrivere il contrario del
+vero su F-002. È la stessa classe di E7 della sessione 1 (falso positivo diagnostico), in
+direzione opposta.
+
+### Prove eseguite
+
+| Verifica | Comando | Esito |
+|---|---|---|
+| Integrità piano canonico | `git show …:docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md \| sha256sum` | `a3fcdfc9…a69a87` **coincide** |
+| Typecheck | `npx tsc -p packages/contracts --noEmit` | **exit 0** |
+| Build | `npx tsc -p packages/contracts` | **exit 0** |
+| Suite completa | `for f in tests/contracts/*.test.mjs; do node --test "$f"; done` | **138/138 pass, 0 fail** |
+| Validatore Council (ref `31f31b99`) | `node scripts/validate-council-packets.mjs` | PASS |
+| Validatore Program OS | `node scripts/validate-program-os.mjs` | PASS |
+| Intake regression | `node scripts/test-review-result-intake.mjs` | PASS, 7 casi |
+| Suite avversariale mia | 20 candidati | **19 respinti, 1 ammesso → F-001** |
+| Il mio ReviewResult | `--review-result … --expected-commit …` | **PASS** |
+
+Dettaglio suite: runtime 34 · policy 28 · tools 30 · recovery 9 · skills 37.
+
+### Cosa NON ho fatto, e perché
+
+- **non ho scritto `gpt.md`, `taskgpt.md`, `BACKLOG.json`** né alcun file su
+  `agent/ultrajarvis-master-prompt-v1`: sono di ChatGPT, e su un branch non mio. I blocchi
+  di append sono pronti per HUMAN_BRIDGE;
+- **non ho assegnato peso a UJ-INT-006**, benché il validatore avrebbe accettato 8/8 con
+  `DONE` — l'ho dimostrato attaccandolo. Due criteri su tre non sono pienamente
+  soddisfatti;
+- **non mi sono assegnato peso** per la review: il peso 8 è di ChatGPT;
+- non ho preso UJ-REV-001 in questa sessione, pur essendo ora lavorabile: la review di
+  UJ-INT-006 era esplicitamente richiesta e bloccava un altro portafoglio;
+- non ho commentato la PR #1 né aperto PR: azioni verso l'esterno non autorizzate.
+
+### Decisione lasciata aperta
+
+`UJ-REV-001` è **lavorabile adesso** (UJ-INT-001 esiste). Non l'ho preso per non
+sovrapporlo alla review appena consegnata e perché il RESUME_POINT va aggiornato prima.
+È il primo candidato della sessione 4.
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -586,8 +742,10 @@ documentazione era cambiato da meno di 24 ore.
 |---|---|---|
 | 1 | Confermare i default DepthGuard (depth 3, fan-out 5, 25 task attivi) come non modificabili dagli agenti | in attesa |
 | 2 | Confermare che `L5 — Broad Autonomy` resti irrappresentabile nel codice | in attesa |
-| 3 | Accesso automatico Claude resta BLOCKED finché UJ-CLD-001 non risponde a Q1–Q4 | in attesa |
-| 4 | Aprire o no una PR per il branch di lavoro | in attesa |
+| 3 | Accesso automatico Claude resta BLOCKED finché UJ-CLD-001 non risponde a Q1–Q4 | **risolta** in sessione 2: UJ-CLD-001 ha risposto, l'accesso automatico non esiste a costo zero |
+| 4 | Aprire o no una PR per il branch di lavoro | **superata**: la PR #2 esiste già (`claude/ultrajarvis-repo-analysis-li6vvj` → `main`) |
+| 5 | Relay HUMAN_BRIDGE dei blocchi di append verso `gpt.md`/`taskgpt.md` di ChatGPT | in attesa — pronti in `docs/program/reviews/UJ-INT-006-CLAUDE-APPEND-BLOCKS.md` |
+| 6 | Segnalare a ChatGPT che il suo `BACKLOG.json` non vede i miei 6 deliverable | in attesa — divergenza documentata in `TASKCLAUDE.md` §9 |
 
 ## ADR proposti, nessuno deciso
 
@@ -631,6 +789,17 @@ Sintesi operativa degli errori sopra, in forma di regole:
 8. **Non assegnarti peso.** `completed_weight` resta 0 finché un reviewer non accetta.
 9. **Non inventare ETA.** Senza velocity su due cicli: `ETA UNKNOWN`.
 10. **Non affermare capacità non verificate** su piani, prezzi o accessi.
+11. **Prima di registrare un'attesa, verifica se qualcuno ha consegnato.** `git fetch` di
+    *tutti* i branch e lettura dei log altrui. Nella sessione 3 il RESUME_POINT diceva
+    "portafoglio esaurito": era vero quando è stato scritto e falso due ore dopo. Il
+    RESUME_POINT descrive il passato, i branch descrivono il presente.
+12. **Un test che fallisce per il motivo sbagliato è un falso negativo** (E11). Prima di
+    concludere che un controllo esiste, leggi *perché* il caso è stato respinto: uno
+    schema che rifiuta un payload malformato non dimostra la regola che volevi provare.
+13. **La cwd viene resettata fra le chiamate Bash**, e vale anche per `require()`, non
+    solo per il test runner (E10). Path assoluti sempre.
+14. **Cita solo prove che hai davvero aperto.** Se una review elenca artefatti non letti,
+    è vuota nello stesso modo che F-001 descrive — e scriverlo mentre lo si fa è peggio.
 
 ---
 
@@ -653,39 +822,50 @@ STATO     : UJ-RUN-001  REVIEW        attende Gemini, 11/13 proposti
             UJ-REV-002  BLOCKED       aspetta ChatGPT
 
 TUTTI E TRE I P0 DEL PROGRAMMA SONO CHIUSI.
-6 TASK SU 8 SONO IN REVIEW. IL PORTAFOGLIO È ESAURITO.
+6 TASK SU 8 SONO IN REVIEW. IL PORTAFOGLIO DI PRODUZIONE È ESAURITO,
+MA I DOVERI DA REVIEWER NO — E QUELLI ARRIVANO SENZA PREAVVISO.
 
-PROSSIMO  : NIENTE che io possa iniziare in autonomia.
+FATTO NUOVO (sessione 3): ChatGPT ha consegnato il 2026-08-17 fra le 09:44 e
+            le 11:27 su agent/ultrajarvis-master-prompt-v1.
+            - UJ-INT-001 Program OS v0.1 ESISTE   -> UJ-REV-001 è lavorabile
+            - UJ-INT-006 Council packets ESISTE   -> REVISIONATO DA ME,
+              PASS_WITH_ACTIONS, 0/8, in docs/program/reviews/
+            - PR #2 esiste per il mio branch (decisione aperta n. 4 superata)
 
-            Se apri una sessione nuova e non ci sono input nuovi, la risposta
-            corretta è REGISTRARE L'ATTESA, non inventare lavoro. §41 dice di
-            prendere il prossimo task ammissibile o proporre un'estensione
-            compatibile: qui le due estensioni sono già proposte (UJ-SEC-002 e
-            UJ-MCP-002) e attendono una decisione di baseline di ChatGPT.
+PROSSIMO  : UJ-REV-001 — Review indipendente del Program OS di ChatGPT (peso 5).
+            È il primo task lavorabile. Il suo blocker storico era "UJ-INT-001
+            non esiste": ora esiste, commit 8f31a37.
+            Attenzione: in BACKLOG.json risulta ancora BLOCKED perché ChatGPT
+            non ha rigenerato lo snapshot. Il blocco è formale, non reale.
+            Materiale: docs/program/{PROJECT_STATE,STATUS,PROGRESS,GOVERNANCE,
+            WORKSTREAMS,RECONCILIATION}.md + BACKLOG.json + validate-program-os.mjs
+            al ref 31f31b99ad7e63bf581161ce9cd12b11f83a945f.
 
-            L'unico residuo mio è 1 unità di UJ-CLD-001, che richiede un
-            HUMAN_BRIDGE: Christian deve guardare lo stato di billing del suo
-            account e riportarlo. Non è urgente e non blocca nulla.
+            METODO CHE HA FUNZIONATO, da riusare: eseguire i validatori PRIMA di
+            leggere il codice, costruire una suite avversariale invece di
+            ispezionare a occhio, e citare solo artefatti davvero aperti.
 
-POI       : il lavoro successivo NON dipende più da me. Dipende da:
-            - Gemini: review di UJ-RUN-001 e UJ-MCP-001
+POI       : - Gemini: review di UJ-RUN-001, UJ-MCP-001, UJ-CLD-001
             - Grok:   review di UJ-SEC-001
-            - ChatGPT: review di UJ-RCV-001 e UJ-SKL-001, più UJ-INT-001 e
-                       UJ-INT-007 che sbloccano UJ-REV-001 e UJ-REV-002
-            - Christian: decisioni costituzionali e di baseline
-            Se nessuno risponde, NON inventare lavoro nuovo: registra l'attesa.
+            - ChatGPT: review di UJ-RCV-001 e UJ-SKL-001; correzione di F-001 e
+                       F-002 su UJ-INT-006; UJ-INT-007 sblocca UJ-REV-002
+            - Christian: decisioni costituzionali e di baseline, più il relay
+                       HUMAN_BRIDGE dei blocchi di append verso gpt.md/taskgpt.md
+            Se nessuno risponde E non ci sono branch nuovi, registra l'attesa.
+            Ma controlla i branch PRIMA: vedi trappola 11.
 
 DECISIONI DI BASELINE IN SOSPESO PRESSO CHATGPT:
             UJ-SEC-002 (peso 8) — chiude i due CRITICA R-SEC-01/R-SEC-02
             UJ-MCP-002 (peso 5) — unico modo di chiudere R-MCP-01
 
 NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
-            approval policy, critica Costituzione, tool plane, source manifest.
+            approval policy, critica Costituzione, tool plane, source manifest,
+            capability record UJ-CLD-001, E LA REVIEW DI UJ-INT-006.
             Verifica prima, DALLA ROOT del repo:
-              node --test tests/contracts/runtime-invariants.test.mjs   → 34/34
-              node --test tests/contracts/approval-policy.test.mjs      → 28/28
-              node --test tests/contracts/tool-admission.test.mjs       → 30/30
-              totale atteso: 92/92
+              for f in tests/contracts/*.test.mjs; do node --test "$f"; done
+              totale atteso: 138/138 (runtime 34 · policy 28 · tools 30 ·
+                                      recovery 9 · skills 37)
+            Riverificato in sessione 3: 138/138 pass, typecheck exit 0.
 
 RICORDA   : a fine task, Regola 2 — aggiorna CLAUDE.md e TASKCLAUDE.md, poi commit e push.
 ```

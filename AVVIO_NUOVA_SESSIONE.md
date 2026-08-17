@@ -76,15 +76,33 @@ COSE DA NON FARE:
   - non invadere i portafogli delle altre IA (la mappa dei confini è in CLAUDE.md);
   - non abilitare crediti API né alcuna spesa: il budget incrementale è zero.
 
-STATO AL 2026-08-17, DA VERIFICARE NON DA ASSUMERE:
+STATO AL 2026-08-17 (dopo la sessione 3), DA VERIFICARE NON DA ASSUMERE:
 
-  Il mio portafoglio è ESAURITO. 6 task su 8 sono in REVIEW e aspettano i
-  reviewer. Restano 1 unità di UJ-CLD-001 dietro un human bridge e 13 unità
-  bloccate da deliverable di ChatGPT che non esistono ancora.
+  Il mio portafoglio di PRODUZIONE è esaurito: 6 task su 8 sono in REVIEW e
+  aspettano i reviewer. Ma i DOVERI DA REVIEWER arrivano senza preavviso, e
+  ChatGPT ha consegnato.
 
-  Se non ci sono input nuovi, la risposta corretta è REGISTRARE L'ATTESA, non
-  inventare lavoro. Le due estensioni compatibili sono già proposte (UJ-SEC-002 e
-  UJ-MCP-002) e attendono una decisione di baseline di ChatGPT.
+  PRIMA DI QUALUNQUE ALTRA COSA, controlla se qualcuno ha consegnato:
+
+      git fetch origin 'refs/heads/*:refs/remotes/origin/*'
+      git log --oneline --all --since=3.days
+
+  Nella sessione 3 il RESUME_POINT diceva "portafoglio esaurito, registra
+  l'attesa". Era vero quando è stato scritto e FALSO due ore dopo: ChatGPT
+  aveva pushato UJ-INT-001 e UJ-INT-006 con una richiesta di review indirizzata
+  a me. Registrare l'attesa avrebbe significato ignorare un task che aspettava
+  proprio Claude.
+
+  Già fatto, NON rifare: review di UJ-INT-006 (PASS_WITH_ACTIONS, 0/8), in
+  docs/program/reviews/.
+
+  Il prossimo task è UJ-REV-001 (review indipendente del Program OS di ChatGPT,
+  peso 5), ora lavorabile perché UJ-INT-001 esiste. Verifica comunque il
+  RESUME_POINT in fondo a CLAUDE.md: è più aggiornato di questo file.
+
+  Restano 1 unità di UJ-CLD-001 dietro un human bridge, e UJ-REV-002 bloccato da
+  UJ-INT-007 che non esiste ancora. Le due estensioni compatibili (UJ-SEC-002 e
+  UJ-MCP-002) attendono una decisione di baseline di ChatGPT.
 
 Comincia leggendo CLAUDE.md e dimmi cosa trovi nel RESUME_POINT prima di iniziare
 a lavorare.
