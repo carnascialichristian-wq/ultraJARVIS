@@ -260,3 +260,12 @@ conflitto va registrato, non eliminato.
 - Rischi aperti da non occultare: il review artifact Claude è `PASS_WITH_ACTIONS` e resta REVIEW; F-001 e F-002 richiedono implementazione/test prima di qualsiasi accettazione. Nessun task weight è cambiato.
 - Istruzioni alla prossima IA: leggere `AGENTS.md`, `gpt.md`, questo file e la head remota di `main`; mantenere separati gli snapshot/PR draft; aggiornare entrambi i ledger alla fine di ogni task; non usare questo merge come prova di accettazione formale.
 - Problema ambientale: installare/abilitare un toolchain Node/TypeScript è ancora necessario per la verifica completa; non sono state installate dipendenze né usati segreti.
+
+
+### 2026-08-17 — Checkpoint cross-AI post-merge
+
+- Head reale di `main`: `f7978cde9b2bae138a6939880f0ced5681a379ad`. Il merge del lavoro Claude resta tracciato da `bb51093b23cb4b8f4f2335fc2bb856f7dc141731`.
+- PR #1 (Program OS/Council) è ancora draft e non mergiata: la sua base è storica e GitHub la segnala `dirty`. PR #3 (snapshot Grok v8) è ancora draft, pulita, ma si basa sulla branch Program OS e non su `main`.
+- `main` contiene runtime/docs Claude, il codice Python/Grok già presente e i ledger; non contiene ancora l'intero Program OS (`AGENTS.md`, backlog, schemi Council e prompt canonico). Questa distinzione è obbligatoria per le prossime IA.
+- Nessun peso è stato accettato. UJ-CAP-001 e UJ-GGL-001 restano READY/HUMAN_BRIDGE per Gemini; la loro integrazione dovrà avvenire in branch dedicate e con ResponsePacket separati.
+- Prossimo resume point: ricevere l'output completo di Gemini, verificare fonti/hash/schema, aggiornare entrambi i ledger, pubblicare le branch UJ-CAP-001/UJ-GGL-001 e solo dopo riallineare PR #1/#3.

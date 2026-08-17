@@ -339,3 +339,13 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Errore/correzione: la prima fotografia della PR la mostrava con base storica; la rilettura GitHub alla head Claude ha restituito `mergeable=clean`, quindi il merge è stato eseguito con `expected_head_sha` per evitare race.
 - Prossima azione: tenere separate le PR draft del Program OS e dell'import Grok, chiudere i finding Claude con test/ADR e rieseguire il typecheck in un ambiente Node completo.
 - Aggiornamento speculare: questa stessa sessione è stata aggiunta a `taskgpt.md` nella medesima pubblicazione.
+
+
+### 2026-08-17 — ChatGPT/Codex — checkpoint remoto post-merge
+
+- Correzione di continuità: il merge Claude è `bb51093b23cb4b8f4f2335fc2bb856f7dc141731`; il commit successivo che pubblica i ledger è `f7978cde9b2bae138a6939880f0ced5681a379ad`. Quindi la head reale di `main` a questo checkpoint è `f7978cde9b2bae138a6939880f0ced5681a379ad`, non `bb51093b…`.
+- Stato PR verificato tramite API: PR #1 Program OS è OPEN/DRAFT, head `31f31b99…`, base storica `9d2a93de…`, `mergeable=dirty`; PR #3 import Grok è OPEN/DRAFT, head `97f7f06d…`, base `agent/ultrajarvis-master-prompt-v1`, `mergeable=clean`. Nessuna delle due è stata unita.
+- Rilevazione importante: `AGENTS.md`, backlog e contratti Program OS restano sulla branch `agent/ultrajarvis-master-prompt-v1`, non sono ancora parte di `main`. Non descrivere `main` come se contenesse già il Program OS completo.
+- Decisione operativa: mantenere PR #1 e #3 separate finché la base viene riallineata e i reviewer/owner gate restano documentati. Non cambiare task weight o status.
+- Prossima azione: integrare prima gli output HUMAN_BRIDGE di Gemini (UJ-CAP-001 e UJ-GGL-001), poi creare branch/PR dedicate e soltanto dopo valutare una fusione controllata del Program OS.
+- Verifica eseguita senza installazioni, billing, segreti o scritture esterne oltre a questo ledger commit.
