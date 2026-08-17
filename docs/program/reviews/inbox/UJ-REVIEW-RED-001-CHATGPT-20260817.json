@@ -1,0 +1,118 @@
+{
+  "schema_version": "ultrajarvis.review-result/v1",
+  "review_id": "UJ-REVIEW-RED-001-CHATGPT-20260817",
+  "created_at": "2026-08-17T19:36:29Z",
+  "repository": {
+    "full_name": "carnascialichristian-wq/ultraJARVIS",
+    "commit_sha": "97f7f06d56f39101b6a54a74dfbcafea49b72676"
+  },
+  "task_id": "UJ-RED-001",
+  "task_owner": "GROK",
+  "reviewer": {
+    "ai_id": "CHATGPT",
+    "product": "ChatGPT Work Mode with GitHub connector"
+  },
+  "artifacts_reviewed": [
+    {
+      "ref": "docs/program/GROK_V8_SNAPSHOT_IMPORT.md",
+      "sha256": "94fc75a802f396b24b0fa854f5782ce79daa0fba36592fc34475f9dd65a9285e"
+    },
+    {
+      "ref": "imports/grok-v8/IMPORT_MANIFEST.json",
+      "sha256": "b790bd2dc58e716684150ee0cff08d28fe16349c776922c605c59d488b4ff48d"
+    },
+    {
+      "ref": "imports/grok-v8/STATUS.md",
+      "sha256": "4954e8f993598de013eaf80769eaf1e3605c056e46a8d123ed4ff5e0a010218a"
+    }
+  ],
+  "outcome": "FAIL",
+  "criteria": [
+    {
+      "criterion_id": "AC-01",
+      "result": "FAIL",
+      "evidence_refs": [
+        "docs/program/GROK_V8_SNAPSHOT_IMPORT.md",
+        "PR #3 changed-file inventory"
+      ],
+      "note": "The required ZERO_COST_FALSIFICATION_REPORT.md is absent."
+    },
+    {
+      "criterion_id": "AC-02",
+      "result": "FAIL",
+      "evidence_refs": [
+        "imports/grok-v8/IMPORT_MANIFEST.json"
+      ],
+      "note": "The required provider, quota, cloud, and zero-card failure analysis is absent."
+    },
+    {
+      "criterion_id": "AC-03",
+      "result": "FAIL",
+      "evidence_refs": [
+        "PR #3 changed-file inventory",
+        "imports/grok-v8/IMPORT_MANIFEST.json"
+      ],
+      "note": "The required attack-surface and falsification coverage is absent."
+    },
+    {
+      "criterion_id": "AC-04",
+      "result": "FAIL",
+      "evidence_refs": [
+        "PR #3 changed-file inventory"
+      ],
+      "note": "No reversible alternative comparison was delivered."
+    },
+    {
+      "criterion_id": "AC-05",
+      "result": "FAIL",
+      "evidence_refs": [
+        "PR #3 changed-file inventory",
+        "schemas/response-packet.schema.json"
+      ],
+      "note": "No separate schema-valid ResponsePacket or artifact hash handoff is present."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-001",
+      "severity": "HIGH",
+      "description": "Required ZERO_COST_FALSIFICATION_REPORT.md is absent from PR #3.",
+      "required_action": "Grok must add the complete report and hash it in a separate ResponsePacket."
+    },
+    {
+      "finding_id": "F-002",
+      "severity": "HIGH",
+      "description": "Required UJ-RED-001 ResponsePacket is absent.",
+      "required_action": "Return one schema-valid packet with status REVIEW and accepted weight 0/13."
+    },
+    {
+      "finding_id": "F-003",
+      "severity": "HIGH",
+      "description": "The manifest records unverified claims, a missing core.natural_tasks import, and no committed tests.",
+      "required_action": "Provide reproducible checks and mark unsupported runtime claims UNKNOWN until proven."
+    },
+    {
+      "finding_id": "F-004",
+      "severity": "HIGH",
+      "description": "The snapshot has file, queue, subprocess, browser, email, OS-control, and promotion surfaces without the required falsification report.",
+      "required_action": "Add bounded tests for the specified attack and escalation scenarios before activation."
+    },
+    {
+      "finding_id": "F-005",
+      "severity": "MEDIUM",
+      "description": "Source license provenance is explicitly unverified.",
+      "required_action": "Resolve license provenance before activation or reuse."
+    }
+  ],
+  "policy_checks": {
+    "zero_cost": "PASS",
+    "data_class": "PASS",
+    "side_effect": "PASS",
+    "secret_handling": "PASS",
+    "consumer_ui_automation": "PASS"
+  },
+  "accepted_weight_before": 0,
+  "accepted_weight_after": 0,
+  "proposed_task_status": "BLOCKED",
+  "next_action": "Keep PR #3 unmerged and inactive; obtain the missing falsification report and separate schema-valid ResponsePacket, then rerun exact-head validation."
+}

@@ -349,3 +349,10 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Decisione operativa: mantenere PR #1 e #3 separate finché la base viene riallineata e i reviewer/owner gate restano documentati. Non cambiare task weight o status.
 - Prossima azione: integrare prima gli output HUMAN_BRIDGE di Gemini (UJ-CAP-001 e UJ-GGL-001), poi creare branch/PR dedicate e soltanto dopo valutare una fusione controllata del Program OS.
 - Verifica eseguita senza installazioni, billing, segreti o scritture esterne oltre a questo ledger commit.
+
+
+### 2026-08-17 — ChatGPT/Codex — UJ-RED-001 review candidate
+
+- Reviewed PR #3 at exact head `97f7f06d56f39101b6a54a74dfbcafea49b72676` against the RED card and acceptance criteria.
+- Found the required falsification report and separate ResponsePacket absent; the import manifest also records unverified claims and a missing `core.natural_tasks` module.
+- Created an untrusted review candidate in `docs/program/reviews/inbox/`; no weight, backlog, PR #3, or `main` changed.

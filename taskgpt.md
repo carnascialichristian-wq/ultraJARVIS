@@ -269,3 +269,10 @@ conflitto va registrato, non eliminato.
 - `main` contiene runtime/docs Claude, il codice Python/Grok già presente e i ledger; non contiene ancora l'intero Program OS (`AGENTS.md`, backlog, schemi Council e prompt canonico). Questa distinzione è obbligatoria per le prossime IA.
 - Nessun peso è stato accettato. UJ-CAP-001 e UJ-GGL-001 restano READY/HUMAN_BRIDGE per Gemini; la loro integrazione dovrà avvenire in branch dedicate e con ResponsePacket separati.
 - Prossimo resume point: ricevere l'output completo di Gemini, verificare fonti/hash/schema, aggiornare entrambi i ledger, pubblicare le branch UJ-CAP-001/UJ-GGL-001 e solo dopo riallineare PR #1/#3.
+
+
+### 2026-08-17 — ChatGPT/Codex — Grok PR #3 review candidate
+
+- PR #3 is a review-only snapshot, not a complete UJ-RED-001 delivery: required report and ResponsePacket are absent.
+- Review outcome is FAIL/BLOCKED for intake; accepted weight remains 0/13.
+- Candidate is stored in `docs/program/reviews/inbox/` and must be validated against the exact PR head before any admission.
