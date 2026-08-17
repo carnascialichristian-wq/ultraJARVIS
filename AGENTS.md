@@ -4,10 +4,12 @@ This repository is the canonical blackboard for ultraJARVIS. Chat memory is not
 authoritative. Read the artifacts below before changing code or program state:
 
 1. `docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md`
-2. `docs/program/PROJECT_STATE.md`
-3. `docs/program/BACKLOG.json`
-4. `docs/program/STATUS.md`
-5. approved records in `docs/adrs/`
+2. `gpt.md`
+3. `taskgpt.md`
+4. `docs/program/PROJECT_STATE.md`
+5. `docs/program/BACKLOG.json`
+6. `docs/program/STATUS.md`
+7. approved records in `docs/adrs/`
 
 ## Non-negotiable constraints
 
@@ -33,6 +35,8 @@ Before starting work:
 
 - identify the real AI/product and capabilities available in the session;
 - read the current repository ref and reconcile it with the backlog;
+- read `gpt.md` and `taskgpt.md`, then verify their checkpoint against the
+  remote branch rather than chat memory;
 - select one READY task owned by that AI;
 - declare the output contract, acceptance criteria, checks, data class, and
   side-effect ceiling;
@@ -45,6 +49,9 @@ Before ending work:
 - record decisions as ADRs, unresolved facts as assumptions/blockers, and
   reusable output as versioned artifacts;
 - provide exact next actions and a `RESUME_POINT`;
+- append the session/task report to both `gpt.md` and `taskgpt.md`, publish it
+  on the working branch, and never delete earlier report entries; Grok must
+  return exact append blocks through HUMAN_BRIDGE if it cannot write directly;
 - do not claim background work, invented tests, invented consensus, or an ETA
   without measured velocity.
 
@@ -65,4 +72,3 @@ Accepted proof is a commit/PR, reproducible test output, primary official
 source with verification date, artifact hash, or owner decision. A narrative
 claim is not proof. Progress is calculated only from accepted weight as defined
 in `docs/program/PROGRESS.md`.
-

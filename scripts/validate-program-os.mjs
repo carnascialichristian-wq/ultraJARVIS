@@ -42,6 +42,8 @@ function parseJson(relativePath) {
 
 const requiredArtifacts = [
   "AGENTS.md",
+  "gpt.md",
+  "taskgpt.md",
   ".github/PULL_REQUEST_TEMPLATE.md",
   "docs/program/README.md",
   "docs/program/PROJECT_STATE.md",
@@ -81,11 +83,30 @@ const schema = parseJson("schemas/backlog.schema.json");
 const handoffSchema = parseJson("schemas/handoff-packet.schema.json");
 const backlog = parseJson("docs/program/BACKLOG.json");
 const statusDocument = read("docs/program/STATUS.md");
+const agentInstructions = read("AGENTS.md");
+const gptLedger = read("gpt.md");
+const crossAiBrief = read("taskgpt.md");
+const resumePoint = read("docs/program/RESUME_POINT.md");
 
 assert(schema?.$schema === "https://json-schema.org/draft/2020-12/schema", "Backlog schema must use JSON Schema 2020-12.");
 assert(handoffSchema?.properties?.schema_version?.const === "ultrajarvis.handoff-packet/v1", "Handoff schema version is invalid.");
 assert(backlog?.schema_version === "ultrajarvis.backlog/v1", "Backlog schema_version is invalid.");
 assert(backlog?.program === "ultraJARVIS", "Backlog program name is invalid.");
+assert(gptLedger.includes("ULTRAJARVIS_PRIMARY_SESSION_LEDGER_RULE"), "gpt.md must contain the primary session-ledger rule marker.");
+assert(gptLedger.includes("ULTRAJARVIS_GROK_SESSION_LEDGER_RULE"), "gpt.md must contain Grok's mandatory ledger rule marker.");
+assert(crossAiBrief.includes("ULTRAJARVIS_CROSS_AI_HANDOFF"), "taskgpt.md must contain the cross-AI handoff marker.");
+assert(crossAiBrief.includes("ResponsePacket"), "taskgpt.md must explain the required ResponsePacket handoff.");
+assert(agentInstructions.includes("gpt.md") && agentInstructions.includes("taskgpt.md"), "AGENTS.md must require the continuity ledgers.");
+assert(resumePoint.includes("gpt.md") && resumePoint.includes("taskgpt.md"), "RESUME_POINT.md must require the continuity ledgers.");
+
+const continuitySecretPatterns = [
+  /ghp_[A-Za-z0-9]{20,}/,
+  /github_pat_[A-Za-z0-9_]{20,}/,
+  /sk-[A-Za-z0-9]{20,}/,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/
+];
+assert(continuitySecretPatterns.every((pattern) => !pattern.test(gptLedger)), "gpt.md contains a value resembling a secret.");
+assert(continuitySecretPatterns.every((pattern) => !pattern.test(crossAiBrief)), "taskgpt.md contains a value resembling a secret.");
 
 if (backlog) {
   const tasks = backlog.tasks ?? [];

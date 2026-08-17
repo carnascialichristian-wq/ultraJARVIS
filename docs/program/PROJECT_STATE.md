@@ -24,6 +24,9 @@ M0–M17 program, Constitution, four-AI ownership, zero-cost boundary, and initi
 minimal README. UJ-INT-001 and UJ-INT-006 have submitted the Program OS and
 Council packet layer for independent review. The first M0 mission and four
 HUMAN_BRIDGE cards are ready; no specialist response has been imported yet.
+`gpt.md` and `taskgpt.md` are now the append-only cross-session ledger and
+cross-AI briefing. They are mandatory reading and update artifacts, while the
+remote branch and `BACKLOG.json` remain authoritative for proof and numbers.
 
 ## User constraints in force
 
@@ -39,6 +42,7 @@ HUMAN_BRIDGE cards are ready; no specialist response has been imported yet.
 | UC-008 | Consumer UI/cookie/session automation is forbidden | USER_CONSTRAINT | master prompt §§3, 6.2 |
 | UC-009 | No secret values in prompts, logs, repository, or memory | USER_CONSTRAINT | master prompt §§3, 14–17 |
 | UC-010 | Work must be resumable from artifacts and checkpoints, not chat memory | USER_CONSTRAINT | master prompt §§1.2, 7, 31 |
+| UC-011 | Every session must leave a GitHub-published evidence-based resoconto for ChatGPT and the other council AIs | USER_CONSTRAINT | `gpt.md`, `taskgpt.md`, AGENTS session protocol |
 
 ## Accepted and pending decisions
 

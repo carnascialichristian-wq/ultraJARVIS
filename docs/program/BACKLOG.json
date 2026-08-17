@@ -229,7 +229,7 @@
           "hash": "sha256:a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87"
         }
       ],
-      "output_contract": "Program state, backlog, status, workstreams, handoff, governance, reconciliation, and resume artifacts",
+      "output_contract": "Program state, backlog, status, workstreams, handoff, governance, reconciliation, resume, and durable cross-session ledger artifacts",
       "acceptance_criteria": [
         {
           "criterion_id": "AC-01",
@@ -251,6 +251,8 @@
             "docs/program/SPECIALIST_INPUTS.md",
             "docs/program/RECONCILIATION.md",
             "docs/program/RESUME_POINT.md",
+            "gpt.md",
+            "taskgpt.md",
             "scripts/validate-program-os.mjs"
           ]
         },
@@ -316,6 +318,12 @@
           "ref": "docs/program/RESUME_POINT.md"
         },
         {
+          "ref": "gpt.md"
+        },
+        {
+          "ref": "taskgpt.md"
+        },
+        {
           "ref": "scripts/validate-program-os.mjs"
         }
       ],
@@ -335,7 +343,7 @@
         "resolver": "GROK via UJ-REV-004 and UJ-INT-001 review"
       },
       "next_action": "Ask Grok to review progress gaming and Program OS consistency; record PASS, PASS_WITH_ACTIONS, or FAIL.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "updated_at": "2026-08-17T08:29:57.000Z"
     },
     {
       "task_id": "UJ-INT-002",

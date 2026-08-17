@@ -6,6 +6,8 @@ canonical constitutional contract remains
 
 | Artifact | Purpose | Owner | Update trigger |
 |---|---|---|---|
+| `../../gpt.md` | Append-only ChatGPT session ledger, errors, proof, remaining work, and exact next action | ChatGPT; Grok must also append | every session/task end |
+| `../../taskgpt.md` | Cross-AI briefing, card queue, constraints, failures, and handoff template | ChatGPT; every delegated AI supplies an append | every session/task end |
 | `PROJECT_STATE.md` | Current baseline, constraints, decisions, and critical path | ChatGPT | accepted task or owner decision |
 | `BACKLOG.json` | Machine-readable task ledger | task owners via reviewed PR | any task delta |
 | `STATUS.md` | Human-readable status snapshot | ChatGPT | ledger change |
@@ -30,3 +32,6 @@ canonical constitutional contract remains
 5. Constitution, budget, data classification, and autonomy ceilings require
    Christian's approval to change.
 6. Conflicts are recorded, not silently normalized.
+7. `gpt.md` and `taskgpt.md` are append-only continuity artifacts. Every work
+   session records proof, errors, real status, remaining work, and next action
+   in both files before it ends; the remote branch is the source of truth.

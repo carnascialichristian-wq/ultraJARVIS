@@ -46,6 +46,16 @@ Council admission and merge follow `COUNCIL_IMPORT_AND_MERGE.md`; a valid
 ResponsePacket proposes task state but does not independently award accepted
 weight.
 
+## Mandatory continuity ledger
+
+At the beginning of every session, the active AI reads `gpt.md` and
+`taskgpt.md` at the verified remote ref. At the end, it appends the work,
+artifact hashes, checks, errors, actual task/weight state, remaining work and
+next action to both files before publishing the handoff. Grok has the same
+obligation; if limited to HUMAN_BRIDGE, it must include exact append blocks in
+its ResponsePacket for import by ChatGPT or Christian. The ledger is append-only
+and is not an acceptance mechanism.
+
 ## Storage convention
 
 Use `docs/program/handoffs/<task-id>/<timestamp>-<from>-to-<target>.json` when
