@@ -108,8 +108,10 @@ def run_gates(
         lines.append("black --check ..... SKIP (black not installed)")
 
     # --- pytest ---
+    # Prefer the current interpreter's pytest
     pytest_cmd = [sys.executable, "-m", "pytest", "-q", "--tb=no"]
     if files:
+        # only test files that look like tests
         test_files = [f for f in files if "test" in Path(f).name]
         if test_files:
             pytest_cmd.extend(test_files)
@@ -124,7 +126,9 @@ def run_gates(
         else:
             lines.append("pytest ............ SKIP (no test files in written set)")
     else:
+        # try collecting tests in target_dir
         code, out = _run(pytest_cmd + [str(target_dir)], cwd=target_dir, timeout=90.0)
+        # exit code 5 = no tests collected – treat as soft pass
         if code in (0, 5):
             lines.append("pytest ............ PASS" + (" (no tests collected)" if code == 5 else ""))
         else:

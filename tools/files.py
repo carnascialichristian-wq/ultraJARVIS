@@ -57,11 +57,6 @@ def _is_protected(path: Path, root: Path = PROJECT_ROOT) -> bool:
     return False
 
 
-def is_protected(path: Union[str, Path], root: Path = PROJECT_ROOT) -> bool:
-    """Public wrapper used by promote and others."""
-    return _is_protected(_resolve(path, root), root)
-
-
 def safe_read(
     path: Union[str, Path],
     *,
@@ -129,25 +124,29 @@ def safe_write(
 
 
 def safe_list(
-    path: Union[str, Path] = ".",
+    directory: Union[str, Path] = ".",
     *,
     root: Path = PROJECT_ROOT,
+    pattern: str = "**/*",
 ) -> List[str]:
-    """List files under path (relative to root), returning posix relative paths."""
-    target = _resolve(path, root)
-    try:
-        target.relative_to(root)
-    except ValueError:
-        raise PermissionError(f"Path escapes project root: {target}") from None
-    if not target.exists():
+    """
+    List files under a directory (relative paths from project root).
+
+    Returns an empty list if the directory does not exist.
+    """
+    target = _resolve(directory, root)
+    if not target.exists() or not target.is_dir():
         return []
-    if not target.is_dir():
-        raise ValueError(f"Not a directory: {target}")
-    out: List[str] = []
-    for p in sorted(target.rglob("*")):
+    results: List[str] = []
+    for p in sorted(target.glob(pattern)):
         if p.is_file():
             try:
-                out.append(p.relative_to(root).as_posix())
+                results.append(p.relative_to(root).as_posix())
             except ValueError:
                 continue
-    return out
+    return results
+
+
+def is_protected(path: Union[str, Path], root: Path = PROJECT_ROOT) -> bool:
+    """Public helper to check protection status."""
+    return _is_protected(_resolve(path, root), root)
