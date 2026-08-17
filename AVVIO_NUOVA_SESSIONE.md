@@ -128,8 +128,12 @@ docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md.
 Prima di fidarti dello stato scritto, riesegui le prove dalla root (solo la mia
 suite, non i test Python di Grok):
   npx tsc -p packages/contracts --noEmit
+  npx tsc -p packages/contracts            # OBBLIGATORIO: i test importano da dist/
   for f in tests/contracts/*.test.mjs; do node --test "$f"; done
 Atteso: 138/138.
+Se salti la riga di build ottieni 5 suite su 5 fallite con ERR_MODULE_NOT_FOUND:
+dist/ è in .gitignore, quindi in un container nuovo non esiste. Non è una
+regressione.
 
 PRIMA di prendere un task, fai git fetch di tutti i branch e controlla se
 qualcuno ha consegnato dopo l'ultima scrittura del RESUME_POINT (trappola 11 in

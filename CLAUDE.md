@@ -14,9 +14,9 @@
 | AI_ID | CLAUDE |
 | Ruolo | Runtime, Security & Skill Architect |
 | Repository | `carnascialichristian-wq/ultraJARVIS` (privata) |
-| Branch di lavoro | `claude/ultrajarvis-repo-analysis-li6vvj` |
+| Branch di lavoro | `claude/claude-md-resume-point-tvej1u` (sessione 4). Sessioni 1-3: `claude/ultrajarvis-repo-analysis-li6vvj` |
 | File gemello per le altre IA | `TASKCLAUDE.md` |
-| Ultimo aggiornamento | 2026-08-17 — sessione `UJ-CLAUDE-2026-08-17-03` |
+| Ultimo aggiornamento | 2026-08-17 — sessione `UJ-CLAUDE-2026-08-17-04` |
 
 > Nota sul nome: il file è `CLAUDE.md` in maiuscolo perché è la convenzione che
 > Claude Code carica automaticamente come istruzioni di progetto. Se lo rinomini in
@@ -212,9 +212,21 @@ trova nuovi input, la risposta corretta è registrare l'attesa, NON inventare la
 | Task | Owner | Peso | Stato | Mio esito |
 |---|---|---:|---|---|
 | UJ-INT-006 — Council packet schemas | CHATGPT | 8 | REVIEW | **PASS_WITH_ACTIONS**, 0/8, sessione 3 |
+| **UJ-CAP-001 — Capability Registry** | **GEMINI** | **13** | **QUARANTENA** | **CHANGES_REQUIRED**, 0/13, sessione 4 — pre-verdetto, vedi sotto |
 | UJ-INT-002, UJ-INT-004 | CHATGPT | 13, 8 | BLOCKED | non ancora consegnati |
-| UJ-CAP-001, UJ-MEM-001, UJ-ADK-001 | GEMINI | 13, 13, 8 | READY/BLOCKED | non ancora consegnati |
+| UJ-MEM-001, UJ-ADK-001 | GEMINI | 13, 8 | BLOCKED | non ancora consegnati |
 | UJ-RSK-001, UJ-ALT-001 | GROK | 8, 8 | BLOCKED | non ancora consegnati |
+
+> **UJ-CAP-001 (sessione 4).** Gemini ha consegnato per la prima volta; ChatGPT ha messo il
+> pacchetto in quarantena per motivi di **intake** (nessun `ResponsePacket`, 4 file su 8
+> assenti). Io sono il reviewer designato — verificato in
+> `prompts/delegation-cards/UJ-CAP-001-GEMINI.json` riga 110 — e il mio gate è sul **merito**.
+> Ho emesso un **pre-verdetto** in `docs/program/reviews/UJ-CAP-001-CLAUDE-PREVERDICT.md`:
+> **1 criterio su 5 passato, 3 falliti nel merito** (cioè non risolvibili reimballando), 1 già
+> fallito in intake. 6 findings: 3 BLOCKER, 3 MAJOR.
+>
+> **Non è un `ReviewResult`** e non muove il ledger: gli artefatti non esistono a nessun
+> commit e la consegna non è stata ammessa. Diventerà un packet al reinvio ammesso.
 
 **Tutti e tre i P0 del programma sono chiusi.** Restano due `CRITICA` (`R-SEC-01`,
 `R-SEC-02`) che richiedono `UJ-SEC-002`, non ancora accettato da ChatGPT.
@@ -1188,6 +1200,206 @@ mia, l'accettazione resta di ChatGPT.
 
 ---
 
+## Sessione 4 — `UJ-CLAUDE-2026-08-17-04` — 2026-08-17
+
+**Branch designato:** `claude/claude-md-resume-point-tvej1u` — **nuovo, diverso da quello
+delle sessioni 1-3** (`claude/ultrajarvis-repo-analysis-li6vvj`). Non l'ho scelto io: è
+assegnato dall'ambiente. Le due sessioni precedenti avevano branch di lavoro e `main`
+coincidenti; da qui non è più vero, e chi legge deve saperlo prima di cercare il lavoro.
+
+**Richiesta di Christian:** aprire il repo, leggere `CLAUDE.md` per intero, dire cosa si
+trova nel RESUME_POINT prima di iniziare, poi continuare con le task.
+
+### Il RESUME_POINT era corretto nei fatti e sbagliato in due punti operativi
+
+Riletto per intero e confrontato con la realtà. La sostanza teneva: hash del piano
+canonico invariato, 7 task su 8 in REVIEW, i 10 findings di `UJ-SEC-003` chiusi da Grok
+davvero chiusi. Ma due cose non tornavano, e nessuna delle due si vedeva leggendo.
+
+### E16 — il mio stesso RESUME_POINT fa fallire la suite a chi lo segue alla lettera
+
+Eseguiti i comandi del blocco `NON RIFARE` nell'ordine in cui erano scritti:
+
+```
+for f in tests/contracts/*.test.mjs; do node --test "$f"; done
+→ 5 suite su 5 FALLITE, ERR_MODULE_NOT_FOUND su packages/contracts/dist/runtime/index.js
+```
+
+Causa: i test importano da `packages/contracts/dist/`, `dist/` è in `.gitignore`, e il
+container di sessione è nuovo. Serve `npx tsc -p packages/contracts` **senza** `--noEmit`.
+Quel blocco elencava solo `--noEmit`, e per giunta metteva i test **prima** del typecheck.
+
+Dopo la build: **138/138 pass, 0 fail** (runtime 34 · policy 28 · tools 30 · recovery 9 ·
+skills 37), typecheck exit 0. Nessuna regressione: la ricetta era incompleta, non il codice.
+
+**Perché lo classifico come errore mio e non come inciampo.** `PARTE 2` conteneva la
+ricetta giusta, con la build. Il RESUME_POINT — cioè l'unico blocco che una sessione nuova
+legge davvero per primo — ne conteneva una versione mutilata. Ho lasciato due ricette
+divergenti nello stesso file e ho messo quella rotta nel punto più letto. Una sessione meno
+sospettosa avrebbe aperto un'indagine su una regressione inesistente, o peggio avrebbe
+"aggiustato" i test.
+
+**Correzione applicata in tre punti**, non uno: `CLAUDE.md` PARTE 8, e
+`AVVIO_NUOVA_SESSIONE.md` — che aveva la ricetta **giusta** alla riga 60 e quella **rotta**
+alla riga 130. Entrambe ora dicono esplicitamente che senza build si ottengono 5 fallimenti
+e che non è una regressione.
+
+### Trappola 11: sei branch che il RESUME_POINT non poteva conoscere
+
+`git fetch` di tutti i branch, come prescritto. Ne sono comparsi **sei** mai citati:
+quattro `agent/continuity-*` di Grok, uno `agent/uj-red-001-chatgpt-review-*`, e soprattutto
+**`agent/gemini-handoff-quarantine-20260817`**.
+
+**Gemini ha consegnato per la prima volta nel programma.** E ChatGPT ha messo la consegna
+**in quarantena**.
+
+Errore evitato subito prima: avevo lanciato i confronti con `git diff main...origin/<b>`
+usando il `main` **locale**, fermo a `9d2a93d` mentre `origin/main` era a `3a297e5`. I
+diffstat risultanti erano enormi e insensati (307 file). Me ne sono accorto perché il
+numero non aveva senso, non perché avessi controllato. È la stessa classe di **E14** della
+sessione 3 — confrontare due ref sbagliando quale sia lo stato reale. Rifatto tutto contro
+`origin/main`: i branch avanti sono 4, di 1-3 commit ciascuno.
+
+### UJ-CAP-001 — pre-verdetto del reviewer sul candidato Gemini
+
+**Perché questo lavoro.** `prompts/delegation-cards/UJ-CAP-001-GEMINI.json` riga 110 dice
+`"reviewer": "CLAUDE"`. Verificato, non assunto. È un dovere mio, ed era arrivato senza
+preavviso — esattamente come il RESUME_POINT avvertiva.
+
+**La distinzione che rende il lavoro utile.** ChatGPT ha respinto il pacchetto per motivi
+di **intake**: niente `ResponsePacket`, 4 file su 8 assenti, un blocco troncato. Giudizio
+corretto, non l'ho rimesso in discussione. Ma quello è un gate di **forma**; il mio è di
+**merito**, sui 5 acceptance criteria della card. Sono due porte in serie.
+
+Se avessi aspettato, Gemini avrebbe rispedito un pacchetto ben imballato con lo **stesso
+contenuto**, avrebbe superato l'intake e sarebbe fallito da me. Terzo giro. E ogni giro
+costa a Christian un `HUMAN_BRIDGE` manuale, perché `UJ-CLD-001` ha già stabilito che il
+canale automatico a costo zero non esiste.
+
+**File prodotto:** `docs/program/reviews/UJ-CAP-001-CLAUDE-PREVERDICT.md`.
+**Esito: `CHANGES_REQUIRED`.** 1 criterio su 5 passato, **3 falliti nel merito** — cioè
+sopravvivono a un reinvio che sistemi solo l'imballaggio.
+
+| Finding | Gravità | Criterio | Sostanza |
+|---|---|---|---|
+| G-001 | BLOCKER | AC-03 | **Zero date ISO in 528 righe.** Il JSON omette 7 dei 13 campi per-capability richiesti dalla card |
+| G-002 | BLOCKER | AC-03 | I rate limit del free tier Google asseriti come costanti universali con `confidence: HIGH` |
+| G-003 | BLOCKER | AC-03 | **`UNKNOWN` compare 1 volta in 528 righe: la sua definizione.** 9 capability, 0 unknown, confidenza `{HIGH}` |
+| G-004 | MAJOR | AC-01 | La matrice §4 marca `ACTIVE` tutte e 4 le UI web, contro la definizione di §2 e contro le righe `HUMAN_BRIDGE` di §3 |
+| G-005 | MAJOR | AC-04 | Il percorso **local-compute** non è mai trattato, benché AC-04 lo nomini |
+| G-006 | MAJOR | AC-01/02 | `CLD-SDK-001` dichiarata una volta, mai classificata, assente dal JSON |
+
+### Il finding che conta di più, e perché l'ho verificato alla fonte
+
+**G-002.** Il registro pinna come interi: Flash 15 RPM / 1.000.000 TPM / 1.500 RPD, Pro
+2 RPM / 32.000 TPM / 50 RPD.
+
+Ho aperto `https://ai.google.dev/gemini-api/docs/rate-limits` **io, oggi**. La pagina non
+pubblica quei numeri: dice che i limiti *"depend on a variety of factors (such as your
+usage tier) and can be viewed in Google AI Studio"*, che variano **per modello**, e che
+sono **per progetto, non per API key**.
+
+Non è un dato stantio: è una claim **di un tipo che la fonte dice di non poter fare** in
+forma universale. È la seconda metà di AC-03 — *"unknowns are not promoted"* — violata nel
+punto peggiore, perché quella è l'**unica** capability del registro che abiliterebbe lavoro
+automatico a costo zero. Tutto il resto è `HUMAN_BRIDGE` o `BLOCKED`.
+
+L'ho alzato a BLOCKER per una ragione operativa, non documentale: §5.3 del registro
+prescrive un rate limiter **tarato su quei numeri**. Un numero inventato che finisce in un
+parametro di configurazione smette di essere un errore di documentazione e diventa un
+difetto di runtime.
+
+### G-003 è TH-10, terza occorrenza, terzo autore
+
+`UNKNOWN` è definito alla riga 76 e **mai usato**. Nove capability, tutte `HIGH`.
+
+Un registro che copre quattro provider su accesso, quota, billing, privacy, region e
+automazione — prodotto con `max_model_calls: 1`, senza una data e senza un solo dubbio — non
+è verificato: è **plausibile**. È la forma esatta di `TH-10` (*proof fabrication*), che ho
+classificato `CRITICA`/`ALTA` proprio perché non richiede malafede. Stessa forma di `F-001`
+contro ChatGPT su `UJ-INT-006`, dove `evidence_refs: "trust me"` superava il gate.
+
+**Terza occorrenza nel programma, terzo autore diverso.** Non è un difetto di Gemini: è la
+modalità di guasto strutturale di questo programma, e va detto così.
+
+### Ho scritto cosa è corretto, non solo cosa è rotto
+
+**AC-02 è pienamente soddisfatto ed è la parte migliore del lavoro.** La separazione
+*subscription ≠ API entitlement* è dichiarata come principio e applicata a tutti e quattro
+i provider. È la distinzione che il programma sbaglierebbe più facilmente. La tassonomia di
+§2 è quella giusta, con `HUMAN_BRIDGE` come status di prima classe; il divieto di scraping è
+argomentato sui termini, non su preferenze tecniche. Nel merito Gemini **converge** con
+quanto `UJ-CLD-001` ha verificato per Claude.
+
+Il problema di G-003/G-004 non è che la tassonomia sia sbagliata: è che il documento non la
+rispetta.
+
+### Perché NON ho emesso un `ReviewResult`
+
+Il validatore avrebbe accettato la mia firma — sono il reviewer legittimo. Non l'ho fatto:
+
+1. gli artefatti **non esistono a nessun commit**: sono testo dentro un file di quarantena.
+   Potrei hashare solo il file di quarantena, che non è l'artefatto;
+2. l'intake di ChatGPT non ha ammesso la consegna, e scavalcarlo sarebbe entrare in un gate
+   suo;
+3. il ledger non deve muoversi **in nessuna direzione**: un `CHANGES_REQUIRED` formale
+   registrerebbe un fallimento di Gemini su un tentativo che il programma ha già deciso di
+   non contare.
+
+Stesso ragionamento di `F-003` in `UJ-REV-001`: quando il deliverable corretto non è
+rappresentabile nel formato previsto, si consegna la sostanza e **si dichiara** che non è
+importabile, invece di produrre un JSON conforme che afferma il falso.
+`UJ-CAP-001` resta **0/13**. Il mio portafoglio resta **76 unità**: fare da reviewer non
+aggiunge peso.
+
+### Rilievo minore sull'audit di ChatGPT
+
+L'audit dichiara *"Raw attachment bytes: 528 / lines: 32435"*. Misurato: **528 righe,
+32.435 byte** — le etichette sono invertite. L'hash dichiarato è invece esatto, ricalcolato
+da me. Lo segnalo solo perché è un documento di intake il cui scopo è l'esattezza dei byte:
+un lettore che confronti "528 byte" con un file da 32 KB concluderebbe che il pacchetto in
+quarantena non è quello auditato.
+
+### ERRORI COMMESSI IN QUESTA SESSIONE
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E16 | **Il mio RESUME_POINT ometteva la build** e metteva i test prima del typecheck | 5 suite su 5 fallite con `ERR_MODULE_NOT_FOUND` seguendo le mie istruzioni alla lettera | ricetta corretta in 3 punti (`CLAUDE.md` PARTE 8 + `AVVIO_NUOVA_SESSIONE.md` righe 60 e 130), con la nota che non è una regressione | **una procedura di verifica va provata da zero, in un container pulito, non ricordata.** Avere la ricetta giusta in PARTE 2 non serve se quella rotta sta nel blocco che si legge per primo |
+| E17 | **Ripetuto E14**: `git diff main...origin/<b>` con il `main` **locale** fermo 1 commit indietro | diffstat da 307 file, privi di senso | rifatto tutto contro `origin/main` | dopo `git fetch`, `main` locale **non** è `origin/main`. Me ne sono accorto perché il numero era assurdo, non perché avessi controllato: la prossima volta va controllato **prima**, non dopo |
+| E18 | **Quasi ripetuto E13/trappola 15, nel gate di verifica finale**: `npx tsc --noEmit \| grep -v "npm notice"; echo $?` | ha stampato `typecheck exit: 1` — che è l'exit di **`grep`** (nessuna riga trovata), non di `tsc`. Il typecheck era in realtà a **0** | rieseguito senza pipe, redirigendo su file e catturando `$?` del comando vero | la trappola 15 era scritta, l'ho riletta, e l'ho comunque quasi ripetuta — perché stavolta la pipe era un innocuo `grep -v` per pulire l'output, non un `tail`. **Qualunque cosa fra il comando e `$?` rompe `$?`.** L'ho preso solo perché un exit 1 con zero errori stampati non tornava: il segnale è stata l'**incoerenza fra output e verdetto**, non il codice in sé |
+
+### Prove eseguite
+
+| Verifica | Comando | Esito |
+|---|---|---|
+| Integrità piano canonico | `sha256sum docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md` | `a3fcdfc9…a69a87` **coincide** |
+| Typecheck | `npx tsc -p packages/contracts --noEmit` | **exit 0** |
+| Build | `npx tsc -p packages/contracts` | **exit 0** |
+| Suite completa (dopo build) | `for f in tests/contracts/*.test.mjs; do node --test "$f"; done` | **138/138 pass, 0 fail** |
+| Identità del pacchetto Gemini | `git show …:GEMINI_HANDOFF_RAW_20260817.md \| sha256sum` | `78fd95ec…89e95` **coincide** con l'audit |
+| Date ISO nel pacchetto | `grep -oE '20[0-9]{2}-[0-9]{2}-[0-9]{2}'` | **zero occorrenze** |
+| Uso di `UNKNOWN` | `grep -n "UNKNOWN"` | **1 sola, riga 76: la definizione** |
+| Campi del JSON vs card | unione dei nomi di campo su 9 capability | **13 presenti, 7 richiesti assenti** |
+| Capability dichiarate vs presenti | differenza insiemistica MD ↔ JSON | **`CLD-SDK-001` assente** |
+| Rate limit alla fonte primaria | lettura di `ai.google.dev/gemini-api/docs/rate-limits` | la pagina **non pubblica** quei numeri |
+| Reviewer designato | `UJ-CAP-001-GEMINI.json` riga 110 | `"reviewer": "CLAUDE"` |
+
+### Cosa NON ho fatto, e perché
+
+- **non ho toccato `UJ-GGL-001`**: reviewer è **GROK**. L'ho aperto solo per due `grep`
+  mirati, per non attribuire a Gemini una lacuna coperta altrove — e l'ho dichiarato nella
+  review;
+- **non ho toccato `UJ-RED-001`**: reviewer è **CHATGPT**, riverificato in questa sessione;
+- **non ho scritto su `gpt.md`, `taskgpt.md`, `BACKLOG.json`** né su branch altrui;
+- **non ho mergiato nulla su `main`**: nessuna autorizzazione in questa sessione. I sei
+  branch nuovi restano dove sono;
+- **non ho corretto l'audit di ChatGPT**: è suo, ho solo segnalato;
+- non ho verificato alla fonte le quote di OpenAI/Anthropic/xAI: ricadono comunque in
+  G-001/G-003 per assenza **strutturale** di data e fonte, che non richiede di sapere se il
+  numero sia giusto.
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -1254,14 +1466,34 @@ Sintesi operativa degli errori sopra, in forma di regole:
     solo per il test runner (E10). Path assoluti sempre.
 14. **Cita solo prove che hai davvero aperto.** Se una review elenca artefatti non letti,
     è vuota nello stesso modo che F-001 descrive — e scriverlo mentre lo si fa è peggio.
-15. **Mai testare l'esito di un comando attraverso una pipe** (E13). `git push … | tail`
-    restituisce l'exit di `tail`: ho dichiarato riuscito un push rifiutato. Cattura
-    l'output in una variabile e testa `$?` del comando vero. Una verifica che non può
-    fallire non è una verifica — è un'auto-attestazione, cioè TH-10 applicata a me stesso.
+15. **Mai testare l'esito di un comando attraverso una pipe** (E13, quasi ripetuto in E18).
+    `git push … | tail` restituisce l'exit di `tail`: ho dichiarato riuscito un push
+    rifiutato. Cattura l'output in una variabile o su file e testa `$?` del comando vero.
+    Una verifica che non può fallire non è una verifica — è un'auto-attestazione, cioè
+    TH-10 applicata a me stesso.
+    **Vale per QUALUNQUE pipe, anche innocua** (E18): un `| grep -v` per ripulire l'output
+    ha fatto leggere `exit 1` su un typecheck che era a `0`. Non esiste una pipe "solo
+    cosmetica" a valle di un comando di cui devi leggere l'esito.
+    Il segnale che salva è l'**incoerenza fra output e verdetto**: un exit diverso da zero
+    con zero errori stampati (o viceversa) va sempre indagato, mai riportato.
 16. **`main` non è più solo tuo né solo di ChatGPT.** Prima di qualunque merge, `git fetch`
     e guarda dov'è arrivato: in questa sessione è passato da 1 a 114 file mentre lavoravo.
     E prima di mergiare il branch di un'altra IA, verifica su cosa è basato: se parte da un
     ref vecchio, una risoluzione sbagliata cancella il lavoro altrui.
+17. **Dopo `git fetch`, il `main` locale NON è `origin/main`** (E17, ripetizione di E14).
+    Ogni confronto fra branch va fatto contro `origin/main`, mai contro `main`. Un diffstat
+    assurdo è il sintomo, ma arriva **dopo** che hai già tratto la conclusione sbagliata:
+    controlla `git rev-parse main origin/main` **prima** di interpretare un diff.
+18. **Una procedura di verifica va provata da zero, non ricordata** (E16). Il blocco
+    `NON RIFARE` del RESUME_POINT ometteva `npx tsc -p packages/contracts` (la build), e
+    seguirlo alla lettera dava 5 suite fallite su 5. Se scrivi una ricetta in due punti del
+    file, **le due copie divergeranno**: quella nel punto più letto è quella che conta.
+    Corollario: `dist/` è in `.gitignore`, quindi in un container nuovo non esiste mai.
+19. **Un gate di forma e un gate di merito sono porte diverse, in serie** (UJ-CAP-001).
+    Che un integratore abbia respinto una consegna per formato non significa che il suo
+    contenuto sia stato giudicato. Se sei il reviewer designato, il tuo verdetto sul merito
+    serve **prima** del reinvio, non dopo: altrimenti si paga un terzo giro di HUMAN_BRIDGE,
+    e quelli li paga Christian a mano.
 
 ---
 
@@ -1270,11 +1502,18 @@ Sintesi operativa degli errori sopra, in forma di regole:
 ```
 PROGRAMMA : ultraJARVIS
 AI_ID     : CLAUDE — Runtime, Security & Skill Architect
-BRANCH    : claude/ultrajarvis-repo-analysis-li6vvj — ORA IDENTICO A main (stesso commit).
-            Da fine sessione 3 lavoro e pubblicazione coincidono: quello che pusho su
-            main è già sul branch designato, e viceversa.
 
-MAIN      : commit 302852a, 319 file. Contiene il piano canonico, il Program OS di
+BRANCH    : ATTENZIONE — CAMBIATO IN SESSIONE 4.
+            Sessione 4 in poi : claude/claude-md-resume-point-tvej1u
+            Sessioni 1-3      : claude/ultrajarvis-repo-analysis-li6vvj
+            Il branch è assegnato dall'ambiente, non lo scelgo io: RILEGGI quale ti
+            è stato dato invece di fidarti di questa riga. Da sessione 4 il branch di
+            lavoro NON coincide più con main: il pre-verdetto UJ-CAP-001 sta sul
+            branch di sessione 4 e NON è su main.
+
+MAIN      : commit 3a297e5 (verificato in sessione 4). La riga sotto dice 302852a/319
+            file: era vero a fine sessione 3 ed è già superato — main si muove.
+            Contiene il piano canonico, il Program OS di
             ChatGPT, i miei contratti/blueprint/review, e l'implementazione Python di
             Grok (core/, tools/, advisors/, bin/uj, tests/*.py). ATTENZIONE: essere su
             main NON significa accettato. Ledger invariato: 0/76 mio, 0/13 UJ-INT-001,
@@ -1336,11 +1575,55 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               UI nel catalogo, è una domanda di policy), S-07 (nessun evento tool.*),
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
+SESSIONE 4 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  A) LA RICETTA DI VERIFICA QUI SOTTO ERA ROTTA, ORA È CORRETTA (errore E16).
+     Mancava la riga di BUILD. Senza quella, 5 suite su 5 falliscono con
+     ERR_MODULE_NOT_FOUND e sembra una regressione che NON esiste. Ordine giusto:
+       npx tsc -p packages/contracts --noEmit    (typecheck)
+       npx tsc -p packages/contracts             (BUILD — i test importano da dist/)
+       for f in tests/contracts/*.test.mjs; do node --test "$f"; done
+     Riverificato in sessione 4: 138/138 pass, exit 0. Nessuna regressione.
+
+  B) GEMINI HA CONSEGNATO PER LA PRIMA VOLTA, E IL PACCHETTO È IN QUARANTENA.
+     Branch: agent/gemini-handoff-quarantine-20260817 (NON su main).
+     ChatGPT l'ha respinto per INTAKE (nessun ResponsePacket, 4 file su 8 assenti).
+     UJ-CAP-001 ha reviewer CLAUDE (verificato nella card, riga 110) -> era un
+     dovere mio, arrivato senza preavviso.
+     GIÀ FATTO, NON RIFARE: docs/program/reviews/UJ-CAP-001-CLAUDE-PREVERDICT.md
+       Esito CHANGES_REQUIRED. 1 criterio su 5 passato (AC-02), 3 falliti NEL
+       MERITO (AC-01, AC-03, AC-04), 1 fallito in intake (AC-05).
+       6 findings: G-001..G-003 BLOCKER, G-004..G-006 MAJOR.
+       I tre BLOCKER, in una riga ciascuno:
+         G-001 zero date ISO in 528 righe; il JSON omette 7 dei 13 campi richiesti
+         G-002 rate limit Google asseriti come costanti universali: ho aperto la
+               fonte ufficiale e NON pubblica quei numeri (variano per modello,
+               tier e progetto). Ed è l'UNICA capability che abiliterebbe lavoro
+               automatico a costo zero
+         G-003 "UNKNOWN" compare 1 volta in 528 righe: la sua definizione. 9
+               capability, 0 unknown, confidenza tutta HIGH -> TH-10, terza
+               occorrenza nel programma, terzo autore diverso
+     NON è un ReviewResult e NON muove il ledger: UJ-CAP-001 resta 0/13.
+     Diventerà un packet al reinvio ammesso da ChatGPT.
+
+  C) SEI BRANCH che il vecchio RESUME_POINT non citava. Nessun altro dovere mio
+     dentro (controllato). UJ-GGL-001 -> reviewer GROK. UJ-RED-001 -> CHATGPT.
+
 PROSSIMO  : Se apri una sessione nuova:
+            0. CONTROLLA `git rev-parse main origin/main` PRIMA di interpretare
+               qualunque diff fra branch: dopo un fetch il main locale resta
+               indietro e i diffstat diventano insensati (E17, ripetizione di E14).
             1. ESEGUI PRIMA LA TRAPPOLA 11 — git fetch di tutti i branch e controlla
-               se qualcuno ha consegnato. In questa sessione ha trovato due volte
+               se qualcuno ha consegnato. In sessione 3 ha trovato due volte
                lavoro che aspettava proprio me, e main si è mosso QUATTRO volte
-               mentre lavoravo (l'ultima proprio mentre scrivevo questo handoff).
+               mentre lavoravo. In sessione 4 ha trovato SEI branch nuovi e la
+               prima consegna di Gemini. Non ha mai dato esito negativo finora.
+            1-bis. SE GEMINI HA RISPEDITO UJ-CAP-001 -> è tuo. Rileggi il
+               pre-verdetto §6 (le 6 correzioni richieste) e §9 (le 12 prove da
+               rieseguire sui byte committati), poi emetti il ReviewResult vero.
+               Test rapido prima di leggerne il merito: se il pacchetto contiene
+               ancora ZERO "UNKNOWN" e ZERO date, non è stato verificato — due
+               grep e hai la risposta.
             2. GROK_FIX_LIST.md È GIÀ STATO VERIFICATO APPLICATO da me, non solo
                dichiarato — 10/16 findings chiusi con comando+esito in
                MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §10-ter. Non rifare quella
@@ -1363,7 +1646,9 @@ PROSSIMO  : Se apri una sessione nuova:
             (S-12/S-13), dire esplicitamente l'ordine di correzione invece di
             lasciarlo intuire.
 
-POI       : - Gemini: review di UJ-RUN-001, UJ-MCP-001, UJ-CLD-001
+POI       : - Gemini: REINVIO di UJ-CAP-001 con le 6 correzioni del pre-verdetto
+                       (§6 del documento); poi review di UJ-RUN-001, UJ-MCP-001,
+                       UJ-CLD-001
             - Grok:   review di UJ-SEC-001, applicazione di GROK_FIX_LIST.md
             - ChatGPT: review di UJ-RCV-001 e UJ-SKL-001; correzione di F-001/F-002
                        su UJ-INT-006; decisione su UJ-SEC-002/UJ-MCP-002/UJ-SEC-003
@@ -1382,14 +1667,23 @@ NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
             approval policy, critica Costituzione, tool plane, source manifest,
             capability record UJ-CLD-001, la review di UJ-INT-006, la review del
             Program OS (UJ-REV-001), LA SECURITY REVIEW DELL'IMPLEMENTAZIONE SU MAIN
-            (UJ-SEC-003, 16 findings) E LA LISTA CORREZIONI PER GROK.
+            (UJ-SEC-003, 16 findings), LA LISTA CORREZIONI PER GROK, E IL
+            PRE-VERDETTO UJ-CAP-001 SUL CANDIDATO GEMINI (sessione 4, 6 findings).
             Verifica prima, DALLA ROOT del repo, SOLO la mia suite (non toccare i
-            test Python di Grok, sono un altro portafoglio):
+            test Python di Grok, sono un altro portafoglio).
+            ESEGUI I TRE COMANDI IN QUEST'ORDINE — il secondo NON è opzionale:
+              npx tsc -p packages/contracts --noEmit   -> exit 0   (typecheck)
+              npx tsc -p packages/contracts            -> exit 0   (BUILD: i test
+                                                          importano da dist/)
               for f in tests/contracts/*.test.mjs; do node --test "$f"; done
               totale atteso: 138/138 (runtime 34 · policy 28 · tools 30 ·
                                       recovery 9 · skills 37)
-              npx tsc -p packages/contracts --noEmit   -> exit 0
-            Riverificato l'ultima volta in questa sessione: 138/138 pass, exit 0.
+            SE SALTI LA BUILD ottieni 5 suite su 5 fallite con
+            ERR_MODULE_NOT_FOUND su packages/contracts/dist/... . NON è una
+            regressione: dist/ è in .gitignore e in un container nuovo non
+            esiste. La sessione 4 ci è cascata perché questo blocco elencava solo
+            --noEmit e metteva i test PRIMA del typecheck (errore E16).
+            Riverificato in sessione 4 dopo la build: 138/138 pass, exit 0.
 
 RICORDA   : a fine task, Regola 2 — aggiorna CLAUDE.md e TASKCLAUDE.md (estensione,
             mai riscrittura), poi commit e push. Un push va verificato leggendo
