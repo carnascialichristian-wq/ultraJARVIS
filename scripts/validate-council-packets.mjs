@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, lstatSync, readFileSync } from "node:fs";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 
 const root = resolve(process.cwd());
 const schemasOnly = process.argv.includes("--schemas-only");
@@ -67,6 +67,51 @@ function parse(relativePath) {
 function sha256(relativePath) {
   const content = read(relativePath);
   return content ? createHash("sha256").update(content).digest("hex") : null;
+}
+
+function resolveRepositoryFile(relativePath, sourceLabel, options = {}) {
+  const requireJson = options.requireJson ?? false;
+  const absolute = typeof relativePath === "string" ? resolve(root, relativePath) : null;
+  const relativeToRoot = absolute ? relative(root, absolute) : "";
+  const hasTraversal = typeof relativePath === "string" && relativePath.split(/[\\/]+/).includes("..");
+  const insideRoot =
+    typeof relativePath === "string" &&
+    relativePath.trim().length > 0 &&
+    !isAbsolute(relativePath) &&
+    !hasTraversal &&
+    relativeToRoot.length > 0 &&
+    relativeToRoot !== ".." &&
+    !relativeToRoot.startsWith(`..${sep}`) &&
+    !isAbsolute(relativeToRoot);
+
+  assert(insideRoot, `${sourceLabel} must be a repository-relative path: ${relativePath}.`);
+  assert(!requireJson || relativePath?.endsWith(".json"), `${sourceLabel} must use a .json file: ${relativePath}.`);
+  if (!insideRoot || (requireJson && !relativePath.endsWith(".json"))) return null;
+
+  if (!existsSync(absolute)) {
+    fail(`${sourceLabel} is missing: ${relativePath}.`);
+    return null;
+  }
+
+  try {
+    const stats = lstatSync(absolute);
+    assert(stats.isFile() && !stats.isSymbolicLink(), `${sourceLabel} must be a regular file, not a symlink: ${relativePath}.`);
+    return stats.isFile() && !stats.isSymbolicLink() ? absolute : null;
+  } catch (error) {
+    fail(`${sourceLabel} cannot be inspected: ${relativePath} (${error.message}).`);
+    return null;
+  }
+}
+
+function parseReviewCandidate(relativePath) {
+  const absolute = resolveRepositoryFile(relativePath, "ReviewResult candidate", { requireJson: true });
+  if (!absolute) return null;
+  try {
+    return JSON.parse(readFileSync(absolute, "utf8"));
+  } catch (error) {
+    fail(`Invalid JSON in ReviewResult candidate ${relativePath}: ${error.message}`);
+    return null;
+  }
 }
 
 function deepEqual(left, right) {
@@ -284,14 +329,8 @@ if (backlog) {
 }
 
 function verifyReviewedArtifact(artifact, sourceLabel) {
-  const absolute = resolve(root, artifact.ref);
-  const insideRoot = absolute !== root && absolute.startsWith(`${root}/`);
-  assert(insideRoot, `${sourceLabel} artifact ref must stay inside the repository: ${artifact.ref}.`);
-  if (!insideRoot) return;
-  if (!existsSync(absolute)) {
-    fail(`${sourceLabel} reviewed artifact is missing: ${artifact.ref}.`);
-    return;
-  }
+  const absolute = resolveRepositoryFile(artifact.ref, `${sourceLabel} artifact ref`);
+  if (!absolute) return;
   const actual = createHash("sha256").update(readFileSync(absolute)).digest("hex");
   assert(actual === artifact.sha256, `${sourceLabel} artifact hash mismatch for ${artifact.ref}.`);
 }
@@ -418,7 +457,7 @@ assert(!reviewResultPath || !schemasOnly, "--review-result cannot be combined wi
 assert(!reviewResultPath || expectedReviewCommit, "--review-result requires --expected-commit to prevent cross-ref review import.");
 
 if (reviewResultPath && !schemasOnly && expectedReviewCommit) {
-  const review = parse(reviewResultPath);
+  const review = parseReviewCandidate(reviewResultPath);
   if (review) validateImportedReview(review, reviewResultPath, { expectedCommit: expectedReviewCommit, verifyArtifacts: true });
   notes.push(`review_result=${reviewResultPath}`);
 }

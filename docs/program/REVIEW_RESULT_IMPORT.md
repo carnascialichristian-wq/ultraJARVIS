@@ -16,8 +16,10 @@ repository tree and the current backlog.
 1. Obtain the exact current PR head from GitHub; call it `<HEAD_SHA>`.
 2. Keep the reviewer output as an untrusted local candidate until validation.
    Do not change `BACKLOG.json`, status, weights, or `main`.
-3. Save the JSON as a repository-relative candidate path, for example
+3. Save the JSON as a repository-relative, regular `.json` file, for example
    `docs/program/reviews/inbox/UJ-REVIEW-INT-001-GROK-20260817.json`.
+   Absolute paths, `..` traversal, symlinks, and non-JSON candidates are
+   rejected before the validator reads their bytes.
 4. Run:
 
    ```bash
@@ -67,6 +69,17 @@ node scripts/validate-council-packets.mjs --review-self-test
 The self-test dynamically constructs a non-accepting UJ-INT-001
 `PASS_WITH_ACTIONS` ReviewResult with a real local artifact hash. It must print
 `review_self_test=PASS`. This is a validator test, not a Grok review.
+
+Run the full intake regression matrix after modifying intake logic:
+
+```bash
+node scripts/test-review-result-intake.mjs
+```
+
+It runs one admissible non-accepting candidate plus negative cases for partial
+weight, the wrong reviewer, a stale commit, an escaped artifact reference, and
+an external candidate path. It uses and removes a uniquely named temporary
+directory under the repository; it does not change `BACKLOG.json` or publish.
 
 ## Disposition
 

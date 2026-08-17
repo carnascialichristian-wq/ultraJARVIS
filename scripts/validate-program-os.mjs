@@ -41,10 +41,12 @@ function parseJson(relativePath) {
 }
 
 const requiredArtifacts = [
+  "README.md",
   "AGENTS.md",
   "gpt.md",
   "taskgpt.md",
   ".github/PULL_REQUEST_TEMPLATE.md",
+  "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
   "docs/program/README.md",
   "docs/program/PROJECT_STATE.md",
   "schemas/backlog.schema.json",
@@ -77,7 +79,8 @@ const requiredArtifacts = [
   "docs/program/RECONCILIATION.md",
   "docs/program/RESUME_POINT.md",
   "scripts/validate-program-os.mjs",
-  "scripts/validate-council-packets.mjs"
+  "scripts/validate-council-packets.mjs",
+  "scripts/test-review-result-intake.mjs"
 ];
 
 for (const artifact of requiredArtifacts) read(artifact);
@@ -85,6 +88,8 @@ for (const artifact of requiredArtifacts) read(artifact);
 const schema = parseJson("schemas/backlog.schema.json");
 const handoffSchema = parseJson("schemas/handoff-packet.schema.json");
 const backlog = parseJson("docs/program/BACKLOG.json");
+const rootReadme = read("README.md");
+const canonicalMasterPrompt = read("docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md");
 const statusDocument = read("docs/program/STATUS.md");
 const agentInstructions = read("AGENTS.md");
 const gptLedger = read("gpt.md");
@@ -94,11 +99,14 @@ const grokReviewRequest = read("prompts/review-requests/UJ-INT-001-GROK.md");
 const claudeReviewRequest = read("prompts/review-requests/UJ-INT-006-CLAUDE.md");
 const reviewResultImportGuide = read("docs/program/REVIEW_RESULT_IMPORT.md");
 const councilValidator = read("scripts/validate-council-packets.mjs");
+const reviewIntakeRegressionTest = read("scripts/test-review-result-intake.mjs");
 
 assert(schema?.$schema === "https://json-schema.org/draft/2020-12/schema", "Backlog schema must use JSON Schema 2020-12.");
 assert(handoffSchema?.properties?.schema_version?.const === "ultrajarvis.handoff-packet/v1", "Handoff schema version is invalid.");
 assert(backlog?.schema_version === "ultrajarvis.backlog/v1", "Backlog schema_version is invalid.");
 assert(backlog?.program === "ultraJARVIS", "Backlog program name is invalid.");
+assert(rootReadme.includes("ultraJARVIS"), "README.md must identify the ultraJARVIS program.");
+assert(canonicalMasterPrompt.includes("PROMPT UNIVERSALE CANONICO") && canonicalMasterPrompt.includes("## 45. COMANDO DI AVVIO"), "Canonical master prompt is incomplete or malformed.");
 assert(gptLedger.includes("ULTRAJARVIS_PRIMARY_SESSION_LEDGER_RULE"), "gpt.md must contain the primary session-ledger rule marker.");
 assert(gptLedger.includes("ULTRAJARVIS_GROK_SESSION_LEDGER_RULE"), "gpt.md must contain Grok's mandatory ledger rule marker.");
 assert(crossAiBrief.includes("ULTRAJARVIS_CROSS_AI_HANDOFF"), "taskgpt.md must contain the cross-AI handoff marker.");
@@ -111,6 +119,7 @@ assert(grokReviewRequest.includes("ultrajarvis.review-result/v1"), "Grok review 
 assert(claudeReviewRequest.includes("ultrajarvis.review-result/v1"), "Claude review request must require ReviewResult v1.");
 assert(reviewResultImportGuide.includes("--review-result") && reviewResultImportGuide.includes("--expected-commit"), "ReviewResult import guide must document the pinned intake command.");
 assert(councilValidator.includes("--review-result") && councilValidator.includes("--review-self-test"), "Council validator must support ReviewResult intake and self-test.");
+assert(reviewIntakeRegressionTest.includes("ReviewResult intake regression tests"), "ReviewResult regression test runner is missing its required test contract.");
 
 const continuitySecretPatterns = [
   /ghp_[A-Za-z0-9]{20,}/,
@@ -186,6 +195,9 @@ if (backlog) {
   const current = tasks.find((task) => task.task_id === "UJ-INT-001");
   assert(current?.status === "REVIEW", "UJ-INT-001 must be submitted as REVIEW in this package.");
   assert(current?.completed_weight === 0, "UJ-INT-001 must not self-award accepted weight.");
+  const expectedPromptHash = current?.inputs?.find((input) => input.ref === "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md")?.hash;
+  const actualPromptHash = `sha256:${createHash("sha256").update(canonicalMasterPrompt).digest("hex")}`;
+  assert(expectedPromptHash === actualPromptHash, "Canonical master prompt bytes must match the hash pinned by UJ-INT-001.");
   for (const proof of current?.proof ?? []) {
     if (!proof.ref.startsWith("http") && !proof.ref.startsWith("agent/")) {
       assert(existsSync(resolve(root, proof.ref)), `UJ-INT-001 proof path is missing: ${proof.ref}`);

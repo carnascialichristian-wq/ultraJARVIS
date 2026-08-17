@@ -30,7 +30,10 @@ remote branch and `BACKLOG.json` remain authoritative for proof and numbers.
 Two copyable review requests now make the named Grok and Claude review gates
 actionable through HUMAN_BRIDGE. A ReviewResult intake guard checks the exact
 reviewed commit, reviewer, artifact hashes, criteria, and weights before any
-separate ledger update; neither mechanism itself awards accepted weight.
+separate ledger update; neither mechanism itself awards accepted weight. A
+local regression matrix proves the admissible non-accepting path and rejects
+partial weight, reviewer, stale-commit, external-path, and artifact-escape
+regressions without changing the backlog.
 
 ## User constraints in force
 

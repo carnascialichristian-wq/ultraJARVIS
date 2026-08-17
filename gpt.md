@@ -68,7 +68,7 @@ auto-approvazione.
 | Repository | `carnascialichristian-wq/ultraJARVIS` |
 | Branch di lavoro | `agent/ultrajarvis-master-prompt-v1` |
 | PR | [#1](https://github.com/carnascialichristian-wq/ultraJARVIS/pull/1), aperta e draft |
-| Commit remoto precedente | `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3` |
+| Commit remoto da usare | head corrente della PR #1 — leggerla da GitHub a ogni sessione |
 | Base protetta | `main` — non modificata |
 | Review/commenti osservati | 0 review, 0 commenti, nessun status check configurato |
 | Portfolio iniziale | 0/311 peso accettato |
@@ -252,4 +252,37 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Prossima azione: inviare prima i due review-request tramite HUMAN_BRIDGE a
   Grok e Claude; importare soltanto ReviewResult v1 valido. Le quattro card di
   produzione restano pronte e non vengono simulate.
+- Aggiornamento speculare: inserito in `taskgpt.md` nella stessa pubblicazione.
+
+### 2026-08-17 — ChatGPT/Codex — regressioni e containment dell'intake ReviewResult
+
+- Ref iniziale osservato: `15a674503c4821569997aa490eb5dce7abe08ba6`.
+  Ref finale: la head remota della PR #1 che contiene questa voce; verificarla
+  dal remoto prima di ogni ripresa.
+- Obiettivo e output: introdotto `scripts/test-review-result-intake.mjs` e
+  rinforzato `scripts/validate-council-packets.mjs`. Un candidato deve ora
+  essere un file `.json` regolare, repository-relative, senza path traversal o
+  symlink; anche gli artefatti referenziati non possono uscire dal repository.
+- Copertura: la suite esercita self-test, un `PASS_WITH_ACTIONS` ammissibile e
+  rifiuti per peso parziale, reviewer errato, commit stale, artefatto con path
+  escapato e candidato con path esterno. Il Program OS validator ora richiede
+  README/prompt canonico, ne controlla struttura e verifica l'hash del prompt
+  fissato da UJ-INT-001.
+- Controlli eseguiti: Node syntax per i tre script; suite intake (7 casi);
+  self-test Council; validator Council; validator Program OS; parsing JSON;
+  fence Markdown; pulizia fixture temporanee — tutti PASS.
+- Nota tool: una prima verifica ad hoc dei fence ha fallito per quoting shell
+  su un apostrofo nel comando, non per un difetto del repository; la riesecuzione
+  con stringa sicura è PASS e non ha modificato file.
+- Errore e correzione: il checkout di lavoro era incompleto rispetto al tree
+  remoto; la copia locale del prompt ha ricevuto un newline finale extra nella
+  sincronizzazione. Rimossa soltanto quella newline: SHA-256 ripristinato a
+  `a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87`.
+  Non è stato modificato il prompt remoto né il suo pin nel backlog.
+- Stato e peso: invariati — UJ-INT-001 REVIEW 0/13, UJ-INT-006 REVIEW 0/8,
+  portfolio 0/311 e M0 26/94. Questa è manutenzione di qualità, non una review
+  indipendente né un'accettazione.
+- Prossima azione: ricevere il ReviewResult originale di Grok o Claude via
+  HUMAN_BRIDGE, eseguire l'intake all'esatta head GitHub e solo dopo valutare un
+  eventuale commit ledger separato.
 - Aggiornamento speculare: inserito in `taskgpt.md` nella stessa pubblicazione.

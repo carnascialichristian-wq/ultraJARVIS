@@ -21,7 +21,8 @@ starting the next session; do not infer it from chat:
 > artifact indexed by `docs/program/README.md` at `ULTRAJARVIS_HEAD`. Reconcile
 > the branch with `docs/program/BACKLOG.json`. Run
 > `node scripts/validate-program-os.mjs` and
-> `node scripts/validate-council-packets.mjs`. Do not change accepted weight.
+> `node scripts/validate-council-packets.mjs`, then
+> `node scripts/test-review-result-intake.mjs`. Do not change accepted weight.
 > If a ReviewResult is supplied, stage it as an untrusted candidate and run
 > `node scripts/validate-council-packets.mjs --review-result <candidate.json>
 > --expected-commit <ULTRAJARVIS_HEAD>` before considering any ledger delta;

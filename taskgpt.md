@@ -33,7 +33,7 @@ la propria DelegationCard.
 | Repository | `carnascialichristian-wq/ultraJARVIS` |
 | Branch | `agent/ultrajarvis-master-prompt-v1` |
 | PR | [#1](https://github.com/carnascialichristian-wq/ultraJARVIS/pull/1), draft verso `main` |
-| Ultimo checkpoint precedente | `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3` |
+| Checkpoint da usare | head corrente della PR #1 — rileggere dal remoto a ogni sessione |
 | Contratti Council | `3611b1b400cf57b5021bab228a3de9470d6eca5c` |
 | Stato portfolio | 0/311 peso accettato; M0 26/94 |
 
@@ -202,3 +202,26 @@ conflitto va registrato, non eliminato.
 - Handoff: usare i due review request, restituire il JSON senza riscriverlo e
   includere il blocco append per entrambi i registri. ChatGPT eseguirà prima
   `--review-result` con l'esatta head remota.
+
+### 2026-08-17 — ChatGPT/Codex — regressioni dell'intake ReviewResult
+
+- Ref iniziale: `15a674503c4821569997aa490eb5dce7abe08ba6`; ripartire dalla
+  head corrente della PR #1 che contiene questa appendice, non da questo SHA.
+- Nuovo controllo da eseguire dopo modifiche all'intake:
+  `node scripts/test-review-result-intake.mjs`.
+- La suite copre 7 casi: self-test, candidate valido non accettante, peso
+  parziale, reviewer errato, commit stale, artifact path escapato e candidato
+  esterno. Il candidato e gli artefatti devono essere file normali interni al
+  repository; `.json`, symlink, path assoluti e `..` sono trattati come input
+  non fidato e respinti.
+- Verificato anche il prompt canonico: il suo SHA-256 coincide con il pin del
+  backlog. L'errore osservato era solo un newline extra nella copia locale
+  temporanea; il file remoto non è stato alterato.
+- Controlli: sintassi, suite intake, self-test, validator Council/Program OS,
+  JSON, Markdown e pulizia fixture — PASS.
+- Nota operativa: un primo comando di controllo Markdown aveva quoting shell
+  errato; il retry sicuro è PASS e non rappresenta un difetto degli artefatti.
+- Stato: nessun ResponsePacket o ReviewResult reale è arrivato; UJ-INT-001 e
+  UJ-INT-006 restano REVIEW con peso 0. Non promuovere nulla in base ai test.
+- Prossimo passo: usare i review pack esistenti, restituire il JSON originale e
+  validarlo all'esatta head GitHub prima di cambiare il ledger.
