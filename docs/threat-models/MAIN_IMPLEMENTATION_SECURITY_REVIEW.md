@@ -197,6 +197,80 @@ sovrapporsi: il campo `safe` non è letto (S-01), non c'è ammissione (S-02), e 
 PROTECTED si disattiva con una parola chiave che il registry inoltra (S-11). Il risultato
 è che **le tre difese del piano di tool non ne compongono una**.
 
+## 4-quater. S-12 — la promozione di codice generato non ha alcun gate. **HIGH.**
+
+`core/natural_tasks.py:185`, `promote_job_to_tools()`, prende il `tool.py` di un job
+generato e lo scrive in `tools/`, cioè **nella directory da cui il registry importa ed
+esegue**. È il percorso più pericoloso del sistema: da *codice prodotto da un modello* a
+*funzione chiamabile*.
+
+**L'unica validazione del contenuto è:**
+
+```python
+if "def " not in text:
+    raise ValueError("tool.py does not appear to define any function")
+```
+
+Non viene chiamato `scan_job_dir`, non si controlla se il job ha superato i gates, non si
+verifica che i test passino. Dimostrato: ho promosso un `tool.py` contenente
+
+```python
+import os
+def helper(cmd):
+    return os.system(cmd)   # eval(  rm -rf
+```
+
+— che contiene **tre** dei sette pattern che `advisors/safety.py` conosce — e la promozione
+è riuscita **senza sollevare nulla**.
+
+È esattamente la proprietà che `UJ-SKL-001` rende meccanica dal lato TypeScript: *una skill
+non può avanzare il proprio stadio*. Qui non ci sono stadi.
+
+## 4-quinquies. S-13 — ogni tool promosso è sintatticamente invalido. **MEDIUM.**
+
+L'header costruito alle righe 216-219:
+
+```python
+header = (
+    f'"""Promoted from job {job_dir.name} by promote_job_to_tools.\n"'
+    f'"""\n\n'
+)
+```
+
+Le due stringhe concatenate producono **quattro** virgolette:
+
+```
+riga 1: """Promoted from job job1 by promote_job_to_tools.
+riga 2: """"
+```
+
+```
+SyntaxError: unterminated string literal (detected at line 2)
+```
+
+**Nessun tool promosso può essere importato.** La virgoletta di troppo sta nella prima
+stringa (`.\n"`), dove non serve.
+
+### La combinazione è la parte importante
+
+**S-13 maschera S-12 per caso.** Il codice non validato viene scritto, ma non si carica
+mai — quindi oggi non fa danno. Il contenimento è **un errore di battitura**, non un
+controllo.
+
+È il **terzo** caso in questo albero in cui l'unica cosa che impedisce un guasto di
+sicurezza è un difetto:
+
+| Difetto che protegge | Cosa impedisce | Fino a quando |
+|---|---|---|
+| `tools/email.py` senza trasporto SMTP (S-03) | invio reale di email | finché nessuno collega un SMTP |
+| moduli mancanti su `main` (chiuso) | chiamata di `email.send` | **già cessato**: il modulo è arrivato |
+| virgolette sbagliate nell'header (S-13) | esecuzione di codice promosso non validato | finché qualcuno non corregge il typo |
+
+La riga di mezzo è già successa **durante questa review**. Il giorno in cui S-13 viene
+corretto — un fix di un carattere, che chiunque farebbe senza pensarci — **S-12 si apre**.
+
+**Va quindi corretto prima S-12, poi S-13**, e mai il contrario.
+
 ## 5. S-01 — `ToolSpec.safe` è dichiarato e mai letto. **HIGH.**
 
 `core/registry.py:15` definisce `safe: bool = True`. Ricerca su tutto il codice (escluse le
