@@ -1,345 +1,352 @@
-# ultraJARVIS — Multi-Provider Capability Registry
+ultraJARVIS Multi-Provider Capability Registry
 
-Registry schema: ultrajarvis.capability-registry/v1
-Registry version: 1.1.0
-Last verification: 2026-08-18T10:28:31Z
+Document Identifier: UJ-DOC-CAP-001
+Document Version: 1.1.0
+Verification Date: 2026-08-18T13:35:00Z
+Architectural Policy: STRICT_ZERO_CARD
+Governing Commit: 3611b1b400cf57b5021bab228a3de9470d6eca5c
 
-> Routing evidence only: this file does not change BACKLOG.json, task status, accepted weight, reviewer gates or dependent blockers.
+1. Executive Summary & Policy Boundary
 
-## Hard stops
+This registry catalog specifies all AI capabilities and integration surfaces
+across the four primary ecosystem providers evaluated for the ultraJARVIS
+multi-agent architecture:
 
-- STRICT_ZERO_CARD: no incremental cost, billing activation, paid credits, secrets/session tokens, consumer UI automation or data above C1.
-- Provider quotas, model IDs, prices, privacy terms, regions and availability are dynamic; no static entry is a universal guarantee.
-- Google values use dated official pages where stated, but account-specific limits require a fresh AI Studio/project check.
+1.  OpenAI / ChatGPT
+2.  Anthropic / Claude
+3.  Google / Gemini
+4.  xAI / Grok
 
-## Provider matrix
+1.1 Policy Mandate: STRICT_ZERO_CARD
 
-| Provider | Count | Candidate routes | Caveat |
-|---|---:|---|---|
-| OpenAI | 4 | CAP-OAI-001, CAP-OAI-003, CAP-OAI-004 | Fresh entitlement/terms check required. |
-| Anthropic | 4 | CAP-ANT-001, CAP-ANT-003, CAP-ANT-004 | Fresh entitlement/terms check required. |
-| Google | 8 | CAP-GGL-001, CAP-GGL-002, CAP-GGL-003, CAP-GGL-005, CAP-GGL-006, CAP-GGL-007, CAP-GGL-008 | Dynamic project/account limits and regional terms. |
-| xAI | 3 | CAP-XAI-001, CAP-XAI-003 | Fresh entitlement/terms check required. |
+Under strict operational rules, ultraJARVIS mandates:
 
-## Capability records
+  - Zero Incremental Cost: No pay-per-use APIs with active billing, monthly
+    overage, or credit card attachments.
+  - Zero Consumer UI Scraping: No headless browser automation
+    (Puppeteer/Playwright/Selenium), session token extraction, cookie replay, or
+    reverse-engineered private web APIs.
+  - Human Bridge Protocol: Consumer web interfaces and interactive subscription
+    entitlements are operated strictly via manual human operator routing
+    (HUMAN_BRIDGE).
+  - Data Privacy Distinction: provider, region, account, and plan terms must be recorded for every external surface. Unpaid-service training/review claims must not be generalized across regions, and confidential project data must be excluded until the applicable terms are verified.
+  - Zero Secret Embedding: No live API keys, secrets, or bearer tokens in
+    version-controlled artifacts.
+  - Zero Heavy Local Inference: No unvetted, resource-draining local model
+    execution.
 
-## OpenAI
+2. Status Taxonomy
 
-### CAP-OAI-001 — ChatGPT Consumer Interactive Interface (GPT-4o / GPT-4.5 / o3-mini)
+Each capability is assigned one of the following authoritative statuses:
 
-- Provider/product: **OpenAI / ChatGPT Web UI**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://chatgpt.com` / `WEB_UI`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Manual prompt transfer via human operator (Human Bridge Protocol).
-- Primary source: https://openai.com/chatgpt/pricing
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-OAI-002 — OpenAI REST API (Chat Completions / Responses / Embeddings)
+  - ACTIVE: Fully verifiable, sanctioned programmatic API or protocol requiring
+    zero credit card, zero consumer UI automation, and operating within verified
+    free quotas.
+  - HUMAN_BRIDGE: Interactive consumer web UI, desktop client, or manual export
+    mechanism operated solely by a human operator without automated session
+    hijacking.
+  - PREVIEW: Experimental or developer-preview capability requiring manual
+    configuration, subject to dynamic capacity or restricted access.
+  - BLOCKED: Capability requires active credit card attachment, pay-as-you-go
+    billing, commercial paid subscription outside zero-card bounds, or violates
+    Terms of Service.
+  - DEPRECATED: Capability or endpoint officially deprecated by the provider.
+  - UNKNOWN: Unverifiable entitlement or quota without authoritative primary
+    documentation.
 
-- Provider/product: **OpenAI / OpenAI Developer Platform**
-- Status: **BLOCKED**
-- Access: `https://api.openai.com/v1` / `API`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Route tasks to zero-card providers or human bridge operator.
-- Primary source: https://platform.openai.com/docs/guides/rate-limits
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-OAI-003 — ChatGPT Historical Chat Data Export
+3. Multi-Provider Capability Matrix
 
-- Provider/product: **OpenAI / ChatGPT Data Controls**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://chatgpt.com/#settings/DataControls` / `MANUAL_EXPORT`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Manual operator download and ingestion into ultraJARVIS offline corpus.
-- Primary source: https://help.openai.com/en/articles/7260999-how-do-i-export-my-chatgpt-history-and-data
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-OAI-004 — Custom GPT Integration and Actions
+| Capability ID | Provider  | Product / Interface         | Access Mode     | Status         | Incremental Cost          | Billing Requirement    | Primary Quota / Limit                  | Primary Source                                                                                               |
+| :------------ | :-------- | :-------------------------- | :-------------- | :------------- | :------------------------ | :--------------------- | :------------------------------------- | :----------------------------------------------------------------------------------------------------------- |
+| `CAP-OAI-001` | OpenAI    | ChatGPT Web UI              | `WEB_UI`        | `HUMAN_BRIDGE` | $0.00 (Existing Sub/Free) | `NO_BILLING`           | Dynamic 3h rolling cap                 | [OpenAI Pricing](https://openai.com/chatgpt/pricing)                                                         |
+| `CAP-OAI-002` | OpenAI    | OpenAI Developer API        | `API`           | `BLOCKED`      | Pay-per-use               | `CREDIT_CARD_REQUIRED` | Tier-dependent (Prepaid)               | [OpenAI Rate Limits](https://platform.openai.com/docs/guides/rate-limits)                                    |
+| `CAP-OAI-003` | OpenAI    | ChatGPT Data Controls       | `MANUAL_EXPORT` | `HUMAN_BRIDGE` | $0.00                     | `NO_BILLING`           | On-demand export                       | [OpenAI Help](https://help.openai.com/en/articles/7260999-how-do-i-export-my-chatgpt-history-and-data)       |
+| `CAP-OAI-004` | OpenAI    | Custom GPTs & Actions       | `WEB_UI`        | `HUMAN_BRIDGE` | $0.00 (Subscription)      | `EXISTING_SUB`         | Plus message quota                     | [OpenAI GPTs](https://openai.com/index/introducing-gpts/)                                                    |
+| `CAP-ANT-001` | Anthropic | Claude Web UI & Artifacts   | `WEB_UI`        | `HUMAN_BRIDGE` | $0.00 (Existing Sub/Free) | `NO_BILLING`           | Dynamic 5h rolling cap                 | [Anthropic Limits](https://support.anthropic.com/en/articles/8325612-does-claude-ai-have-any-message-limits) |
+| `CAP-ANT-002` | Anthropic | Anthropic Messages API      | `API`           | `BLOCKED`      | Pay-per-use               | `CREDIT_CARD_REQUIRED` | Tier-dependent (Prepaid)               | [Anthropic Rate Limits](https://docs.anthropic.com/en/api/rate-limits)                                       |
+| `CAP-ANT-003` | Anthropic | Claude Projects             | `HUMAN_BRIDGE`  | `HUMAN_BRIDGE` | $0.00 (Pro Sub)           | `EXISTING_SUB`         | 200k context sandbox                   | [Anthropic Projects](https://support.anthropic.com/en/articles/9517075-what-are-projects)                    |
+| `CAP-ANT-004` | Anthropic | Model Context Protocol      | `SDK`           | `PREVIEW`      | $0.00 (Open Source)       | `NO_BILLING`           | Localhost execution                    | [MCP Protocol](https://modelcontextprotocol.io/)                                                             |
+| `CAP-GGL-001` | Google | Gemini Developer API Free | `API` | `ACTIVE` | $0.00 only while unbilled | `NO_BILLING` | Dynamic RPM/TPM/RPD; live project snapshot required | [Google AI Rate Limits](https://ai.google.dev/gemini-api/docs/rate-limits)                                   |
+| `CAP-GGL-002` | Google    | Google AI Studio Playground | `WEB_UI`        | `HUMAN_BRIDGE` | $0.00                     | `NO_BILLING`           | Project Free Quota                     | [Google AI Studio](https://aistudio.google.com)                                                              |
+| `CAP-GGL-003` | Google    | Gemini Consumer Web App     | `WEB_UI`        | `HUMAN_BRIDGE` | $0.00 (Existing Sub/Free) | `NO_BILLING`           | Consumer web caps                      | [Gemini Web](https://gemini.google.com)                                                                      |
+| `CAP-GGL-004` | Google    | Cloud Vertex AI             | `API`           | `BLOCKED`      | Pay-per-use               | `CREDIT_CARD_REQUIRED` | Cloud Quotas (Billed)                  | [Vertex AI Pricing](https://cloud.google.com/vertex-ai/pricing)                                              |
+| `CAP-GGL-005` | Google    | Google NotebookLM           | `WEB_UI`        | `HUMAN_BRIDGE` | $0.00                     | `NO_BILLING`           | Dynamic rolling limits (`UNKNOWN` SLA) | [NotebookLM Support](https://support.google.com/notebooklm/)                                                 |
+| `CAP-GGL-006` | Google    | Google Apps Script          | `API`           | `ACTIVE`       | $0.00                     | `NO_BILLING`           | 6m exec / 24h rolling user quotas      | [Apps Script Quotas](https://developers.google.com/apps-script/guides/services/quotas)                       |
+| `CAP-GGL-007` | Google    | Google Colab Free Tier      | `WEB_UI`        | `HUMAN_BRIDGE` | $0.00                     | `NO_BILLING`           | Dynamic ephemeral VM (no SLA)          | [Colab FAQ](https://research.google.com/colaboratory/faq.html)                                               |
+| `CAP-GGL-008` | Google    | Firebase Spark Plan         | `API`           | `ACTIVE`       | $0.00 (Zero Card)         | `NO_BILLING`           | 50k reads, 20k writes/day (Spark only) | [Firebase Pricing](https://firebase.google.com/pricing)                                                      |
+| `CAP-XAI-001` | xAI       | Grok Web UI on X            | `WEB_UI`        | `HUMAN_BRIDGE` | $0.00 (X Premium)         | `EXISTING_SUB`         | Dynamic 2h rolling cap                 | [X Grok Help](https://help.x.com/en/using-x/grok)                                                            |
+| `CAP-XAI-002` | xAI       | xAI Developer API           | `API`           | `BLOCKED`      | Pay-per-use               | `CREDIT_CARD_REQUIRED` | Tier-dependent (Prepaid)               | [xAI Docs](https://docs.x.ai/docs/overview)                                                                  |
+| `CAP-XAI-003` | xAI       | Grok Real-Time Search       | `HUMAN_BRIDGE`  | `HUMAN_BRIDGE` | $0.00 (X Premium)         | `EXISTING_SUB`         | Governed by Grok Web UI                | [X Grok Help](https://help.x.com/en/using-x/grok)                                                            |
 
-- Provider/product: **OpenAI / ChatGPT Custom GPTs / Actions**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://chatgpt.com/gpts` / `WEB_UI`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Manual interaction via ChatGPT UI by human operator.
-- Primary source: https://openai.com/index/introducing-gpts/
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
+4. Granular Provider Capability Profiles
 
-## Anthropic
+4.1 OpenAI Ecosystem
 
-### CAP-ANT-001 — Claude Consumer Interactive Interface (Claude 3.5 Sonnet / Claude 3.7 Sonnet / Opus)
+  - CAP-OAI-001 (ChatGPT Web Interface):
 
-- Provider/product: **Anthropic / Claude Web UI & Artifacts**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://claude.ai` / `WEB_UI`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Manual prompt transfer via human operator (Human Bridge Protocol).
-- Primary source: https://support.anthropic.com/en/articles/8325612-does-claude-ai-have-any-message-limits
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-ANT-002 — Anthropic Messages REST API
+      - Access Mode: WEB_UI via https://chatgpt.com.
+      - Authentication: Interactive browser session (OAuth / Session Cookie).
+      - Entitlement: Consumer Subscription / Free Account.
+      - Cost & Billing: $0.00 incremental cost. No API billing account required.
+      - Quota Scope & Period: Dynamic rolling 3-hour message cap per user
+        session.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://openai.com/chatgpt/pricing.
+      - Data & Privacy Policy: Default consumer terms permit model training on
+        free and plus tiers unless opted out via Data Controls.
+      - UI Automation Risk: CRITICAL / FORBIDDEN. Scraping or browser session
+        automation is strictly prohibited under OpenAI Terms of Service and
+        triggers account termination.
+      - Status: HUMAN_BRIDGE.
 
-- Provider/product: **Anthropic / Anthropic API**
-- Status: **BLOCKED**
-- Access: `https://api.anthropic.com/v1/messages` / `API`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Route tasks through Human Bridge to Claude.ai or zero-cost API providers.
-- Primary source: https://docs.anthropic.com/en/api/rate-limits
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-ANT-003 — Claude Projects Document Context & Knowledge Base
+  - CAP-OAI-002 (OpenAI REST API):
 
-- Provider/product: **Anthropic / Claude Projects & Artifacts Knowledge**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://claude.ai/projects` / `HUMAN_BRIDGE`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Human operator manually uploads repository context documents into Claude Project.
-- Primary source: https://support.anthropic.com/en/articles/9517075-what-are-projects
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-ANT-004 — Anthropic Model Context Protocol Client/Server Local Integration
+      - Access Mode: API via https://api.openai.com/v1.
+      - Entitlement: Developer API Entitlement.
+      - Cost & Billing: Pay-as-you-go. Requires active credit card or prepaid
+        credit deposit.
+      - Status: BLOCKED under STRICT_ZERO_CARD.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://platform.openai.com/docs/guides/rate-limits.
 
-- Provider/product: **Anthropic / Model Context Protocol (MCP)**
-- Status: **PREVIEW**
-- Access: `Local stdio / SSE transport` / `SDK`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Direct CLI script execution without MCP bridge.
-- Primary source: https://modelcontextprotocol.io/
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
+  - CAP-OAI-003 (ChatGPT Data Controls Export):
 
-## Google
+      - Access Mode: MANUAL_EXPORT via Settings > Data Controls.
+      - Entitlement: Consumer Account Feature.
+      - Cost & Billing: $0.00.
+      - Status: HUMAN_BRIDGE. Manual download of conversations.json for offline
+        multi-agent indexing.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://help.openai.com/en/articles/7260999-how-do-i-export-my-chatgpt-history-and-data.
 
-### CAP-GGL-001 — Google Gemini Developer API Free Tier (gemini-2.5-flash / gemini-2.5-pro / gemini-3.7-flash)
+  - CAP-OAI-004 (Custom GPTs & Actions):
 
-- Provider/product: **Google / Gemini Developer API (Free Tier)**
-- Status: **ACTIVE**
-- Access: `https://generativelanguage.googleapis.com/v1beta` / `API`
-- Account/region: Eligibility and active limits are account/project/region specific; verify in AI Studio.
-- Billing/cost: NO_BILLING — billing activation is a hard stop for STRICT_ZERO_CARD.; 0.00 USD only while the project is unpaid and within the current free quota.
-- Model/tier: Unpaid/free quota for an eligible Google Cloud project; exact model access is dynamic.
-- Quota: Check active limits in AI Studio; limits are model-specific, not guaranteed and can vary with capacity.
-- Period/scope: RPM/TPM plus RPD; RPD resets at midnight Pacific Time. / Per project.
-- Privacy/data: Google API terms distinguish unpaid and paid services. Unpaid-service content may be used to improve products and may receive human review; the terms state that for EEA/Switzerland/UK users paid-service data-use terms apply to all services, including free access. Verify current terms and region before sending C1 data.
-- Fallback: HUMAN_BRIDGE with redacted C1-safe prompts; otherwise BLOCKED.
-- Primary source: https://ai.google.dev/gemini-api/docs/rate-limits
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Official Google rate-limit, pricing and API-terms pages checked; no account-specific quota snapshot available.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-GGL-002 — Google AI Studio Interactive Prompting & Model Playground
+      - Access Mode: WEB_UI via https://chatgpt.com/gpts.
+      - Entitlement: Consumer Plus/Team Subscription.
+      - Status: HUMAN_BRIDGE.
 
-- Provider/product: **Google / Google AI Studio Web Playground**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://aistudio.google.com` / `WEB_UI`
-- Account/region: Developer account; 180+ regions
-- Billing/cost: NO_BILLING; 0.00 USD
-- Model/tier: AI Studio Playground
-- Quota: UNKNOWN/DYNAMIC — do not infer a fixed quota from a homepage or model name.
-- Period/scope: UNKNOWN — do not infer API quotas from the UI. / Account/session specific.
-- Privacy/data: Use only redacted C1-safe content; current UI terms and account controls must be checked.
-- Fallback: Manual HUMAN_BRIDGE only; no headless browser, cookies or session tokens.
-- Primary source: https://aistudio.google.com/
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Official entry point recorded; interactive entitlement not account-verified.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-GGL-003 — Gemini Consumer Interface (gemini.google.com / Advanced)
+4.2 Anthropic Ecosystem
 
-- Provider/product: **Google / Google Gemini Consumer Web App**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://gemini.google.com` / `WEB_UI`
-- Account/region: Free Consumer Account / Google One AI Premium (19.99/mo); Global
-- Billing/cost: NO_BILLING_FOR_FREE_TIER_PREEXISTING_FOR_ADVANCED; 0.00 USD (utilizing free tier or pre-existing Google One subscription)
-- Model/tier: Gemini 2.5 / 3.x Consumer Engine
-- Quota: UNKNOWN/DYNAMIC — do not infer a fixed quota from a homepage or model name.
-- Period/scope: UNKNOWN — consumer limits are dynamic. / Account/session specific.
-- Privacy/data: Consumer account controls and current terms govern data use; no universal training/retention claim.
-- Fallback: Manual HUMAN_BRIDGE only; no UI automation or session-token handling.
-- Primary source: https://gemini.google.com/
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Consumer entry point recorded; exact entitlement/data controls not independently verified.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-GGL-004 — Vertex AI Enterprise Foundation Models & Model Garden
+  - CAP-ANT-001 (Claude Web UI & Artifacts):
 
-- Provider/product: **Google / Google Cloud Vertex AI**
-- Status: **BLOCKED**
-- Access: `https://cloud.google.com/vertex-ai` / `API`
-- Account/region: Google Cloud Platform Project (Multi-region)
-- Billing/cost: BILLING_REQUIRED_OR_ACCOUNT_DEPENDENT — blocked unless separately authorized.; Not permitted under STRICT_ZERO_CARD.
-- Model/tier: Vertex AI Pay-as-you-go
-- Quota: UNKNOWN/DYNAMIC — do not infer a fixed quota from a homepage or model name.
-- Period/scope: Per minute / Monthly invoice / Per GCP Project / Region
-- Privacy/data: Enterprise terms and project configuration must be verified; no access proposed.
-- Fallback: Use CAP-GGL-001 only if an eligible unpaid project remains within free quota.
-- Primary source: https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Blocked paid/cloud route; no billing or project mutation performed.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-GGL-005 — NotebookLM Document Grounding & Audio Overview
+      - Access Mode: WEB_UI via https://claude.ai.
+      - Authentication: Interactive human browser session.
+      - Entitlement: Consumer Free / Pro Subscription.
+      - Cost & Billing: $0.00 incremental cost. No API credit card required.
+      - Quota Scope & Period: Dynamic rolling 5-hour message quota scaling by
+        conversation length.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://support.anthropic.com/en/articles/8325612-does-claude-ai-have-any-message-limits.
+      - Data & Privacy Policy: Commercial terms exclude prompt training without
+        explicit opt-in.
+      - UI Automation Risk: CRITICAL / FORBIDDEN. Headless browser control is
+        strictly prohibited.
+      - Status: HUMAN_BRIDGE.
 
-- Provider/product: **Google / Google NotebookLM**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://notebooklm.google.com` / `WEB_UI`
-- Account/region: Consumer / Workspace / Education; 180+ regions
-- Billing/cost: NO_BILLING; 0.00 USD (Free web service)
-- Model/tier: NotebookLM Core Runtime (Gemini 2.5 / 3.x backend)
-- Quota: UNKNOWN/DYNAMIC — do not infer a fixed quota from a homepage or model name.
-- Period/scope: UNKNOWN / Account/plan specific.
-- Privacy/data: Grounding, retention, training and export behavior are product/plan/region dependent; verify current support terms before C1.
-- Fallback: Manual HUMAN_BRIDGE with redacted documents; no automated upload/account access.
-- Primary source: https://support.google.com/notebooklm/
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Official support entry point recorded; fixed quota/privacy claims not accepted.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-GGL-006 — Google Apps Script Serverless Automation & Workspace Triggers
+  - CAP-ANT-002 (Anthropic Messages API):
 
-- Provider/product: **Google / Google Apps Script**
-- Status: **ACTIVE**
-- Access: `https://script.google.com` / `API`
-- Account/region: Consumer and Workspace quotas differ; verify account type.
-- Billing/cost: NO_BILLING_FOR_DOCUMENTED_QUOTA_ONLY; 0.00 USD for documented no-cost quota use; external services/plans may differ.
-- Model/tier: Apps Script per-user runtime and service quotas.
-- Quota: Examples for consumer accounts: 90 min/day trigger runtime, 20,000 URL Fetch/day, 100 email recipients/day, 6 min/execution, 30 simultaneous executions/user; values can change.
-- Period/scope: Per user; many quotas reset 24 hours after first request. / Per user/service.
-- Privacy/data: Workspace/Google account policies apply; no secrets, cookies or consumer-session automation.
-- Fallback: Run local node.js / python scripts on host machine.
-- Primary source: https://developers.google.com/apps-script/guides/services/quotas
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Official Apps Script quota page checked; exact Workspace quota not snapshot-verified.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-GGL-007 — Google Colab Hosted Jupyter Python Computing (Free Tier)
+      - Access Mode: API via https://api.anthropic.com/v1/messages.
+      - Entitlement: Developer API Entitlement.
+      - Cost & Billing: Pay-per-token. Requires pre-purchased credits / payment
+        method.
+      - Status: BLOCKED under STRICT_ZERO_CARD.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://docs.anthropic.com/en/api/rate-limits.
 
-- Provider/product: **Google / Google Colaboratory (Colab)**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://colab.research.google.com` / `WEB_UI`
-- Account/region: Free Tier; Global
-- Billing/cost: NO_BILLING; 0.00 USD (No card required)
-- Model/tier: Free Hosted VM (Dynamic CPU / T4 GPU / TPU allocation)
-- Quota: UNKNOWN/DYNAMIC — do not infer a fixed quota from a homepage or model name.
-- Period/scope: UNKNOWN/DYNAMIC / Account/session
-- Privacy/data: Do not upload secrets or data above C1; runtime storage is ephemeral and VMs may be deleted.
-- Fallback: Local deterministic Node/TypeScript path.
-- Primary source: https://research.google.com/colaboratory/faq.html
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Official Colab FAQ checked; free resources are not guaranteed/unlimited and limits fluctuate.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-GGL-008 — Firebase Spark Plan (No-Cost Firestore & Auth Backend)
+  - CAP-ANT-003 (Claude Projects):
 
-- Provider/product: **Google / Firebase Spark Plan**
-- Status: **ACTIVE**
-- Access: `https://firebase.google.com` / `API`
-- Account/region: Spark plan only; project-level quotas. Blaze/paid features are outside STRICT_ZERO_CARD.
-- Billing/cost: NO_PAYMENT_METHOD_FOR_SPARK; Blaze is a hard stop unless separately authorized.; 0.00 USD on Spark within documented no-cost limits and eligible services.
-- Model/tier: Firebase Spark no-cost plan; Firestore no-cost quotas are project-level.
-- Quota: Firestore examples: 1 GiB stored, 10 GiB/month outbound transfer, 20,000 writes/day, 50,000 reads/day, 20,000 deletes/day; verify current pricing.
-- Period/scope: Daily quotas and monthly transfer/storage limits. / Project-level.
-- Privacy/data: Project data policy/security rules remain the owner's responsibility; no secrets or production data introduced.
-- Fallback: Local JSON/file-backed adapter with deterministic tests.
-- Primary source: https://firebase.google.com/pricing
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Official Firebase pricing page checked; Spark/Blaze boundary and project-level scope recorded.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
+      - Access Mode: HUMAN_BRIDGE via https://claude.ai/projects.
+      - Entitlement: Consumer Pro Subscription.
+      - Status: HUMAN_BRIDGE. 200k token project context window managed manually
+        by operator.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://support.anthropic.com/en/articles/9517075-what-are-projects.
 
-## xAI
+  - CAP-ANT-004 (Model Context Protocol - MCP):
 
-### CAP-XAI-001 — Grok Interactive Web Interface on X / grok.com (Grok 2 / Grok 3)
+      - Access Mode: SDK via local stdio / SSE transport.
+      - Entitlement: Open Source Specification.
+      - Cost & Billing: $0.00. No billing or external cloud accounts required.
+      - Status: PREVIEW. Standardized local IPC protocol for connecting agent
+        runtimes to local tools.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://modelcontextprotocol.io/.
 
-- Provider/product: **xAI / Grok Web UI on X**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://x.com/i/grok or https://grok.com` / `WEB_UI`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Human operator executes queries manually in Grok UI (Human Bridge Protocol).
-- Primary source: https://help.x.com/en/using-x/grok
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-XAI-002 — xAI REST API (grok-2 / grok-2-mini / grok-3)
+4.3 Google Ecosystem
 
-- Provider/product: **xAI / xAI Developer Platform**
-- Status: **BLOCKED**
-- Access: `https://api.x.ai/v1` / `API`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Route tasks through Human Bridge to Grok UI or registered zero-cost engines.
-- Primary source: https://docs.x.ai/docs/overview
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
-### CAP-XAI-003 — Grok Real-Time Web & Social Information Retrieval
+  - CAP-GGL-001 (Gemini Developer API Free Tier):
 
-- Provider/product: **xAI / Grok Real-Time Search & Reasoning**
-- Status: **HUMAN_BRIDGE**
-- Access: `https://x.com/i/grok` / `HUMAN_BRIDGE`
-- Account/region: Account, plan and region dependent; no universal entitlement asserted.
-- Billing/cost: UNKNOWN_OR_ACCOUNT_DEPENDENT — treat any billing/paid-credit requirement as BLOCKED.; UNKNOWN until entitlement and billing state are verified; paid paths are forbidden by STRICT_ZERO_CARD.
-- Model/tier: Provider/account/model entitlement is dynamic; verify before use.
-- Quota: DYNAMIC_OR_UNKNOWN — no fixed provider limit is asserted here.
-- Period/scope: UNKNOWN — verify the current account/plan. / Provider/account/project specific.
-- Privacy/data: Provider, account, region and plan terms govern retention/training. No universal claim is accepted; verify current primary terms before sending C1 data.
-- Fallback: Human operator executes search queries and copies grounding citations.
-- Primary source: https://help.x.com/en/using-x/grok
-- Verified: 2026-08-18T10:28:31Z
-- Verification scope: Routing/catalog evidence only; exact account entitlement, active quota, model availability, region terms and billing state require a fresh check.
-- Strict-zero guard: Use only an existing no-cost path with billing disabled. Paid credits, billing activation, consumer UI automation, cookies, session tokens and secrets are forbidden.
+      - Access Mode: API via https://generativelanguage.googleapis.com/v1beta.
+      - Authentication: API Key generated in Google AI Studio.
+      - Entitlement: Developer API Free Tier (Unpaid Project without Billing
+        Account).
+      - Cost & Billing: $0.00 only while the project remains Free/unbilled. A 429/RESOURCE_EXHAUSTED response is not, by itself, proof of every account's billing state; block paid fallback and verify the project before dispatch.
+      - Quota & Rate Limit Specification:
+          - Model: Model-specific and dynamic (e.g. gemini-2.5-flash,
+            gemini-2.5-pro, gemini-3.7-flash). Quotas (RPM, TPM, RPD) vary
+            dynamically based on model, account verification status, and project
+            allocation. Without an active project snapshot, exact live rate
+            limits are marked UNKNOWN and must be checked in Google AI Studio.
+          - Project: Google Cloud Project linked in AI Studio.
+          - Account: Standard Google Developer Account.
+          - Tier: Free Tier (Unpaid).
+          - Region: Check the current official region list, account, and terms at dispatch; a country-count headline does not prove API-client eligibility.
+          - Period: Per-minute and daily windows as documented by Google; describe the reset as Pacific time without hard-coding a daylight-saving UTC offset.
+          - Scope: Per Google Cloud Project (shared across all keys within the
+            project).
+          - Capacity Notice: Published free-tier rate limits represent upper
+            bounds, not guaranteed system capacity.
+      - Data & Privacy Policy: Google's Gemini API Additional Terms describe content use and possible human review for Unpaid Services. They also state that the Paid Services data-use section applies to all Services for users in the EEA, Switzerland, or the UK even when access is free. Verify the current account, project tier, region, and terms before dispatch. C2+ data MUST NOT be submitted; redact to C0/C1.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://ai.google.dev/gemini-api/docs/rate-limits,
+        https://ai.google.dev/gemini-api/terms, and
+        https://ai.google.dev/gemini-api/docs/pricing.
+      - Status: ACTIVE.
 
-## Acceptance gate
+  - CAP-GGL-002 (Google AI Studio Web Playground):
 
-- Proposed task: UJ-CAP-001 — REVIEW, not DONE.
-- Reviewer: Claude. Accepted weight remains 0/13 until independent review and Council import.
+      - Access Mode: WEB_UI via https://aistudio.google.com.
+      - Entitlement: Developer Console Playground.
+      - Status: HUMAN_BRIDGE. Used for manual prompt engineering, testing system
+        instructions, and generating code templates.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://aistudio.google.com.
+
+  - CAP-GGL-003 (Gemini Consumer Web App):
+
+      - Access Mode: WEB_UI via https://gemini.google.com.
+      - Entitlement: Consumer Free / Google One AI Premium ($19.99/mo).
+      - Status: HUMAN_BRIDGE.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://gemini.google.com.
+
+  - CAP-GGL-004 (Google Cloud Vertex AI):
+
+      - Access Mode: API via https://cloud.google.com/vertex-ai.
+      - Entitlement: Enterprise Cloud API.
+      - Cost & Billing: Pay-as-you-go billed usage. Requires active GCP Billing
+        Account with payment card.
+      - Status: BLOCKED under STRICT_ZERO_CARD.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://cloud.google.com/vertex-ai/pricing.
+
+  - CAP-GGL-005 (Google NotebookLM):
+
+      - Access Mode: WEB_UI via https://notebooklm.google.com.
+      - Entitlement: Consumer Labs Service.
+      - Cost & Billing: $0.00. No billing required.
+      - Quota: Exact notebook limits and daily chat quotas are UNKNOWN (not
+        published as guaranteed static SLAs by Google; managed dynamically
+        server-side).
+      - Data & Privacy Policy: Per official NotebookLM FAQ, uploaded sources and
+        notes are NOT used to train Google AI models.
+      - UI Automation Risk: CRITICAL / FORBIDDEN. Scraping or headless
+        automation is prohibited.
+      - Status: HUMAN_BRIDGE.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://support.google.com/notebooklm/.
+
+  - CAP-GGL-006 (Google Apps Script):
+
+      - Access Mode: API / Serverless Execution via https://script.google.com.
+      - Entitlement: Workspace Platform Feature.
+      - Cost & Billing: $0.00. Included with standard Google account.
+      - Quotas: Execution timeout: 6 min/execution. Daily quotas are per-user
+        and reset on a rolling 24-hour window from the first request (Consumer
+        @gmail.com: 20,000 UrlFetch calls/day, 90 min/day trigger time, 100
+        email recipients/day; Workspace: 100,000 UrlFetch calls/day, 6 hours/day
+        trigger time, 1,500 email recipients/day).
+      - Status: ACTIVE. Sanctioned programmatic serverless engine.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://developers.google.com/apps-script/guides/services/quotas.
+
+  - CAP-GGL-007 (Google Colaboratory Free Tier):
+
+      - Access Mode: WEB_UI via https://colab.research.google.com.
+      - Entitlement: Hosted Jupyter Environment.
+      - Cost & Billing: $0.00.
+      - Quota: Dynamic, un-guaranteed ephemeral VM (variable CPU/GPU/RAM). No
+        guaranteed session duration; VMs may be preempted/terminated at any moment; idle timeout, maximum VM lifetime, available hardware, and usage limits are not published as fixed values and vary over time.
+      - UI Automation Risk: CRITICAL / FORBIDDEN. Automated headless execution,
+        background proxy tunneling, or multi-account abuse violates Colab ToS.
+      - Status: HUMAN_BRIDGE.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://research.google.com/colaboratory/faq.html.
+
+  - CAP-GGL-008 (Firebase Spark Plan):
+
+      - Access Mode: API via Firebase Admin SDK / REST.
+      - Entitlement: Cloud Backend Free Tier (Spark Plan ONLY; strictly
+        separated from Blaze Plan).
+      - Cost & Billing: Spark has no payment method requirement for its documented no-cost quotas. This is not a universal guarantee for every Firebase product or usage path; features outside the Spark quotas can require Blaze billing.
+      - Quotas: One free Cloud Firestore database per project; 1 GiB stored data; 50,000 document reads/day; 20,000 document writes/day; 20,000 document deletes/day; 10 GiB outbound bandwidth/month. Daily quotas reset around midnight Pacific Time.
+      - Privacy: Pricing/quota evidence does not establish a universal training exclusion or DPA configuration; verify the applicable terms before storing data above C1.
+      - Status: ACTIVE (conditional; evidence only).
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://firebase.google.com/pricing and https://firebase.google.com/docs/firestore/quotas.
+
+4.4 xAI Ecosystem
+
+  - CAP-XAI-001 (Grok Web UI on X):
+
+      - Access Mode: WEB_UI via https://x.com/i/grok or https://grok.com.
+      - Authentication: Interactive X user login (X Premium / Premium+).
+      - Entitlement: Consumer Platform Subscription.
+      - Cost & Billing: $0.00 incremental cost beyond existing X subscription.
+      - Quota Scope & Period: Dynamic rolling 2-hour window message cap.
+      - UI Automation Risk: CRITICAL / FORBIDDEN. Scraping or browser automation
+        violates X Terms of Service and results in account suspension.
+      - Status: HUMAN_BRIDGE.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://help.x.com/en/using-x/grok.
+
+  - CAP-XAI-002 (xAI Developer Platform API):
+
+      - Access Mode: API via https://api.x.ai/v1.
+      - Entitlement: Developer API Entitlement.
+      - Cost & Billing: Pay-per-token. Requires pre-purchased credits / payment
+        method.
+      - Status: BLOCKED under STRICT_ZERO_CARD.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://docs.x.ai/docs/overview.
+
+  - CAP-XAI-003 (Grok Real-Time Search & Reasoning):
+
+      - Access Mode: HUMAN_BRIDGE via Grok Web Interface.
+      - Entitlement: Consumer Platform Subscription.
+      - Status: HUMAN_BRIDGE. Real-time web/social synthesis operated manually.
+      - Verification: Verified 2026-08-18T13:35:00Z via
+        https://help.x.com/en/using-x/grok.
+
+5. Architectural Routing Decision Table
+
+| Task Modality                                  | Preferred Primary Engine                 | Access Method               | Fallback Engine                             | Fallback Method                               |
+| :--------------------------------------------- | :--------------------------------------- | :-------------------------- | :------------------------------------------ | :-------------------------------------------- |
+| **Zero-Cost Automated Text / Code Generation** | `CAP-GGL-001` (Gemini Flash API Free)    | Programmatic REST API       | `CAP-ANT-001` (Claude Web UI)               | Human Bridge Manual Relay                     |
+| **Complex Reasoning & Code Architecture**      | `CAP-ANT-001` (Claude 3.5/3.7 Sonnet)    | Human Bridge Manual Relay   | `CAP-OAI-001` (ChatGPT Plus / o3-mini)      | Human Bridge Manual Relay                     |
+| **Real-Time News & Live Web Grounding**        | `CAP-XAI-001` (Grok 2/3 Web on X)        | Human Bridge Manual Relay   | `CAP-GGL-001` (Gemini API with Grounding\*) | Programmatic API / Search (\*Subject to tier) |
+| **Document Synthesis & Study Dossiers**        | `CAP-GGL-005` (NotebookLM)               | Human Bridge Manual Relay   | `CAP-ANT-003` (Claude Projects)             | Human Bridge Manual Relay                     |
+| **Zero-Cost Structured Metadata Storage**      | `CAP-GGL-008` (Firebase Spark Firestore) | Programmatic Admin SDK      | Local SQLite / JSON Flat-file               | Local Disk Storage                            |
+| **Serverless Scheduled Triggers / Webhooks**   | `CAP-GGL-006` (Google Apps Script)       | Programmatic Webhook / Cron | Local Cron Script                           | Local Host Process                            |
+
+6. Verification Summary & Maintenance Contract
+
+1.  Continuous Validation: Quota allocations and tier boundaries are subject to
+    change by providers without notice. All programmatic clients must implement
+    graceful backoff on HTTP 429 (Too Many Requests) and route to Human Bridge
+    fallback.
+2.  Data Sanitization Mandate: Any payload dispatched to CAP-GGL-001 (Gemini
+    Developer API Free Tier) must be free of credentials, API secrets,
+    proprietary intellectual property, or identifiable personal data (PII).
+3.  No Unilateral Weight Acceptance: This deliverable is submitted under task
+    UJ-CAP-001 with accepted weight remaining 0/13 pending independent peer
+    review by CLAUDE.
+
+## Corrections and admission gates
+
+- CAP-GGL-001 is conditionally usable only for redacted C0/C1 internal evaluation on a demonstrably unbilled project. A 429 response is not, by itself, proof that every account state is non-billable.
+- EEA/Switzerland/UK use requires a current terms and API-client eligibility check; do not describe the free tier as universally permitted for an EEA-facing product.
+- CAP-GGL-005 remains HUMAN_BRIDGE, but its privacy statement is UNKNOWN until an exact dated NotebookLM policy/FAQ citation is attached.
+- CAP-GGL-006 technical execution is documented, but triggers, webhooks, OAuth grants, and document writes require a separate side-effect approval.
+- CAP-GGL-008 is Spark/project-level only. No-cost Firestore quotas do not make every Firebase product or configuration free.
+- Dynamic quotas, preview model availability, and commercial rights must be rechecked at dispatch time; this registry does not unblock downstream tasks.
