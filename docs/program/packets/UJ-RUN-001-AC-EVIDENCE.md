@@ -5,11 +5,11 @@
 | Task | `UJ-RUN-001` — owner CLAUDE, reviewer GEMINI, peso 13 |
 | Card | `UJ-CARD-RUN-001-CLAUDE` |
 | Branch | `agent/uj-run-001-blueprint-20260818` — **verificato con `git branch -a --contains`**, non presunto |
-| **`source_commit_sha` unico** | `cfee1316cf83a6171871fedd541e7c4cd286389f` |
+| **`source_commit_sha` unico** | `c645377d54c20fad517d376a1b1e10ac54d289a7` |
 | Supersede | `a7e03e979baee5a8b796007313ad93408299f840` — il cui handoff chiedeva una correzione del `read_ref` che `main` non avrebbe potuto risolvere (§0-ter). A sua volta superava `79408449bd096613d2823efe6872ed424b757ee6`, i cui byte dell'handoff erano ancora il documento della sessione 1 (§0-bis), e prima ancora `2dad45a40798a8059b5e2b7db077b76e77fcc88b` |
 | Stato proposto | **`BLOCKED`** |
 | Peso accettato | **0 / 13, invariato** |
-| Generato | 2026-08-18T21:19:36Z |
+| Generato | 2026-08-18T22:18:42Z |
 
 ## 0. Perche' BLOCKED, e perche' resta BLOCKED
 
@@ -150,6 +150,35 @@ irrisolvibili.
 **Un solo hash su 15 e' cambiato** in questo giro — l'handoff, che ora porta la §1.1 con questa
 analisi. Gli altri 14 sono byte-identici.
 
+## 0-quater. 2026-08-19 — il blocco e' cambiato di natura
+
+CHATGPT ha corretto le card con `4b63b94` su `main`. **Il difetto della §0-ter e' chiuso:** i
+quattro `read_ref` puntano ora a `25b1b7d53ff5`, che contiene le card ed e' raggiungibile da
+`main` — verificato 4 su 4 su entrambe le clausole. Ha inoltre allineato i criteri
+(`UJ-RUN-001` ne dichiara ora **5** nel `BACKLOG.json`, non 2) e aggiunto due assert al
+validatore che rendono **meccanico** il difetto invece di limitarsi a correggerlo. Va
+accreditato: e' piu' di quanto avessi chiesto.
+
+**Lo stesso commit ha pero' riscritto i sedici hash degli input pinati, e nessuno corrisponde.**
+
+| Card | pin coincidenti | divergenti |
+|---|---:|---:|
+| `UJ-RUN-001-CLAUDE.json` | 0 | **4** |
+| `UJ-CAP-001-GEMINI.json` | 0 | **4** |
+| `UJ-GGL-001-GEMINI.json` | 0 | **4** |
+| `UJ-RED-001-GROK.json` | 0 | **4** |
+
+Sei convenzioni di hashing testate, nessuna produce quei valori; nessuna versione del piano
+canonico nella storia ha mai avuto l'hash dichiarato. **I valori corretti sono quelli che le
+card portavano prima.** Il gate di ChatGPT rifiuta il commit di ChatGPT con `exit 1`.
+
+Per quattro giri questo documento ha scritto *"non e' un pin mismatch"*. **Adesso lo e'**, ed e'
+l'unica cosa che separa questi byte da `REVIEW`. Il rischio sostanziale resta **nullo**: il
+lavoro e' stato svolto contro i documenti reali, i cui byte non sono cambiati.
+
+Analisi completa e sedici valori corretti:
+`docs/program/reviews/UJ-CARDS-REPIN-VERIFICATION-CLAUDE.md`.
+
 ## 1. Il conteggio dei test, risolto definitivamente
 
 Circolavano quattro numeri diversi. Ecco cosa era ciascuno e qual e' quello vero.
@@ -196,7 +225,7 @@ Suite completa, riseguita in questa sessione, file per file:
 ## 2. Il branch, verificato e non supposto
 
 ```
-$ git branch -a --contains cfee1316cf83
+$ git branch -a --contains c645377d54c2
 * agent/uj-run-001-blueprint-20260818
   remotes/origin/agent/uj-run-001-blueprint-20260818
 ```
@@ -208,9 +237,9 @@ stato scrivere un output non misurato.
 Verificato anche in negativo, che e' la meta' che di solito si omette:
 
 ```
-git merge-base --is-ancestor cfee1316cf83 origin/main                              -> non contiene
-git merge-base --is-ancestor cfee1316cf83 origin/claude/claude-md-resume-point-tvej1u -> non contiene
-git merge-base --is-ancestor cfee1316cf83 origin/claude/ultrajarvis-program-setup-2noca9 -> non contiene
+git merge-base --is-ancestor c645377d54c2 origin/main                              -> non contiene
+git merge-base --is-ancestor c645377d54c2 origin/claude/claude-md-resume-point-tvej1u -> non contiene
+git merge-base --is-ancestor c645377d54c2 origin/claude/ultrajarvis-program-setup-2noca9 -> non contiene
 ```
 
 Nessun `UNVERIFIED` e' necessario: la domanda ha una risposta dimostrabile.
@@ -226,7 +255,7 @@ la mappatura sta qui, e il packet la cita da `handoff.resume_point`.
 
 ### AC-01 — contratti provider-neutral
 
-| Artefatto | SHA-256 a `cfee1316cf83` |
+| Artefatto | SHA-256 a `c645377d54c2` |
 |---|---|
 | `docs/architecture/RUNTIME_BLUEPRINT.md` | `bccc5a08d3ab8fc9245c0e6dcb8f946d1616bdda40f8e001d3ad1e3504e0cf6c` |
 | `packages/contracts/src/runtime/agent-manifest.ts` | `0401bf8c364cad5e6f8d430c84a4dc1b66e3b5420e7e2834e88e2a891ebb5b26` |
@@ -241,7 +270,7 @@ paternita'. **Esito `0`** occorrenze in posizione normativa. Falsificabile: intr
 
 ### AC-02 — semantiche binary-testable
 
-| Artefatto | SHA-256 a `cfee1316cf83` |
+| Artefatto | SHA-256 a `c645377d54c2` |
 |---|---|
 | `packages/contracts/src/runtime/checkpoint.ts` | `21df12f40d2ffe93e672ed95a13d3ca1125fcd0dad05abfd967b41b2d9612fce` |
 | `tests/contracts/runtime-invariants.test.mjs` | `0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0` |
@@ -253,7 +282,7 @@ cancellation `T-KS-1` · replay e integrita' del ledger `T-LG-1` ×3 · failure 
 
 ### AC-03 — tool access default-deny, mai ereditato implicitamente
 
-| Artefatto | SHA-256 a `cfee1316cf83` |
+| Artefatto | SHA-256 a `c645377d54c2` |
 |---|---|
 | `packages/contracts/src/runtime/depth-guard.ts` | `515b8a9f36fa3fae9594552d30a58bc33bf52d155d6b29fe45e7f01bdcca19b7` |
 | `packages/contracts/src/runtime/supervisor.ts` | `d9d4078c69fd1dfede055571c546d0b3ca092bd14a1807eab6eb16d99dd72779` |
@@ -264,10 +293,10 @@ provider, e *the state machine denies by default*.
 
 ### AC-04 — schemi e checklist completi per la review
 
-| Artefatto | SHA-256 a `cfee1316cf83` |
+| Artefatto | SHA-256 a `c645377d54c2` |
 |---|---|
 | `docs/threat-models/RUNTIME_THREAT_NOTES.md` | `b84a9a721c5544df9ad1b84e48760a2382783eed3556a7b0c60ba2a6d34bdb60` |
-| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | `a2f5934113d5d2254394da8d31accc591e6751d2576822ddd1df0e081531bfcd` |
+| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | `768c13f5b2952854d5730bfbcfed2069d0359becb7405bfa08315e25504d4776` |
 | `packages/contracts/src/runtime/index.ts` | `8a42d88fb9526fc107970d628abbfbe239609423fb2c7fc5bd8b817c44f4ea5d` |
 | `packages/contracts/src/runtime/common.ts` | `86baa7e4050a252f5d4650be35753585ae4f1bd3733691a8b4ba31ef70919c51` |
 | `packages/contracts/src/runtime/envelopes.ts` | `1e3f94558b69abd2852f2c8d5af3691db4d31a9ca947ae7d093581ec4a483b79` |
@@ -288,7 +317,7 @@ $ node scripts/validate-response-packet.mjs docs/program/packets/UJ-RESP-RUN-001
 exit 0
 - status proposed : READY -> BLOCKED
 - accepted weight : 0 -> 0 / 13 (unchanged)
-- artifacts       : 15 cited, all hashes verified at cfee1316cf83
+- artifacts       : 15 cited, all hashes verified at c645377d54c2
 ```
 
 Dichiararlo soddisfatto proponendo `REVIEW` significherebbe aggirare la condizione di blocco

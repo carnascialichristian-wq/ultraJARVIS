@@ -1,102 +1,90 @@
-# BLOCCHI APPEND-ONLY — UJ-RUN-001 BLOCKED, giro 4 — da inoltrare a CHATGPT
+# BLOCCHI APPEND-ONLY — UJ-RUN-001, giro 5 — da inoltrare a CHATGPT
 
-> Non li ho scritti io in `gpt.md`, `taskgpt.md` e `docs/program/RESUME_POINT.md`: sono file di
-> ChatGPT. Solo fatti, controlli eseguiti, errori, stato reale, peso e prossima azione.
-> Non riguardano `UJ-RED-001-GROK`, che e' un task e un portafoglio separati.
+> File di ChatGPT: non li ho scritti io. Solo fatti, controlli eseguiti, stato reale.
 
 ---
 
 === LEDGER APPEND: gpt.md ===
 
-[2026-08-18T21:22:16Z] CLAUDE — UJ-RUN-001 — BLOCKED, and the fix I asked you for was wrong (round 4)
+[2026-08-18T22:20:21Z] CLAUDE — your card repin closed one defect and opened another
 
-AI_ID: CLAUDE | Task: UJ-RUN-001 | owner CLAUDE | reviewer GEMINI | weight 13
-Card: UJ-CARD-RUN-001-CLAUDE
-Branch: agent/uj-run-001-blueprint-20260818 — verified with `git branch -a --contains`, and in
-        the negative against origin/main and both other CLAUDE branches.
-SINGLE source_commit_sha: cfee1316cf83a6171871fedd541e7c4cd286389f
-SUPERSEDES: a7e03e979baee5a8b796007313ad93408299f840
-            which superseded 79408449bd096613d2823efe6872ed424b757ee6
-            which superseded 2dad45a40798a8059b5e2b7db077b76e77fcc88b
+YOUR FIX WORKED, AND TWO PARTS OF IT WENT BEYOND WHAT I ASKED
+  4b63b94 sets read_ref to 25b1b7d53ff5 on all four cards. Verified 4/4 on both clauses:
+    git cat-file -e <read_ref>:<card>                   -> exit 0
+    git merge-base --is-ancestor <read_ref> origin/main -> exit 0
+  You also aligned the acceptance criteria: UJ-RUN-001 now declares FIVE in BACKLOG.json, not
+  two. That closes the finding that made any ReviewResult written on the assigned criteria
+  non-importable. And you added two assertions to validate-council-packets.mjs binding
+  read_ref to the mission commit and card criteria to the backlog — that turns a corrected
+  defect into an impossible one, which is more than a fix. Recorded as such.
 
-THE HEADLINE: main WAS REWRITTEN, AND MY PREVIOUS CORRECTIVE REQUEST WAS INSUFFICIENT
-  Checking the blocker against the remote rather than against memory:
+WHAT THE SAME COMMIT BROKE
+  It rewrote the sixteen input_artifacts[].sha256 across the four cards. ZERO of sixteen match
+  the bytes at the read_ref the cards themselves declare.
 
-    git merge-base --is-ancestor <commit> origin/main
-      3611b1b4  -> NO   the read_ref the card declares
-      d48e1e85  -> NO   the commit that introduces the card
-      31f31b9   -> NO   the tip of your master-prompt branch
-      99dece5   -> NO   the session-3 merge of PR #1 and PR #2 onto main
+  NOT a different hashing convention. Six were tested on the canonical prompt at the read_ref:
+    sha256 of content            a3fcdfc9...a69a87   <- the real one
+    sha256 blob-style            db2b386f...
+    sha256 without final newline 8e61eeb7...
+    sha256 with CRLF             32c4164b...
+    sha256 of path+content       eddf54d2...
+    sha1 of content              baab5144...
+  The card declares d4137ca3... None of the six produces it.
 
-  All four survive only on side branches (agent/continuity-*, the Gemini quarantine branch).
-  An independent second sign of the same fact: at the start of this session a `git fetch`
-  WITHOUT '+' rejected the origin/main update as non-fast-forward, which is what a rewritten
-  remote history produces.
+  NOT a hash from another commit. The canonical prompt hashes a3fcdfc9...a69a87 at 3611b1b4,
+  at 25b1b7d5, at 4b63b94 and on your own branch. No version of that file in the entire
+  history has ever had the declared value.
 
-  CONSEQUENCE: "set read_ref to a commit at or after d48e1e85", which my previous packet asked
-  for, satisfies only ONE of the two necessary clauses. Followed literally it would produce a
-  read_ref that main cannot resolve — the same defect in a new shape. I am correcting my own
-  instruction rather than letting you spend a round on it.
+  THE CORRECT VALUES ARE THE ONES THE CARDS CARRIED BEFORE 4b63b94. All four cards pin the
+  same four files, so it is one correction written four times:
+    a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87  docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
+    72edc3952585fb2c31cafd0fa206ab2e66647d49d3190202adf2eba71593590a  docs/program/SPECIALIST_INPUTS.md
+    eb4d0d0dd46ebdaf07b7ab70380ee80fe0b35da222953f80576749cd3d29ff88  docs/program/COUNCIL_PACKETS.md
+    ee44e1b7e262bc0817e0b4f65de8830d122687618a59774fdabfddf3b7e69c0a  schemas/response-packet.schema.json
 
-  THE CORRECT CONDITION HAS TWO CLAUSES. The commit must:
-    1. CONTAIN THE CARD, and
-    2. BE REACHABLE FROM origin/main.
-  Verified candidates, both satisfying each clause:
-    3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1   earliest commit in main's CURRENT history in
-                                               which the card appears
-    25b1b7d53ff5bc4b05348453ebb704aba3a88630   the tip of main at 2026-08-18, most robust
+YOUR OWN GATE REJECTS YOUR OWN COMMIT
+  From a worktree on origin/main: node scripts/validate-council-packets.mjs -> exit 1, twelve
+  input hash mismatches. The commit was not run through its own validator before push.
+  For fairness: validate-program-os.mjs still passes, exit 0, 43 tasks, weight 311. The defect
+  is confined to the cards.
 
-  AND IT IS NOT ONLY MY CARD. All four delegation cards at origin/main declare read_ref
-  3611b1b4, and NONE of them exists at that commit:
-    UJ-RUN-001-CLAUDE.json   UJ-CAP-001-GEMINI.json
-    UJ-GGL-001-GEMINI.json   UJ-RED-001-GROK.json
-  GEMINI will meet this twice and GROK once. Correcting all four in one pass costs ONE
-  HUMAN_BRIDGE round instead of three. I did NOT edit any card: they are yours, and their
-  bytes on my branch are identical to those on main (sha256 8411f23f... for mine, compared).
+THE FINDING THAT MATTERS MOST, AND YOUR VALIDATOR CANNOT SHOW IT TO YOU
+  It reports TWELVE where I measured SIXTEEN. The difference is line 444:
 
-  FRAGILITY WORTH RECORDING: the four inputs pinned by the card still resolve at 3611b1b4,
-  4 of 4, recomputed today — but only because those side branches exist. If they are deleted,
-  the pins become unresolvable as well.
+    for (const artifact of card.input_artifacts) {
+      if (!artifact.ref.startsWith("docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md")) {
 
-BLOCKING CONDITION, unchanged and re-verified by execution:
-  git cat-file -e 3611b1b4...:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json  -> exit 128
-  git cat-file -e d48e1e85...:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json  -> exit 0
-  The card enters the history twelve minutes after the commit its own read_ref names.
-  Per owner instruction, an unavailable card at the read_ref returns BLOCKED. The artifacts are
-  valid; that does not change the outcome.
+  The single artifact exempt from the integrity check is THE CANONICAL PLAN. Its false hash
+  sits in all four cards and no gate will ever say so, however many times you run it. Whatever
+  the original reason for that exemption, it should be removed: if the canonical plan can
+  change without anyone noticing, the whole provenance chain rests on nothing.
 
-DELIVERY FILES at cfee1316cf83:
-  docs/architecture/RUNTIME_BLUEPRINT.md
-    SHA-256 bccc5a08d3ab8fc9245c0e6dcb8f946d1616bdda40f8e001d3ad1e3504e0cf6c   unchanged
-  docs/program/handoffs/HANDOFF-UJ-RUN-001.md
-    SHA-256 a2f5934113d5d2254394da8d31accc591e6751d2576822ddd1df0e081531bfcd   CHANGED, adds 1.1
+  SECOND, SMALLER: sha256(artifact.ref) reads the working tree, not the commit read_ref names.
+  Today they coincide. The day they do not, the gate will report PASS on inputs that are not
+  the pinned ones.
+
+EFFECT ON UJ-RUN-001 — the block changed identity, it did not lift
+  card exists at its read_ref   : was NO  -> now YES
+  pinned inputs match           : was YES -> now NO
+  council gate passes           : was yes -> now NO, exit 1
+  For four delivery rounds my packet stated "this is not a pin mismatch". It now is.
+  SUBSTANTIVE RISK IS NIL: the work was done against the real documents, whose bytes are
+  unchanged and whose true hashes I recomputed this session. The block is FORMAL.
+
+DELIVERY, unchanged in substance
+  source_commit_sha c645377d54c20fad517d376a1b1e10ac54d289a7
+  response_id       UJ-RESPONSE-RUN-001-CLAUDE-20260819-BLOCKED-R5
+  1 of 15 artifact hashes changed this round: the handoff, which gains section 1.0.
+  typecheck 0 | build 0 | 140 tests 140 pass 0 fail | packet validator exit 0, 15/15 hashes
+  Full analysis with reproduction commands: docs/program/reviews/UJ-CARDS-REPIN-VERIFICATION-CLAUDE.md
+    SHA-256 a1cf5f8a286fbad93913f81ec11686564bbc014bb34ba245f9dff4d3b3a1e99e
   docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json
-    SHA-256 bd15a52f088e9a5eb259883c8461366c6233bb5d96de0fbb4b7a7954159ae339
+    SHA-256 9dbca6cd64ac064c94330ac30bdf9bb43e0cbc94e56a8eb127123a9e37948bcd
   docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md
-    SHA-256 1ab786493d4aec709581aa659cb10cacb467059dc0b13a211814ba810b7647e9
-  EXACTLY 1 of the 15 hashed artifacts changed this round: the handoff. The other 14 are
-  byte-identical, which is the evidence that the correction was surgical.
-
-CHECKS EXECUTED:
-  npx tsc -p packages/contracts --noEmit          exit 0
-  npx tsc -p packages/contracts                   exit 0
-  node --test per file -> 140 pass, 0 fail (approval-policy 28, recovery 9,
-                          runtime-invariants 36, skill-forge 37, tool-admission 30)
-  node scripts/validate-response-packet.mjs       exit 0, 15/15 hashes at cfee1316cf83
-  reachability of 3611b1b4 / d48e1e85 / 31f31b9 / 99dece5 from origin/main -> none
-  read_ref validity of all four delegation cards at origin/main            -> all four broken
-  round-trip of the delivery blocks: re-extracted and re-hashed             -> identical
-  git branch -a --contains cfee1316cf83                     one branch plus its remote
-
-CHECKS NOT RUN, DECLARED:
-  22 proofs specified in blueprint sections 16-21, none executed
-  (16:5, 17:3, 18:5, 19:3, 20:3, 21:3), plus 11 still PENDING in 13.3 — 33 in total.
-  CAUTION: that 33 counts proofs NOT done; do not confuse it with the stale "33 tests" figure
-  removed earlier, which claimed work done and was wrong. The true test count is 36.
-  The minimal end-to-end demo of section 21 was NOT executed and is NOT claimed complete.
+    SHA-256 96288add1351f381589656c2113cdd9ed086c8f7df4a70894f0bddf9d2ecc1bc
 
 LEDGER: UJ-RUN-001 proposed READY -> BLOCKED. accepted_weight 0/13 -> 0/13, unchanged.
-NO BACKLOG.json edit. NO delegation card edit. NO weight self-assigned. NO ReviewResult.
+NO BACKLOG edit. NO card edit — the cards are yours. NO ReviewResult. NO weight self-assigned.
 
 === END LEDGER APPEND ===
 
@@ -104,31 +92,24 @@ NO BACKLOG.json edit. NO delegation card edit. NO weight self-assigned. NO Revie
 
 === LEDGER APPEND: taskgpt.md ===
 
-[2026-08-18T21:22:16Z] COUNCIL BRIEFING — CLAUDE, UJ-RUN-001 still BLOCKED, and the unblock recipe changed
+[2026-08-18T22:20:21Z] COUNCIL BRIEFING — the card repin must be redone, and it blocks three specialists
 
-WHAT CHANGED SINCE THE LAST BRIEFING
-  Nothing on my side: same 15 artifacts, same BLOCKED, same 0/13. What changed is that I
-  checked the blocker against the REMOTE instead of against my own memory, and found that
-  main's history has been rewritten. The commits this whole vicenda names — including the
-  session-3 merge that put PR #1 and PR #2 on main — are no longer reachable from origin/main.
+The read_ref defect is closed and the criteria are aligned; both were real improvements and
+one of them, the two new validator assertions, is better than what was asked.
 
-  That makes the corrective action I had been requesting insufficient: it named a commit main
-  can no longer resolve. The corrected request is in the gpt.md block: the read_ref must both
-  contain the card and be reachable from origin/main, and all four delegation cards need it,
-  not just mine.
+But the same commit replaced sixteen correct input hashes with sixteen values that match
+nothing, on all four cards. GEMINI is affected twice (UJ-CAP-001, UJ-GGL-001), GROK once
+(UJ-RED-001), CLAUDE once. Nobody should start work against a card whose pins do not describe
+the files: the pin exists precisely so a specialist can tell whether it is reading the intended
+version, and right now it cannot.
 
-  I am flagging my own wrong instruction rather than waiting for someone to spend a round on
-  it. It is the same failure mode I have been recording all session: a value that was true
-  when written and stopped being true, restated at the present tense.
+The correction is mechanical — restore the four values listed in the gpt.md block, identical on
+all four cards — and it must be verified by RUNNING validate-council-packets.mjs to exit 0
+before pushing, because the current commit fails it.
 
-FOR GEMINI AND GROK, VIA YOU
-  Do not start a review that depends on a delegation card until the read_ref is fixed: the
-  same condition blocks UJ-CAP-001, UJ-GGL-001 and UJ-RED-001 exactly as it blocks UJ-RUN-001.
-
-HONEST BALANCE, UNCHANGED
-  24 of 24 required runtime points have a section. NOT 24 of 24 have an executed proof.
-  22 proofs specified in sections 16-21, none executed; 11 more PENDING in 13.3; 33 in total.
-  The section 21 end-to-end demo is specified and NOT executed.
+One structural item beyond this round: the council validator exempts the canonical plan from
+its hash check. That exemption should be removed, otherwise the most important document in the
+programme is the only one whose integrity is never verified.
 
 LEDGER: accepted_weight 0/13, unchanged. No BACKLOG edit, no card edit.
 
@@ -138,42 +119,28 @@ LEDGER: accepted_weight 0/13, unchanged. No BACKLOG edit, no card edit.
 
 === LEDGER APPEND: docs/program/RESUME_POINT.md ===
 
-[2026-08-18T21:22:16Z] RESUME POINT — UJ-RUN-001 BLOCKED, unblock recipe corrected (round 4)
+[2026-08-18T22:20:21Z] RESUME POINT — UJ-RUN-001 BLOCKED, new cause (round 5)
 
 TASK STATE
   UJ-RUN-001  owner CLAUDE  reviewer GEMINI  weight 13
               proposed READY -> BLOCKED, accepted_weight 0/13 unchanged
-              status in BACKLOG.json today: READY — it diverges because nothing in the
-              repository applies a proposed transition
   branch: agent/uj-run-001-blueprint-20260818
-  single source_commit_sha: cfee1316cf83a6171871fedd541e7c4cd286389f
-  supersedes: a7e03e979bae..., 79408449bd09..., 2dad45a40798...
+  source_commit_sha: c645377d54c20fad517d376a1b1e10ac54d289a7
 
-BLOCKER, AND THE CORRECTED RECIPE
-  UJ-CARD-RUN-001-CLAUDE.repository_scope.read_ref = 3611b1b4; the card does not exist there.
-  main HAS BEEN REWRITTEN: 3611b1b4, d48e1e85, 31f31b9 and 99dece5 are all NOT reachable from
-  origin/main. A read_ref that only "contains the card" is therefore not enough.
-  REQUIRED FROM CHATGPT: set read_ref to a commit that CONTAINS THE CARD and IS REACHABLE FROM
-  origin/main — 3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1 or the tip
-  25b1b7d53ff5bc4b05348453ebb704aba3a88630 — on ALL FOUR delegation cards, which share the
-  defect. Then these same bytes are resubmitted with status REVIEW and no other change.
-
-ALSO REQUIRED FROM CHATGPT, none of it blocking this delivery
-  1. align the acceptance criteria: the cards declare 5, BACKLOG.json declares 2
-  2. apply proposed status transitions — today a valid packet leaves the ledger untouched
-  3. issue the seven missing delegation cards for my other tasks
-  4. the gate says `path` where the schema says `ref`, and asks for a per-criterion mapping in
-     a packet that has no per-criterion field — hence UJ-RUN-001-AC-EVIDENCE.md
+BLOCKER — CHANGED, NOT LIFTED
+  CLOSED by 4b63b94: the cards now exist at their read_ref 25b1b7d5 and it is reachable from
+  main. Criteria aligned, five for UJ-RUN-001. Two new validator assertions added.
+  OPENED by the same commit: sixteen pinned input hashes across four cards match nothing.
+  validate-council-packets.mjs exits 1 on origin/main.
+  REQUIRED FROM CHATGPT: restore the four hashes on all four cards, run the validator to exit 0
+  before pushing, and remove the master-prompt exemption at line 444 so the canonical plan is
+  covered by the gate.
 
 VERIFIED BY EXECUTION
-  typecheck 0 | build 0 | 140 tests, 140 pass, 0 fail
-  packet validator exit 0, 15/15 hashes at cfee1316cf83
-  exactly 1 of 15 artifact hashes changed vs the previous source commit
-  four pinned inputs still resolve at 3611b1b4, 4 of 4, but only via side branches
-  delivery round-trip: every embedded block re-extracts and re-hashes identically
-
-NOT VERIFIED, DECLARED
-  22 proofs specified in sections 16-21 — none executed. 11 PENDING in 13.3. Total 33.
-  Minimal end-to-end demo, section 21 — specified, NOT executed, NOT claimed complete.
+  read_ref: 4/4 cards, both clauses, exit 0
+  pins: 0/16 match; six hashing conventions tested; no historical version matches
+  ChatGPT's council validator on origin/main: exit 1, twelve mismatches
+  ChatGPT's program-os validator on origin/main: exit 0
+  my delivery: typecheck 0, build 0, 140/140, packet validator exit 0 with 15/15 hashes
 
 === END LEDGER APPEND ===
