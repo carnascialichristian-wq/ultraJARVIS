@@ -310,3 +310,7 @@ conflitto va registrato, non eliminato.
 - La claim di commit `218 tests green` resta non verificata: nel diff non risultano test aggiunti/modificati e non è stato eseguito runtime.
 - Nessuna chiamata, installazione, modifica a main, task delta o peso; PR #3/#5/#6 restano draft senza review/commenti/status.
 - Prossimo passo: intake del resend Gemini; mantenere il percorso cloud disabilitato finché il finding non ha evidenza e mitigazione.
+### 2026-08-18 — ChatGPT/Codex — refresh Gemini refs
+
+- Aggiornato il prompt Gemini con main corrente 1e40376b6c30b4452090c598c5f6ddf265e36852; le basi storiche delle PR restano immutate.
+- Nessun handoff Gemini ricevuto, nessun packet importato, nessun peso.

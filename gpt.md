@@ -399,3 +399,9 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Controlli aggiuntivi: PR #3/#5/#6 senza review, commenti inline o status check; nessun ResponsePacket Gemini ricevuto.
 - Prossima azione: attendere il resend Gemini e, separatamente, richiedere evidenza/mitigazione per il percorso `cloud_bridge` prima di considerarlo conforme a STRICT_ZERO.
 - Aggiornamento speculare: inserito in `taskgpt.md`.
+### 2026-08-18 — ChatGPT/Codex — refresh ref Gemini handoff
+
+- La main corrente è avanzata a 1e40376b6c30b4452090c598c5f6ddf265e36852; il prompt Gemini è stato aggiornato per non usare la fotografia precedente 6af4a37.
+- Le card/input SHA e il contratto di resend restano invariati; PR #5 resta quarantena e non importa output.
+- PR #7 è candidate STRICT_ZERO ma richiede riallineamento futuro; PR #8/9 sono handoff separati per Claude/Grok.
+- Nessun task, status o peso cambia. Prossimo passo: ricevere i due packet Gemini originali e validarli.

@@ -4,7 +4,7 @@ Questo è il prompt operativo da copiare integralmente a Gemini. Il contratto de
 
 ## Stato remoto verificato prima della pubblicazione
 
-- main corrente osservata il 2026-08-18: 6af4a3721ab0d7f3272fd6e4e872b1331da99aa5; le PR operative mantengono la base storica e non vengono riallineate da questo handoff.
+- main corrente osservata al refresh del 2026-08-18: 1e40376b6c30b4452090c598c5f6ddf265e36852; le PR operative mantengono la base storica e non vengono riallineate da questo handoff.
 
 - Il precedente handoff Gemini è in quarantena: 3 file completi, 1 file troncato, 4 file assenti e 0 ResponsePacket.
 - Le sole task Gemini READY sono UJ-CAP-001 (reviewer CLAUDE, 0/13) e UJ-GGL-001 (reviewer GROK, 0/13). UJ-INF-001, UJ-MEM-001, UJ-KNW-001, UJ-MED-001 e UJ-ADK-001 sono BLOCKED.

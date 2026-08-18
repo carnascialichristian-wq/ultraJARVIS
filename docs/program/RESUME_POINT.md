@@ -84,3 +84,9 @@ remoto osservato; lo storico non viene cancellato.
 - Il commit message dichiara 218 test verdi, ma il confronto remoto mostra un solo file nel commit; la claim resta non verificata in questa sessione.
 - Il finding va a una review di sicurezza separata; non sblocca Gemini, non cambia backlog/pesi e non autorizza API o billing.
 - Prossimo comando: ricevere/validare il resend Gemini; poi mantenere separati i gate di sicurezza e di integrazione.
+
+## Latest remote reconciliation — 2026-08-18 — Gemini ref refresh
+
+- Main corrente al refresh: 1e40376b6c30b4452090c598c5f6ddf265e36852. PR #5 resta quarantena con base storica; PR #3 non viene retargettata.
+- Card CAP/GGL, input pin e required output restano invariati; nessun output Gemini è stato ammesso.
+- Prossimo comando: ricevere esattamente 3 artifact e 2 ResponsePacket e avviare admission pipeline.
