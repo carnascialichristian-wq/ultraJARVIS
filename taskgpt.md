@@ -314,3 +314,11 @@ conflitto va registrato, non eliminato.
 
 - Aggiornato il prompt Gemini con main corrente 1e40376b6c30b4452090c598c5f6ddf265e36852; le basi storiche delle PR restano immutate.
 - Nessun handoff Gemini ricevuto, nessun packet importato, nessun peso.
+### 2026-08-18 — ChatGPT/Codex — Gemini correction gate
+
+- L’allegato `Pasted markdown(3).md` è stato classificato `REVIEW_BLOCKED`: 3 FILE completi, 1 troncato, 4 mancanti e 0 ResponsePacket; raw SHA-256 `78fd95eca07584939ad92bd2390271777bbf272ffea588d5a702b70a6a489e95`.
+- Il JSON CAP è parseable, ma la consegna non soddisfa il contratto: mancano packet separati, `source_commit_sha`, fonti/date per claim materiali, metadati per capability e qualificazione delle quote Google. Non si corregge inventando file o fonti.
+- La correzione è stata pubblicata in quarantena con un nuovo audit e `GEMINI_CORRECTION_REQUEST_20260818.md`. Gemini deve restituire soltanto CAP/GGL: 3 artifact completi + 2 packet separati, status REVIEW/BLOCKED/FAILED, peso accettato sempre 0/13.
+- `main` osservata: `b4b4b12ae657488fe12157ca508f4e9e711de7de`; nessun merge, retarget PR #3, write su main o modifica al backlog.
+- Stato Gemini: non finito. Next gate: resend verificabile e admission pipeline completa.
+- Aggiornamento speculare inserito in `gpt.md`.

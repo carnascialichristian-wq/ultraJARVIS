@@ -405,3 +405,13 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Le card/input SHA e il contratto di resend restano invariati; PR #5 resta quarantena e non importa output.
 - PR #7 è candidate STRICT_ZERO ma richiede riallineamento futuro; PR #8/9 sono handoff separati per Claude/Grok.
 - Nessun task, status o peso cambia. Prossimo passo: ricevere i due packet Gemini originali e validarli.
+### 2026-08-18 — ChatGPT/Codex — Gemini attachment `(3)` quarantined after admission audit
+
+- Audited `/workspace/scratch/cfcf8b024a32/upload/Pasted markdown(3).md`: `32,435` bytes, `528` lines, raw SHA-256 `78fd95eca07584939ad92bd2390271777bbf272ffea588d5a702b70a6a489e95`.
+- The package declares 8 files but contains 3 complete blocks, 1 truncated infrastructure block, 4 absent files, and 0 ResponsePacket blocks. The CAP JSON parses; its declared 4,372-byte hash matches only with no final LF, while the two Markdown hashes require an explicit final LF.
+- CAP/GGL content remains inadmissible: sparse per-capability metadata, missing per-claim source/date coverage, unscoped Google quotas, and unqualified `100% compliant`/`zero risk`/production claims. Current Google documentation requires model/project/tier/account-scoped rate-limit evidence and visibility of free-tier data-policy limitations.
+- Current `main` observed at `b4b4b12ae657488fe12157ca508f4e9e711de7de`; PR #5 remains quarantine on its historical base. No artifact was imported, no task/backlog/status/weight changed, and PR #3/main were not modified.
+- Published a dated audit and `prompts/handoffs/GEMINI_CORRECTION_REQUEST_20260818.md` on this quarantine branch. The correction prompt narrows Gemini to the two READY tasks, requires exactly 3 artifacts + 2 separate closed-schema ResponsePackets, and preserves accepted weight at `0/13`.
+- Gemini is not finished. Missing for a valid CAP/GGL admission: two ResponsePackets, complete source/date/metadata corrections, explicit final-newline/hash declarations, and a clean exact-output envelope. The five dependency-blocked task artifacts are not requested in the corrected scope.
+- Prossimo passo: attendere il resend corretto, congelare ref/byte, validare fonti, JSON, hash, schema e policy, quindi creare branch/PR dedicate solo se tutti i gate passano.
+- Aggiornamento speculare: inserito in `taskgpt.md`.

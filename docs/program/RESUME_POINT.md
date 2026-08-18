@@ -90,3 +90,10 @@ remoto osservato; lo storico non viene cancellato.
 - Main corrente al refresh: 1e40376b6c30b4452090c598c5f6ddf265e36852. PR #5 resta quarantena con base storica; PR #3 non viene retargettata.
 - Card CAP/GGL, input pin e required output restano invariati; nessun output Gemini è stato ammesso.
 - Prossimo comando: ricevere esattamente 3 artifact e 2 ResponsePacket e avviare admission pipeline.
+## Latest remote reconciliation — 2026-08-18 — Gemini attachment `(3)` audit
+
+- Input auditato: `Pasted markdown(3).md`, 32,435 bytes, 528 linee, SHA-256 `78fd95eca07584939ad92bd2390271777bbf272ffea588d5a702b70a6a489e95`.
+- Risultato: 3 blocchi FILE completi, 1 troncato, 4 assenti, 0 ResponsePacket. CAP JSON `JSON.parse` PASS, ma package `REVIEW_BLOCKED` per contratto e qualità delle fonti.
+- Main corrente osservata: `b4b4b12ae657488fe12157ca508f4e9e711de7de`. PR #5 resta quarantena sulla propria base storica; PR #3 non viene riallineata o fusa.
+- Audit e prompt correttivo sono sul branch di quarantena. Nessun task, status, backlog, peso accettato o ref main è stato modificato.
+- Prossima azione: Gemini deve inviare esattamente 3 artifact CAP/GGL e 2 ResponsePacket separati. Dopo il resend: congelare input ref/byte, validare JSON, hash/newline, fonti/date, schema chiuso e policy; pubblicare branch/PR dedicate soltanto dopo PASS completo.
