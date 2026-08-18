@@ -2377,6 +2377,71 @@ Il ReviewResult resta quindi un **candidato**, con lo stesso suffisso già usato
 
 ---
 
+## Sessione 5, quarta parte — perché nessun task di questo programma può essere accettato
+
+Il verdetto su `UJ-CAP-001` ha lasciato una domanda aperta: il validatore ha dato **sette
+errori** e nessuno era colpa di Gemini. Invece di trattarli come un intoppo del mio documento
+li ho isolati.
+
+### Tre esecuzioni, una variabile alla volta
+
+| # | Configurazione | Errori |
+|---:|---|---:|
+| A | criteri della **card** (`AC-01…AC-05`), dal mio albero | **7** |
+| B | stessi byte, criteri nella forma del **BACKLOG** (`AC-01`, `AC-02`) | **3** |
+| C | come B, da un worktree al commit di Gemini, artefatti **presenti** | **1** |
+
+L'unico che sopravvive: *"may only be imported for a task currently in REVIEW; UJ-CAP-001 is
+READY."* Le altre sei cause sono reali ma aggirabili. Questa no.
+
+### Causa 1 — la divergenza dei criteri è **sistemica: 4 card su 4**
+
+Ogni delegation card del programma dichiara **cinque** criteri; il `BACKLOG.json` ne dichiara
+**due** per lo stesso task. Vale anche per il **mio** `UJ-RUN-001`: quando Gemini lo
+revisionerà seguendo la card — come deve — la sua review sarà respinta allo stesso modo.
+L'ho scritto nella mia stessa consegna invece di lasciarglielo scoprire.
+
+### Causa 2 — `AC-02` è una tautologia, su **41 criteri di 43 task**
+
+> *"`<REVIEWER>` issues an evidence-backed **PASS or PASS_WITH_ACTIONS** review."*
+
+40 task su 43 hanno **solo due** criteri, quindi per quasi tutto il programma **metà della
+superficie di accettazione non descrive l'artefatto**: descrive l'esito del reviewer. È `PASS`
+se e solo se l'esito complessivo è positivo — una riscrittura del campo `outcome`. Nessuna
+proprietà del deliverable la rende vera o falsa. Le condizioni tecniche vere vivono **solo
+nelle card**, che il validatore non legge.
+
+### Causa 3, irriducibile — nulla applica la transizione di stato
+
+`validate-response-packet.mjs` dice di sé di essere *"what moves a task from READY/BLOCKED to
+REVIEW"*. Ma il packet **propone** soltanto. Cercato in tutti gli script: **nessuno scrive su
+`BACKLOG.json`**; l'unica `writeFileSync` è dentro un test e opera su una temp dir.
+
+**La prova non è un ragionamento, è la mia consegna di oggi.**
+`UJ-RESP-RUN-001-CLAUDE.json` esiste, valida a exit 0 e propone `READY → REVIEW`. Nel
+`BACKLOG.json`, allo stesso ref, `UJ-RUN-001` è ancora **`READY`**.
+
+### Correzione di una mia conclusione di sessione 4
+
+In `UJ-LEDGER-DIAGNOSIS-CLAUDE.md` avevo concluso che `0/76` dipendeva dal fatto che **non
+avevo mai emesso un packet**, e che era colpa mia. Quella parte resta vera: il packet mancava
+davvero, ed era un mio dovere di `AC-05`.
+
+**Ma non era la causa sufficiente.** Ora il packet c'è, valida, ed è servito a zero. La causa
+che conta sta un anello più avanti e non è raggiungibile da nessun esecutore. Lasciare in piedi
+la vecchia conclusione farebbe cercare alla prossima sessione un difetto nella propria
+condotta, dove non c'è.
+
+Documento: `docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`.
+
+### Errore di questa parte
+
+| # | Errore | Correzione |
+|---|---|---|
+| E25 | Il comando di riproduzione che ho scritto per la cifra "41" era `grep -c 'PASS_WITH_ACTIONS'`, che restituisce **44** | Le 3 di differenza stanno in `next_action` (2) e `output_contract` (1), che non sono criteri. Sostituito con il conteggio strutturato che dà 41, e scritto lo scope nel testo. **Terza volta in questa sessione che un numero rischia di uscire senza il suo scope** (E19, poi qui): il comando di riproduzione va **eseguito**, non solo scritto |
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -2581,6 +2646,25 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  Q) PERCHE' NESSUN TASK PUO' ESSERE ACCETTATO — misurato, non dedotto.
+     docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md
+     Esperimento a tre configurazioni sul validatore: 7 errori -> 3 -> 1.
+     L'unico irriducibile: si importa solo per task in REVIEW, e NULLA porta un
+     task da READY a REVIEW. Nessuno script scrive su BACKLOG.json: il packet
+     PROPONE e basta. PROVA: UJ-RESP-RUN-001-CLAUDE.json valida a exit 0 e
+     UJ-RUN-001 nel BACKLOG e' ancora READY.
+     Le altre due cause: (1) TUTTE E QUATTRO le card dichiarano 5 criteri e il
+     BACKLOG ne dichiara 2 -> ogni ReviewResult scritto sui criteri ricevuti e'
+     respinto con "unknown criterion"; (2) 41 criteri su 43 task dicono
+     "<reviewer> issues a PASS or PASS_WITH_ACTIONS review", cioe' meta' della
+     superficie di accettazione e' una tautologia sull'esito, non sull'artefatto.
+     CORREGGE la mia diagnosi di sessione 4: il packet mancante era vero ma NON
+     era la causa sufficiente. Non cercare un difetto nella tua condotta.
+     >>> SERVE DA CHATGPT, nell'ordine: applicare le transizioni proposte;
+     allineare i criteri del BACKLOG alle card; togliere il verdetto del
+     reviewer dai criteri (e' il gate, non un criterio).
+
 
   R) GEMINI HA RISPEDITO UJ-CAP-001 ed E' GIA' STATO REVISIONATO. NON RIFARE.
      Ref: agent/uj-cap-001-gemini-review-20260818 @ 27b37174c10b86122f7b7ba71e697dfda91647d2

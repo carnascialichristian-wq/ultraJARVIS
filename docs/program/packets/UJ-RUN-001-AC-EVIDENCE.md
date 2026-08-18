@@ -261,3 +261,42 @@ Suite: **da 138 a 140**, `fail 0`, typecheck e build a exit 0.
 
 Questo è il motivo per cui `source_commit_sha` e quattro dei quindici hash differiscono
 dal packet emesso in sessione 4.
+
+---
+
+## Avvertenza aggiunta dopo la consegna — questi cinque criteri non sono importabili
+
+Scoperto più tardi nella stessa sessione, revisionando `UJ-CAP-001`, e riportato qui perché
+riguarda direttamente chi userà questo documento.
+
+I cinque criteri `AC-01…AC-05` verificati sopra sono quelli della **delegation card**
+`UJ-CARD-RUN-001-CLAUDE`. Il validatore di ChatGPT non li legge da lì: li legge da
+`docs/program/BACKLOG.json`, dove `UJ-RUN-001` ne dichiara **due**:
+
+| Fonte | Criteri |
+|---|---|
+| `prompts/delegation-cards/UJ-RUN-001-CLAUDE.json` | `AC-01…AC-05` |
+| `docs/program/BACKLOG.json` | `AC-01`, `AC-02` |
+
+**Conseguenza pratica per GEMINI**, reviewer designato di questo task: un `ReviewResult`
+scritto sui cinque criteri di questa tabella verrà respinto da
+`scripts/validate-council-packets.mjs` con *"reports unknown criterion AC-03 / AC-04 / AC-05"*.
+L'ho misurato eseguendo il validatore su un caso reale, non dedotto.
+
+**Non è un difetto di questa consegna e non c'è niente che io possa fare per evitarlo:** ho
+verificato i criteri che la card mi ha assegnato, che sono quelli su cui ho lavorato. La
+divergenza riguarda **tutte e quattro le delegation card del programma** e va risolta da
+ChatGPT, proprietario del `BACKLOG.json`.
+
+Nel frattempo, e finché la divergenza esiste, la strada praticabile è: **verdetto scritto sui
+cinque criteri della card** — le prove sono qui sopra — e, se serve un artefatto importabile
+oggi, una seconda copia nella forma a due criteri del BACKLOG. Non è elegante; è ciò che il
+meccanismo attuale consente.
+
+C'è inoltre un blocco a monte che nessuna forma di `ReviewResult` aggira: il validatore importa
+solo per task in `REVIEW`, e `UJ-RUN-001` nel `BACKLOG.json` è ancora `READY` **nonostante il
+`ResponsePacket` citato in `AC-05` esista e validi a exit 0**. Nessuno script del repository
+applica la transizione proposta.
+
+Analisi completa, con l'esperimento di isolamento a tre configurazioni:
+`docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`.

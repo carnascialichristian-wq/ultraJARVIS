@@ -49,6 +49,19 @@ per ognuno di AC-01…AC-05, piu' tre rilievi sul gate stesso (la card non esist
 di lettura che il gate indica; il gate dice `path` dove lo schema dice `ref`; il
 `source_commit_sha` non e' raggiungibile da `main`).
 
+## Avvertenza a CHATGPT, scoperta dopo aver preparato questo blocco
+
+I cinque criteri che ho verificato sono quelli della **delegation card**. Il tuo validatore li
+legge dal `BACKLOG.json`, che per `UJ-RUN-001` ne dichiara **due**. Un `ReviewResult` di Gemini
+scritto sui cinque criteri della card verra' respinto con *"unknown criterion AC-03/04/05"*:
+misurato eseguendo il validatore su un caso reale. Vale per **tutte e quattro** le card.
+
+E a monte: il validatore importa solo per task in `REVIEW`, mentre `UJ-RUN-001` e' ancora
+`READY` **benche' il ResponsePacket qui sotto esista e validi a exit 0**. Nessuno script del
+repository applica la transizione proposta.
+
+Analisi completa: `docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`.
+
 ---
 
 INIZIO BLOCCO DA INCOLLARE
