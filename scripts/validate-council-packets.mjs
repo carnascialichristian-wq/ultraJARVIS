@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
@@ -67,6 +68,28 @@ function parse(relativePath) {
 function sha256(relativePath) {
   const content = read(relativePath);
   return content ? createHash("sha256").update(content).digest("hex") : null;
+}
+
+function sha256AtRef(relativePath, ref) {
+  if (typeof ref !== "string" || !/^[0-9a-f]{40}$/.test(ref)) return null;
+  try {
+    const content = execFileSync("git", ["show", `${ref}:${relativePath}`], {
+      cwd: root,
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    return createHash("sha256").update(content).digest("hex");
+  } catch {
+    return null;
+  }
+}
+
+function verifyInputPins(sourceLabel, readRef, artifacts) {
+  assert(/^[0-9a-f]{40}$/.test(readRef ?? ""), `${sourceLabel} read_ref must be a lowercase 40-character SHA.`);
+  for (const artifact of artifacts ?? []) {
+    const actual = sha256AtRef(artifact.ref, readRef);
+    assert(actual !== null, `${sourceLabel} input artifact missing at read_ref ${readRef}: ${artifact.ref}.`);
+    assert(actual === artifact.sha256, `${sourceLabel} input hash mismatch at read_ref ${readRef} for ${artifact.ref}.`);
+  }
 }
 
 function resolveRepositoryFile(relativePath, sourceLabel, options = {}) {
@@ -403,6 +426,7 @@ if (!schemasOnly) {
   const cards = cardPaths.map((path) => ({ path, card: parse(path) }));
   if (mission && schemas.mission) {
     validate(mission, schemas.mission, schemas.mission).forEach((error) => fail(`mission: ${error}`));
+    verifyInputPins(missionPath, mission.repository?.commit_sha, mission.inputs);
   }
   for (const { path, card } of cards) {
     if (card && schemas.delegation) validate(card, schemas.delegation, schemas.delegation).forEach((error) => fail(`${path}: ${error}`));
@@ -440,12 +464,7 @@ if (!schemasOnly) {
     assert(card.call_budget.incremental_cost_eur === 0, `${path} cost must be zero.`);
     assert(card.repository_scope.direct_main_write === false, `${path} must forbid direct main write.`);
     assert(Date.parse(card.expires_at) > Date.parse(card.created_at), `${path} expiry must follow creation.`);
-    for (const artifact of card.input_artifacts) {
-      if (!artifact.ref.startsWith("docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md")) {
-        const actual = sha256(artifact.ref);
-        assert(actual === artifact.sha256, `${path} input hash mismatch for ${artifact.ref}.`);
-      }
-    }
+    verifyInputPins(path, card.repository_scope?.read_ref, card.input_artifacts);
   }
 
   const assigned = new Set(mission?.assigned_task_ids ?? []);
