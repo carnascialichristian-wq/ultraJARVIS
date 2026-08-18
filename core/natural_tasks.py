@@ -15,8 +15,6 @@ from core.verify import write_verify, summarize_gates
 from core.utils import slugify
 from core.gates import run_gates
 
-# Job-dir writes use reliability.safe_write (atomic, no project-root lock).
-# Agent-facing writes should still go through tools.files.
 from core.reliability import safe_write as guarded_write
 from core.metrics import record as metric_record
 from advisors.critic import critique
@@ -29,30 +27,18 @@ JOBS_DIR = ROOT / "workspace" / "jobs"
 JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 
-
 def _code_via_llm(prompt: str, title: str) -> str | None:
-    """
-    Optional LLM-backed code writer (Phase 2 adapter).
-
-    Enabled only when UJ_WRITER_LLM=1. Returns a Python body that defines
-    at least ``def run()`` or None on any failure so the heuristic path
-    remains the safe fallback.
-
-    Generated text is safety-scanned; dangerous patterns are rejected.
-    """
+    """Optional LLM-backed code writer (Phase 2). Opt-in UJ_WRITER_LLM=1."""
     import os
     import re
-
     if os.getenv("UJ_WRITER_LLM", "").strip() != "1":
         return None
     if not (prompt or "").strip():
         return None
-
     try:
         from cloud_bridge import ask_cloud_ai
     except Exception:
         return None
-
     system = (
         "You are the UltraJarvis code writer. "
         "Reply with ONLY valid Python source code (no markdown fences, no prose). "
@@ -60,57 +46,36 @@ def _code_via_llm(prompt: str, title: str) -> str | None:
         "containing 'ok'. Add any helper functions needed for the task. "
         "Keep the code self-contained, no external imports beyond the standard library."
     )
-    user = (
-        f"Task title: {title}\n"
-        f"Task prompt:\n{prompt.strip()[:1500]}\n\n"
-        "Write the Python module body now."
-    )
+    user = f"Task title: {title}\nTask prompt:\n{prompt.strip()[:1500]}\n\nWrite the Python module body now."
     raw = ask_cloud_ai(user, system=system)
     if not raw or not raw.strip():
         return None
-
     body = raw.strip()
-    # Strip markdown fences if the model ignored instructions
     if body.startswith("```"):
         body = re.sub(r"^```(?:python)?\s*", "", body)
         body = re.sub(r"\s*```$", "", body)
         body = body.strip()
-
     if "def run" not in body:
         return None
-
-    # Must be syntactically valid Python
     try:
         compile(body, "<llm-writer>", "exec")
     except SyntaxError:
         return None
-
-    # Safety gate – never promote/use LLM code that matches dangerous patterns
     try:
         from advisors.safety import scan_text
-        hits = scan_text(body)
-        if hits:
+        if scan_text(body):
             return None
     except Exception:
         return None
-
     return body
 
 
 def _code_for_prompt(prompt: str, title: str) -> str:
-    """Code body for a job module.
-
-    Prefer the LLM writer when UJ_WRITER_LLM=1 and the model returns usable,
-    safe Python; otherwise use deterministic heuristics that mirror the pure
-    helpers in tools/*_helpers.py.
-    """
+    """Code body: LLM writer when UJ_WRITER_LLM=1 else heuristics."""
     llm_body = _code_via_llm(prompt, title)
     if llm_body is not None:
         return llm_body
-
     low = prompt.lower()
-
-    # --- math ---
     if "is_even" in low or "even int" in low:
         return (
             "def is_even(n: int) -> bool:\n"
@@ -218,8 +183,6 @@ def _code_for_prompt(prompt: str, title: str) -> str:
             "    assert mean([1, 2, 3, 4]) == 2.5\n"
             '    return "ok – mean works"\n'
         )
-
-    # --- string ---
     if "palindrome" in low:
         return (
             "def is_palindrome(s: str) -> bool:\n"
@@ -251,8 +214,6 @@ def _code_for_prompt(prompt: str, title: str) -> str:
             "    assert reverse_words(\"one two three\") == \"three two one\"\n"
             '    return "ok – reverse_words works"\n'
         )
-
-    # --- list ---
     if "unique" in low or "dedupe" in low or "deduplicate" in low:
         return (
             "def unique(items):\n"
@@ -283,8 +244,6 @@ def _code_for_prompt(prompt: str, title: str) -> str:
             "    assert flatten([[1, 2], [3], 4]) == [1, 2, 3, 4]\n"
             '    return "ok – flatten works"\n'
         )
-
-    # fallback
     return (
         "def run() -> str:\n"
         f'    """Entry point for: {title}"""\n'
@@ -295,79 +254,43 @@ def _code_for_prompt(prompt: str, title: str) -> str:
 class NaturalTaskRunner:
     """Architect → Write → Gates → Verify pipeline."""
 
-    def __init__(
-        self,
-        jobs_root: Path | None = None,
-        *,
-        use_real_gates: bool = True,
-    ) -> None:
+    def __init__(self, jobs_root: Path | None = None, *, use_real_gates: bool = True) -> None:
         self.jobs_root = Path(jobs_root) if jobs_root else JOBS_DIR
         self.use_real_gates = use_real_gates
 
-    def build_and_run(
-        self,
-        prompt: str,
-        output_dir: Optional[str] = None,
-    ) -> dict[str, Any]:
+    def build_and_run(self, prompt: str, output_dir: Optional[str] = None) -> dict[str, Any]:
         if not prompt or not prompt.strip():
             raise ValueError("prompt must be non-empty")
-
         task_plan: Plan = plan(prompt)
-
         job_id = f"job_{slugify(task_plan.title)[:20]}_{int(time.time()) % 100000}"
         job_dir = self.jobs_root / job_id
         if output_dir:
             job_dir = Path(output_dir)
         job_dir.mkdir(parents=True, exist_ok=True)
-
-        # 1. Plan
         plan_path = job_dir / "plan.md"
         if hasattr(task_plan, "to_markdown"):
             plan_md = task_plan.to_markdown()
         else:
             plan_md = f"# {task_plan.title}\n\n{getattr(task_plan, 'summary', '')}\n"
         guarded_write(plan_path, plan_md)
-
-        # 2. Write (controlled stub under job_dir – never touches protected paths)
         written = self._write_implementation(job_dir, task_plan, prompt)
-
-        # 3. Gates (real tools when available, else stub) – structured result (FIX-6)
-        gates = run_gates(
-            job_dir,
-            files=written,
-            use_real=self.use_real_gates,
-        )
+        gates = run_gates(job_dir, files=written, use_real=self.use_real_gates)
         gates_text = gates["text"] if isinstance(gates, dict) else str(gates)
-        gates_path = job_dir / "gates.txt"
-        guarded_write(gates_path, gates_text)
-
-        # 4. Verify – prefer structured ok over text heuristics
+        guarded_write(job_dir / "gates.txt", gates_text)
         if isinstance(gates, dict) and gates.get("ok") is True:
             status, notes = "PASS", ["Gates reported ok=True"]
         elif isinstance(gates, dict) and gates.get("ok") is False:
             status, notes = "FAIL", ["Gates reported ok=False"]
         elif isinstance(gates, dict) and gates.get("ok") is None:
-            # Stub mode: still allow pipeline progress but mark as non-real
             status, notes = "PASS", ["Gates ran in STUB mode (no real tools)"]
         else:
             status, notes = summarize_gates(gates_text)
-        verify_path = write_verify(
-            job_dir,
-            gates_text,
-            extra={"job_id": job_id, "status": status, "notes": notes},
-        )
-
+        verify_path = write_verify(job_dir, gates_text, extra={"job_id": job_id, "status": status, "notes": notes})
         summary = {
-            "job_id": job_id,
-            "prompt": prompt,
-            "title": task_plan.title,
-            "status": status,
-            "notes": notes,
-            "plan_path": str(plan_path),
-            "verify_path": str(verify_path),
-            "written_files": written,
-            "gates_real": self.use_real_gates,
-            "ts": time.time(),
+            "job_id": job_id, "prompt": prompt, "title": task_plan.title,
+            "status": status, "notes": notes, "plan_path": str(plan_path),
+            "verify_path": str(verify_path), "written_files": written,
+            "gates_real": self.use_real_gates, "ts": time.time(),
         }
         guarded_write(job_dir / "summary.json", json.dumps(summary, indent=2, ensure_ascii=False))
         try:
@@ -396,15 +319,7 @@ class NaturalTaskRunner:
             pass
         return summary
 
-    def _write_implementation(
-        self, job_dir: Path, task_plan: Plan, prompt: str
-    ) -> list[str]:
-        """
-        Write a concrete Python module under the job directory.
-
-        Uses guarded_write so path escape / protected paths are blocked.
-        Job dirs are not in the protected set, so this is allowed.
-        """
+    def _write_implementation(self, job_dir: Path, task_plan: Plan, prompt: str) -> list[str]:
         stub_path = job_dir / "tool.py"
         body = _code_for_prompt(prompt, task_plan.title)
         content = f'''"""Auto-generated module for: {task_plan.title}
@@ -424,10 +339,8 @@ if __name__ == "__main__":
     print(run())
 '''
         guarded_write(stub_path, content)
-
-        # Also write a tiny test so gates can potentially run pytest on it
         test_path = job_dir / "test_tool.py"
-        test_content = f'''"""Smoke test for generated tool."""
+        test_content = '''"""Smoke test for generated tool."""
 from __future__ import annotations
 
 from tool import run
@@ -438,44 +351,39 @@ def test_run_returns_ok():
     assert "ok" in result.lower()
 '''
         guarded_write(test_path, test_content)
-
+        self._maybe_format([stub_path, test_path])
         return ["tool.py", "test_tool.py"]
+
+    def _maybe_format(self, paths: list[Path]) -> None:
+        """Run black in-place on generated files if installed."""
+        import shutil
+        import subprocess
+        black = shutil.which("black")
+        if not black:
+            return
+        try:
+            subprocess.run(
+                [black, "--quiet", *[str(p) for p in paths if p.is_file()]],
+                capture_output=True, timeout=30, check=False,
+            )
+        except Exception:
+            pass
 
 
 def promote_job_to_tools(
-    job_dir: Path | str,
-    module_name: str,
-    *,
-    root: Path | None = None,
-    force: bool = False,
-    register: bool = False,
+    job_dir: Path | str, module_name: str, *,
+    root: Path | None = None, force: bool = False, register: bool = False,
 ) -> Path:
-    """
-    Promote a successful job's tool.py into tools/ using guarded file I/O.
-
-    - Validates that tool.py exists and contains a callable.
-    - Writes via tools.files.safe_write (respects PROTECTED paths).
-    - Safety scan (FIX-1) blocks dangerous patterns unless force=True.
-    - Optional auto-register into the runtime Registry when register=True
-      (uses Registry.add; does not mutate the static catalog).
-    - Returns the path written under tools/.
-
-    Raises PermissionError / FileNotFoundError / ValueError on problems.
-    """
+    """Promote job tool.py into tools/ with safety scan and optional Registry.add."""
     import re
     from tools.files import safe_write, is_protected
-
     job_dir = Path(job_dir)
     src = job_dir / "tool.py"
     if not src.is_file():
         raise FileNotFoundError(f"No tool.py in job dir: {job_dir}")
-
     text = src.read_text(encoding="utf-8")
     if "def " not in text:
         raise ValueError("tool.py does not appear to define any function")
-
-    # Safety gate (FIX-1 / UJ-SEC-003): refuse to promote code matching known
-    # dangerous patterns unless the caller explicitly passes force=True.
     from advisors.safety import scan_text
     hits = scan_text(text)
     if hits and not force:
@@ -483,13 +391,9 @@ def promote_job_to_tools(
             f"Refusing to promote: dangerous patterns {hits}. "
             f"Use force=True only with an explicit human decision."
         )
-
-    # Normalise module name: only safe identifier chars
     safe_name = re.sub(r"[^a-zA-Z0-9_]", "_", module_name.strip()).strip("_").lower()
     if not safe_name or safe_name[0].isdigit():
         raise ValueError(f"Invalid module_name: {module_name!r}")
-
-    # Prefer *_helpers.py naming convention used by the project
     if not safe_name.endswith("_helpers"):
         dest_name = f"{safe_name}_helpers.py"
         module_import = f"tools.{safe_name}_helpers"
@@ -498,42 +402,30 @@ def promote_job_to_tools(
         dest_name = f"{safe_name}.py"
         module_import = f"tools.{safe_name}"
         tool_prefix = safe_name[: -len("_helpers")] if safe_name.endswith("_helpers") else safe_name
-
     root = root or ROOT
     dest = root / "tools" / dest_name
-
     if is_protected(dest, root=root) and not force:
         raise PermissionError(f"Refusing to write protected path: {dest}")
-
-    # Header so the promoted file is clearly marked
     header = (
         f'"""Promoted from job {job_dir.name} by NaturalTaskRunner.promote_job_to_tools.\n'
         f"Original prompt / title may be found in the job directory.\n"
         f'"""\n\n'
     )
-    # Drop the auto-generated header of the job module to avoid duplication noise
     body = text
     if body.startswith('"""Auto-generated'):
-        # skip until the closing """ of the module docstring
         end = body.find('"""', 3)
         if end != -1:
             body = body[end + 3 :].lstrip("\n")
-
     content = header + body
     written = safe_write(dest, content, root=root, force=force)
-
     if register:
-        # Discover a public callable: prefer `run`, else first non-private def
         names = re.findall(r"^def ([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", body, re.M)
         public = [n for n in names if not n.startswith("_")]
         callable_name = "run" if "run" in public else (public[0] if public else None)
         if callable_name is None:
             raise ValueError("Cannot auto-register: no public function found in promoted module")
-
         from core.registry import ToolSpec, get_registry
-
         tool_name = f"{tool_prefix}.{callable_name}"
-        # Promoted helpers went through the safety scan → mark safe by default
         spec = ToolSpec(
             name=tool_name,
             description=f"Promoted helper from job {job_dir.name}",
@@ -543,5 +435,4 @@ def promote_job_to_tools(
             tags=["promoted", tool_prefix],
         )
         get_registry().add(spec)
-
     return written

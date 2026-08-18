@@ -5,17 +5,13 @@
 **Publish repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Local:** `/home/workdir/artifacts/UltraJarvis_v8`
 
-**Rule:** Update continuity files at the end of every session. Export future work to ultraJARVIS only.
-
-## Snapshot 2026-08-18 (~09:55 CEST)
-- **221 tests green** · **135 tools**
-- SEC-003 + promote auto-register published
-- Phase 2 complete for adapters:
-  - Planner: `UJ_PLANNER_LLM=1`
-  - Writer: `UJ_WRITER_LLM=1` (safety scan + heuristic fallback)
+## Snapshot 2026-08-18 (~10:40 CEST)
+- **224 tests green** · **135 tools**
+- Real gates: py_compile + ruff + black + pytest; tools_used in result
+- Generated jobs black-formatted when black available
 
 ## Remaining
-1. Real gates when ruff/black available
+1. Multi-file jobs / dependency graph (optional)
 2. Prefer quality / integration
 
 ## Proceed

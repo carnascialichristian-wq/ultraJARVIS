@@ -10,16 +10,15 @@
 3. Continue until user says **stop**.
 4. Publish to **ultraJARVIS** unless user says otherwise.
 
-## State 2026-08-18 ~09:55 CEST
-- **221 tests green** · **135 tools**
-- UJ-SEC-003 published
-- Optional auto-register after promote (`register=True`)
-- Phase 2: planner LLM (`UJ_PLANNER_LLM=1`) + **writer LLM** (`UJ_WRITER_LLM=1`)
-- Writer path: safety-scanned, syntax-checked, heuristic fallback
+## State 2026-08-18 ~10:40 CEST
+- **224 tests green** · **135 tools**
+- UJ-SEC-003 + promote auto-register + Phase 2 planner/writer LLM
+- **Real gates:** py_compile baseline + ruff/black when installed + tools_used
+- Generated jobs auto-formatted with black so black --check passes
 
 ## Remaining
-1. Real gates when ruff/black available
-2. Optional embedding-backed recall / multi-file jobs
+1. Optional multi-file jobs / dependency graph
+2. Embedding-backed recall (optional)
 3. Prefer quality / integration over pure stubs
 
-*Last updated: 2026-08-18 ~09:55 by Grok — Phase 2 writer adapter*
+*Last updated: 2026-08-18 ~10:40 by Grok — real gates*
