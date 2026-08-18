@@ -2525,6 +2525,127 @@ mancato tutti e tre, e l'esecuzione li ha trovati tutti e tre in una giornata.
 
 ---
 
+## Sessione 5, settima parte — `UJ-RUN-001` riconciliata su branch dedicato, due giri di correzione
+
+Il proprietario ha bloccato `UJ-RUN-001` finché gli artefatti non fossero coerenti su un solo
+commit, e ha dato otto vincoli precisi. Poi, dopo la mia prima riconciliazione, ha riletto i
+quattro file byte per byte e trovato tre incoerenze residue. Due giri, entrambi chiusi.
+
+### Giro 1 — perché l'esito è `BLOCKED` e non `REVIEW`
+
+Riverificato per esecuzione, non per memoria: `git cat-file -e
+3611b1b400cf57b5021bab228a3de9470d6eca5c:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json`
+fallisce. La card entra con `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3`, dodici minuti dopo.
+Il proprietario aveva già stabilito la regola: card assente al `read_ref` → `BLOCKED`, non si
+procede aggirando la condizione con un `REVIEW` di comodo.
+
+**Azioni:**
+- creato il branch autorizzato `agent/uj-run-001-blueprint-20260818` (coincide col pattern
+  `write_branch_patterns` già scritto nella card);
+- rieseguiti tutti i test dalla root: **140/140**, `runtime-invariants` **36/36**;
+- **rimossi** i quattro documenti di consegna precedenti (packet, AC-evidence, delivery,
+  append-blocks): erano generati su tre commit diversi e nessuna modifica a un solo file li
+  avrebbe potuti riconciliare;
+- creato un commit di riferimento unico, `2dad45a40798a8059b5e2b7db077b76e77fcc88b` (`X`),
+  che fissa il byte stream dei 15 artefatti citati;
+- rigenerato packet **con `status: BLOCKED`**, `AC-05` dichiarato esplicitamente **non
+  soddisfatto** (chiede di proporre `REVIEW`, e proporre `BLOCKED` mentre lo si dichiara
+  soddisfatto sarebbe aggirare la condizione, non segnalarla);
+- rigenerata l'evidenza per criterio e il blocco di consegna, **senza** il `ReviewResult` di
+  `UJ-INT-006`, come richiesto — è un artefatto separato, non mescolato con questa consegna;
+- committato (`f0218d495e96f0394b062f4bc8dde987ca857542`, `Y`) e pushato sul nuovo branch.
+
+Nessuna modifica a `BACKLOG.json`, nessun incremento di peso.
+
+### Giro 2 — il proprietario ha trovato tre incoerenze rileggendo byte per byte, e io una quarta
+
+**Le sue tre:**
+
+1. Il blueprint dichiarava ancora `| Stato | REVIEW |` alla riga 9, mentre packet e delivery
+   dichiaravano `BLOCKED`. Era rimasto così **dalla sessione 1**, mai rivisto. Corretto, con una
+   nota che distingue esplicitamente ammissibilità (bloccata) da qualità dell'artefatto (non in
+   discussione): il blocco non si scioglie perché i test passano.
+2. Quattro conteggi di test diversi in circolazione: `33` (§13.3, conteggio di sessione 1),
+   `34` (riepilogo dell'artefatto nel packet, conteggio intermedio dopo la regressione sulla
+   idempotency key), `36`, `140`. **Misurato due volte in modo indipendente** sul file
+   byte-identico al blob committato — statico (`grep -c '^test('` → 36) e dinamico
+   (`node --test` dalla root → `36 pass, 0 fail, exit 0`). Un avvertimento aggiunto al
+   documento: eseguire il blob estratto da una directory temporanea **fallisce** sugli import
+   verso `dist/`, e non va riportato come test rotto.
+3. Due branch citati per lo stesso commit. **Dimostrato**, non supposto:
+   `git branch -a --contains <commit>` restituisce **un solo branch** (più il suo remoto).
+   Nessun `UNVERIFIED` necessario — la domanda aveva una risposta.
+
+**La quarta, trovata da me mentre correggevo le sue:** avevo scritto "24 prove specificate"
+nelle sezioni 16-22. Contando solo le righe di **tabella** (`grep -cE '^\|.*PROVA DA
+IMPLEMENTARE'`), il numero vero è **22**: la 23ª e 24ª occorrenza erano una menzione in prosa,
+non una riga di prova. **Scoperta collaterale mentre scrivevo la correzione:** documentare il
+comando di conteggio *dentro* il documento che sta contando cambia il risultato — senza
+l'ancora `^\|` i due comandi restituiscono 24 e 13 invece di 22 e 11, perché contano anche le
+proprie righe di prosa. Ho dovuto ancorare entrambi i comandi e riverificare che, come scritti
+nel documento, riproducessero davvero i numeri dichiarati accanto.
+
+**Azioni:** blueprint corretto (stato, §13.3, §15 autovalutazione, tabella per sezione delle 22
+prove), committato (`79408449bd096613d2823efe6872ed424b757ee6`, `Z` — nuovo `source_commit_sha`
+perché correggere il blueprint sposta i byte); packet rigenerato a `Z` con **1 hash su 15
+cambiato** (solo il blueprint — prova che la correzione è stata chirurgica), riepilogo
+dell'artefatto `34→36`, riferimento al branch stantio corretto,
+`24→22` in tre punti; AC-evidence e delivery rigenerati a `Z`; **verifica incrociata sui
+quattro file prima di committare** — matrice grep su `source_commit_sha`, `card_id`, `BLOCKED`,
+assenza di dichiarazioni `REVIEW`, `36`, assenza di `UJ-INT-006` — con due falsi positivi
+ispezionati e confermati innocui (una frase che dichiara l'assenza della review, una citazione
+del difetto corretto); committato
+(`9a7e92022d399f3e6575b84415a38fe099d13fde`, `W`) e pushato.
+
+### Il collo di bottiglia resta lo stesso, ora dimostrato due volte
+
+Non è risolvibile da me: `repository_scope.read_ref` della card è di ChatGPT.
+
+### Errore di questa parte
+
+| # | Errore | Correzione |
+|---|---|---|
+| E27 | Un numero generato in una sessione precedente ("24 prove") è stato ripetuto per tre commit e quattro file senza mai essere ricontato | Trovato per iniziativa propria, non richiesto dal proprietario, mentre si correggevano altre tre incoerenze segnalate da lui. Corretto a 22, con scomposizione per sezione e comando ancorato per la riproducibilità |
+
+**Nota di metodo, non un errore nuovo ma una conferma delle trappole 22/24/25:** il proprietario
+ha trovato, rileggendo byte per byte, tre incoerenze che le mie verifiche automatiche non
+avevano colto — perché erano *interne al documento* (uno stato dichiarato in due punti diversi
+con valori diversi), non *fra il documento e l'ambiente* (che è ciò che i miei script di
+verifica controllano). Una lettura umana byte per byte resta insostituibile per la coerenza
+interna di un testo lungo.
+
+### Prove eseguite in questa parte
+
+| Prova | Esito |
+|---|---|
+| `git cat-file -e` della card al `read_ref` | fallisce, confermato due volte |
+| `npx tsc --noEmit` / `npx tsc` (entrambi i giri) | exit 0 / exit 0 |
+| suite completa (entrambi i giri) | **140/140**, `runtime-invariants` **36/36** |
+| `validate-response-packet.mjs` (entrambi i giri) | exit 0, 15/15 hash |
+| `git branch -a --contains` sul commit di consegna | un solo branch + remoto |
+| conteggio statico e dinamico dei test sul blob committato | coincidono, **36** |
+| comandi di conteggio delle 22 prove, ancorati e riverificati | riproducono 22 e 11 |
+| matrice di coerenza incrociata sui 4 file, pre-commit | 2 falsi positivi, entrambi ispezionati |
+| `git push` (entrambi i giri) | exit 0 letto dal comando vero |
+
+### Confini rispettati
+
+Non ho toccato i tre file di Grok (`UJ-HANDOFF-NOTICE-RED-001-GROK-BLOCKED.md`,
+`UJ-RESPONSE-RED-001-GROK-20260818.INVALID-source_commit.json`,
+`ZERO_COST_FALSIFICATION_REPORT.md`) né li ho letti per modificarli. `UJ-RED-001-GROK` non
+compare in nessuno dei miei quattro file. Non ho modificato `BACKLOG.json`, non ho toccato il
+peso accettato. Il push sul branch `agent/uj-run-001-blueprint-20260818` non è una pubblicazione
+né un merge: nessuna scrittura su `main`.
+
+### Cosa NON ho fatto, e perché
+
+Non ho aperto la nuova consegna di Gemini su `UJ-CAP-001` (vedi RESUME_POINT, punto nuovo):
+l'ho trovata riaprendo la trappola 11 a fine sessione, e revisionarla ora avrebbe significato
+iniziare un lavoro nuovo invece di chiudere la sessione corrente in modo pulito, come chiesto
+dal proprietario.
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -2675,6 +2796,21 @@ BRANCH    : ATTENZIONE — L'AMBIENTE PUO' NON ASSEGNARTELO (sessione 5: contain
             lavoro NON coincide più con main: il pre-verdetto UJ-CAP-001 sta sul
             branch di sessione 4 e NON è su main.
 
+            ATTENZIONE — SESSIONE 5, FINE SESSIONE: ORA CI SONO DUE BRANCH MIEI, NON
+            UNO. Non confonderli:
+              claude/claude-md-resume-point-tvej1u  -> CASA. CLAUDE.md, TASKCLAUDE.md,
+                AVVIO_NUOVA_SESSIONE.md vivono QUI. E' il branch su cui aprire una
+                sessione nuova, verificato con git rev-list (0 indietro su origin/main
+                a fine sessione 5).
+              agent/uj-run-001-blueprint-20260818   -> CONSEGNA. Autorizzato dalla
+                delegation card (write_branch_patterns). Contiene la consegna
+                riconciliata di UJ-RUN-001: blueprint, packet, AC-evidence, delivery,
+                append-blocks. NON contiene questo file. source_commit_sha finale:
+                79408449bd096613d2823efe6872ed424b757ee6. Verificato con
+                `git branch -a --contains <sha>`: e' l'UNICO branch che lo contiene.
+            Se devi toccare UJ-RUN-001, vai su quel branch. Per tutto il resto
+            (memoria, altri task, altre review) resta su quello di casa.
+
 MAIN      : commit 9d80f9f+ (verificato in sessione 4, sesta parte — si era mossa
             di 7 commit in meno di un'ora). La riga sotto dice 302852a/319
             file: era vero a fine sessione 3 ed è già superato — main si muove.
@@ -2741,6 +2877,59 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AA) CHIUSURA DI SESSIONE (fine settima parte). Leggi questo punto per primo,
+     letteralmente prima di P-Z qui sotto: quelli sono la cronologia della
+     sessione, questo e' dove si riprende.
+
+     1. UJ-RUN-001 E' STATA RICONCILIATA E RESTA BLOCKED. NON RIFARE.
+        Ref: agent/uj-run-001-blueprint-20260818
+        @ 9a7e92022d399f3e6575b84415a38fe099d13fde (i quattro documenti di consegna)
+        source_commit_sha citato da tutti e quattro (blueprint incluso):
+          79408449bd096613d2823efe6872ed424b757ee6
+        File: docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json (status BLOCKED,
+          AC-05 dichiarato NON soddisfatto), UJ-RUN-001-AC-EVIDENCE.md,
+          prompts/handoffs/CLAUDE-RUN-001-DELIVERY-BLOCKED-20260818.md (2 blocchi,
+          NESSUN ReviewResult dentro), CLAUDE-RUN-001-APPEND-BLOCKS-BLOCKED-
+          20260818.md (3 blocchi append-only per gpt.md/taskgpt.md/RESUME_POINT.md
+          DI CHATGPT, non scritti li' da me).
+        PERCHE' RESTA BLOCKED: la card UJ-CARD-RUN-001-CLAUDE non esiste al commit
+        che il suo stesso read_ref nomina (3611b1b4); entra 12 minuti dopo con
+        d48e1e85. Verificato con `git cat-file -e`, due volte in due sessioni
+        diverse. Non e' un pin mismatch: i 4 hash pinati coincidono.
+        NON DIVENTA REVIEW SOLO PERCHE' I TEST PASSANO (140/140, runtime 36/36,
+        rieseguiti). Diventa REVIEW quando CHATGPT corregge il read_ref della
+        card — servono zero byte di modifica dopo, solo il cambio di status.
+        Corretti in questo giro anche 3 incoerenze interne trovate rileggendo
+        byte per byte (stato REVIEW residuo in una tabella, 4 conteggi test in
+        conflitto risolti a 36/140, un branch stantio citato) + 1 trovata da me
+        (24 prove dichiarate, contate 22). Dettaglio: CLAUDE.md sessione 5
+        settima parte, qui sopra.
+
+     2. GEMINI HA RISPEDITO UJ-CAP-001 UNA TERZA VOLTA. TROVATO A FINE SESSIONE
+        DALLA TRAPPOLA 11, NON ANCORA REVISIONATO. E' IL PRIMO TASK DA FARE.
+        Ref: agent/uj-cap-001-gemini-review-20260818 @ 0f1c536 (5 commit dopo il
+        27b3717 che avevo gia' revisionato con esito FAIL 3/5 — vedi punto R qui
+        sotto, che ora e' SUPERATO da questo terzo invio).
+        Cosa cambia rispetto al mio ultimo verdetto: il commit 0f1c536 aggiunge
+        "docs/program/packets/UJ-RESPONSE-CAP-001-GEMINI-001.json" — cioe' proprio
+        il ResponsePacket la cui ASSENZA era F-001, il mio finding piu' grave
+        (AC-05 fallito, motivo per cui il ReviewResult non era importabile).
+        Gli altri 4 commit del giro (cd1fa6e, 73afb8c, f65e44a, 1185133) toccano
+        ancora CAPABILITY_REGISTRY.md/.json: puo' darsi che F-002 (verified_at_utc
+        costante) e F-004 (CLD-SDK-001 rimossa) siano stati affrontati, va
+        VERIFICATO, non presunto dal nome dei commit.
+        NON L'HO ANCORA APERTO: il proprietario aveva chiesto di chiudere la
+        sessione, e aprire una nuova review a quel punto sarebbe stato iniziare
+        lavoro nuovo invece di chiudere quello in corso. E' il primo task della
+        sessione che segue.
+        Metodo gia' rodato per farlo: (a) i due grep dichiarati in anticipo su
+        UNKNOWN/date; (b) confrontare il nuovo packet con lo schema ESEGUENDO il
+        validatore, non leggendolo; (c) verificare se il ResponsePacket risolve
+        DAVVERO F-001 o se e' un packet malformato come il primo tentativo di
+        sessione 4 (zero ResponsePacket, file troncato) — quel precedente e'
+        proprio la ragione per cui va eseguito il validatore e non solo letto
+        il JSON.
 
   P) S-18 RIVERIFICATO, ANCORA APERTO su main. GIA' FATTO, NON RIFARE:
        MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §18
@@ -3031,27 +3220,35 @@ PROSSIMO  : Se apri una sessione nuova:
             0. CONTROLLA `git rev-parse main origin/main` PRIMA di interpretare
                qualunque diff fra branch: dopo un fetch il main locale resta
                indietro e i diffstat diventano insensati (E17, ripetizione di E14).
+               E controlla anche `git rev-parse HEAD` sul TUO branch di casa,
+               claude/claude-md-resume-point-tvej1u: da sessione 5 esiste ANCHE
+               agent/uj-run-001-blueprint-20260818, e i due non vanno confusi.
             1. ESEGUI PRIMA LA TRAPPOLA 11 — git fetch di tutti i branch e controlla
-               se qualcuno ha consegnato. In sessione 3 ha trovato due volte
-               lavoro che aspettava proprio me, e main si è mosso QUATTRO volte
-               mentre lavoravo. In sessione 4 ha trovato SEI branch nuovi e la
-               prima consegna di Gemini. Non ha mai dato esito negativo finora.
-            1-bis. SE GEMINI HA RISPEDITO UJ-CAP-001 -> è tuo. Rileggi il
-               pre-verdetto §6 (le 6 correzioni richieste) e §9 (le 12 prove da
-               rieseguire sui byte committati), poi emetti il ReviewResult vero.
-               Test rapido prima di leggerne il merito: se il pacchetto contiene
-               ancora ZERO "UNKNOWN" e ZERO date, non è stato verificato — due
-               grep e hai la risposta.
+               se qualcuno ha consegnato. Non ha mai dato esito negativo, in
+               cinque sessioni di fila. A fine sessione 5 ha trovato il terzo
+               invio di UJ-CAP-001 mentre si stava chiudendo la sessione: vedi
+               punto AA sopra, azione 2. E' il primo task da fare.
+            1-bis. IL PRE-VERDETTO §6/§9 (sessione 4) E' SUPERATO. Non ripartire
+               da li': il mio verdetto vero e aggiornato e' in
+               docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260818.md
+               (FAIL 3/5, sessione 5), e quello a sua volta va riverificato sul
+               terzo invio @ 0f1c536 — vedi punto AA azione 2 per il metodo.
             2. GROK_FIX_LIST.md È GIÀ STATO VERIFICATO APPLICATO da me, non solo
                dichiarato — 10/16 findings chiusi con comando+esito in
                MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §10-ter. Non rifare quella
                verifica. Se riprendi UJ-SEC-003, parti da lì: restano S-02
-               (parziale), S-06, S-07, S-16.
-            3. Se UJ-INT-007 esiste ora (era DEFERRED a M8/M9) -> prendi UJ-REV-002.
+               (parziale), S-06, S-07, S-16, più S-20 (nuovo, §17) e S-18
+               riverificato ancora aperto (§18).
+            3. Se UJ-INT-007 esiste ora (era DEFERRED, verificato assente in
+               sessione 5) -> prendi UJ-REV-002.
             4. Se Gemini/Grok hanno consegnato altro -> hai doveri da reviewer su
                UJ-CAP-001, UJ-MEM-001, UJ-ADK-001, UJ-RSK-001, UJ-ALT-001.
                NON su UJ-RED-001: il suo reviewer è CHATGPT (verificato).
-            5. Se NIENTE di tutto questo -> registra l'attesa. Ma solo dopo 1-4.
+            5. Se UJ-RUN-001 e' uscita da BLOCKED (il read_ref della card e'
+               stato corretto) -> il tuo compito e' verificare che il ledger
+               segua, non ripetere il lavoro: i byte sono gia' pronti su
+               agent/uj-run-001-blueprint-20260818.
+            6. Se NIENTE di tutto questo -> registra l'attesa. Ma solo dopo 1-5.
 
             IN SOSPESO, non mio ma da sapere: il branch
             agent/uj-red-001-grok-v8-snapshot (97f7f06) potrebbe non essere ancora
@@ -3087,6 +3284,10 @@ NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
             Program OS (UJ-REV-001), LA SECURITY REVIEW DELL'IMPLEMENTAZIONE SU MAIN
             (UJ-SEC-003, 16 findings), LA LISTA CORREZIONI PER GROK, E IL
             PRE-VERDETTO UJ-CAP-001 SUL CANDIDATO GEMINI (sessione 4, 6 findings).
+            LA RICONCILIAZIONE DI UJ-RUN-001 (sessione 5, settima parte: blueprint
+            corretto, packet BLOCKED, AC-evidence, delivery, append-blocks — tutto
+            su agent/uj-run-001-blueprint-20260818 @ 79408449). Il TERZO invio di
+            UJ-CAP-001 NON e' in questa lista: quello va aperto, e' il primo task.
             Verifica prima, DALLA ROOT del repo, SOLO la mia suite (non toccare i
             test Python di Grok, sono un altro portafoglio).
             ESEGUI I TRE COMANDI IN QUEST'ORDINE — il secondo NON è opzionale:
