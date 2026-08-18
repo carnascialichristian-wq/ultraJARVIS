@@ -9,7 +9,7 @@
   "repository": {
     "full_name": "carnascialichristian-wq/ultraJARVIS",
     "ref": "agent/ultrajarvis-master-prompt-v1",
-    "commit_sha": "d48e1e8519a8d7af90ea44e770f0db7fd3938fb3"
+    "commit_sha": "25b1b7d53ff5bc4b05348453ebb704aba3a88630"
   },
   "title": "M0 first specialist council cycle",
   "objective": "Collect four distinct, schema-valid specialist artifacts needed to review the Program OS and unlock evidence-backed architecture synthesis without paid APIs or consumer UI automation.",
@@ -22,25 +22,25 @@
   "inputs": [
     {
       "ref": "docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md",
-      "sha256": "a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87",
+      "sha256": "d4137ca3df2e5f187c55dd92d7239d30aa2e806db26729bc5c7412b76347ccdc",
       "media_type": "text/markdown",
       "data_class": "C1"
     },
     {
       "ref": "docs/program/SPECIALIST_INPUTS.md",
-      "sha256": "72edc3952585fb2c31cafd0fa206ab2e66647d49d3190202adf2eba71593590a",
+      "sha256": "18196d2dfc7748a44b258684f0426addbd3127ef6a1e1dbc1a1d5826fa2ee268",
       "media_type": "text/markdown",
       "data_class": "C1"
     },
     {
       "ref": "docs/program/COUNCIL_PACKETS.md",
-      "sha256": "eb4d0d0dd46ebdaf07b7ab70380ee80fe0b35da222953f80576749cd3d29ff88",
+      "sha256": "ef7c4fff060f3394caafb801ed278c133da3d703681d67572de84fcf5160daee",
       "media_type": "text/markdown",
       "data_class": "C1"
     },
     {
       "ref": "schemas/response-packet.schema.json",
-      "sha256": "ee44e1b7e262bc0817e0b4f65de8830d122687618a59774fdabfddf3b7e69c0a",
+      "sha256": "6d75345b6e83faf5c44a57a4e1bdc7a5f32a5d93b7721682834e07943c04df4a",
       "media_type": "application/schema+json",
       "data_class": "C1"
     }
@@ -132,4 +132,3 @@
   ],
   "status": "READY"
 }
-
