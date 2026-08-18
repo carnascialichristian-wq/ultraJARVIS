@@ -7,15 +7,16 @@
 
 **Rule:** Update continuity files at the end of every session. Export future work to ultraJARVIS only.
 
-## Snapshot 2026-08-18 (~00:35 CEST)
-- **218 tests green** · **135 tools**
-- SEC-003 + optional promote auto-register published
-- Phase 2: planner LLM adapter (opt-in via `UJ_PLANNER_LLM=1`, fallback heuristic)
+## Snapshot 2026-08-18 (~09:55 CEST)
+- **221 tests green** · **135 tools**
+- SEC-003 + promote auto-register published
+- Phase 2 complete for adapters:
+  - Planner: `UJ_PLANNER_LLM=1`
+  - Writer: `UJ_WRITER_LLM=1` (safety scan + heuristic fallback)
 
 ## Remaining
-1. Writer LLM adapter
-2. Real gates when tools available
-3. Prefer quality / integration
+1. Real gates when ruff/black available
+2. Prefer quality / integration
 
 ## Proceed
 1. Read continuity + this file
