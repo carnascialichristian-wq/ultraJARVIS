@@ -1922,6 +1922,128 @@ Ho rispettato lo schema e perso il riferimento incrociato. Da allineare, uno dei
   riusa la sua logica invece di duplicarla.
 - **Non mi sono assegnato un'unità di peso.** Il packet propone `0 → 0/13`.
 
+---
+
+## Sessione 4, sesta parte — handoff per la sessione nuova, e tre scoperte nel farlo
+
+**Richiesta di Christian:** *"QUESTA SESSIONE STA DIVENTANDO PESANTE, APRI UNA NUOVA SESSIONE
+E FAGLI RICORDARE TUTTO."*
+
+### Il lavoro vero non era aprire una sessione: era rendere la memoria sufficiente
+
+In questo programma la memoria sta nei **file**, non nella chat — è l'intera ragione per cui
+`CLAUDE.md` e `AVVIO_NUOVA_SESSIONE.md` esistono. Una sessione nuova ricostruisce tutto solo se
+quei file sono corretti. Quindi il deliverable è l'handoff, non il click.
+
+### `AVVIO_NUOVA_SESSIONE.md` era scaduto nel punto peggiore
+
+Diceva ancora: branch `claude/ultrajarvis-repo-analysis-li6vvj`, *"ORA IDENTICO a main"*.
+**Falso da tre parti di sessione**: il branch di sessione 4 è un altro e non coincide con main.
+
+È **esattamente l'errore E16** che avevo già corretto in `CLAUDE.md` — la ricetta sbagliata nel
+punto che si legge per primo — e l'avevo lasciato in piedi nell'altro file. Riscritto per
+intero: identità e scopo del programma, branch (con l'avvertenza di rileggerlo invece di
+fidarsi), controllo dei ref prima dei diff, trappola 11, la ricetta con la build, le due regole,
+i divieti, e una tabella di stato con i findings aperti.
+
+### Trappola 11, e stavolta ha impedito un danno concreto
+
+`git merge origin/main` → **conflitto su `cloud_bridge.py`**, cioè il file dello STRICT_ZERO.
+Una risoluzione distratta avrebbe riaperto `S-17`, il percorso a pagamento.
+
+### Scoperta 1 — `S-17` è ANCORA APERTO su `main`
+
+Verificato al ref: `origin/main` ha `MODEL_PROVIDER` default `openai`, ha `_call_openai`, e ha
+**un secondo sito** che costruisce un client OpenAI. **Il fix approvato (decisione n. 7) non è
+mai stato mergiato su main**: vive sul branch `agent/strict-zero-cloud-bridge-20260818` e sul mio.
+
+Christian aveva approvato la decisione, io l'avevo verificata — ma **l'approvazione non ha
+prodotto un merge**. È una lezione di processo, non tecnica: *una decisione approvata e
+verificata non è una decisione applicata finché non arriva sul ramo che conta.*
+
+### Scoperta 2 — `S-19`: il budget gate non ferma niente
+
+`cloud_bridge.embed()` su `main`:
+
+```python
+try:
+    from core.monetization import assert_llm_budget, record_llm_call
+    assert_llm_budget()          # solleva QuotaExceeded se il budget e' sforato
+    record_llm_call(...)
+except Exception:
+    pass                          # <-- inghiotte QuotaExceeded
+provider = os.getenv("MODEL_PROVIDER", "openai").lower()
+if provider == "openai":
+    ...  # la chiamata a pagamento procede lo stesso
+```
+
+**Il guard è dentro un `except Exception: pass`**: l'eccezione che dovrebbe fermare la chiamata
+viene catturata e ignorata, e l'esecuzione prosegue fino alla richiesta fatturabile. È l'**ottava
+occorrenza** dello stesso schema — un controllo che sembra una difesa e non ferma nulla.
+
+**Per correttezza: in `ask_cloud_ai` lo stesso guard è scritto BENE** — `QuotaExceeded` viene
+riconosciuto e la funzione ritorna `""`. Il difetto è solo in `embed()`. Dirlo com'è evita di
+attribuire a Grok un errore sistematico quando è un punto solo.
+
+### Scoperta 3 — una mia previsione smentita si è ri-avverata due commit dopo
+
+Nella quinta parte avevo scritto che *"embedding-backed recall"* e *"debate loop"* **non**
+avevano aperto porte a pagamento, e l'avevo registrato come previsione mia smentita dai fatti.
+Era vero al ref che avevo controllato.
+
+**Poi main ha aggiunto `embed()`, che va su OpenAI per default.** Quindi la terza porta si è
+aperta davvero, un commit dopo che avevo dichiarato il contrario.
+
+Non è un errore di misura: è la dimostrazione che **in questo programma una verifica ha una
+scadenza di ore**. La correzione è già scritta qui invece di lasciare in giro la nota vecchia.
+
+### Scoperta 4 — `core/billing.py` è comparso su `main`
+
+Skeleton Stripe: con `STRIPE_SECRET_KEY` che inizia per `sk_`, fa una **POST reale** a
+`api.stripe.com`. **Nessun chiamante** al ref corrente — verificato con `git grep`, non assunto.
+
+Non è una violazione dell'Articolo 5: riguarda l'addebito a **futuri clienti**, non la spesa di
+Christian. Ma è un `EXTERNAL_WRITE` verso un provider di pagamento senza ammissione né
+approvazione, quindi va nel perimetro di `S-02` e andrà revisionato prima che qualcuno lo cabli.
+
+### Come ho risolto il conflitto
+
+Applicando la **decisione n. 7**, che è approvata e generale (*"nessuna chiamata cloud o API
+pay-per-use deve avvenire implicitamente"*), non limitata a una funzione:
+
+- mantenuto il bridge strict-zero: default `local`, allowlist dei provider, `_validate_local_base`,
+  **nessun adapter cloud**;
+- mantenuta l'integrazione quota/budget di main in `ask_cloud_ai`, che è corretta;
+- portato **`embed()` sotto la stessa policy**: local-only, provider non-local rifiutato prima di
+  costruire la richiesta;
+- corretto il guard di `embed()` perché `QuotaExceeded` **fermi** la chiamata invece di essere
+  inghiottito, con un commento che spiega perché non deve tornare un `except Exception: pass`.
+
+**Verificato dopo il merge**, non dedotto: probe `S-17` → **0 tentativi in tutti e 4 gli
+scenari**; `pytest` → **254 passed, 1 failed** (la failure pre-esistente di `main`).
+
+### Errori commessi in questa parte
+
+Nessuno tecnico. Un errore **già commesso e ripetuto in un altro file**: E16 — la ricetta
+scaduta nel documento più letto. L'avevo corretto in `CLAUDE.md` in questa stessa sessione e
+**non avevo controllato l'altro file che conteneva la stessa informazione**. La lezione non è
+"aggiorna i file": è che **un'informazione duplicata in due punti diverge sempre**, e va
+cercata ovunque quando cambia.
+
+`S-18` si è ripresentato durante i test (`grok.md` sovrascritto): ripulito con
+`git checkout -- grok.md` prima del commit, come da procedura.
+
+### Prove eseguite
+
+| Verifica | Esito |
+|---|---|
+| Conflitto `cloud_bridge.py` risolto | strict-zero preservato, 0 riferimenti a OpenAI nel file |
+| Probe `S-17` dopo il merge | **0 tentativi fatturabili in tutti e 4 gli scenari** |
+| `pytest` (esclusi i 6 moduli rotti pre-esistenti) | **254 passed, 1 failed** (pre-esistente) |
+| Suite contratti | **138/138**, typecheck e build exit 0 |
+| `S-17` su `origin/main` | **ancora aperto**: default `openai`, `_call_openai` presente |
+| `core/billing.py` — chiamanti | **nessuno** al ref corrente |
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -2035,7 +2157,7 @@ BRANCH    : ATTENZIONE — CAMBIATO IN SESSIONE 4.
             lavoro NON coincide più con main: il pre-verdetto UJ-CAP-001 sta sul
             branch di sessione 4 e NON è su main.
 
-MAIN      : commit b4b4b12 (verificato in sessione 4, quinta parte — si era mossa
+MAIN      : commit 9d80f9f+ (verificato in sessione 4, sesta parte — si era mossa
             di 7 commit in meno di un'ora). La riga sotto dice 302852a/319
             file: era vero a fine sessione 3 ed è già superato — main si muove.
             Contiene il piano canonico, il Program OS di
@@ -2204,6 +2326,32 @@ SESSIONE 4 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
 
   C) SEI BRANCH che il vecchio RESUME_POINT non citava. Nessun altro dovere mio
      dentro (controllato). UJ-GGL-001 -> reviewer GROK. UJ-RED-001 -> CHATGPT.
+
+  F) ATTENZIONE — S-17 E' ANCORA APERTO SU main (verificato sessione 4, sesta
+     parte). La decisione n. 7 e' APPROVATA e io l'ho VERIFICATA, ma il fix
+     NON e' mai stato mergiato su main: vive sul mio branch e su
+     agent/strict-zero-cloud-bridge-20260818. Su origin/main MODEL_PROVIDER e'
+     ancora "openai" e _call_openai esiste.
+     LEZIONE DI PROCESSO: una decisione approvata e verificata NON e' una
+     decisione applicata finche' non arriva sul ramo che conta.
+     >>> SERVE: che qualcuno merghi il fix su main. Non l'ho fatto io: non ho
+     autorizzazione a scrivere su main in questa sessione.
+     NUOVI FINDINGS della stessa parte:
+       S-19 (main): in cloud_bridge.embed() il budget gate sta dentro un
+         `except Exception: pass`, quindi QuotaExceeded viene inghiottito e la
+         chiamata a pagamento procede. OTTAVA occorrenza dello schema
+         "controllo che non controlla". In ask_cloud_ai lo stesso guard e'
+         invece scritto BENE: il difetto e' solo in embed().
+       core/billing.py (main, nuovo): skeleton Stripe; con STRIPE_SECRET_KEY
+         "sk_" fa una POST reale a api.stripe.com. NESSUN chiamante al ref
+         corrente (verificato). Non viola l'Articolo 5 — riguarda l'addebito a
+         futuri clienti — ma e' un EXTERNAL_WRITE senza ammissione: rientra in
+         S-02 e va revisionato prima che venga cablato.
+     CORREZIONE DI UNA MIA NOTA: nella quinta parte avevo scritto che
+     "embedding recall" e "debate loop" NON avevano aperto porte a pagamento.
+     Era vero al ref controllato. Due commit dopo main ha aggiunto embed(),
+     che va su OpenAI per default: la terza porta si e' aperta davvero. In
+     questo programma una verifica ha una scadenza di ore.
 
 PROSSIMO  : Se apri una sessione nuova:
             0. CONTROLLA `git rev-parse main origin/main` PRIMA di interpretare
