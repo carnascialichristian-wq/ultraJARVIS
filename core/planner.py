@@ -21,12 +21,7 @@ class Plan:
     done_criteria: List[str] = field(default_factory=list)
 
     def to_markdown(self) -> str:
-        """Render the plan as a readable Markdown document."""
-        lines = [
-            f"# Plan: {self.title}",
-            "",
-            "## Milestones",
-        ]
+        lines = [f"# Plan: {self.title}", "", "## Milestones"]
         for i, m in enumerate(self.milestones, 1):
             lines.append(f"{i}. {m}")
         lines += ["", "## Risks"]
@@ -46,7 +41,6 @@ class Plan:
 
 
 def _matching_tools(task_text: str) -> list[str]:
-    """Return registry tool names whose short name appears in the prompt."""
     try:
         from core.registry import get_registry
         import re
@@ -74,20 +68,16 @@ def _matching_tools(task_text: str) -> list[str]:
 
 
 def _plan_via_llm(task_text: str) -> Plan | None:
-    """Optional LLM-backed planner. Opt-in UJ_PLANNER_LLM=1."""
     import os
     import re
-
     if os.getenv("UJ_PLANNER_LLM", "").strip() != "1":
         return None
     if not (task_text or "").strip():
         return None
-
     try:
         from cloud_bridge import ask_cloud_ai
     except Exception:
         return None
-
     system = (
         "You are the UltraJarvis task planner. "
         "Reply with ONLY a single JSON object (no markdown fences) with keys: "
@@ -98,12 +88,10 @@ def _plan_via_llm(task_text: str) -> Plan | None:
     raw = ask_cloud_ai(user, system=system)
     if not raw or not raw.strip():
         return None
-
     cleaned = raw.strip()
     if cleaned.startswith("```"):
         cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
         cleaned = re.sub(r"\s*```$", "", cleaned)
-
     try:
         data = json.loads(cleaned)
     except Exception:
@@ -114,7 +102,6 @@ def _plan_via_llm(task_text: str) -> Plan | None:
             data = json.loads(m.group(0))
         except Exception:
             return None
-
     if not isinstance(data, dict):
         return None
     title = str(data.get("title") or "").strip() or "Untitled task"
@@ -123,40 +110,24 @@ def _plan_via_llm(task_text: str) -> Plan | None:
     done = [str(x).strip() for x in (data.get("done_criteria") or []) if str(x).strip()]
     if not milestones:
         return None
-
     existing = _matching_tools(task_text)
     if existing:
-        milestones.insert(
-            1,
-            f"Review existing tools that may already cover this: {', '.join(existing)}",
-        )
-        risks.append(
-            "Reimplementing a capability that already exists in the registry"
-        )
-
+        milestones.insert(1, f"Review existing tools that may already cover this: {', '.join(existing)}")
+        risks.append("Reimplementing a capability that already exists in the registry")
     return Plan(
         title=title[:120],
         milestones=milestones[:8],
         risks=risks[:6],
-        done_criteria=done[:6] or [
-            "All unit tests pass",
-            "Code is linted and formatted",
-        ],
+        done_criteria=done[:6] or ["All unit tests pass", "Code is linted and formatted"],
     )
 
 
 def plan(task_text: str) -> Plan:
-    """Create a Plan; prefer LLM when UJ_PLANNER_LLM=1 else heuristic."""
     llm_plan = _plan_via_llm(task_text)
     if llm_plan is not None:
         return llm_plan
-
     text = (task_text or "").strip()
-    if not text:
-        title = "Untitled task"
-    else:
-        title = text.split("\n")[0][:80].strip() or "Untitled task"
-
+    title = (text.split("\n")[0][:80].strip() if text else "") or "Untitled task"
     milestones = [
         "Understand requirements and constraints",
         "Implement core functionality",
@@ -164,36 +135,27 @@ def plan(task_text: str) -> Plan:
         "Run lint / format / tests",
         "Document changes",
     ]
-
     risks = [
         "Ambiguous requirements may lead to rework",
         "External dependencies or API keys may be missing",
     ]
-
     done_criteria = [
         "All unit tests pass",
         "Code is linted and formatted",
         "Documentation / docstring is present",
         "No critical files were modified unexpectedly",
     ]
-
     existing = _matching_tools(text)
     if existing:
-        milestones.insert(
-            1,
-            f"Review existing tools that may already cover this: {', '.join(existing)}",
-        )
-        risks.append(
-            "Reimplementing a capability that already exists in the registry"
-        )
-
-    # Surface related past jobs from durable memory (if any)
+        milestones.insert(1, f"Review existing tools that may already cover this: {', '.join(existing)}")
+        risks.append("Reimplementing a capability that already exists in the registry")
     try:
-        from core.memory import recall
-        tokens = [t for t in text.lower().replace("-", " ").split() if len(t) > 3][:3]
-        related = []
-        for tok in tokens:
-            related.extend(recall(tok, limit=3, tag="job"))
+        from core.memory import recall, recall_semantic
+        related = recall_semantic(text, limit=5, tag="job", min_score=0.05)
+        if not related:
+            tokens = [t for t in text.lower().replace("-", " ").split() if len(t) > 3][:3]
+            for tok in tokens:
+                related.extend(recall(tok, limit=3, tag="job"))
         seen = set()
         unique = []
         for e in related:
@@ -202,22 +164,13 @@ def plan(task_text: str) -> Plan:
                 seen.add(f)
                 unique.append(f)
         if unique:
-            milestones.append(
-                "Review related past jobs: " + "; ".join(unique[:3])
-            )
+            milestones.append("Review related past jobs: " + "; ".join(unique[:3]))
     except Exception:
         pass
-
-    return Plan(
-        title=title,
-        milestones=milestones,
-        risks=risks,
-        done_criteria=done_criteria,
-    )
+    return Plan(title=title, milestones=milestones, risks=risks, done_criteria=done_criteria)
 
 
 def write_plan_md(plan_obj: Plan, job_dir: str | Path) -> Path:
-    """Write plan.md inside a job directory and return the path."""
     job_dir = Path(job_dir)
     job_dir.mkdir(parents=True, exist_ok=True)
     path = job_dir / "plan.md"
