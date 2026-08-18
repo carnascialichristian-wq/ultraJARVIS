@@ -7,7 +7,7 @@
 > Il file esiste perché **la chat non è memoria**: se il prompt di avvio vivesse solo in
 > una conversazione, andrebbe perso esattamente quando serve.
 >
-> **Ultimo aggiornamento: 2026-08-18, fine sessione 4.**
+> **Ultimo aggiornamento: 2026-08-18, fine sessione 5.**
 
 ---
 
@@ -30,9 +30,13 @@ CHE COS'È ULTRAJARVIS
 
 REPOSITORY
   carnascialichristian-wq/ultraJARVIS   (privata)
-  BRANCH DI LAVORO: quello che ti assegna l'ambiente. RILEGGILO, non fidarti di
-  questa riga: cambia fra le sessioni. In sessione 4 era
-  claude/claude-md-resume-point-tvej1u, nelle sessioni 1-3 era
+  BRANCH DI LAVORO: quello che ti assegna l'ambiente — SE te lo assegna. In
+  sessione 5 il container era VUOTO: /home/user senza file, repository NON
+  clonato, nessun branch. In quel caso il clone atterra su main, e il branch va
+  SCELTO e la scelta DIMOSTRATA con
+    git rev-list --left-right --count origin/main...<branch>
+  (atteso per quello giusto: 0 indietro, N avanti), non presunta dal nome.
+  In sessioni 4 e 5 era claude/claude-md-resume-point-tvej1u, nelle sessioni 1-3
   claude/ultrajarvis-repo-analysis-li6vvj.
   ATTENZIONE: da sessione 4 il branch di lavoro NON coincide più con main.
   Verifica sempre: git rev-parse HEAD origin/main
@@ -69,7 +73,9 @@ FAI ESATTAMENTE QUESTO, IN QUESTO ORDINE, PRIMA DI PRODURRE QUALUNQUE COSA:
      npx tsc -p packages/contracts --noEmit    -> exit 0   (typecheck)
      npx tsc -p packages/contracts             -> exit 0   (BUILD)
      for f in tests/contracts/*.test.mjs; do node --test "$f"; done
-   Atteso: 138/138 (runtime 34 · policy 28 · tools 30 · recovery 9 · skills 37).
+   Atteso: 140/140 (runtime 36 · policy 28 · tools 30 · recovery 9 · skills 37).
+   Era 138 fino alla sessione 4: i due in piu' sono i test di regressione di E6
+   aggiunti in sessione 5. Se ne vedi 138, sei su un ref vecchio.
    SE SALTI LA BUILD ottieni 5 suite su 5 fallite con ERR_MODULE_NOT_FOUND:
    dist/ è in .gitignore e in un container nuovo non esiste. NON è una regressione.
 
@@ -164,6 +170,32 @@ Correzioni applicabili per Grok: `docs/threat-models/GROK_FIX_LIST.md` (FIX-1..F
 `MODEL_PROVIDER` default `local`, nessuna chiamata pay-per-use implicita, fail-safe senza
 fallback al cloud. Applicata e verificata sul mio branch: 6 attacchi di provider e 13 di
 endpoint tutti bloccati. **Su `main` non è ancora arrivata.**
+
+---
+
+### Delta di sessione 5 — cosa è cambiato rispetto alla tabella qui sopra
+
+La tabella di stato dei task **non cambia**: 7 su 8 in `REVIEW`, `0/76` accettato, e resta
+corretto. Cambiano quattro cose operative.
+
+1. **La suite è 140, non 138.** Due test di regressione nuovi (`runtime` 34 → 36). Trovata e
+   chiusa la **seconda occorrenza dell'errore E6**: `depth-guard.ts` usava un byte NUL come
+   separatore nella chiave del rilevatore di cicli. Falsi positivi misurati, e il file era
+   **binario** per git e grep, quindi fuori da ogni audit testuale per quattro sessioni.
+2. **`UJ-RUN-001` ha un gate di consegna, ed è stato soddisfatto.** ChatGPT l'ha emesso su
+   `agent/claude-run-handoff-20260818`. Blocco pronto da incollare in
+   `prompts/handoffs/CLAUDE-RUN-001-DELIVERY-20260818.md`. Tre incoerenze nel gate segnalate,
+   nessuna bloccante.
+3. **`S-17` e `S-19` sono ancora aperti su `main`** — terza verifica — e i candidati alla
+   correzione sono diventati **tre**. `v1` e `v2` sono byte-identici e **mergiarli oggi
+   cancellerebbe `embed()`**, rompendo `core/memory.py`. Raccomandazione e misure in
+   `docs/program/reviews/UJ-SEC-003-STRICT-ZERO-CANDIDATE-RECONCILIATION.md`.
+4. **La correction request a Gemini copre 4 delle mie 6 correzioni.** Le due mancanti sono in
+   `prompts/handoffs/CLAUDE-TO-GEMINI-MERIT-ADDENDUM-UJ-CAP-001-20260818.md`, **da incollare
+   insieme** alla request di ChatGPT, non in un giro separato.
+
+**Due cose che servono da altri, e sono il vero collo di bottiglia:** le sette delegation card
+da ChatGPT, e un merge del fix strict-zero su `main` da parte di chi ne ha l'autorizzazione.
 
 ---
 

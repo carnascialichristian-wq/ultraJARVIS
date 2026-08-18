@@ -14,9 +14,9 @@
 | AI_ID | CLAUDE |
 | Ruolo | Runtime, Security & Skill Architect |
 | Repository | `carnascialichristian-wq/ultraJARVIS` (privata) |
-| Branch di lavoro | `claude/claude-md-resume-point-tvej1u` (sessione 4). Sessioni 1-3: `claude/ultrajarvis-repo-analysis-li6vvj` |
+| Branch di lavoro | `claude/claude-md-resume-point-tvej1u` (sessioni 4 e 5). Sessioni 1-3: `claude/ultrajarvis-repo-analysis-li6vvj`. **L'ambiente può non assegnarne uno**: vedi RESUME_POINT punto Z |
 | File gemello per le altre IA | `TASKCLAUDE.md` |
-| Ultimo aggiornamento | 2026-08-17 — sessione `UJ-CLAUDE-2026-08-17-04` |
+| Ultimo aggiornamento | 2026-08-18 — sessione `UJ-CLAUDE-2026-08-18-05` |
 
 > Nota sul nome: il file è `CLAUDE.md` in maiuscolo perché è la convenzione che
 > Claude Code carica automaticamente come istruzioni di progetto. Se lo rinomini in
@@ -117,8 +117,10 @@ npx tsc -p packages/contracts
 for f in tests/contracts/*.test.mjs; do node --test "$f"; done
 ```
 
-Attesi al 2026-08-17: hash coincidente, typecheck exit 0, **138 test / 138 pass**
-(runtime 34 · policy 28 · tools 30 · recovery 9 · skills 37).
+Attesi al 2026-08-18 (sessione 5): hash coincidente, typecheck exit 0, **140 test / 140 pass**
+(runtime 36 · policy 28 · tools 30 · recovery 9 · skills 37). Era `138` fino alla sessione 4:
+i due in più sono le regressioni di E6 aggiunte in sessione 5. Le occorrenze di `138` nel
+Session Log sono **storia** e restano come sono.
 
 ---
 
@@ -206,6 +208,17 @@ trova nuovi input, la risposta corretta è registrare l'attesa, NON inventare la
 > Il peso 8 di UJ-INT-006 è di **ChatGPT**, non mio: fare da reviewer non aggiunge unità
 > al mio portafoglio, che resta 76. La lezione operativa è nella §"trappole": *prima di
 > registrare l'attesa, verifica se qualcuno ha consegnato*.
+
+> **AGGIORNAMENTO sessione 5 (2026-08-18).** La tabella qui sopra **non cambia**: 7 task su 8
+> restano in `REVIEW`, `0/76` accettato, e resta corretto. Cambia il perché di `UJ-RUN-001`:
+> ChatGPT ha emesso un **gate di consegna** (`CLAUDE_RUN_UJ-RUN-001_REQUEST_20260818.md`) che
+> nessuna memoria registrava, e l'ho soddisfatto — blocco HUMAN_BRIDGE, evidenza per criterio,
+> packet rivalidato. Il task **non è più in attesa solo della review di Gemini: era anche in
+> attesa di una consegna nel formato che ChatGPT si aspettava**, e quella parte ora c'è.
+>
+> Verificando quella consegna ho trovato un difetto in un mio artefatto (`E6`, seconda
+> occorrenza in `depth-guard.ts`) e l'ho corretto: la suite passa da **138 a 140**. Il peso
+> resta `0/13`: correggere un proprio difetto non è avanzamento accettato.
 
 ## Doveri da reviewer (non fanno parte delle 76 unità)
 
@@ -2044,6 +2057,187 @@ cercata ovunque quando cambia.
 | `S-17` su `origin/main` | **ancora aperto**: default `openai`, `_call_openai` presente |
 | `core/billing.py` — chiamanti | **nessuno** al ref corrente |
 
+## Sessione 5 — `UJ-CLAUDE-2026-08-18-05` — 2026-08-18
+
+Ordine di lavoro dato dal proprietario: *"procedi in questo ordine, fai quello che pensi sia
+meglio, poi continua con le task"*. I tre punti erano quelli che avevo proposto a fine
+orientamento.
+
+### Il container era vuoto: nessun branch assegnato, nessun repository
+
+`/home/user` era vuoto e il repository **non era clonato**. Nessun branch assegnato
+dall'ambiente: il clone è atterrato su `main`. Ho agganciato il repo, clonato, e fatto
+checkout di `claude/claude-md-resume-point-tvej1u` **dopo aver verificato** che fosse la
+scelta giusta (`0 indietro / 15 avanti` su `origin/main`, e tip più recente del repository).
+
+**Da ricordare:** la riga "il branch è assegnato dall'ambiente" può essere falsa. Se
+l'ambiente non assegna niente, il branch va scelto e la scelta va **dimostrata** con
+`git rev-list --left-right --count`, non presunta dal nome.
+
+### Trappola 11, settima volta che paga: quattro artefatti che la memoria non conosceva
+
+`git fetch` di tutti i ref, poi confronto di ogni ramo **contro il mio branch** e non contro
+`main`. Quattro elementi con **zero occorrenze** in `CLAUDE.md` e `TASKCLAUDE.md`:
+
+| Ramo | Contenuto | Mio? |
+|---|---|---|
+| `agent/claude-run-handoff-20260818` | gate di consegna `UJ-RUN-001` indirizzato a me | **sì** |
+| `agent/gemini-handoff-quarantine-20260817` `9da01be` | correction request a Gemini su `UJ-CAP-001` | **sì, sono il reviewer** |
+| `agent/strict-zero-cloud-bridge-20260818-v2` | secondo candidato per `S-17` | sì, da riconciliare |
+| `agent/grok-red-handoff-20260818` | gate `UJ-RED-001` | no, reviewer è ChatGPT |
+
+Il controllo non ha ancora mai dato esito negativo, in cinque sessioni.
+
+### Parte 1 — il gate `UJ-RUN-001`, e il difetto trovato verificando me stesso
+
+Il gate chiede path, SHA e **un controllo concreto per criterio**. Ho verificato AC-01…AC-05
+eseguendo, non leggendo. Il controllo di AC-01 era uno scan di token vendor sui contratti
+runtime, atteso a zero occorrenze normative.
+
+Ha stampato **`binary file matches`** su `depth-guard.ts`.
+
+**È E6 alla seconda occorrenza.** In sessione 1 avevo trovato un byte NUL usato come
+separatore nella idempotency key di `checkpoint.ts`, e l'avevo corretto con encoding
+length-prefixed. Lo stesso identico difetto era rimasto nel file accanto: `hasToolCycle`
+costruiva la chiave k-gram con `sequence.join("\0")`.
+
+Due conseguenze, entrambe misurate:
+
+1. **Falsi positivi.** `ToolId` è `Brand<string, "ToolId">`, una stringa branded **senza
+   validazione a runtime**: niente impedisce al separatore di stare dentro un nome di tool.
+   La sequenza `["a","b\0c","x","a\0b","c","x"]` segnalava un ciclo **inesistente**, perché
+   le finestre 0 e 3 si codificano identiche.
+2. **Invisibilità.** Il NUL rendeva `depth-guard.ts` **binario** per git e per grep. Il file
+   è stato fuori da ogni audit testuale del repository **per quattro sessioni**, comprese le
+   mie.
+
+Correzione: `encodeInjective` in `common.ts`, sede unica, usata sia da `buildIdempotencyKey`
+sia da `hasToolCycle`. `checkpoint.ts` produce byte identici e il test di iniettività
+preesistente lo dimostra — è il controllo che rendeva sicuro il refactor.
+
+**Il test di regressione l'ho provato contro il codice vecchio prima di accettarlo.** Ho
+rimesso il `join("\0")` nel `dist/`, rieseguito, ottenuto `not ok 34` con
+`expected: false, actual: true` — esattamente il falso positivo previsto — e poi ripristinato.
+Una verifica che non può fallire non è una verifica.
+
+Secondo test: nessun sorgente dei contratti runtime contiene un NUL. Fissa la lezione
+**meccanicamente**, invece che con un commento che la terza occorrenza ignorerebbe.
+
+Suite: **138 → 140**, `fail 0`, typecheck e build a exit 0.
+
+### Il gate ha tre incoerenze, e nessuna è colpa di Gemini o di Grok
+
+1. **La card non esiste al commit al quale il gate ordina di leggerla.** Il gate include
+   `prompts/delegation-cards/UJ-RUN-001-CLAUDE.json` fra gli input da leggere a `3611b1b4`;
+   la card è entrata con `d48e1e85`, **dodici minuti dopo**. La prosa del gate ha aggiunto un
+   quinto input al `read_ref` della card; il campo `input_artifacts` della card ne elenca
+   correttamente quattro e non se stessa.
+   **Non ho restituito `BLOCKED`**: il gate riserva quel verdetto a *"un pin non corrisponde"*,
+   e i quattro hash pinati coincidono tutti a `3611b1b4`. Verificato uno per uno.
+2. **Il gate dice `path`, lo schema dice `ref`**, e con `additionalProperties: false` un
+   artifact con `path` fallisce la validazione.
+3. **Il gate chiede la mappatura per criterio dentro il packet e lo schema non la ammette.**
+   Messa in `UJ-RUN-001-AC-EVIDENCE.md` e citata da `handoff.resume_point`.
+
+### Parte 2 — i tre candidati STRICT_ZERO, misurati invece che letti
+
+Primo passo: **trappola 17**. Il diff `HEAD` vs `-v2` mostrava `-444` righe e sembrava che
+`v2` cancellasse mezzo repository. Non era vero: le due basi sono diverse. Ho confrontato
+ciascun candidato **contro la propria merge-base**, e il quadro si è invertito.
+
+`v1` e `v2` hanno un `cloud_bridge.py` **byte-identico** (md5 `2961c3a8…`). `-v2` non è un
+design alternativo: è lo stesso fix ricommittato su una base più recente.
+
+Due sonde, con `requests` e `openai` sostituiti da stub che **registrano il tentativo e
+sollevano**. Nessuna chiamata reale, costo zero.
+
+| | `origin/main` | `v1` = `v2` | branch CLAUDE |
+|---|---|---|---|
+| percorsi a pagamento/remoti su 7 attacchi | **6** | 0 | 0 |
+| `embed()` con budget **esaurito** | **CHIAMATA A PAGAMENTO** | non esiste | nessuna chiamata |
+
+**Il risultato che conta.** Entrambe le basi di `v1`/`v2` precedono `embed()`. Mergiare il
+loro `cloud_bridge.py` sull'attuale `main` chiuderebbe `S-17` e **cancellerebbe `embed()` e
+le quattro guardie di budget**. `core/memory.py:118` fa `from cloud_bridge import embed` e lo
+chiama alla riga 139: il merge romperebbe il lavoro appena consegnato da Gemini, per
+applicare una correzione di sicurezza.
+
+Una correzione di sicurezza che rimuove una feature è uno **scambio**, e lo decide chi possiede
+entrambe le cose. Non io.
+
+`S-17` e `S-19` **aperti su `main`** al ref corrente. Terza verifica consecutiva.
+
+### Parte 3 — la correction request a Gemini copre 4 delle mie 6 correzioni
+
+Trappola 19 applicata: se il reinvio soddisfa solo l'intake, passa la prima porta e sbatte
+sulla seconda, e il terzo giro di HUMAN_BRIDGE lo paga Christian a mano.
+
+**Coperte:** i 7 campi JSON (4), URL primario + ora UTC (5), rate limit (6).
+**Non coperte:** `G-004` e `G-005`.
+
+`G-004` è una contraddizione **dentro il Markdown**, non fra Markdown e JSON: la regola
+*"make Markdown and JSON agree"* si può soddisfare **propagando l'errore nel JSON**.
+`G-005` è la classe `local-compute` nominata da `AC-04`, assente dalla request; il suo
+preflight dice *"no heavy local inference **occurred**"*, che riguarda la condotta di Gemini,
+non il contenuto del registro.
+
+Scritto l'addendum con **solo** le due scoperte. Non ho ripetuto le tre coperte: allungare un
+messaggio che Christian ricopia a mano, con due formulazioni della stessa regola che possono
+divergere, peggiora il risultato.
+
+**Ho scritto anche cosa ChatGPT ha fatto bene:** il punto 4 del suo audit arriva a `G-002`
+per conto proprio e cita la stessa fonte ufficiale che avevo aperto io.
+
+### ERRORI COMMESSI IN QUESTA SESSIONE
+
+| # | Errore | Come si è manifestato | Correzione |
+|---|---|---|---|
+| E19 | **Numero dato senza scope.** Nell'addendum per Gemini ho scritto che *"local* compare una volta sola"*. Su tutto l'allegato di 528 righe compare **tre** volte | l'ho colto rieseguendo la misura invece di ricopiarla dal pre-verdetto | il conteggio `1` vale solo dentro le righe 36–332, i due artefatti `UJ-CAP-001` delimitati dai marcatori. Scope ora esplicito nel testo. **Stavo per consegnare a Gemini un numero non qualificato: è il difetto per cui l'ho bocciata in `G-002`** |
+| E20 | **Path citato a memoria.** Avevo scritto `docs/program/UJ-CLD-001-*` | il path reale è `docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md` | verificato con `find` prima del commit. Trappola 14: si citano solo artefatti aperti |
+| E21 | **Misura letta su un indice sbagliato.** Il conteggio dei byte del blocco da incollare dava `33` per un blocco da 72 KB | `str.index()` aveva trovato la **prima** occorrenza del marcatore, che era nella frase di istruzioni per Christian, non il delimitatore vero | `rindex`. Il segnale che ha salvato è l'**incoerenza fra output e verdetto**: 33 byte per un file da 57 KB non può essere giusto. È la stessa euristica della trappola 15 |
+
+Nessuno dei tre è arrivato a un artefatto consegnato.
+
+### Prove eseguite in questa sessione
+
+| Prova | Esito |
+|---|---|
+| `sha256sum docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md` | `a3fcdfc9…a69a87`, **coincide** |
+| `npx tsc -p packages/contracts --noEmit` | exit 0 |
+| `npx tsc -p packages/contracts` | exit 0 |
+| suite contratti, 5 file | **140/140 pass**, fail 0 (era 138, +2 nuovi) |
+| test di regressione contro il codice vecchio | **fallisce**, `expected: false, actual: true` |
+| `node scripts/validate-response-packet.mjs` | exit 0, 15 hash ricalcolati |
+| 15 hash artefatto al `source_commit_sha` e a HEAD | **15/15** |
+| 4 hash di input pinati a `3611b1b4` | **4/4 coincidono** |
+| scan vendor sui contratti runtime | **0** occorrenze normative |
+| scan NUL su tutti i sorgenti dei contratti | **0** |
+| sonda `S-17`, 7 attacchi × 3 varianti | main 6 a pagamento, candidati 0 |
+| sonda `S-19`, budget esaurito × 3 varianti | main chiama comunque, branch CLAUDE no |
+| round-trip del blocco di consegna | blueprint riestratto **rihasha identico** |
+| merge di `origin/main` nel branch | pulito, nessun conflitto, suite invariata |
+| `git push` | exit 0 letto dal comando vero, **mai da una pipe** |
+
+### Confini rispettati
+
+Non ho toccato `core/`, `tools/`, `advisors/`, `bin/uj` (GROK), né `BACKLOG`/`schemas`/
+`scripts` di ChatGPT, né il Capability Registry di Gemini. Ho modificato **solo**
+`packages/contracts/` e `tests/contracts/`, che sono `UJ-RUN-001`, cioè miei. Non ho
+mergiato niente su `main`: `direct_main_write: false` è nella mia card. Non ho eseguito
+nessuna chiamata di rete a pagamento, in nessuna variante, in nessuna sonda.
+
+### Cosa NON ho fatto, e perché
+
+- **Nessun `ReviewResult` per `UJ-CAP-001`.** Le tre ragioni del §7 del pre-verdetto valgono
+  ancora: gli artefatti non esistono a nessun commit e la consegna non è ammessa.
+- **Non ho riaperto le fonti primarie di Gemini.** Il candidato non è cambiato. Se il reinvio
+  arriva, le riapro allora: in questo programma una verifica esterna scade in ore.
+- **Non ho eseguito la suite Python di Grok.** Altro portafoglio, e su `main`
+  `python3 -m pytest` senza argomenti **non colleziona** (difetto pre-esistente).
+- **Non mi sono assegnato peso.** `0/76` resta corretto.
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -2141,6 +2335,28 @@ Sintesi operativa degli errori sopra, in forma di regole:
     serve **prima** del reinvio, non dopo: altrimenti si paga un terzo giro di HUMAN_BRIDGE,
     e quelli li paga Christian a mano.
 
+20. **Un difetto corretto in un file non è corretto nel file accanto** (E6, seconda
+    occorrenza). Il NUL come separatore è stato tolto da `checkpoint.ts` in sessione 1 e
+    lasciato in `depth-guard.ts` fino alla sessione 5. Quando correggi un difetto di
+    *principio* — non di battitura — **cerca lo stesso schema in tutto il portafoglio** e
+    metti la correzione in **una sede sola**, così la terza occorrenza non è possibile.
+    Corollario: un byte NUL rende il file **binario** per git e grep, cioè lo toglie da ogni
+    audit testuale. Il sintomo è `binary file matches` al posto di una riga: non ignorarlo.
+21. **Un test nuovo va provato contro il codice vecchio prima di essere accettato.** Se passa
+    su entrambi non prova niente (falso negativo, trappola 12, visto dall'altro lato). Il
+    modo più rapido è rimettere il difetto nel `dist/`, rieseguire, leggere il fallimento
+    atteso, ripristinare. In sessione 5: `expected: false, actual: true`.
+22. **Ogni numero consegnato a un'altra IA va accompagnato dal suo scope** (E19). *"local
+    compare una volta"* era vero sui due artefatti del task e falso sull'allegato intero,
+    dove compare tre volte. Un numero senza scope è la stessa classe di difetto per cui ho
+    bocciato Gemini in `G-002`: **rimisura sempre, non ricopiare dal tuo documento
+    precedente**, e scrivi l'intervallo su cui vale.
+23. **Confronta ogni ramo contro la propria merge-base, non contro un altro ramo** (E14/E17,
+    terza forma). Un diff fra due rami con basi diverse mostra come "cancellazioni" tutto ciò
+    che il ramo più vecchio semplicemente non ha ancora. In sessione 5 sembrava che `-v2`
+    cancellasse 444 righe: erano commit che non aveva. Il rischio pratico è mergiare un fix
+    corretto che, su una base più recente, **rimuove una feature**.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -2149,7 +2365,10 @@ Sintesi operativa degli errori sopra, in forma di regole:
 PROGRAMMA : ultraJARVIS
 AI_ID     : CLAUDE — Runtime, Security & Skill Architect
 
-BRANCH    : ATTENZIONE — CAMBIATO IN SESSIONE 4.
+BRANCH    : ATTENZIONE — L'AMBIENTE PUO' NON ASSEGNARTELO (sessione 5: container
+            vuoto, repo non clonato). Se non te lo assegna, il clone atterra su main:
+            scegli il branch e DIMOSTRA la scelta con git rev-list, non dal nome.
+            ATTENZIONE — CAMBIATO IN SESSIONE 4.
             Sessione 4 in poi : claude/claude-md-resume-point-tvej1u
             Sessioni 1-3      : claude/ultrajarvis-repo-analysis-li6vvj
             Il branch è assegnato dall'ambiente, non lo scelgo io: RILEGGI quale ti
@@ -2221,6 +2440,68 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-02 (parziale — ammissione ok, manca tetto/evento), S-06 (automazione
               UI nel catalogo, è una domanda di policy), S-07 (nessun evento tool.*),
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
+
+SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  Z) L'AMBIENTE PUO' NON ASSEGNARTI NIENTE. In sessione 5 il container era VUOTO:
+     /home/user senza file, repository NON clonato, nessun branch. Il clone atterra
+     su main. Il branch di lavoro va SCELTO e la scelta DIMOSTRATA con
+     `git rev-list --left-right --count origin/main...<branch>`, non presunta dal
+     nome. Atteso per il branch giusto: 0 indietro, N avanti.
+
+  Y) LA SUITE ORA E' 140, NON 138. Due test nuovi in runtime-invariants
+     (34 -> 36). Se ne vedi 138 sei su un ref vecchio, non c'e' una regressione.
+     Totale: runtime 36 · policy 28 · tools 30 · recovery 9 · skills 37.
+
+  X) E6 AVEVA UNA SECONDA OCCORRENZA, ORA CHIUSA. depth-guard.ts costruiva la
+     chiave k-gram con join su un byte NUL: falsi positivi di ciclo (ToolId non ha
+     validazione a runtime) e file BINARIO per git/grep, quindi fuori da ogni audit
+     testuale per quattro sessioni. Corretto con `encodeInjective` in common.ts,
+     sede UNICA, usata anche da buildIdempotencyKey. GIA' FATTO, NON RIFARE.
+
+  W) GATE UJ-RUN-001 RICEVUTO E CONSEGNATO. Trovato dalla trappola 11 su
+     agent/claude-run-handoff-20260818. GIA' FATTO, NON RIFARE:
+       prompts/handoffs/CLAUDE-RUN-001-DELIVERY-20260818.md  (blocco da incollare,
+         round-trip verificato: il blueprint riestratto rihasha identico)
+       docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md  (AC-01..AC-05, un controllo
+         ESEGUITO per criterio)
+       docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json (aggiornato, validatore
+         exit 0, 15 hash, accepted 0/13 invariato)
+     TRE INCOERENZE NEL GATE, segnalate a ChatGPT, nessuna bloccante: la card NON
+     esiste al commit 3611b1b4 al quale il gate ordina di leggerla (entra 12 minuti
+     dopo con d48e1e85); il gate dice `path` dove lo schema dice `ref`; il gate
+     chiede la mappatura per criterio DENTRO il packet e lo schema, con
+     additionalProperties:false, non la ammette.
+     >>> SERVE DA CHATGPT: decidere se lo schema prende un campo per criterio o se
+     il gate punta a un documento accanto. Oggi le due cose si contraddicono.
+
+  V) S-17 E S-19 ANCORA APERTI SU main, terza verifica consecutiva. E ci sono TRE
+     candidati per la stessa correzione. GIA' FATTO, NON RIFARE:
+       docs/program/reviews/UJ-SEC-003-STRICT-ZERO-CANDIDATE-RECONCILIATION.md
+       docs/threat-models/probes/S-17-strict-zero-candidate-probe.py
+       docs/threat-models/probes/S-19-embed-budget-gate-probe.py
+     Le sonde si automaterializzano dai ref con `git show`: si rieseguono dalla root
+     senza dipendere da file temporanei. Nessuna chiamata di rete reale, costo zero.
+     MISURATO: main 6 percorsi a pagamento/remoti su 7 attacchi, i candidati 0. Con
+     budget ESAURITO main chiama comunque (S-19), il branch CLAUDE no.
+     IL PUNTO CHE CONTA: v1 e v2 hanno cloud_bridge.py BYTE-IDENTICO (md5
+     2961c3a8...) e entrambe le basi precedono embed(). Mergiarli oggi chiuderebbe
+     S-17 e CANCELLEREBBE embed() e le 4 guardie di budget — core/memory.py:118 lo
+     importa e lo chiama a riga 139, quindi romperebbe il lavoro di Gemini.
+     >>> RACCOMANDATO: portare su main la versione del branch CLAUDE, la sola su
+     una base che contiene embed(). NON l'ho fatto io: direct_main_write false.
+
+  U) UJ-CAP-001: LA CORRECTION REQUEST DI CHATGPT COPRE 4 DELLE MIE 6 CORREZIONI.
+     GIA' FATTO, NON RIFARE:
+       docs/program/reviews/UJ-CAP-001-CLAUDE-GATE-COVERAGE.md
+       prompts/handoffs/CLAUDE-TO-GEMINI-MERIT-ADDENDUM-UJ-CAP-001-20260818.md
+     Coperte: 7 campi JSON, URL+ora UTC, rate limit. NON coperte: G-004 (la matrice
+     §4 contraddice la tassonomia §2 DENTRO il Markdown, quindi "far concordare MD e
+     JSON" si soddisfa propagando l'errore nel JSON) e G-005 (la classe
+     local-compute di AC-04, assente dalla request).
+     >>> SERVE DA CHRISTIAN: incollare l'addendum INSIEME alla request di ChatGPT,
+     stesso messaggio. Separarli costa un terzo giro di HUMAN_BRIDGE.
+     UJ-CAP-001 resta 0/13. Nessun ReviewResult emesso.
 
 SESSIONE 4 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
 
@@ -2420,14 +2701,16 @@ NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
               npx tsc -p packages/contracts            -> exit 0   (BUILD: i test
                                                           importano da dist/)
               for f in tests/contracts/*.test.mjs; do node --test "$f"; done
-              totale atteso: 138/138 (runtime 34 · policy 28 · tools 30 ·
+              totale atteso: 140/140 (runtime 36 · policy 28 · tools 30 ·
                                       recovery 9 · skills 37)
+              ERA 138 fino alla sessione 4: i due test in piu' sono le regressioni
+              di E6 aggiunte in sessione 5, non un errore di conteggio.
             SE SALTI LA BUILD ottieni 5 suite su 5 fallite con
             ERR_MODULE_NOT_FOUND su packages/contracts/dist/... . NON è una
             regressione: dist/ è in .gitignore e in un container nuovo non
             esiste. La sessione 4 ci è cascata perché questo blocco elencava solo
             --noEmit e metteva i test PRIMA del typecheck (errore E16).
-            Riverificato in sessione 4 dopo la build: 138/138 pass, exit 0.
+            Riverificato in sessione 5 dopo la build: 140/140 pass, exit 0.
 
 RICORDA   : a fine task, Regola 2 — aggiorna CLAUDE.md e TASKCLAUDE.md (estensione,
             mai riscrittura), poi commit e push. Un push va verificato leggendo

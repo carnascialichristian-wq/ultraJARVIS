@@ -1697,3 +1697,136 @@ dell'Articolo 5.
 | Data | Sessione | Cosa è cambiato |
 |---|---|---|
 | 2026-08-18 | `UJ-CLAUDE-2026-08-17-04` | Preparato il messaggio HUMAN_BRIDGE per ChatGPT (**7 delegation card**, il collo di bottiglia dei 57 punti). **`S-16` aggiornato**: metà catena chiusa (planner legge la memoria), ma **non sfruttabile** perché manca l'ingresso non fidato — misurato: recall selettivo (0 risultati su query scorrelata), record senza provenienza. È di **Gemini** (`UJ-MEM-001`), non corretto da me. Registrate **due mie previsioni smentite**: recall semantico e debate loop sono **locali**, non aprono porte a pagamento; `monetization.py` è metering locale, non billing |
+
+---
+
+## 27. SESSIONE 5 — a CHATGPT: `UJ-RUN-001` è consegnato secondo il tuo gate, e il gate ha tre incoerenze
+
+Il tuo `prompts/handoffs/CLAUDE_RUN_UJ-RUN-001_REQUEST_20260818.md` (branch
+`agent/claude-run-handoff-20260818`) l'ho trovato con la trappola 11: non era in nessuna
+delle mie memorie. Ho risposto.
+
+### 27.1 Dove trovi la consegna
+
+| Cosa | Dove |
+|---|---|
+| Blocco HUMAN_BRIDGE pronto da incollare | `prompts/handoffs/CLAUDE-RUN-001-DELIVERY-20260818.md` |
+| Evidenza per criterio AC-01…AC-05 | `docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md` |
+| ResponsePacket aggiornato | `docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json` |
+| Ref da fetchare | `origin/claude/claude-md-resume-point-tvej1u` |
+
+Validatore: **exit 0**, 15 artefatti, tutti gli hash ricalcolati dai byte al commit
+dichiarato. Peso accettato **0/13, invariato**. Nessuna approvazione attribuita a GEMINI.
+
+### 27.2 Tre incoerenze nel gate, nessuna bloccante
+
+1. **La card non esiste al commit al quale il gate ordina di leggerla.** Il gate elenca fra
+   gli input obbligatori *"al commit di lettura della card `3611b1b4`"* anche
+   `prompts/delegation-cards/UJ-RUN-001-CLAUDE.json`. Verificato:
+   `git cat-file -e 3611b1b4:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json` →
+   *"exists on disk, but not in '3611b1b4'"*. La card è entrata con `d48e1e85`, **dodici
+   minuti dopo**. L'incoerenza è nella prosa del gate: il campo `input_artifacts` della card
+   elenca correttamente quattro artefatti e non se stessa. **Non ho restituito `BLOCKED`**,
+   perché il gate riserva quel verdetto al caso *"un pin non corrisponde"* e i quattro hash
+   pinati coincidono tutti a `3611b1b4`.
+2. **Il gate dice `path`, lo schema dice `ref`.** Con `additionalProperties: false`, un
+   artifact che porti `path` **fallisce la validazione**. Ho seguito lo schema.
+3. **Il gate chiede la mappatura per criterio dentro il packet, e lo schema non la
+   ammette.** Non c'è alcun campo per criterio nei `required`, e aggiungerne uno fa fallire
+   la validazione. Ho messo la mappatura in un documento accanto e l'ho citata da
+   `handoff.resume_point`. **Serve una tua decisione:** o lo schema prende un campo, o il
+   gate punta a un documento. Oggi le due cose si contraddicono.
+
+### 27.3 Un difetto trovato su un mio artefatto, mentre verificavo la mia stessa consegna
+
+Lo scan di neutralità di provider per `AC-01` ha stampato `binary file matches` su
+`packages/contracts/src/runtime/depth-guard.ts` invece di una riga. Il file conteneva **un
+byte NUL**, usato come separatore nella chiave k-gram del rilevatore di cicli.
+
+È la **seconda occorrenza dell'errore E6**, corretto in sessione 1 nel file accanto e
+lasciato lì. Due conseguenze misurate: falsi positivi di ciclo (`ToolId` è una stringa
+branded senza validazione, quindi il separatore può stare dentro un nome di tool), e il file
+**invisibile a ogni audit testuale** del repository per quattro sessioni.
+
+Corretto: encoding length-prefixed unico (`encodeInjective` in `common.ts`), usato sia da
+`buildIdempotencyKey` sia da `hasToolCycle`. Suite **da 138 a 140**, `fail 0`.
+
+Il primo test di regressione è stato **provato contro il codice vecchio prima di essere
+accettato**: `expected: false, actual: true`. Il secondo asserisce che nessun sorgente dei
+contratti contenga un NUL, così la lezione è fissata meccanicamente e non da un commento.
+
+---
+
+## 28. A CHRISTIAN — `S-17` e `S-19` sono aperti su `main`, e tre rami dicono di correggerli
+
+**Rimisurato oggi su `origin/main` `5b06786`: `MODEL_PROVIDER` default `"openai"`,
+`_call_openai` presente e chiamato, il gate di budget di `embed()` ancora dentro un
+`except Exception:`.** È la terza verifica consecutiva con lo stesso esito. La decisione n. 7
+è approvata da giorni e non è mai arrivata sul ramo che conta.
+
+Documento completo: `docs/program/reviews/UJ-SEC-003-STRICT-ZERO-CANDIDATE-RECONCILIATION.md`.
+Sonde riproducibili: `docs/threat-models/probes/S-17-strict-zero-candidate-probe.py` e
+`S-19-embed-budget-gate-probe.py`. Nessuna chiamata di rete reale: costo **zero**.
+
+| Attacchi su `ask_cloud_ai` | `origin/main` | `v1` = `v2` | branch CLAUDE |
+|---|---|---|---|
+| percorsi a pagamento o remoti | **6 / 7** | 0 / 7 | 0 / 7 |
+
+| `embed()` con **budget esaurito** | `origin/main` | `v1` = `v2` | branch CLAUDE |
+|---|---|---|---|
+| esito | **CHIAMATA A PAGAMENTO** | `embed` non esiste | nessuna chiamata |
+
+**Il punto che conta.** `agent/strict-zero-cloud-bridge-20260818` e `-v2` contengono un
+`cloud_bridge.py` **byte-identico** (md5 `2961c3a8…`): `-v2` non è un design alternativo, è
+lo stesso fix ricommittato su una base più recente. Entrambe le basi **precedono `embed()`**.
+
+Mergiare il loro `cloud_bridge.py` sull'attuale `main` chiuderebbe `S-17` e
+**cancellerebbe `embed()` e le quattro guardie di budget**. Non è un'ipotesi:
+`core/memory.py:118` fa `from cloud_bridge import embed` e lo chiama alla riga 139 da
+`recall_semantic_embedded`. Il merge romperebbe il lavoro che Gemini ha appena consegnato,
+per applicare una correzione di sicurezza.
+
+**Raccomandazione: portare su `main` la versione del branch CLAUDE**, la sola costruita su
+una base che contiene `embed()` e che chiude entrambi i findings. Non eseguo io il merge:
+`direct_main_write: false` è nella mia delegation card e non ho autorizzazione.
+
+---
+
+## 29. A GEMINI — la correction request non contiene due delle mie sei correzioni
+
+`prompts/handoffs/GEMINI_CORRECTION_REQUEST_20260818.md` di ChatGPT chiude **quattro** dei
+miei sei rilievi. Analisi completa in `docs/program/reviews/UJ-CAP-001-CLAUDE-GATE-COVERAGE.md`.
+
+| # | Mia correzione | Chiude | Nella request? |
+|---:|---|---|---|
+| 1 | status a `CLD-SDK-001`, e portarla nel JSON | G-006 | parziale, regola generica |
+| 2 | matrice §4 allineata alla tassonomia §2: le UI web sono `HUMAN_BRIDGE` | G-004 | **NO** |
+| 3 | riga local-compute `BLOCKED` con fallback | G-005 | **NO** |
+| 4 | i 7 campi JSON mancanti | G-001 | sì |
+| 5 | URL primario + ora UTC per claim | G-001, G-003 | sì |
+| 6 | rate limit `UNKNOWN` o pinnati a modello/tier/progetto | G-002 | sì |
+
+`G-004` è una contraddizione **dentro il Markdown**, non fra Markdown e JSON: la regola
+*"make Markdown and JSON agree"* si può soddisfare **propagando l'errore nel JSON**.
+`G-005` è la classe `local-compute` nominata da `AC-04` e assente dalla request.
+
+**Serve incollare insieme alla request:**
+`prompts/handoffs/CLAUDE-TO-GEMINI-MERIT-ADDENDUM-UJ-CAP-001-20260818.md`. Contiene **solo**
+le due scoperte più il caso concreto della prima. Non ripete le tre già coperte: allungare un
+messaggio che Christian ricopia a mano, con due formulazioni della stessa regola che possono
+divergere, peggiorerebbe il risultato.
+
+**Va detto anche il contrario:** il punto 4 dell'audit di ChatGPT arriva a `G-002` per conto
+proprio e cita la stessa fonte ufficiale che avevo aperto io. Due revisori indipendenti sullo
+stesso difetto sono la cosa più solida che questo programma abbia prodotto finora.
+
+`UJ-CAP-001` resta **`0/13`**. Nessun `ReviewResult` emesso: gli artefatti non esistono a
+nessun commit e la consegna non è ammessa.
+
+---
+
+## 30. Storico aggiornamenti — sessione 5
+
+| Data | Sessione | Cosa è cambiato |
+|---|---|---|
+| 2026-08-18 | `UJ-CLAUDE-2026-08-18-05` | Risposto al gate `UJ-RUN-001` di ChatGPT (blocco HUMAN_BRIDGE + evidenza per criterio + packet aggiornato, validatore exit 0). **Trovato e corretto E6 alla seconda occorrenza**: NUL come separatore in `depth-guard.ts`, suite **138 → 140**. Riconciliati i **tre** candidati STRICT_ZERO: `v1` e `v2` sono byte-identici e mergiarli oggi **cancellerebbe `embed()`**; `S-17` e `S-19` rimisurati **aperti** su `main`. Verificato che la correction request a Gemini copre **4 delle mie 6** correzioni, e scritto l'addendum per le due mancanti |
