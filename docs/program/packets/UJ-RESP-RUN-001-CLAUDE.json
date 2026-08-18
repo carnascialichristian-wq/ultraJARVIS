@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
-  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818-BLOCKED",
-  "created_at": "2026-08-18T15:42:27Z",
+  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818-BLOCKED-R3",
+  "created_at": "2026-08-18T20:13:49Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "79408449bd096613d2823efe6872ed424b757ee6",
+  "source_commit_sha": "a7e03e979baee5a8b796007313ad93408299f840",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -31,7 +31,7 @@
   ],
   "task_id": "UJ-RUN-001",
   "status": "BLOCKED",
-  "executive_delta": "BLOCKED, not delivered. The delegation card UJ-RUN-001-CLAUDE.json does not exist at the commit its own repository_scope.read_ref names, 3611b1b400cf57b5021bab228a3de9470d6eca5c. Verified by execution: `git cat-file -e 3611b1b4:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json` fails with \"exists on disk, but not in '3611b1b4'\". The card was introduced twelve minutes later by commit d48e1e8519a8d7af90ea44e770f0db7fd3938fb3. The owner instructed that an unavailable card at the read_ref returns BLOCKED rather than proceeding. The blueprint and contracts exist and are hashed at a single reconciled commit so the delivery can be admitted unchanged once the read_ref is corrected. Accepted weight unchanged at 0/13.",
+  "executive_delta": "BLOCKED, not delivered. The delegation card UJ-RUN-001-CLAUDE.json does not exist at the commit its own repository_scope.read_ref names, 3611b1b400cf57b5021bab228a3de9470d6eca5c. Verified by execution: `git cat-file -e 3611b1b4:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json` fails with \"exists on disk, but not in '3611b1b4'\". The card was introduced twelve minutes later by commit d48e1e8519a8d7af90ea44e770f0db7fd3938fb3. The owner instructed that an unavailable card at the read_ref returns BLOCKED rather than proceeding. The blueprint and contracts exist and are hashed at a single reconciled commit so the delivery can be admitted unchanged once the read_ref is corrected. One further reconciliation round was needed: HANDOFF-UJ-RUN-001.md, itself one of the fifteen hashed artifacts, was still the session-1 document and declared branch claude/ultrajarvis-repo-analysis-li6vvj, status REVIEW and 33 tests, contradicting the packet and the blueprint pinned on the same commit. It has been rewritten and the source commit moved accordingly; exactly one of the fifteen hashes changed, which is the evidence that the correction was surgical. Accepted weight unchanged at 0/13.",
   "facts": [
     {
       "claim": "The delegation card is absent at its own declared read_ref. `git cat-file -e 3611b1b4:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json` fails; the card enters the history at d48e1e8519a8d7af90ea44e770f0db7fd3938fb3, twelve minutes after 3611b1b4.",
@@ -86,6 +86,42 @@
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "git branch -a --contains",
       "verified_at": "2026-08-18T15:42:27Z"
+    },
+    {
+      "claim": "HANDOFF-UJ-RUN-001.md, one of the fifteen hashed artifacts, still declared branch claude/ultrajarvis-repo-analysis-li6vvj, status REVIEW, 33 tests and a task table asserting ledger transitions that were never applied. It has been rewritten and the source commit moved from 79408449 to a7e03e97.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git show <commit>:docs/program/handoffs/HANDOFF-UJ-RUN-001.md | sha256sum, at both commits",
+      "verified_at": "2026-08-18T20:13:49Z"
+    },
+    {
+      "claim": "UJ-INT-007 DOES exist among the 43 tasks of docs/program/BACKLOG.json (owner CHATGPT, reviewer GEMINI, weight 13, milestone M10, status DEFERRED). An earlier CLAUDE note claiming it was absent was a false negative produced by reading t.id where the field is t.task_id. UJ-REV-002 remains unworkable, but because its dependency is deferred, not because it is missing.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "docs/program/BACKLOG.json, tasks[].task_id",
+      "verified_at": "2026-08-18T17:39:30Z"
+    },
+    {
+      "claim": "The delegation card declares five acceptance criteria for UJ-RUN-001 while docs/program/BACKLOG.json declares two, and the four inputs pinned by the card all still match at 3611b1b4 (a3fcdfc9, 72edc395, eb4d0d0d, ee44e1b7), recomputed in this session.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json and docs/program/BACKLOG.json; git show 3611b1b4:<path> | sha256sum",
+      "verified_at": "2026-08-18T17:39:30Z"
+    },
+    {
+      "claim": "A scan of the whole delivery set for superseded state written in the present tense found FOUR occurrences, not one: the handoff; RUNTIME_CONTRACTS_PROVENANCE.status = \"REVIEW\" in packages/contracts/src/runtime/index.ts, which is the only machine-readable copy of the status and is offered by its own comment 'for the Program OS ledger'; the package.json description; and the blueprint's provenance note claiming the canonical prompt was not yet on main. All four are corrected. Recomputing all fifteen hashes at both source commits shows exactly 4 of 15 changed, which are precisely those four artifacts.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "grep over the delivery set; git show <commit>:<ref> | sha256sum at 79408449 and a7e03e97",
+      "verified_at": "2026-08-18T20:13:49Z"
+    },
+    {
+      "claim": "The blueprint's provenance claim was false, measured rather than assumed: git show origin/main:docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md | sha256sum and git show b8a7697:<same path> | sha256sum both return a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87. The canonical prompt is on main and the bytes are identical, so the provenance still holds and only the place to read it changed.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git show origin/main:docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md | sha256sum",
+      "verified_at": "2026-08-18T20:13:49Z"
+    },
+    {
+      "claim": "Nothing in the repository reads RUNTIME_CONTRACTS_PROVENANCE: grep over every .ts, .mjs and .js outside dist/ returns only its own declaration. Changing status from REVIEW to BLOCKED therefore cannot break a consumer, and typecheck, build and the 140 tests were re-run after the edit to confirm it.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "grep -rn RUNTIME_CONTRACTS_PROVENANCE --include=*.ts --include=*.mjs --include=*.js",
+      "verified_at": "2026-08-18T20:13:49Z"
     }
   ],
   "assumptions": [
@@ -122,10 +158,10 @@
   "artifacts": [
     {
       "ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
-      "sha256": "d03c2fea30f2d0a994d92c16a87c4e1218351e8094daf29aa5625db625ba75ea",
+      "sha256": "bccc5a08d3ab8fc9245c0e6dcb8f946d1616bdda40f8e001d3ad1e3504e0cf6c",
       "media_type": "text/markdown",
       "data_class": "C1",
-      "summary": "Provider-neutral runtime blueprint. Part I (sections 0-15): AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, six proposed ADRs. Part II (sections 16-22, added session 5): task decomposition, agent selection, provider-neutral routing and HUMAN_BRIDGE, inter-agent conflicts, zero-cost local fallback, minimal end-to-end demo, and a traceability map of the 24 required points."
+      "summary": "Provider-neutral runtime blueprint. Part I (sections 0-15): AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, six proposed ADRs. Part II (sections 16-22, added session 5): task decomposition, agent selection, provider-neutral routing and HUMAN_BRIDGE, inter-agent conflicts, zero-cost local fallback, minimal end-to-end demo, and a traceability map of the 24 required points. The provenance note was corrected in session 6: it claimed the canonical prompt was not yet on main, which is no longer true, and the bytes on origin/main are identical to those at b8a7697."
     },
     {
       "ref": "packages/contracts/src/runtime/agent-manifest.ts",
@@ -164,10 +200,10 @@
     },
     {
       "ref": "packages/contracts/src/runtime/index.ts",
-      "sha256": "08e06bde8eb51ab1ac9636a1bebfae12c6bd373643ba1c77180b1da64b85de1a",
+      "sha256": "8a42d88fb9526fc107970d628abbfbe239609423fb2c7fc5bd8b817c44f4ea5d",
       "media_type": "application/typescript",
       "data_class": "C1",
-      "summary": "Runtime contract module 'index': provider-neutral TypeScript types compiled under strict mode."
+      "summary": "Runtime contract module 'index': the public surface of the contract set, compiled under strict mode. RUNTIME_CONTRACTS_PROVENANCE carries the delivery status for the Program OS ledger and now reads BLOCKED; it read REVIEW until session 6, which made the only machine-readable copy of the status contradict this packet. The file header separately claimed 'Status: PROPOSAL' twenty-five lines above the constant; contract maturity and delivery admissibility are now stated as two distinct axes."
     },
     {
       "ref": "packages/contracts/src/runtime/run-ledger.ts",
@@ -192,10 +228,10 @@
     },
     {
       "ref": "packages/contracts/package.json",
-      "sha256": "3c085ad42466251192a5ecfa7ee71750bd6825d4f5cb6fa56df0c257c4f3980a",
+      "sha256": "c2bdb5b63d1b1bab4bf68d7c0644d5376eb7bc28298be53b59f50407b48bc566",
       "media_type": "application/json",
       "data_class": "C1",
-      "summary": "Contracts package manifest used to typecheck and build the runtime contracts."
+      "summary": "Contracts package manifest used to typecheck and build the runtime contracts. Its description declared 'status REVIEW' until session 6 and now states that the delivery is BLOCKED on the delegation card read_ref, not on the contracts themselves."
     },
     {
       "ref": "packages/contracts/tsconfig.json",
@@ -220,10 +256,10 @@
     },
     {
       "ref": "docs/program/handoffs/HANDOFF-UJ-RUN-001.md",
-      "sha256": "5b943a125bddfb70659daadceda7609527fed464d1ff9f1fb26c88887e7c5e45",
+      "sha256": "f1d4db2d608f39fc88510b524c59030c346f6f6f1e97436d496b5674de35d74d",
       "media_type": "text/markdown",
       "data_class": "C1",
-      "summary": "Handoff and resume point for UJ-RUN-001."
+      "summary": "Handoff and resume point for UJ-RUN-001, rewritten in session 6. It declares branch agent/uj-run-001-blueprint-20260818, status BLOCKED, accepted weight 0/13, runtime-invariants 36 and suite 140, the 22 unimplemented proofs of blueprint sections 16-21 plus the 11 still PENDING in 13.3 (33 in total), the unexecuted section 21 demo, and the card's absence at read_ref 3611b1b4 against its introduction at d48e1e85. Section 5 separates the measured BACKLOG status from the proposed status. Section 0.3 keeps the superseded values under an explicit history heading; section 0.4 records the defect class, four occurrences of a superseded state written in the present tense across this delivery set. The document does not name the commit containing it, because its own hash is part of that commit."
     }
   ],
   "verification": {
@@ -238,7 +274,11 @@
       "NUL-byte scan of every runtime contract source",
       "coverage count of the 24 required runtime points against the blueprint",
       "git branch -a --contains on the delivery commit",
-      "static and dynamic count of tests/contracts/runtime-invariants.test.mjs at the delivery commit"
+      "static and dynamic count of tests/contracts/runtime-invariants.test.mjs at the delivery commit",
+      "scan of the delivery set for stale branch names, stale status and stale test counts, with every surviving occurrence accounted for as explicitly marked history",
+      "recomputation of all fifteen artifact hashes at both the previous and the new source commit, to prove how many changed",
+      "grep for consumers of RUNTIME_CONTRACTS_PROVENANCE before changing it, and re-run of typecheck, build and the full suite after",
+      "round-trip of every block embedded in the HUMAN_BRIDGE delivery: each block re-extracted and re-hashed against the file it came from"
     ],
     "passed": [
       "four pinned input hashes match at 3611b1b4",
@@ -250,7 +290,9 @@
       "0 NUL bytes across all runtime contract sources",
       "24 of 24 requirements mapped to a section",
       "branch containment: agent/uj-run-001-blueprint-20260818 only",
-      "runtime-invariants: 36 tests, 36 pass, 0 fail, run from the repository root on the file byte-identical to the committed blob"
+      "runtime-invariants: 36 tests, 36 pass, 0 fail, run from the repository root on the file byte-identical to the committed blob",
+      "exactly 4 of 15 artifact hashes changed between 79408449 and a7e03e97: the handoff, the blueprint, packages/contracts/src/runtime/index.ts and packages/contracts/package.json — the four artifacts that carried a superseded state, and no others",
+      "no occurrence of a superseded branch, status or test count remains in a position that presents it as current; every surviving mention sits in an explicitly labelled history section or in a sentence that states the correction"
     ],
     "failed": [
       "delegation card availability at read_ref 3611b1b4: the file does not exist at that commit. This is the blocking condition."
@@ -348,6 +390,6 @@
   "handoff": {
     "target": "CHATGPT",
     "next_action": "Resolve the read_ref discrepancy on UJ-CARD-RUN-001-CLAUDE, then admit these bytes unchanged. GEMINI's review cannot begin while the task is BLOCKED.",
-    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha 79408449bd096613d2823efe6872ed424b757ee6, the single reference for blueprint, packet, AC evidence and handoff. It supersedes 2dad45a40798a8059b5e2b7db077b76e77fcc88b, whose blueprint bytes carried three internal inconsistencies now corrected. Accepted weight 0/13, unchanged. No BACKLOG edit was made."
+    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha a7e03e979baee5a8b796007313ad93408299f840, the single reference for blueprint, packet, AC evidence and handoff. It supersedes 79408449bd096613d2823efe6872ed424b757ee6, which still carried four artifacts declaring a superseded state, and which in turn superseded 2dad45a40798a8059b5e2b7db077b76e77fcc88b. Accepted weight 0/13, unchanged. No BACKLOG edit was made."
   }
 }
