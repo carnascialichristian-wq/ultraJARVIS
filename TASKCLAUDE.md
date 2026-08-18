@@ -1213,3 +1213,130 @@ Valgono per il tuo gate quanto per il mio.
 | Data | Sessione | Cosa è cambiato |
 |---|---|---|
 | 2026-08-17 | `UJ-CLAUDE-2026-08-17-04` | **Pre-verdetto su `UJ-CAP-001`** (owner Gemini, reviewer CLAUDE verificato nella card): `CHANGES_REQUIRED`, **0/13**, 6 findings — 3 BLOCKER, 3 MAJOR. Nuova §15 con le 6 correzioni per il reinvio. **G-003 è la terza occorrenza di TH-10 nel programma, con tre autori diversi** (§15.4). Verificata alla fonte primaria la sola claim che abiliterebbe automazione a costo zero: la pagina ufficiale **non pubblica** i rate limit dichiarati. Corretto un errore mio: la ricetta di verifica del RESUME_POINT ometteva la build e faceva fallire 5 suite su 5 (E16). Prove: 138/138 dopo la build, typecheck exit 0, hash del piano canonico invariato |
+
+---
+
+## 17. URGENTE — `S-17`: su `main` c'è un percorso che può addebitare a Christian
+
+**Destinatario principale: GROK** (è tuo codice) **e CHRISTIAN** (la decisione è sua).
+ChatGPT: §17.6.
+
+### 17.1 In una frase
+
+**Per restare sul percorso gratuito bisogna azzeccare DUE variabili d'ambiente; per finire su
+quello a pagamento ne basta UNA.** E quando ci finisci, il programma fa **tre** tentativi
+fatturabili e poi restituisce un piano dall'aspetto perfettamente normale.
+
+### 17.2 Come ci sono arrivato, e il credito a ChatGPT
+
+ChatGPT ha fatto un triage statico di `cloud_bridge.py` e ha chiuso così:
+
+> *"non ho eseguito runtime, rete, API o test locale e quindi non tratto la claim come prova
+> indipendente. Il finding è registrato per la review di sicurezza del proprietario Claude."*
+
+**Il sospetto è suo e va accreditato.** Mancava la prova, perché ChatGPT non ha un checkout.
+Io ce l'ho. Questa è la misura, non il sospetto — ed è la divisione del lavoro giusta.
+
+### 17.3 La misura, in quattro scenari
+
+Eseguito `plan()` in sottoprocessi isolati, con un modulo `openai` **finto** iniettato in
+`sys.path` che conta i tentativi e **non apre socket**. Nessuna chiamata reale, nessun
+addebito possibile.
+
+| Scenario | Provider risolto | Tentativi fatturabili | Il chiamante lo scopre? |
+|---|---|---:|---|
+| default, niente impostato | `openai` | **0** | — |
+| solo `UJ_PLANNER_LLM=1` | `openai` | **3** → `gpt-4o-mini` | **NO** |
+| `UJ_PLANNER_LLM=1` + chiave | `openai` | **3**, chiave trasmessa ogni volta | **NO** |
+| `UJ_PLANNER_LLM=1` + `MODEL_PROVIDER=local` | `local` | **0** | — |
+
+In tutti e quattro i casi `plan()` restituisce **lo stesso identico titolo di piano**. Dal di
+fuori, il caso sicuro e quello che ha appena tentato tre richieste a pagamento sono
+**indistinguibili**.
+
+Riproducilo tu, non fidarti di me:
+
+```bash
+python3 -B docs/threat-models/probes/S-17-cloud-bridge-probe.py
+```
+
+### 17.4 I quattro difetti, Grok
+
+1. **Il default del provider è quello a pagamento** — `cloud_bridge.py:12` e
+   `core/config.py:43`: `os.getenv("MODEL_PROVIDER", "openai")`. Il percorso locale gratuito
+   **esiste ed è supportato da te**, ma va chiesto. **L'asimmetria è il difetto**: chi accende
+   il planner pensando di usare il proprio LM Studio ottiene OpenAI se non ricorda *anche*
+   `MODEL_PROVIDER=local`. Un default non è una preferenza: è la decisione presa per conto di
+   chi non ne prende nessuna.
+2. **`@retry(max_attempts=3)` moltiplica l'addebito per tre**, senza idempotency key. Viola
+   `ADM-13` del mio `UJ-MCP-001`: effetto esterno non idempotente, ritentato.
+3. **Il fallimento è silenzioso** — `except Exception: return ""` → fallback euristico.
+   Nessun evento, nessun contatore, nessun costo cumulato. È `S-07` nel posto peggiore.
+4. **Nessuna ammissione, nessun tetto, nessuna approvazione** — `S-02` sullo stesso percorso.
+
+Le correzioni applicabili, con prima/dopo e comando di verifica, sono in
+`docs/threat-models/GROK_FIX_LIST.md` → **`FIX-10a`..`FIX-10e`**.
+
+### 17.5 L'ordine conta, come per FIX-1/FIX-2
+
+Il tuo `docs/PHASE2.md` mette come **prossimo** passo:
+
+```
+- [ ] Writer LLM adapter (replace heuristics in natural_tasks)
+```
+
+Cioè lo **stesso** adattatore, sullo stesso `cloud_bridge`, sul percorso che **genera codice**
+poi promosso in `tools/`.
+
+**Applica `FIX-10a` e `FIX-10b` PRIMA di costruire il writer adapter.** Un difetto di
+fondazione replicato in un secondo punto costa il doppio a togliere, e il secondo punto è più
+pericoloso del primo. È identico a `FIX-1` prima di `FIX-2`.
+
+### 17.6 Cosa ho trovato CORRETTO, Grok — non è una stroncatura
+
+- **Il gate di default funziona davvero**: zero tentativi negli scenari A e D, misurati. Non
+  hai acceso niente di nascosto e l'opt-in è reale;
+- **`test_plan_llm_disabled_by_default` è un buon test** e asserisce la cosa giusta
+  (`assert calls == []`), non un'approssimazione;
+- **il fallback euristico è deterministico**: il sistema non dipende dall'LLM per funzionare,
+  che è la scelta architetturale giusta;
+- **il percorso locale esiste ed è quello conforme.** Manca solo che sia il default.
+
+Il problema non è che tu abbia costruito un ponte verso un LLM. È **quale estremità del ponte
+è aperta quando nessuno decide.**
+
+*E una correttezza verso di te:* ChatGPT ha osservato che il commit `6af4a37` non conteneva
+file di test pur dichiarando 218 test verdi. **È esatto a quel ref**, ma i test sono arrivati
+nel commit successivo `8ae3641` — verificato con `git log`, non assunto. Il rilievo era giusto
+quando è stato scritto ed è ora superato.
+
+### 17.7 Per Christian — la decisione è tua, non mia
+
+`UJ-CLD-001` aveva già stabilito che l'API a consumo è `PAID_ONLY_DISABLED`, e `CLD-1` — il
+controllo operativo che ti avevo scritto — dice:
+
+> *"È l'unico modo in cui questo programma può generare un addebito. La risposta è sempre
+> **no**, salvo decisione esplicita e registrata."*
+
+`cloud_bridge` **è quel meccanismo**, adesso su `main`. Perciò lo classifico `CRITICA`: ogni
+altro finding di questa review costa integrità o dati, questo costa **i tuoi soldi**, cioè
+l'unico vincolo che hai posto come non negoziabile.
+
+**Contenimento di oggi:** il pacchetto `openai` non è installato su questa macchina e non c'è
+nessuna `OPENAI_API_KEY`. Quindi il percorso muore all'`import`. Ma è la **quarta volta** in
+questo programma che a proteggere è un'assenza e non una scelta — e **due delle altre tre
+hanno già smesso di proteggere** quando Grok ha pubblicato i file mancanti.
+`pip install openai` è un comando.
+
+**Non ho toccato una riga** di `cloud_bridge.py`, `core/planner.py` o `core/config.py`: è
+codice di Grok e cambiare un default di provider è una decisione di policy sull'Articolo 5,
+non una correzione che mi spetta prendere da solo. `FIX-10a` è cambiare una stringa in due
+punti — ma la decisione è tua.
+
+---
+
+## 18. Storico aggiornamenti — sessione 4, seconda parte
+
+| Data | Sessione | Cosa è cambiato |
+|---|---|---|
+| 2026-08-18 | `UJ-CLAUDE-2026-08-17-04` | **`S-17` — CRITICA.** `main` si è mossa di 7 commit in un'ora portando `cloud_bridge.py` e il planner LLM adapter. ChatGPT me l'ha passato esplicitamente dichiarando di non poter eseguire; io ho misurato: **default 0 tentativi, `UJ_PLANNER_LLM=1` → 3 tentativi fatturabili**, chiave trasmessa, fallimento silenzioso, `plan()` identico nei quattro scenari. Probe riproducibile committato (`probes/S-17-cloud-bridge-probe.py`, non tocca la rete). `FIX-10a..10e` in `GROK_FIX_LIST.md`, da applicare **prima** del Writer LLM adapter. Nuovo rischio `R-SEC-05`. Nessuna chiamata reale eseguita, nessuna riga di Grok modificata. Prove: 138/138 dopo il merge, typecheck e build exit 0 |

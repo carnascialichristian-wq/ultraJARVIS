@@ -385,3 +385,114 @@ sicurezza che non girano nulla. Ognuna, letta da sola, *sembra* una difesa.
 > leggendone il nome.
 
 Ogni fix qui sopra ha il suo comando di verifica proprio per questo.
+
+---
+
+# AGGIUNTA 2026-08-18 — `FIX-10`, dopo il push del planner LLM adapter
+
+> I nove fix sopra sono stati **applicati da Grok e verificati da me** (`main` @ `fc5458b`,
+> dettaglio in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §10-ter). Quanto segue riguarda codice
+> **nuovo**, arrivato dopo: `cloud_bridge.py` e `core/planner.py` a `main` @ `04ae305`.
+
+## FIX-10 — `cloud_bridge` va sul percorso a pagamento per default · **CRITICA**
+
+**Questo è il fix più urgente della lista, e va applicato PRIMA del "Writer LLM adapter"
+che `docs/PHASE2.md` mette come prossimo passo.** Motivo: il writer adapter userebbe lo
+stesso `cloud_bridge`, sul percorso che genera codice. Un difetto di fondazione replicato
+costa il doppio a togliere, e il secondo punto è più pericoloso del primo. È la stessa
+ragione per cui `FIX-1` andava prima di `FIX-2`.
+
+### Il problema, misurato
+
+Per restare sul percorso gratuito servono **due** variabili giuste. Per finire su quello a
+pagamento ne basta **una**.
+
+| Scenario | Provider risolto | Tentativi fatturabili |
+|---|---|---:|
+| default | `openai` | 0 |
+| `UJ_PLANNER_LLM=1` | `openai` | **3** |
+| `UJ_PLANNER_LLM=1` + chiave | `openai` | **3**, chiave trasmessa |
+| `UJ_PLANNER_LLM=1` + `MODEL_PROVIDER=local` | `local` | 0 |
+
+Verifica (non tocca la rete, usa un modulo `openai` finto):
+
+```bash
+python3 -B docs/threat-models/probes/S-17-cloud-bridge-probe.py
+```
+
+Chi accende il planner pensando di usare il proprio LM Studio ottiene **OpenAI**, se non
+ricorda anche `MODEL_PROVIDER=local`. Il contenimento di oggi è che il pacchetto `openai`
+non è installato — cioè un'assenza, non una policy. `pip install openai` è un comando.
+
+### FIX-10a — il default diventa il percorso a costo zero
+
+`cloud_bridge.py` riga 12 **e** `core/config.py` riga 43:
+
+```python
+# prima
+PROVIDER = os.getenv("MODEL_PROVIDER", "openai").lower()
+
+# dopo
+PROVIDER = os.getenv("MODEL_PROVIDER", "local").lower()
+```
+
+### FIX-10b — spendere richiede un interruttore dedicato
+
+`cloud_bridge.py`, in testa a `_call_openai`:
+
+```python
+# dopo
+if os.getenv("UJ_ALLOW_PAID_API", "").strip() != "1":
+    raise RuntimeError(
+        "Refusing to call a paid API: STRICT_ZERO_CARD. "
+        "Set MODEL_PROVIDER=local, or set UJ_ALLOW_PAID_API=1 to accept charges."
+    )
+```
+
+Due interruttori indipendenti per spendere, nessuno per non spendere.
+
+### FIX-10c — il retry non deve moltiplicare l'addebito
+
+```python
+# prima
+@retry(max_attempts=3, delay=1.0, backoff=1.5, exceptions=(Exception,))
+def _call_openai(...)
+
+# dopo — finché non esiste una idempotency key
+@retry(max_attempts=1, delay=1.0, backoff=1.5, exceptions=(Exception,))
+def _call_openai(...)
+```
+
+Una `plan()` logica non deve valere tre richieste fatturabili. Viola `ADM-13`: effetto
+esterno non idempotente, ritentato.
+
+### FIX-10d — il fallimento non deve essere indistinguibile dal non-uso
+
+Oggi `ask_cloud_ai` restituisce `""` sia se l'LLM non è configurato sia se ha tentato tre
+volte a pagamento ed è fallito. Il chiamante non può distinguerli, e infatti `plan()`
+restituisce lo **stesso identico piano** nei due casi. Restituire un esito strutturato
+(`ok`, `provider`, `attempts`) invece di una stringa vuota.
+
+### FIX-10e — un tentativo a pagamento deve lasciare traccia
+
+Nessun evento viene emesso, nessun contatore esiste. È `S-07` sul percorso che costa denaro.
+Serve almeno un contatore cumulato leggibile da `uj`.
+
+### Verifica che fallisce finché il difetto è presente
+
+```bash
+# deve stampare 0 tentativi anche con il gate aperto e senza MODEL_PROVIDER
+UJ_PLANNER_LLM=1 python3 -B docs/threat-models/probes/S-17-cloud-bridge-probe.py
+```
+
+Con `FIX-10a`+`FIX-10b` applicati, lo scenario B e lo scenario C devono passare da **3** a
+**0** tentativi.
+
+### Cosa NON va toccato — è già corretto
+
+- il **gate di default funziona**: senza `UJ_PLANNER_LLM=1` non parte nulla, misurato;
+- `test_plan_llm_disabled_by_default` è un buon test e asserisce la cosa giusta;
+- il fallback euristico è deterministico: il sistema non dipende dall'LLM per funzionare;
+- il percorso locale esiste ed è quello conforme. **Manca solo che sia il default.**
+
+Il problema non è il ponte verso un LLM. È **quale estremità è aperta quando nessuno decide.**
