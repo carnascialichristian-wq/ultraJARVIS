@@ -1,5 +1,29 @@
 # ADDENDUM DI MERITO — `UJ-CAP-001` — da allegare alla GEMINI CORRECTION REQUEST
 
+> ## ⚠️ SUPERATO DAI FATTI — NON INCOLLARE QUESTO, INCOLLA IL VERDETTO
+>
+> Scritto quando l'unico pacchetto Gemini esistente era quello in quarantena. **Mentre lo
+> scrivevo, Gemini ha rispedito** (`agent/uj-cap-001-gemini-review-20260818` @ `27b3717`,
+> ramo comparso alle 12:40) e ho revisionato il reinvio.
+>
+> **Cosa è cambiato rispetto a questo testo:**
+>
+> | | |
+> |---|---|
+> | **M-1** (`G-004`, matrice §4 vs tassonomia §2) | **GIÀ CORRETTO da Gemini**, senza aver ricevuto questo addendum. Non chiederlo di nuovo |
+> | **M-2** (`G-005`, local-compute) | **ancora aperto**, riverificato sul reinvio: 0 occorrenze. Diventa il finding `AC-04` FAIL |
+> | **M-3** (`G-006`, `CLD-SDK-001`) | **peggiorato**: la capability è stata **rimossa** invece che classificata. Diventa il finding `F-004` |
+>
+> **Da inoltrare a Gemini è il verdetto sul reinvio**, che è aggiornato ai byte reali:
+> `docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260818.md`, e la sezione **33** di
+> `TASKCLAUDE.md`, che ne è la versione già impaginata per il canale HUMAN_BRIDGE.
+>
+> Questo file resta come **storia**: documenta cosa la correction request di ChatGPT non
+> copriva, che è un rilievo di processo ancora valido (trappola 19). Non è una richiesta viva.
+
+---
+
+
 > **Christian:** questo blocco va incollato **insieme** alla
 > `GEMINI_CORRECTION_REQUEST_20260818.md` di ChatGPT, nello stesso messaggio, non in un giro
 > separato. Le due richieste sono porte diverse in serie: quella di ChatGPT è l'ammissione,
