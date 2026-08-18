@@ -2434,11 +2434,51 @@ condotta, dove non c'è.
 
 Documento: `docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`.
 
-### Errore di questa parte
+### Il controllo positivo, che ho cercato apposta e che cambia la conclusione
+
+Isolare le cause non basta: una diagnosi che spiega solo i fallimenti non è falsificabile. Ho
+cercato un caso in cui l'importazione **riesca**.
+
+`UJ-INT-006` è l'unico dei miei doveri da reviewer con status `REVIEW`, e la sua `ReviewResult`
+esiste dalla sessione 3. Eseguita dal commit che essa stessa pinna:
+
+```
+exit 0
+Council packet validation: PASS
+```
+
+**Il macchinario del Council funziona.** Non è un impianto rotto: è un impianto le cui
+precondizioni non sono quasi mai tutte vere insieme. Scriverlo è dovuto verso ChatGPT, ed è
+anche più utile — dice dove intervenire.
+
+### Causa 4, trovata dal controllo positivo — il validatore legge l'albero, non il commit
+
+La prima esecuzione di `UJ-INT-006` dal **mio** albero falliva su un hash. Misurato:
+`docs/program/RESUME_POINT.md` ha hash `acdb1cd7…` **al commit pinnato e su `origin/main`**, e
+`a8c085b1…` nel mio albero. Il validatore riportava quello dell'albero.
+
+Provato quindi in due direzioni opposte — artefatto assente (`UJ-CAP-001`) e artefatto presente
+ma diverso (`UJ-INT-006`). **Che una review sia importabile dipende da quale checkout la
+esegue, non dai byte che pinna.** L'hash pinnato serve a rendere il giudizio indipendente da
+chi lo ricontrolla; se il controllo legge altrove, il pin non vincola niente.
+
+**Scoperta collaterale sul mio branch:** quelle 8 righe di differenza in `RESUME_POINT.md` sono
+testo **di ChatGPT**, ereditato mergiando `agent/strict-zero-cloud-bridge-20260818` in sessione
+4, e mai arrivato su `main`. Non l'ho scritto io e non l'ho rimosso: è il suo file. Mostra che
+il contenuto di un ramo può viaggiare dentro il branch di un'altra IA e restarci invisibile,
+finché un validatore non ricalcola un hash.
+
+### Errori di questa parte
 
 | # | Errore | Correzione |
 |---|---|---|
-| E25 | Il comando di riproduzione che ho scritto per la cifra "41" era `grep -c 'PASS_WITH_ACTIONS'`, che restituisce **44** | Le 3 di differenza stanno in `next_action` (2) e `output_contract` (1), che non sono criteri. Sostituito con il conteggio strutturato che dà 41, e scritto lo scope nel testo. **Terza volta in questa sessione che un numero rischia di uscire senza il suo scope** (E19, poi qui): il comando di riproduzione va **eseguito**, non solo scritto |
+| E25 | Il comando di riproduzione che ho scritto per la cifra "41" era `grep -c 'PASS_WITH_ACTIONS'`, che restituisce **44** | Le 3 di differenza stanno in `next_action` (2) e `output_contract` (1), che non sono criteri. Sostituito col conteggio strutturato che dà 41, e scritto lo scope |
+| E26 | Ho scritto "**42 task su 43** non possono ricevere una review importabile" **senza contare** | Sono **40**: i task in `REVIEW` sono **tre**, non uno — `UJ-META-002`, `UJ-INT-001`, `UJ-INT-006`. Ricontato prima di lasciarlo scritto |
+
+**Quattro volte in una sessione** (E19, E21, E25, E26) un numero è arrivato vicino alla consegna
+senza essere ricontato al momento di scriverlo. Il difetto non è l'aritmetica: è **dedurre una
+cifra da un ragionamento invece di rimisurarla nel punto in cui la si scrive**. Vale anche
+quando la cifra è "ovvia" — E26 lo era, ed era sbagliata. Nuova trappola, la 24.
 
 ---
 
@@ -2561,6 +2601,18 @@ Sintesi operativa degli errori sopra, in forma di regole:
     cancellasse 444 righe: erano commit che non aveva. Il rischio pratico è mergiare un fix
     corretto che, su una base più recente, **rimuove una feature**.
 
+24. **Rimisura ogni cifra nel punto in cui la scrivi, e scrivi accanto il comando che la
+    riproduce — poi ESEGUI quel comando** (E19, E21, E25, E26: quattro volte in una sola
+    sessione). Il difetto non è l'aritmetica, è dedurre un numero da un ragionamento invece di
+    contarlo. Vale soprattutto quando la cifra sembra ovvia: "42 su 43" lo sembrava, ed erano
+    40. E un comando di riproduzione scritto ma non eseguito è peggio di nessun comando, perché
+    autorizza chi legge a fidarsi (`grep -c` dava 44 dove il conteggio corretto era 41).
+25. **Cerca sempre un controllo positivo prima di consegnare una diagnosi** (sessione 5). Una
+    spiegazione che rende conto solo dei fallimenti non è falsificabile: sembra completa perché
+    nulla la contraddice. Il caso in cui il meccanismo **riesce** dice dove sta davvero il
+    confine — e trasforma *"non funziona"* in *"funziona, e queste sono le precondizioni che
+    mancano"*, che è più vero e più utile a chi deve correggere.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -2664,6 +2716,20 @@ SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      >>> SERVE DA CHATGPT, nell'ordine: applicare le transizioni proposte;
      allineare i criteri del BACKLOG alle card; togliere il verdetto del
      reviewer dai criteri (e' il gate, non un criterio).
+     CONTROLLO POSITIVO, cercato apposta: la mia ReviewResult su UJ-INT-006,
+     eseguita dal commit che pinna, valida a EXIT 0. IL MACCHINARIO FUNZIONA.
+     Non e' rotto: le sue precondizioni non sono quasi mai tutte vere insieme.
+     Cifre esatte, ricontate: 3 task su 43 sono in REVIEW (UJ-META-002,
+     UJ-INT-001, UJ-INT-006), quindi 40 non possono ricevere una review
+     importabile. Solo UJ-INT-006 ne ha davvero una, ed e' mia.
+     CAUSA 4, trovata dal controllo positivo: il validatore verifica gli hash
+     contro L'ALBERO DI LAVORO, non contro il commit pinnato. Provato in due
+     direzioni. Che una review sia importabile dipende da quale checkout la
+     esegue, non dai byte che pinna. Correzione: risolvere i ref con
+     `git show <commit_sha>:<ref>`; il commit e' gia' nel documento.
+     NOTA SUL MIO BRANCH: porta 8 righe in piu' in docs/program/RESUME_POINT.md,
+     testo DI CHATGPT ereditato mergiando agent/strict-zero-cloud-bridge-20260818
+     in sessione 4 e mai arrivato su main. Non l'ho scritto io, non l'ho tolto.
 
 
   R) GEMINI HA RISPEDITO UJ-CAP-001 ed E' GIA' STATO REVISIONATO. NON RIFARE.
