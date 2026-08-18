@@ -2482,6 +2482,49 @@ quando la cifra è "ovvia" — E26 lo era, ed era sbagliata. Nuova trappola, la 
 
 ---
 
+## Sessione 5, sesta parte — `S-18` riverificato, e una forma che oggi ho incontrato tre volte
+
+`S-18` distrugge la memoria di Grok a ogni esecuzione dei test: valeva la pena controllare se
+fosse ancora aperto invece di fidarmi del RESUME_POINT.
+
+**`pytest` non è installato in un container nuovo**, quindi la verifica scritta in `FIX-11`
+(`python3 -m pytest tests/test_files.py -q`) **non è eseguibile a freddo**. Invece di
+dichiararlo non verificabile ho riprodotto il **meccanismo** con Python semplice, in un
+worktree usa-e-getta su `origin/main`.
+
+**Ancora aperto.** `grok.md` è passato da `d72ece89c9e7` a `6fa4b5249c69` **nella root reale**,
+e nella temp dir non è stato scritto niente. Il mio albero di lavoro è rimasto intatto.
+
+### La precisazione che rende la diagnosi esatta, e che avevo quasi sbagliato
+
+La mia prima esecuzione stampava `__defaults__: None` e sembrava dire che nessun default fosse
+stato catturato — cioè il contrario della verità. `root` è **keyword-only**: il valore vive in
+**`__kwdefaults__`**, non in `__defaults__`. Cercarlo nel posto sbagliato porta alla conclusione
+opposta a quella vera.
+
+L'ho corretto prima di scriverlo, e ho aggiunto la precisazione a `FIX-11` perché chiunque
+riproduca il difetto cadrà nello stesso posto.
+
+### Controllo positivo, di nuovo, e assolve Grok su metà del difetto
+
+Passando `root=<temp>` esplicitamente, `safe_write` scrive correttamente nella temp dir. **Il
+contenimento funziona.** Sbagliato è solo il *momento* in cui la root viene legata. Quindi la
+correzione già proposta in `FIX-11` è quella giusta, e non ne serve una più invasiva.
+
+### La forma, incontrata tre volte oggi in tre punti diversi del programma
+
+| Dove | Valore fissato una volta sola | Cosa sembra e non è |
+|---|---|---|
+| `cloud_bridge.PROVIDER` | all'import del modulo | impostare `MODEL_PROVIDER` dopo l'import non protegge |
+| `promote_job_to_tools` | `safe=True` cablato | il gate `FIX-7` esiste e non può rifiutare |
+| `tools.files.safe_write` | `__kwdefaults__['root']` alla `def` | il `monkeypatch` della fixture è un no-op |
+
+In tutti e tre il codice del controllo è **corretto**, e leggerlo non rivela niente. Quello che
+inganna è **quando** il valore viene fissato. È la ragione per cui la lettura statica ha
+mancato tutti e tre, e l'esecuzione li ha trovati tutti e tre in una giornata.
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -2698,6 +2741,25 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  P) S-18 RIVERIFICATO, ANCORA APERTO su main. GIA' FATTO, NON RIFARE:
+       MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §18
+       GROK_FIX_LIST.md -> FIX-11, sezione "Riverificato 2026-08-18"
+     ATTENZIONE: pytest NON e' installato in un container nuovo, quindi la
+     verifica documentata (`python3 -m pytest tests/test_files.py`) NON e'
+     eseguibile a freddo. Usa il riproduttore senza pytest scritto in FIX-11.
+     PRECISAZIONE CHE FA SBAGLIARE: `root` e' keyword-only, quindi il default
+     catturato sta in __kwdefaults__, NON in __defaults__ (che vale None).
+     Guardare nel posto sbagliato porta alla conclusione OPPOSTA a quella vera.
+     Misurato: grok.md d72ece89 -> 6fa4b524 nella root REALE, temp dir vuota.
+     Passando root= esplicito il contenimento FUNZIONA: sbagliato e' solo il
+     momento in cui la root viene legata. La correzione di FIX-11 e' giusta.
+     FORMA RICORRENTE, tre volte in questa sessione: un valore fissato una volta
+     sola (PROVIDER all'import, safe=True cablato, __kwdefaults__['root'] alla
+     def) e una riassegnazione che sembra avere effetto e non ne ha. Il codice
+     del controllo e' corretto in tutti e tre: inganna il QUANDO. La lettura
+     statica li ha mancati tutti e tre, l'esecuzione li ha trovati tutti e tre.
+
 
   Q) PERCHE' NESSUN TASK PUO' ESSERE ACCETTATO — misurato, non dedotto.
      docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md

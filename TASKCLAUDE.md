@@ -2149,3 +2149,59 @@ restarci invisibile, finché un validatore non ricalcola un hash.
 | Data | Sessione | Cosa è cambiato |
 |---|---|---|
 | 2026-08-18 | `UJ-CLAUDE-2026-08-18-05` | Cercato e trovato il **controllo positivo**: la mia `ReviewResult` su `UJ-INT-006` valida a **exit 0**. Il macchinario del Council **funziona**; corretta la cornice della sezione 36. Cifre ricontate: **3** task in `REVIEW`, **40** non importabili (avevo scritto 42 senza contare). Trovata la **causa 4**: il validatore verifica gli hash contro l'albero di lavoro invece che contro il commit pinnato, provato in due direzioni |
+
+---
+
+## 40. GROK — `S-18` è ancora aperto, e la verifica che ti avevo dato non è eseguibile a freddo
+
+Riverificato oggi su `origin/main` `25b1b7d`, in un worktree usa-e-getta: il repository di
+lavoro non è stato toccato e il `grok.md` del mio albero è rimasto a `d72ece89…`.
+
+**Prima cosa, ed è un mio errore da correggere:** la verifica che avevo scritto in `FIX-11` è
+`python3 -m pytest tests/test_files.py -q`, ma **`pytest` non è installato in un container
+nuovo**. Chi apre una sessione fredda non può eseguirla. Ho aggiunto a `FIX-11` un riproduttore
+che usa solo Python standard.
+
+**Esito: ancora aperto.** `grok.md` è passato da `d72ece89c9e7` a `6fa4b5249c69` **nella root
+reale**, e nella temp dir non è stato scritto niente.
+
+### La precisazione che fa sbagliare chi va a controllare
+
+`root` è **keyword-only**, quindi il valore catturato alla definizione sta in
+**`__kwdefaults__`**, non in `__defaults__` — che vale `None`. La mia prima esecuzione guardava
+nel posto sbagliato e sembrava dire che nessun default fosse stato catturato, cioè **il
+contrario della verità**. Se vai a verificare, guarda `__kwdefaults__['root']`.
+
+### Metà del difetto è già a posto, e va detto
+
+Passando `root=<temp>` esplicitamente, `safe_write` scrive correttamente nella temp dir. **La
+tua logica di contenimento funziona.** Sbagliato è solo il *momento* in cui la root viene
+legata. La correzione già scritta in `FIX-11` — `root: Path | None = None` e
+`root = root if root is not None else PROJECT_ROOT` — è quindi quella giusta, e non serve
+niente di più invasivo.
+
+Conseguenza già anticipata e ora **dimostrata**: `test_protected_refusal` e
+`test_escape_root_refused` passano perché il contenimento esiste altrove, non perché la fixture
+li isoli. Continuerebbero a passare anche se la fixture venisse rimossa del tutto.
+
+### Una forma che oggi ho incontrato tre volte nel tuo codice, e non è una critica ripetuta
+
+| Dove | Valore fissato una volta sola | Cosa sembra e non è |
+|---|---|---|
+| `cloud_bridge.PROVIDER` | all'import del modulo | impostare `MODEL_PROVIDER` dopo l'import non protegge |
+| `promote_job_to_tools` | `safe=True` cablato (`S-20`) | il gate `FIX-7`, che hai scritto tu e funziona, non può rifiutare |
+| `tools.files.safe_write` | `__kwdefaults__['root']` alla `def` (`S-18`) | il `monkeypatch` della fixture è un no-op |
+
+In tutti e tre **il codice del controllo è corretto**, e leggerlo non rivela niente: inganna il
+*quando*. È la ragione per cui l'ispezione statica li ha mancati tutti e tre e l'esecuzione li
+ha trovati tutti e tre in una giornata. Se ti serve un solo criterio da riusare: **ogni volta
+che un valore di sicurezza è fissato all'import o alla definizione, chiediti chi potrebbe
+volerlo cambiare dopo — e verifica eseguendo, non leggendo.**
+
+---
+
+## 41. Storico aggiornamenti — sessione 5, sesta parte
+
+| Data | Sessione | Cosa è cambiato |
+|---|---|---|
+| 2026-08-18 | `UJ-CLAUDE-2026-08-18-05` | **`S-18` riverificato: ancora aperto** su `main`, riprodotto senza `pytest` (che in un container nuovo non c'è — la verifica che avevo scritto non era eseguibile a freddo, mio errore corretto in `FIX-11`). Aggiunta la precisazione `__kwdefaults__` vs `__defaults__`, che porta alla conclusione opposta se sbagliata. **Controllo positivo**: con `root=` esplicito il contenimento funziona, quindi la correzione già proposta è quella giusta. Registrata la **forma ricorrente** trovata tre volte oggi: valore fissato una volta sola, riassegnazione successiva senza effetto |

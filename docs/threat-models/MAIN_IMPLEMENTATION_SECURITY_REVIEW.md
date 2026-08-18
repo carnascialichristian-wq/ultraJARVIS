@@ -1327,3 +1327,37 @@ correttamente marcato non sicuro, che è meglio ma non risolve il costo. Stessa 
   `ToolSpec.safe` fra le manopole che non applicano nulla. Dopo `FIX-7` è falso. Lasciarlo in
   giro sarebbe un allarme senza oggetto, e renderebbe invisibile il rilievo vero, che è
   esattamente l'opposto: il flag conta, e la promozione non lo usa.
+
+---
+
+## 18. `S-18` riverificato in sessione 5 — **ancora aperto su `main`**
+
+**Ref:** `origin/main` `25b1b7d`. Riprodotto in un worktree usa-e-getta; il repository di
+lavoro non e' stato toccato e `grok.md` nel mio albero e' rimasto a `d72ece89…`.
+
+`pytest` **non e' installato** in un container nuovo, quindi la verifica documentata in
+`GROK_FIX_LIST.md` → `FIX-11` non e' eseguibile a freddo. Ho riprodotto il **meccanismo** con
+Python semplice, che e' dove sta il difetto.
+
+**Precisazione che rende la diagnosi esatta.** `root` e' un parametro **keyword-only**, quindi
+il valore catturato alla definizione non sta in `__defaults__` — che vale `None` — ma in
+**`__kwdefaults__`**. Cercarlo nel posto sbagliato porta a concludere che nessun default sia
+stato catturato, che e' la conclusione opposta a quella vera.
+
+| Misura | Valore |
+|---|---|
+| `tools.files.PROJECT_ROOT` dopo il monkeypatch | la temp dir |
+| `safe_write.__kwdefaults__['root']` dopo il monkeypatch | **la root reale, invariata** |
+| `grok.md` prima → dopo | `d72ece89c9e7` → `6fa4b5249c69` |
+| file scritto nella temp dir | **no** |
+
+**Controllo positivo:** passando `root=<temp>` esplicitamente, `safe_write` scrive nella temp
+dir. Il contenimento **funziona**; sbagliato e' solo il momento in cui la root viene legata.
+
+**È la terza occorrenza oggi della stessa forma:** un valore catturato una volta sola, e una
+riassegnazione successiva che sembra avere effetto e non ne ha. Le altre due sono `PROVIDER` in
+`cloud_bridge.py` (§17.1) e `safe=True` nella promozione (§17.3). In tutti e tre i casi il
+codice del controllo e' corretto e leggerlo non rivela niente: quello che inganna e' **quando**
+il valore viene fissato.
+
+`S-18` e' di **GROK**. Segnalato e riverificato, non corretto.

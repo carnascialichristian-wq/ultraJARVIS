@@ -563,6 +563,52 @@ python3 -m pytest tests/test_files.py -q
 git status --porcelain grok.md     # deve essere VUOTO; se stampa " M grok.md" il difetto c'e'
 ```
 
+### Riverificato 2026-08-18, sessione 5 — **ancora aperto su `main`**, e il comando qui sopra non basta
+
+`pytest` **non e' installato** in un container nuovo, quindi la verifica scritta sopra non e'
+eseguibile a freddo. Ho riprodotto il **meccanismo** invece della suite, con Python semplice, in
+un worktree usa-e-getta su `origin/main`. Il repository di lavoro non e' stato toccato.
+
+Una precisazione che rende la diagnosi esatta: `root` e' **keyword-only**, quindi il valore
+catturato non sta in `__defaults__` (che e' `None`) ma in **`__kwdefaults__`**. Cercarlo nel
+posto sbagliato fa concludere che non ci sia alcun default catturato.
+
+```python
+import hashlib, pathlib, sys, tempfile
+sys.path.insert(0, ".")
+import tools.files as F
+
+root   = pathlib.Path(".").resolve()
+before = hashlib.sha256((root / "grok.md").read_bytes()).hexdigest()
+
+tmp = pathlib.Path(tempfile.mkdtemp())
+F.PROJECT_ROOT = tmp                      # esattamente cio' che fa la fixture tmp_root
+print(F.safe_write.__kwdefaults__["root"])  # <- la root REALE, non tmp
+
+F.safe_write("grok.md", "overwrite attempt", force=True)
+after = hashlib.sha256((root / "grok.md").read_bytes()).hexdigest()
+print("scritto nella root reale:", after != before)
+print("scritto nella temp dir  :", (tmp / "grok.md").exists())
+```
+
+**Esito misurato su `origin/main`:**
+
+```
+__kwdefaults__['root'] : <root reale>        <-- INVARIATO dopo il monkeypatch
+grok.md : d72ece89c9e7 -> 6fa4b5249c69       => SCRITTO NELLA ROOT REALE
+nella temp dir : False
+```
+
+**Controllo positivo, che assolve la logica di contenimento:** passando `root=tmp`
+esplicitamente, `safe_write` scrive correttamente nella temp dir. Il contenimento **funziona**;
+sbagliato e' solo il momento in cui la root viene legata. La correzione proposta sopra e'
+quindi quella giusta e non ne serve una piu' invasiva.
+
+**Conseguenza sui test, gia' anticipata e ora dimostrata:** `test_protected_refusal` e
+`test_escape_root_refused` passano perche' il contenimento esiste davvero altrove, non perche'
+la fixture li isoli. Sono verdi **per il motivo sbagliato**: continuerebbero a passare anche se
+la fixture venisse rimossa del tutto.
+
 **Effetto collaterale che conta piu' del danno:** finche' la fixture non isola, **`FIX-3` e
 `FIX-4` non hanno una prova valida** — le loro asserzioni girano contro la root reale, dove il
 contenimento esiste davvero, quindi passerebbero anche se la logica fosse stata tolta.
