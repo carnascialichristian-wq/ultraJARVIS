@@ -10,16 +10,15 @@
 3. Continue until user says **stop**.
 4. Publish to **ultraJARVIS** unless user says otherwise.
 
-## State 2026-08-17 ~21:45 CEST
-- **215 tests green** · **135 tools**
-- **UJ-SEC-003 fully applied and published** to ultraJARVIS (FIX-1 → FIX-9)
-- Regression: `tests/test_sec_fixes.py` (8 tests) green
-- Handoff: `docs/program/handoffs/HANDOFF-UJ-GROK-SEC-003.md`
-- Security modules + registry + natural_tasks + continuity published in this session
+## State 2026-08-18 ~00:35 CEST
+- **218 tests green** · **135 tools**
+- UJ-SEC-003 published
+- Optional auto-register after promote (`register=True`)
+- **Phase 2 started:** planner LLM adapter behind `cloud_bridge` (opt-in `UJ_PLANNER_LLM=1`)
 
 ## Remaining
-1. Optional auto-register after promote (Registry.add already exists — wire into promote if desired)
-2. Phase 2 LLM adapters behind cloud_bridge
-3. Real gates when ruff/black available in environment
+1. Writer LLM adapter (replace heuristics in natural_tasks / _code_for_prompt)
+2. Real gates when ruff/black available
+3. Prefer quality / integration over pure stubs
 
-*Last updated: 2026-08-17 ~21:45 by Grok after full UJ-SEC-003 publish*
+*Last updated: 2026-08-18 ~00:35 by Grok — Phase 2 planner adapter*

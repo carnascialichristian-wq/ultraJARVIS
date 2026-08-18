@@ -3,23 +3,19 @@
 **Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Target:** ultraJARVIS (not UltraJarvis_v8-grok)
 
-## Published (2026-08-17 ~21:45 CEST)
+## Published (2026-08-18 ~00:35 CEST)
 
-### Security (UJ-SEC-003) — COMPLETE
-FIX-1 promote safety · FIX-3 safe_read root · FIX-4 privileged kwargs · FIX-5 browser allowlist  
-FIX-6 structured gates · FIX-7 ToolSpec.safe · FIX-8 email env policy · FIX-9 expanded patterns  
-Regression: tests/test_sec_fixes.py (published)
+### Security + promote
+UJ-SEC-003 complete · optional `register=True` on promote
 
-### Core modules published this session
-core/natural_tasks.py · core/registry.py · core/gates.py · core/verify.py  
-tools/files.py · tools/browser.py · tools/email.py · advisors/safety.py
-
-### Continuity + handoff
-docs/GROK_CONTINUITY.md · taskgrok.md · STATUS.md · docs/program/handoffs/HANDOFF-UJ-GROK-SEC-003.md
+### Phase 2 (started)
+- `cloud_bridge.ask_cloud_ai(..., system=)` optional system prompt
+- `core.planner._plan_via_llm` + `plan()` opt-in via `UJ_PLANNER_LLM=1`
+- Heuristic fallback always available
+- Tests: opt-in path + default-off path
 
 ## Remaining
-- Phase 2 LLM adapters
-- Real gates when tools available
-- Optional wire of Registry.add into promote
+- Writer LLM adapter
+- Real gates when ruff/black available
 
 Continues until user says **stop**.

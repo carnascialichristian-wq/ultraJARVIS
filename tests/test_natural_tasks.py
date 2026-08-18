@@ -11,6 +11,7 @@ from core.natural_tasks import NaturalTaskRunner
 
 @pytest.fixture
 def runner(tmp_path):
+    # force stub gates so tests don't depend on ruff/black being installed
     return NaturalTaskRunner(jobs_root=tmp_path / "jobs", use_real_gates=False)
 
 
@@ -86,6 +87,7 @@ def test_promote_job_to_tools(runner, tmp_path):
 
     summary = runner.build_and_run("Write a gcd helper for two integers")
     job_dir = Path(summary["plan_path"]).parent
+    # Promote into a temporary "tools" tree under tmp_path so we never touch real tools/
     fake_root = tmp_path / "proj"
     (fake_root / "tools").mkdir(parents=True)
     dest = promote_job_to_tools(job_dir, "gcd_from_job", root=fake_root)
@@ -104,3 +106,38 @@ def test_promote_rejects_missing_tool(tmp_path):
     empty.mkdir()
     with pytest.raises(FileNotFoundError):
         promote_job_to_tools(empty, "whatever", root=tmp_path)
+
+
+def test_promote_optional_auto_register(runner, tmp_path):
+    """register=True wires the promoted module into the runtime Registry."""
+    from core.natural_tasks import promote_job_to_tools
+    from core.registry import get_registry
+    import core.registry as reg_mod
+
+    # Isolate default registry so we don't pollute other tests
+    reg_mod._default = None
+    reg = get_registry()
+
+    summary = runner.build_and_run("Write a gcd helper for two integers")
+    job_dir = Path(summary["plan_path"]).parent
+    fake_root = tmp_path / "proj"
+    (fake_root / "tools").mkdir(parents=True)
+
+    # Default: no auto-register
+    dest = promote_job_to_tools(job_dir, "gcd_reg_test", root=fake_root)
+    assert dest.exists()
+    assert reg.get("gcd_reg_test.run") is None
+    assert reg.get("gcd_reg_test.gcd") is None
+
+    # Explicit register=True
+    dest2 = promote_job_to_tools(
+        job_dir, "gcd_reg_test", root=fake_root, register=True
+    )
+    assert dest2.exists()
+    # Prefer `run` when present (generated tools always have it)
+    spec = reg.get("gcd_reg_test.run")
+    assert spec is not None
+    assert spec.module == "tools.gcd_reg_test_helpers"
+    assert spec.callable_name == "run"
+    assert spec.safe is True
+    assert "promoted" in spec.tags

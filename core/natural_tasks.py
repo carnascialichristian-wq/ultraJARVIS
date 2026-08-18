@@ -376,17 +376,21 @@ def promote_job_to_tools(
     *,
     root: Path | None = None,
     force: bool = False,
+    register: bool = False,
 ) -> Path:
     """
     Promote a successful job's tool.py into tools/ using guarded file I/O.
 
     - Validates that tool.py exists and contains a callable.
     - Writes via tools.files.safe_write (respects PROTECTED paths).
-    - Does **not** auto-register in the registry (manual / future step).
+    - Safety scan (FIX-1) blocks dangerous patterns unless force=True.
+    - Optional auto-register into the runtime Registry when register=True
+      (uses Registry.add; does not mutate the static catalog).
     - Returns the path written under tools/.
 
     Raises PermissionError / FileNotFoundError / ValueError on problems.
     """
+    import re
     from tools.files import safe_write, is_protected
 
     job_dir = Path(job_dir)
@@ -409,7 +413,6 @@ def promote_job_to_tools(
         )
 
     # Normalise module name: only safe identifier chars
-    import re
     safe_name = re.sub(r"[^a-zA-Z0-9_]", "_", module_name.strip()).strip("_").lower()
     if not safe_name or safe_name[0].isdigit():
         raise ValueError(f"Invalid module_name: {module_name!r}")
@@ -417,8 +420,12 @@ def promote_job_to_tools(
     # Prefer *_helpers.py naming convention used by the project
     if not safe_name.endswith("_helpers"):
         dest_name = f"{safe_name}_helpers.py"
+        module_import = f"tools.{safe_name}_helpers"
+        tool_prefix = safe_name
     else:
         dest_name = f"{safe_name}.py"
+        module_import = f"tools.{safe_name}"
+        tool_prefix = safe_name[: -len("_helpers")] if safe_name.endswith("_helpers") else safe_name
 
     root = root or ROOT
     dest = root / "tools" / dest_name
@@ -441,4 +448,28 @@ def promote_job_to_tools(
             body = body[end + 3 :].lstrip("\n")
 
     content = header + body
-    return safe_write(dest, content, root=root, force=force)
+    written = safe_write(dest, content, root=root, force=force)
+
+    if register:
+        # Discover a public callable: prefer `run`, else first non-private def
+        names = re.findall(r"^def ([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", body, re.M)
+        public = [n for n in names if not n.startswith("_")]
+        callable_name = "run" if "run" in public else (public[0] if public else None)
+        if callable_name is None:
+            raise ValueError("Cannot auto-register: no public function found in promoted module")
+
+        from core.registry import ToolSpec, get_registry
+
+        tool_name = f"{tool_prefix}.{callable_name}"
+        # Promoted helpers went through the safety scan → mark safe by default
+        spec = ToolSpec(
+            name=tool_name,
+            description=f"Promoted helper from job {job_dir.name}",
+            module=module_import,
+            callable_name=callable_name,
+            safe=True,
+            tags=["promoted", tool_prefix],
+        )
+        get_registry().add(spec)
+
+    return written
