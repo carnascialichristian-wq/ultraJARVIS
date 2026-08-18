@@ -38,6 +38,10 @@ REPOSITORY
   (atteso per quello giusto: 0 indietro, N avanti), non presunta dal nome.
   In sessioni 4 e 5 era claude/claude-md-resume-point-tvej1u, nelle sessioni 1-3
   claude/ultrajarvis-repo-analysis-li6vvj.
+  ATTENZIONE, da fine sessione 5: quel branch resta CASA (CLAUDE.md e questo file
+  vivono li'), ma esiste ANCHE agent/uj-run-001-blueprint-20260818, autorizzato
+  dalla delegation card, che contiene la consegna riconciliata di UJ-RUN-001 e
+  NON contiene questo file. Non confonderli. Dettaglio nel RESUME_POINT, punto AA.
   ATTENZIONE: da sessione 4 il branch di lavoro NON coincide più con main.
   Verifica sempre: git rev-parse HEAD origin/main
 
@@ -175,27 +179,34 @@ endpoint tutti bloccati. **Su `main` non è ancora arrivata.**
 
 ### Delta di sessione 5 — cosa è cambiato rispetto alla tabella qui sopra
 
-La tabella di stato dei task **non cambia**: 7 su 8 in `REVIEW`, `0/76` accettato, e resta
-corretto. Cambiano quattro cose operative.
+La tabella di stato dei task **non cambia nei numeri**: 7 su 8 hanno una consegna, `0/76`
+accettato, e resta corretto. Cambia lo stato di uno di quei sette e compare un ottavo fatto.
 
 1. **La suite è 140, non 138.** Due test di regressione nuovi (`runtime` 34 → 36). Trovata e
    chiusa la **seconda occorrenza dell'errore E6**: `depth-guard.ts` usava un byte NUL come
    separatore nella chiave del rilevatore di cicli. Falsi positivi misurati, e il file era
    **binario** per git e grep, quindi fuori da ogni audit testuale per quattro sessioni.
-2. **`UJ-RUN-001` ha un gate di consegna, ed è stato soddisfatto.** ChatGPT l'ha emesso su
-   `agent/claude-run-handoff-20260818`. Blocco pronto da incollare in
-   `prompts/handoffs/CLAUDE-RUN-001-DELIVERY-20260818.md`. Tre incoerenze nel gate segnalate,
-   nessuna bloccante.
+2. **`UJ-RUN-001` ha un gate di consegna, e la prima consegna era incoerente.** Riconciliata
+   in due giri su un branch dedicato — `agent/uj-run-001-blueprint-20260818`, un solo
+   `source_commit_sha` (`79408449bd096613d2823efe6872ed424b757ee6`) per i quattro documenti.
+   **Resta `BLOCKED`, non `REVIEW`**: la delegation card non esiste al commit che il suo
+   stesso `read_ref` nomina. Correggere quel `read_ref` è l'unica cosa che manca — a quel
+   punto questi stessi byte diventano una consegna `REVIEW` senza altra modifica.
 3. **`S-17` e `S-19` sono ancora aperti su `main`** — terza verifica — e i candidati alla
    correzione sono diventati **tre**. `v1` e `v2` sono byte-identici e **mergiarli oggi
    cancellerebbe `embed()`**, rompendo `core/memory.py`. Raccomandazione e misure in
    `docs/program/reviews/UJ-SEC-003-STRICT-ZERO-CANDIDATE-RECONCILIATION.md`.
-4. **La correction request a Gemini copre 4 delle mie 6 correzioni.** Le due mancanti sono in
-   `prompts/handoffs/CLAUDE-TO-GEMINI-MERIT-ADDENDUM-UJ-CAP-001-20260818.md`, **da incollare
-   insieme** alla request di ChatGPT, non in un giro separato.
+4. **Gemini ha rispedito `UJ-CAP-001` per la seconda e poi per la terza volta.** Il secondo
+   invio (`27b3717`) è stato revisionato: **FAIL, 3 criteri su 5**, era 1 su 5 nella
+   quarantena originale — `docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260818.md`. **Il
+   terzo invio (`0f1c536`) è stato trovato dalla trappola 11 a fine sessione e NON è ancora
+   aperto**: aggiunge il `ResponsePacket` che mancava (`F-001`). **È il primo task della
+   sessione che apri.**
 
-**Due cose che servono da altri, e sono il vero collo di bottiglia:** le sette delegation card
-da ChatGPT, e un merge del fix strict-zero su `main` da parte di chi ne ha l'autorizzazione.
+**Una cosa sola serve ancora da altri, ed è il vero collo di bottiglia:** ChatGPT deve
+correggere il `read_ref` della delegation card di `UJ-RUN-001` — la consegna tecnica è già
+pronta e ferma da lì. Resta anche aperto un merge del fix strict-zero su `main`, da parte di
+chi ne ha l'autorizzazione.
 
 ---
 
