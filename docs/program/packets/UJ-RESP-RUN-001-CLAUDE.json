@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
   "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818",
-  "created_at": "2026-08-18T00:00:00Z",
+  "created_at": "2026-08-18T10:30:06Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "6471dcf7da81f0fdc497105e2a70bf1c37001f6e",
+  "source_commit_sha": "01d7d3016175a46c17a50f4f3d26ce0490a23704",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -31,19 +31,19 @@
   ],
   "task_id": "UJ-RUN-001",
   "status": "REVIEW",
-  "executive_delta": "Runtime blueprint and provider-neutral contracts were delivered in session 1 and re-verified in every session since. This packet exists because AC-05 requires one and none had ever been emitted: the artifacts were published but never reported through the mechanism the ledger consumes, which is why BACKLOG.json still shows this task as READY rather than REVIEW.",
+  "executive_delta": "Runtime blueprint and provider-neutral contracts were delivered in session 1 and re-verified in every session since. This packet exists because AC-05 requires one and none had ever been emitted: the artifacts were published but never reported through the mechanism the ledger consumes, which is why BACKLOG.json still shows this task as READY rather than REVIEW. Re-verifying the artifacts against the UJ-RUN-001 handoff gate surfaced a defect in one of them: the tool-cycle detector joined its k-gram key on a NUL byte, the same non-injective encoding that error E6 had already fixed in the adjacent file. It is corrected, the encoding is now single-sourced, and two regression tests were added — the first one proved to fail against the old code before being accepted. Accepted weight is unchanged at 0/13.",
   "facts": [
     {
       "claim": "The contracts package typechecks under strict mode plus six additional flags with exit code 0.",
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "npx tsc -p packages/contracts --noEmit",
-      "verified_at": "2026-08-18T00:00:00Z"
+      "verified_at": "2026-08-18T10:30:06Z"
     },
     {
-      "claim": "The runtime invariant suite passes 34 of 34 tests and the full contract suite passes 138 of 138.",
+      "claim": "The runtime invariant suite passes 36 of 36 tests and the full contract suite passes 140 of 140.",
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "node --test tests/contracts/",
-      "verified_at": "2026-08-18T00:00:00Z"
+      "verified_at": "2026-08-18T10:30:06Z"
     },
     {
       "claim": "The textual loop detector is evadable by changing a single token: Jaccard similarity measured at 0.7778 on a nine-token mission and 0.9130 on a twenty-three-token mission, both under the 0.95 threshold.",
@@ -62,6 +62,18 @@
       "classification": "OBSERVATION",
       "source_ref": "packages/contracts/src/runtime/agent-manifest.ts",
       "verified_at": "2026-08-17T00:00:00Z"
+    },
+    {
+      "claim": "The tool-cycle detector built its k-gram key by joining the window on a NUL byte, which is error E6 in a second file. Measured: the sequence [\"a\",\"b\\u0000c\",\"x\",\"a\\u0000b\",\"c\",\"x\"] reported a cycle that does not exist, because windows 0 and 3 encode identically. The NUL also made depth-guard.ts binary to git and grep, so the file was excluded from every text audit of the repository for four sessions.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "tests/contracts/runtime-invariants.test.mjs",
+      "verified_at": "2026-08-18T10:30:06Z"
+    },
+    {
+      "claim": "The regression test for that defect was proved to fail against the previous implementation before being accepted: expected false, actual true. A check that cannot fail is not a check.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "node --test tests/contracts/runtime-invariants.test.mjs against the reverted join",
+      "verified_at": "2026-08-18T10:30:06Z"
     }
   ],
   "assumptions": [
@@ -107,21 +119,21 @@
     },
     {
       "ref": "packages/contracts/src/runtime/checkpoint.ts",
-      "sha256": "226ccdf45c575d248b780e8d8650f770554e1df74105e22ed1e0454cc5795b2c",
+      "sha256": "21df12f40d2ffe93e672ed95a13d3ca1125fcd0dad05abfd967b41b2d9612fce",
       "media_type": "application/typescript",
       "data_class": "C1",
       "summary": "Runtime contract module 'checkpoint': provider-neutral TypeScript types compiled under strict mode."
     },
     {
       "ref": "packages/contracts/src/runtime/common.ts",
-      "sha256": "762a667f5e27c2f55b9391359027e4be8590d064129ee6d43e7f4e6a482d0af2",
+      "sha256": "86baa7e4050a252f5d4650be35753585ae4f1bd3733691a8b4ba31ef70919c51",
       "media_type": "application/typescript",
       "data_class": "C1",
       "summary": "Runtime contract module 'common': provider-neutral TypeScript types compiled under strict mode."
     },
     {
       "ref": "packages/contracts/src/runtime/depth-guard.ts",
-      "sha256": "8b756a5b3e0a48a648a15f474dddb33cbe219eed38980f2d6235620651385d64",
+      "sha256": "515b8a9f36fa3fae9594552d30a58bc33bf52d155d6b29fe45e7f01bdcca19b7",
       "media_type": "application/typescript",
       "data_class": "C1",
       "summary": "Runtime contract module 'depth-guard': provider-neutral TypeScript types compiled under strict mode."
@@ -177,7 +189,7 @@
     },
     {
       "ref": "tests/contracts/runtime-invariants.test.mjs",
-      "sha256": "86d7cce92d10e0c55b88fd1336f494902edd5daff2aee73d21612b6d181fdb9a",
+      "sha256": "0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0",
       "media_type": "application/javascript",
       "data_class": "C1",
       "summary": "34 executable invariant tests, including pinned loop-detector similarity measurements and the idempotency-key collision regression."
@@ -203,14 +215,22 @@
       "npx tsc -p packages/contracts",
       "node --test tests/contracts/runtime-invariants.test.mjs",
       "node --test across the full tests/contracts suite",
-      "sha256sum of the canonical master prompt"
+      "sha256sum of the canonical master prompt",
+      "sha256 of every cited artifact recomputed from the bytes at source_commit_sha",
+      "vendor-token scan of packages/contracts/src/runtime for provider neutrality",
+      "NUL-byte scan of every runtime contract source",
+      "negative control: the new injectivity test run against the previous implementation"
     ],
     "passed": [
       "typecheck exit 0",
       "build exit 0",
-      "runtime invariants 34/34",
-      "full contract suite 138/138",
-      "canonical prompt hash unchanged"
+      "runtime invariants 36/36",
+      "full contract suite 140/140",
+      "canonical prompt hash unchanged (a3fcdfc9...a69a87)",
+      "15/15 artifact hashes reproduced at source_commit_sha",
+      "no vendor identifier in any normative position; the only matches are authorship headers",
+      "0 NUL bytes across all runtime contract sources",
+      "negative control failed as required (expected false, actual true), so the test can fail"
     ],
     "failed": [],
     "not_run": [
@@ -295,6 +315,6 @@
   "handoff": {
     "target": "GEMINI",
     "next_action": "Review UJ-RUN-001 against AC-01 through AC-04 and return a ReviewResult; accepted weight stays 0/13 until then.",
-    "resume_point": "Artifacts are committed on branch claude/claude-md-resume-point-tvej1u at the stated source_commit_sha. AC-05 is satisfied by this packet; AC-01 through AC-04 await the named reviewer."
+    "resume_point": "Artifacts are committed on branch claude/claude-md-resume-point-tvej1u at source_commit_sha 01d7d3016175a46c17a50f4f3d26ce0490a23704. AC-05 is satisfied by this packet; AC-01 through AC-04 await the named reviewer. Per-criterion evidence (path, hash, executable check) is in docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md, because the response-packet schema has additionalProperties:false and no per-criterion field."
   }
 }
