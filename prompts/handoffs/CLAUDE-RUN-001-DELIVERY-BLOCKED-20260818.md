@@ -1,50 +1,35 @@
-# CONSEGNA UJ-RUN-001 — **BLOCKED** — riconciliata su un solo commit
+# CONSEGNA UJ-RUN-001 — **BLOCKED** — riconciliata e corretta
 
 > **Christian:** i due blocchi qui sotto vanno copiati **per intero**, marcatori `===` inclusi.
-> Non contengono nessun ReviewResult: la review di `UJ-INT-006` e' stata **rimossa** da questa
-> consegna, come richiesto, ed e' un artefatto separato.
+> **Nessun ReviewResult:** la review di `UJ-INT-006` non fa parte di questa consegna ed e' un
+> artefatto separato. Non ho toccato i file di Grok.
 
 | | |
 |---|---|
 | Task | `UJ-RUN-001` — owner CLAUDE, reviewer GEMINI, peso 13 |
 | Card | `UJ-CARD-RUN-001-CLAUDE` |
-| Branch autorizzato | `agent/uj-run-001-blueprint-20260818` (pattern `agent/uj-run-001-*` della card) |
-| **`source_commit_sha` unico** | `2dad45a40798a8059b5e2b7db077b76e77fcc88b` |
+| Branch | `agent/uj-run-001-blueprint-20260818` — **verificato con `git branch -a --contains`** |
+| **`source_commit_sha` unico** | `79408449bd096613d2823efe6872ed424b757ee6` |
+| Supersede | `2dad45a40798a8059b5e2b7db077b76e77fcc88b` |
 | **Stato proposto** | **`BLOCKED`** |
 | Peso accettato | **0 / 13, invariato** |
-| Blocchi FILE | **1** — `docs/architecture/RUNTIME_BLUEPRINT.md`, **84318 byte**, sha256 `a0be04069692d89399eefe183d489d8ad8bea472c232444676883331c23c2538` |
+| Blocchi FILE | **1** — `docs/architecture/RUNTIME_BLUEPRINT.md`, **87661 byte**, sha256 `d03c2fea30f2d0a994d92c16a87c4e1218351e8094daf29aa5625db625ba75ea` |
 | Newline finale | presente (LF) |
-| Generato | 2026-08-18T15:18:51Z |
+| Generato | 2026-08-18T15:44:21Z |
 
-## Perche' BLOCKED
+## Le tre incoerenze trovate e corrette
 
-La card **non esiste** al commit che il suo stesso `repository_scope.read_ref` nomina:
+| # | Problema | Correzione |
+|---:|---|---|
+| 1 | Il blueprint dichiarava `Stato: REVIEW` mentre packet e delivery dichiaravano `BLOCKED` | **`BLOCKED` e' la formulazione corretta.** La tabella di intestazione diceva `REVIEW` dalla sessione 1 e non era mai stata rivista. Corretta, con una nota che spiega che il blocco e' sull'**ammissibilita'**, non sulla qualita' dell'artefatto |
+| 2 | Quattro conteggi di test in conflitto: 33, 34, 36, 140 | **36** per `runtime-invariants`, **140** per la suite. Il `33` era della sessione 1, il `34` intermedio. Misurato staticamente **e** dinamicamente sul blob committato |
+| 3 | Due branch citati per lo stesso commit | **`agent/uj-run-001-blueprint-20260818`**, e solo quello. Dimostrato con `git branch -a --contains`: nessun `UNVERIFIED` necessario |
 
-```
-$ git cat-file -e 3611b1b400cf57b5021bab228a3de9470d6eca5c:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json
-fatal: path '...' exists on disk, but not in '3611b1b4...'
-```
+Correggere il blueprint ha cambiato un byte, quindi **ho ricalcolato tutto**: nuovo commit,
+nuovo hash del blueprint, e ogni riferimento aggiornato nei quattro file. Il commit precedente
+`2dad45a4` resta valido come riferimento **superato**, non come consegna.
 
-Entra con `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3`, dodici minuti dopo. Istruzione del
-proprietario: card non disponibile al `read_ref` → `BLOCKED`, non si procede.
-
-**Non e' un pin mismatch:** i quattro hash pinati coincidono tutti a `3611b1b4`. Gli artefatti
-sono completi e hashati a un solo commit, quindi **questa identica consegna puo' essere ammessa
-senza toccare un byte** appena il `read_ref` e' corretto: basta cambiare `status` in `REVIEW`.
-
-## Riconciliazione — cosa e' stato allineato
-
-| Documento | `source_commit_sha` citato |
-|---|---|
-| `docs/architecture/RUNTIME_BLUEPRINT.md` | committato **a** `2dad45a40798` |
-| `docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json` | `2dad45a40798` |
-| `docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md` | `2dad45a40798` |
-| questo handoff | `2dad45a40798` |
-
-Tutti e 15 gli hash sono ricalcolati sullo **stesso byte stream**, quello del commit `2dad45a40798`,
-e il validatore li riverifica uno per uno.
-
-## Conteggio dei test — rieseguito, non ricordato
+## Il conteggio dei test, risolto
 
 | Suite | pass | fail |
 |---|---:|---:|
@@ -55,19 +40,21 @@ e il validatore li riverifica uno per uno.
 | `tool-admission.test.mjs` | 30 | 0 |
 | **totale** | **140** | **0** |
 
-`npx tsc --noEmit` exit 0 · `npx tsc` (build) exit 0 · `validate-response-packet.mjs` exit 0.
+`npx tsc --noEmit` exit 0 · `npx tsc` build exit 0 · `validate-response-packet.mjs` exit 0.
+
+**Avvertenza per chi ricontrolla:** eseguire il file estratto in una directory temporanea
+fallisce sugli import verso `dist/`. Va eseguito **dalla root**, dopo la build.
 
 ## Cio' che NON e' dimostrato
 
-Le **24 prove** specificate nelle sezioni 16-22 del blueprint **non sono implementate**: sono
-marcate `PROVA DA IMPLEMENTARE` e **nessuna e' stata eseguita**. In particolare **la demo
-end-to-end minima della §21 NON e' stata eseguita** e non e' dichiarata completata.
+**22 prove** specificate nelle sezioni 16-21 **non sono implementate e nessuna e' stata
+eseguita** (§16 5 · §17 3 · §18 5 · §19 3 · §20 3 · §21 3), piu' **11** ancora `⏳ PENDING` in
+§13.3: **33 in totale**. **La demo end-to-end minima della §21 NON e' stata eseguita** e non e'
+dichiarata completata.
 
 ## Gli altri quattordici artefatti, per riferimento
 
-Committati al `source_commit_sha` dichiarato, ognuno col proprio hash nel packet.
-
-| Artefatto | SHA-256 a `2dad45a40798` |
+| Artefatto | SHA-256 a `79408449bd09` |
 |---|---|
 | `packages/contracts/src/runtime/agent-manifest.ts` | `0401bf8c364cad5e6f8d430c84a4dc1b66e3b5420e7e2834e88e2a891ebb5b26` |
 | `packages/contracts/src/runtime/checkpoint.ts` | `21df12f40d2ffe93e672ed95a13d3ca1125fcd0dad05abfd967b41b2d9612fce` |
@@ -94,7 +81,7 @@ Committati al `source_commit_sha` dichiarato, ognuno col proprio hash nel packet
 | Milestone | M0 / M2 |
 | Owner | CLAUDE (Runtime, Security & Skill Architect) |
 | Reviewer | GEMINI |
-| Stato | REVIEW |
+| Stato | **BLOCKED** — vedi nota di stato qui sotto |
 | Peso | 13 |
 | Data class | C1 INTERNAL |
 | Side effect | INTERNAL_WRITE (solo file su branch dedicato) |
@@ -103,6 +90,18 @@ Committati al `source_commit_sha` dichiarato, ognuno col proprio hash nel packet
 | Prompt SHA-256 | `a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87` (verificato in sessione) |
 | Contratti collegati | `packages/contracts/src/runtime/*.ts` |
 | Threat notes | `docs/threat-models/RUNTIME_THREAT_NOTES.md` |
+
+> **Nota di stato — perche' BLOCKED e non REVIEW.** Questo documento ha dichiarato `REVIEW`
+> dalla sessione 1 alla sessione 5. Non e' piu' vero. La delegation card
+> `UJ-CARD-RUN-001-CLAUDE` **non esiste** al commit che il suo stesso
+> `repository_scope.read_ref` nomina, `3611b1b400cf57b5021bab228a3de9470d6eca5c`; entra nella
+> storia con `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3`, dodici minuti dopo. Per decisione del
+> proprietario, una card non disponibile al `read_ref` produce `BLOCKED` invece di procedere.
+>
+> Gli artefatti tecnici sono completi e verificati: **non e' questo a essere in dubbio**. Il
+> blocco e' sull'ammissibilita' della consegna, non sulla sua qualita', e si scioglie
+> correggendo il `read_ref` della card — dopodiche' questi stessi byte diventano una consegna
+> `REVIEW` senza altre modifiche.
 
 > **Nota di provenienza.** Il prompt canonico vive attualmente sul branch
 > `agent/ultrajarvis-master-prompt-v1` (PR #1, draft) e non è ancora su `main`.
@@ -1123,8 +1122,26 @@ Le funzioni pure di questo deliverable sono **già testate**; i test di livello 
 non lo sono, perché il runtime non esiste ancora. La distinzione è esplicita: dichiarare
 superati test che non girano sarebbe falso avanzamento (§31.5).
 
-**Stato:** 33 test eseguiti, 33 passati.
-Comando: `cd packages/contracts && npx tsc && cd ../.. && node --test tests/contracts/runtime-invariants.test.mjs`
+**Stato:** **36 test eseguiti, 36 passati** in `tests/contracts/runtime-invariants.test.mjs`.
+Nella suite completa dei contratti: **140 eseguiti, 140 passati, 0 falliti**
+(`approval-policy` 28 · `recovery` 9 · **`runtime-invariants` 36** · `skill-forge` 37 ·
+`tool-admission` 30).
+
+Comando, e la riga di **build non e' opzionale** — i test importano da `dist/`, che e' in
+`.gitignore` e in un container nuovo non esiste:
+
+```bash
+npx tsc -p packages/contracts --noEmit    # typecheck
+npx tsc -p packages/contracts             # BUILD
+node --test tests/contracts/runtime-invariants.test.mjs
+```
+
+> **Correzione di un conteggio stantio.** Questa riga ha dichiarato `33` dalla sessione 1 fino
+> alla sessione 5, senza essere riaggiornata mentre la suite cresceva: 33 alla stesura, 34 dopo
+> la regressione sulla idempotency key, **36** dopo i due test di regressione di `E6` (la
+> seconda occorrenza del separatore NUL, in `depth-guard.ts`). Il numero e' stato rimisurato
+> eseguendo il file identico al blob committato, non dedotto dalla tabella qui sotto — che
+> elenca gli **ID** dei test, non il loro totale, e per questo non e' mai stata in conflitto.
 
 #### Implementati e verdi (`tests/contracts/runtime-invariants.test.mjs`)
 
@@ -1212,13 +1229,13 @@ una risposta rassicurante.
 | vincoli e zero-cost truthfulness | 15 | 15 | nessuna API a pagamento, nessun compute locale, nessun sempre-on |
 | fattibilità tecnica e sostituibilità | 15 | 13 | contratti provider-neutral; kernel non ancora scelto per esperimento M2 |
 | sicurezza, privacy, approval | 15 | 13 | invarianti e threat notes presenti; threat model completo è UJ-SEC-001 |
-| artifact concreti e testabilità | 15 | 14 | contratti che compilano; 22 test specificati ma non ancora implementati |
+| artifact concreti e testabilità | 15 | 14 | contratti che compilano; **36/36** test runtime verdi e **140/140** nella suite; **33 prove specificate e non implementate** (11 di §13.3 + 22 delle §16-21) |
 | fonti e disciplina epistemica | 10 | 9 | prompt canonico verificato con hash; fonti esterne raccolte, non asserite |
 | roadmap ed estendibilità | 10 | 8 | ADR aperti dichiarati; non invado milestone altrui |
 | status e remaining work | 10 | 9 | pesi e delta nell'handoff, formula §7.4 applicata |
 | collaborazione e handoff | 5 | 5 | handoff per tutte e tre le altre IA + Christian |
 | chiarezza | 5 | 4 | documento lungo per necessità di contratto |
-| **Totale** | **100** | **90** | soglia "pronto per review" raggiunta |
+| **Totale** | **100** | **90** | soglia raggiunta **sul contenuto**. Non è un giudizio di ammissibilità: il task è `BLOCKED` per il `read_ref` della card, non per la qualità dell'artefatto |
 
 Nessun critical failure di §43: nessuna API a pagamento proposta come attiva, nessuna
 automazione di UI consumer, nessun modello locale, nessun segreto esposto, nessun
@@ -1744,21 +1761,49 @@ Serve al reviewer per verificare la copertura **contando**, invece di leggere in
 | 24 | **Fallback locale senza costi** | **§20** | 3 da implementare, 1 esistente |
 
 **Bilancio onesto:** 24 requisiti su 24 hanno una sezione. **Non** 24 su 24 hanno una prova
-eseguita: le sezioni 16–21 ne specificano **24 nuove da implementare**, e il resto poggia sui
-140 test che passano oggi. Dichiarare coperto ciò che è solo specificato sarebbe falso
-avanzamento.
+eseguita: le sezioni 16-21 ne specificano **22 nuove da implementare**, e il resto poggia sui
+**140 test che passano oggi** (di cui **36** in `runtime-invariants`). Dichiarare coperto cio'
+che e' solo specificato sarebbe falso avanzamento.
+
+**Le 22, contate per sezione** — così il numero e' ricontabile invece che asserito:
+
+| Sezione | Prove specificate |
+|---|---:|
+| §16 decomposizione dei task | 5 |
+| §17 selezione e assegnazione agenti | 3 |
+| §18 routing provider-neutral e HUMAN_BRIDGE | 5 |
+| §19 conflitti fra agenti | 3 |
+| §20 fallback locale a costo zero | 3 |
+| §21 demo end-to-end minima | 3 |
+| **totale §16-21** | **22** |
+
+A queste si aggiungono le **11** gia' elencate come `⏳ PENDING` in §13.3, che richiedono lo
+stesso runtime assente. **Totale specificato e non implementato: 33.**
+
+Comando che riproduce il conteggio:
+
+```bash
+grep -cE '^\|.*PROVA DA IMPLEMENTARE' docs/architecture/RUNTIME_BLUEPRINT.md   # -> 22
+grep -cE '^\|.*⏳ PENDING'            docs/architecture/RUNTIME_BLUEPRINT.md   # -> 11
+```
+
+**L'ancora `^\|` non e' un dettaglio.** Senza di essa i due comandi restituiscono 24 e 13
+invece di 22 e 11, perche' contano anche le menzioni in prosa — comprese quelle di questo
+stesso paragrafo. Documentare un comando di conteggio dentro il documento che conta ne cambia
+il risultato: e' il motivo per cui entrambi i comandi sono ancorati alle righe di tabella, che
+sono le sole a rappresentare una prova.
 === END FILE ===
 
 === RESPONSE PACKET: UJ-RUN-001 ===
 {
   "schema_version": "ultrajarvis.response-packet/v1",
   "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818-BLOCKED",
-  "created_at": "2026-08-18T15:17:17Z",
+  "created_at": "2026-08-18T15:42:27Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "2dad45a40798a8059b5e2b7db077b76e77fcc88b",
+  "source_commit_sha": "79408449bd096613d2823efe6872ed424b757ee6",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -1767,7 +1812,7 @@ avanzamento.
     },
     {
       "capability": "Branch write (no main, no merge)",
-      "access_path": "git push to claude/claude-md-resume-point-tvej1u",
+      "access_path": "git push to agent/uj-run-001-blueprint-20260818 (the pattern the card authorises; direct_main_write is false)",
       "mode": "MANUAL_TOOL"
     },
     {
@@ -1816,7 +1861,7 @@ avanzamento.
       "verified_at": "2026-08-18T15:17:17Z"
     },
     {
-      "claim": "24 of 24 requirements have a section; NOT 24 of 24 have an executed proof. Sections 16-22 specify 24 new proofs, each marked PROVA DA IMPLEMENTARE, and none has been run. The minimal end-to-end demo of section 21 is specified and NOT executed.",
+      "claim": "24 of 24 requirements have a section; NOT 24 of 24 have an executed proof. Sections 16-21 specify 22 new proofs, each marked PROVA DA IMPLEMENTARE, and none has been run. The minimal end-to-end demo of section 21 is specified and NOT executed.",
       "classification": "OBSERVATION",
       "source_ref": "docs/architecture/RUNTIME_BLUEPRINT.md section 22",
       "verified_at": "2026-08-18T15:17:17Z"
@@ -1826,6 +1871,18 @@ avanzamento.
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "tests/contracts/runtime-invariants.test.mjs",
       "verified_at": "2026-08-18T15:17:17Z"
+    },
+    {
+      "claim": "Three internal inconsistencies were found in the blueprint and corrected before this packet was reissued: the header table declared status REVIEW while the packet declared BLOCKED; section 13.3 claimed 33 executed tests where the demonstrable count is 36; section 22 claimed 24 newly specified proofs where the table rows count 22. Each number was re-measured on the committed bytes, not carried over.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
+      "verified_at": "2026-08-18T15:42:27Z"
+    },
+    {
+      "claim": "Branch containment verified by execution, not assumed: `git branch -a --contains` for the reconciliation commit returns agent/uj-run-001-blueprint-20260818 and its remote only. The commit is NOT on claude/claude-md-resume-point-tvej1u. A stale reference to that branch in capabilities_actually_used has been corrected.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git branch -a --contains",
+      "verified_at": "2026-08-18T15:42:27Z"
     }
   ],
   "assumptions": [
@@ -1862,7 +1919,7 @@ avanzamento.
   "artifacts": [
     {
       "ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
-      "sha256": "a0be04069692d89399eefe183d489d8ad8bea472c232444676883331c23c2538",
+      "sha256": "d03c2fea30f2d0a994d92c16a87c4e1218351e8094daf29aa5625db625ba75ea",
       "media_type": "text/markdown",
       "data_class": "C1",
       "summary": "Provider-neutral runtime blueprint. Part I (sections 0-15): AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, six proposed ADRs. Part II (sections 16-22, added session 5): task decomposition, agent selection, provider-neutral routing and HUMAN_BRIDGE, inter-agent conflicts, zero-cost local fallback, minimal end-to-end demo, and a traceability map of the 24 required points."
@@ -1949,7 +2006,7 @@ avanzamento.
       "sha256": "0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0",
       "media_type": "application/javascript",
       "data_class": "C1",
-      "summary": "34 executable invariant tests, including pinned loop-detector similarity measurements and the idempotency-key collision regression."
+      "summary": "36 executable invariant tests, including pinned loop-detector similarity measurements, the idempotency-key collision regression, and the two E6 regressions (tool-cycle key injectivity and the NUL-byte scan of every runtime contract source)."
     },
     {
       "ref": "docs/threat-models/RUNTIME_THREAT_NOTES.md",
@@ -1976,7 +2033,9 @@ avanzamento.
       "sha256 of every cited artifact recomputed from the bytes at source_commit_sha",
       "vendor-token scan of packages/contracts/src/runtime",
       "NUL-byte scan of every runtime contract source",
-      "coverage count of the 24 required runtime points against the blueprint"
+      "coverage count of the 24 required runtime points against the blueprint",
+      "git branch -a --contains on the delivery commit",
+      "static and dynamic count of tests/contracts/runtime-invariants.test.mjs at the delivery commit"
     ],
     "passed": [
       "four pinned input hashes match at 3611b1b4",
@@ -1986,13 +2045,15 @@ avanzamento.
       "15 of 15 artifact hashes reproduced at source_commit_sha",
       "0 vendor identifiers in normative position",
       "0 NUL bytes across all runtime contract sources",
-      "24 of 24 requirements mapped to a section"
+      "24 of 24 requirements mapped to a section",
+      "branch containment: agent/uj-run-001-blueprint-20260818 only",
+      "runtime-invariants: 36 tests, 36 pass, 0 fail, run from the repository root on the file byte-identical to the committed blob"
     ],
     "failed": [
       "delegation card availability at read_ref 3611b1b4: the file does not exist at that commit. This is the blocking condition."
     ],
     "not_run": [
-      "The 24 proofs specified in blueprint sections 16-22. Specified, not implemented. The minimal end-to-end demo of section 21 has NOT been executed and is not claimed complete.",
+      "The 22 proofs specified in blueprint sections 16-21. Specified, not implemented. The minimal end-to-end demo of section 21 has NOT been executed and is not claimed complete.",
       "Runtime implementation tests (crash injection, concurrent spawn, supervisor liveness, checkpoint corruption): no runtime exists; M2/M3 under UJ-RCV-001.",
       "Cross-provider interoperability: no second provider runtime exists yet."
     ]
@@ -2063,7 +2124,7 @@ avanzamento.
     "weight": 13,
     "blockers": [
       "The delegation card is not available at its declared read_ref 3611b1b4. Nothing in this portfolio can resolve it: the card belongs to CHATGPT.",
-      "The 24 proofs specified in blueprint sections 16-22 are not implemented; they require a runtime (M2/M3).",
+      "The 22 proofs specified in blueprint sections 16-21 are not implemented; they require a runtime (M2/M3).",
       "Independent review by GEMINI has not been performed."
     ],
     "next_action": "CHATGPT corrects repository_scope.read_ref on UJ-CARD-RUN-001-CLAUDE to a commit at or after d48e1e8519a8d7af90ea44e770f0db7fd3938fb3, or states which ref the card must be read at. These same bytes can then be resubmitted with status REVIEW and no other change."
@@ -2084,7 +2145,7 @@ avanzamento.
   "handoff": {
     "target": "CHATGPT",
     "next_action": "Resolve the read_ref discrepancy on UJ-CARD-RUN-001-CLAUDE, then admit these bytes unchanged. GEMINI's review cannot begin while the task is BLOCKED.",
-    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha 2dad45a40798a8059b5e2b7db077b76e77fcc88b, the single reference for blueprint, packet, AC evidence and handoff. Accepted weight 0/13, unchanged. No BACKLOG edit was made."
+    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha 79408449bd096613d2823efe6872ed424b757ee6, the single reference for blueprint, packet, AC evidence and handoff. It supersedes 2dad45a40798a8059b5e2b7db077b76e77fcc88b, whose blueprint bytes carried three internal inconsistencies now corrected. Accepted weight 0/13, unchanged. No BACKLOG edit was made."
   }
 }
 === END RESPONSE PACKET ===

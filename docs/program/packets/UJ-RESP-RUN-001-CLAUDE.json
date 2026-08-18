@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
   "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818-BLOCKED",
-  "created_at": "2026-08-18T15:17:17Z",
+  "created_at": "2026-08-18T15:42:27Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "2dad45a40798a8059b5e2b7db077b76e77fcc88b",
+  "source_commit_sha": "79408449bd096613d2823efe6872ed424b757ee6",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -15,7 +15,7 @@
     },
     {
       "capability": "Branch write (no main, no merge)",
-      "access_path": "git push to claude/claude-md-resume-point-tvej1u",
+      "access_path": "git push to agent/uj-run-001-blueprint-20260818 (the pattern the card authorises; direct_main_write is false)",
       "mode": "MANUAL_TOOL"
     },
     {
@@ -64,7 +64,7 @@
       "verified_at": "2026-08-18T15:17:17Z"
     },
     {
-      "claim": "24 of 24 requirements have a section; NOT 24 of 24 have an executed proof. Sections 16-22 specify 24 new proofs, each marked PROVA DA IMPLEMENTARE, and none has been run. The minimal end-to-end demo of section 21 is specified and NOT executed.",
+      "claim": "24 of 24 requirements have a section; NOT 24 of 24 have an executed proof. Sections 16-21 specify 22 new proofs, each marked PROVA DA IMPLEMENTARE, and none has been run. The minimal end-to-end demo of section 21 is specified and NOT executed.",
       "classification": "OBSERVATION",
       "source_ref": "docs/architecture/RUNTIME_BLUEPRINT.md section 22",
       "verified_at": "2026-08-18T15:17:17Z"
@@ -74,6 +74,18 @@
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "tests/contracts/runtime-invariants.test.mjs",
       "verified_at": "2026-08-18T15:17:17Z"
+    },
+    {
+      "claim": "Three internal inconsistencies were found in the blueprint and corrected before this packet was reissued: the header table declared status REVIEW while the packet declared BLOCKED; section 13.3 claimed 33 executed tests where the demonstrable count is 36; section 22 claimed 24 newly specified proofs where the table rows count 22. Each number was re-measured on the committed bytes, not carried over.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
+      "verified_at": "2026-08-18T15:42:27Z"
+    },
+    {
+      "claim": "Branch containment verified by execution, not assumed: `git branch -a --contains` for the reconciliation commit returns agent/uj-run-001-blueprint-20260818 and its remote only. The commit is NOT on claude/claude-md-resume-point-tvej1u. A stale reference to that branch in capabilities_actually_used has been corrected.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git branch -a --contains",
+      "verified_at": "2026-08-18T15:42:27Z"
     }
   ],
   "assumptions": [
@@ -110,7 +122,7 @@
   "artifacts": [
     {
       "ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
-      "sha256": "a0be04069692d89399eefe183d489d8ad8bea472c232444676883331c23c2538",
+      "sha256": "d03c2fea30f2d0a994d92c16a87c4e1218351e8094daf29aa5625db625ba75ea",
       "media_type": "text/markdown",
       "data_class": "C1",
       "summary": "Provider-neutral runtime blueprint. Part I (sections 0-15): AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, six proposed ADRs. Part II (sections 16-22, added session 5): task decomposition, agent selection, provider-neutral routing and HUMAN_BRIDGE, inter-agent conflicts, zero-cost local fallback, minimal end-to-end demo, and a traceability map of the 24 required points."
@@ -197,7 +209,7 @@
       "sha256": "0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0",
       "media_type": "application/javascript",
       "data_class": "C1",
-      "summary": "34 executable invariant tests, including pinned loop-detector similarity measurements and the idempotency-key collision regression."
+      "summary": "36 executable invariant tests, including pinned loop-detector similarity measurements, the idempotency-key collision regression, and the two E6 regressions (tool-cycle key injectivity and the NUL-byte scan of every runtime contract source)."
     },
     {
       "ref": "docs/threat-models/RUNTIME_THREAT_NOTES.md",
@@ -224,7 +236,9 @@
       "sha256 of every cited artifact recomputed from the bytes at source_commit_sha",
       "vendor-token scan of packages/contracts/src/runtime",
       "NUL-byte scan of every runtime contract source",
-      "coverage count of the 24 required runtime points against the blueprint"
+      "coverage count of the 24 required runtime points against the blueprint",
+      "git branch -a --contains on the delivery commit",
+      "static and dynamic count of tests/contracts/runtime-invariants.test.mjs at the delivery commit"
     ],
     "passed": [
       "four pinned input hashes match at 3611b1b4",
@@ -234,13 +248,15 @@
       "15 of 15 artifact hashes reproduced at source_commit_sha",
       "0 vendor identifiers in normative position",
       "0 NUL bytes across all runtime contract sources",
-      "24 of 24 requirements mapped to a section"
+      "24 of 24 requirements mapped to a section",
+      "branch containment: agent/uj-run-001-blueprint-20260818 only",
+      "runtime-invariants: 36 tests, 36 pass, 0 fail, run from the repository root on the file byte-identical to the committed blob"
     ],
     "failed": [
       "delegation card availability at read_ref 3611b1b4: the file does not exist at that commit. This is the blocking condition."
     ],
     "not_run": [
-      "The 24 proofs specified in blueprint sections 16-22. Specified, not implemented. The minimal end-to-end demo of section 21 has NOT been executed and is not claimed complete.",
+      "The 22 proofs specified in blueprint sections 16-21. Specified, not implemented. The minimal end-to-end demo of section 21 has NOT been executed and is not claimed complete.",
       "Runtime implementation tests (crash injection, concurrent spawn, supervisor liveness, checkpoint corruption): no runtime exists; M2/M3 under UJ-RCV-001.",
       "Cross-provider interoperability: no second provider runtime exists yet."
     ]
@@ -311,7 +327,7 @@
     "weight": 13,
     "blockers": [
       "The delegation card is not available at its declared read_ref 3611b1b4. Nothing in this portfolio can resolve it: the card belongs to CHATGPT.",
-      "The 24 proofs specified in blueprint sections 16-22 are not implemented; they require a runtime (M2/M3).",
+      "The 22 proofs specified in blueprint sections 16-21 are not implemented; they require a runtime (M2/M3).",
       "Independent review by GEMINI has not been performed."
     ],
     "next_action": "CHATGPT corrects repository_scope.read_ref on UJ-CARD-RUN-001-CLAUDE to a commit at or after d48e1e8519a8d7af90ea44e770f0db7fd3938fb3, or states which ref the card must be read at. These same bytes can then be resubmitted with status REVIEW and no other change."
@@ -332,6 +348,6 @@
   "handoff": {
     "target": "CHATGPT",
     "next_action": "Resolve the read_ref discrepancy on UJ-CARD-RUN-001-CLAUDE, then admit these bytes unchanged. GEMINI's review cannot begin while the task is BLOCKED.",
-    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha 2dad45a40798a8059b5e2b7db077b76e77fcc88b, the single reference for blueprint, packet, AC evidence and handoff. Accepted weight 0/13, unchanged. No BACKLOG edit was made."
+    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha 79408449bd096613d2823efe6872ed424b757ee6, the single reference for blueprint, packet, AC evidence and handoff. It supersedes 2dad45a40798a8059b5e2b7db077b76e77fcc88b, whose blueprint bytes carried three internal inconsistencies now corrected. Accepted weight 0/13, unchanged. No BACKLOG edit was made."
   }
 }
