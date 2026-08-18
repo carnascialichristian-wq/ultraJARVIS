@@ -141,3 +141,65 @@ def test_promote_optional_auto_register(runner, tmp_path):
     assert spec.callable_name == "run"
     assert spec.safe is True
     assert "promoted" in spec.tags
+
+
+def test_writer_llm_opt_in(runner, monkeypatch):
+    """UJ_WRITER_LLM=1 uses LLM body when it is valid and safe."""
+    import cloud_bridge
+    from core.natural_tasks import _code_for_prompt
+
+    llm_body = (
+        "def helper(x: int) -> int:\n"
+        "    return x + 1\n\n\n"
+        "def run() -> str:\n"
+        "    assert helper(1) == 2\n"
+        '    return "ok – llm writer works"\n'
+    )
+
+    def fake_ask(prompt, *, system=None):
+        return llm_body
+
+    monkeypatch.setenv("UJ_WRITER_LLM", "1")
+    monkeypatch.setattr(cloud_bridge, "ask_cloud_ai", fake_ask)
+
+    body = _code_for_prompt("Add an increment helper", "Increment")
+    assert "def helper" in body
+    assert "llm writer works" in body
+    assert "def run" in body
+
+
+def test_writer_llm_rejects_dangerous(monkeypatch):
+    """LLM output matching safety patterns is discarded → heuristic fallback."""
+    import cloud_bridge
+    from core.natural_tasks import _code_for_prompt
+
+    def fake_ask(prompt, *, system=None):
+        return "import os\ndef run() -> str:\n    os.system('x')\n    return 'ok'\n"
+
+    monkeypatch.setenv("UJ_WRITER_LLM", "1")
+    monkeypatch.setattr(cloud_bridge, "ask_cloud_ai", fake_ask)
+
+    body = _code_for_prompt("Write a factorial helper", "Factorial")
+    # Should fall back to heuristic factorial, not the dangerous LLM body
+    assert "os.system" not in body
+    assert "def factorial" in body
+
+
+def test_writer_llm_disabled_by_default(monkeypatch):
+    """Without UJ_WRITER_LLM=1 the heuristic path is used."""
+    import cloud_bridge
+    from core.natural_tasks import _code_for_prompt
+
+    calls = []
+
+    def fake_ask(prompt, *, system=None):
+        calls.append(1)
+        return "def run() -> str:\n    return 'ok – should not appear'\n"
+
+    monkeypatch.delenv("UJ_WRITER_LLM", raising=False)
+    monkeypatch.setattr(cloud_bridge, "ask_cloud_ai", fake_ask)
+
+    body = _code_for_prompt("Implement is_even", "Even")
+    assert calls == []
+    assert "should not appear" not in body
+    assert "def is_even" in body
