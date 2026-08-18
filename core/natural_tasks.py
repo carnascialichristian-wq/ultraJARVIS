@@ -317,6 +317,17 @@ class NaturalTaskRunner:
             guarded_write(job_dir / "style.json", json.dumps(style, indent=2))
         except Exception:
             pass
+        # Durable memory: record completed jobs for later recall / planner hints
+        try:
+            from core.memory import remember
+            final_status = summary.get("status", status)
+            remember(
+                f"job:{job_id} title={task_plan.title!r} status={final_status}",
+                tags=["job", final_status.lower(), "natural_tasks"],
+            )
+            summary["remembered"] = True
+        except Exception:
+            summary["remembered"] = False
         return summary
 
     def _write_implementation(self, job_dir: Path, task_plan: Plan, prompt: str) -> list[str]:
