@@ -58,7 +58,6 @@ def _matching_tools(task_text: str) -> list[str]:
             name_key = t.name.split(".")[-1].lower()
             if not name_key:
                 continue
-            # whole-token match preferred; skip very short keys that cause false positives
             if name_key in tokens:
                 hits.append(t.name)
             elif len(name_key) > 3 and any(name_key in tok for tok in tokens):
@@ -75,15 +74,7 @@ def _matching_tools(task_text: str) -> list[str]:
 
 
 def _plan_via_llm(task_text: str) -> Plan | None:
-    """
-    Optional LLM-backed planner (Phase 2 adapter).
-
-    Calls cloud_bridge.ask_cloud_ai and expects a small JSON object:
-      {"title": "...", "milestones": [...], "risks": [...], "done_criteria": [...]}
-
-    Returns None on any failure so the heuristic planner remains the fallback.
-    Enabled only when UJ_PLANNER_LLM=1.
-    """
+    """Optional LLM-backed planner. Opt-in UJ_PLANNER_LLM=1."""
     import os
     import re
 
@@ -108,7 +99,6 @@ def _plan_via_llm(task_text: str) -> Plan | None:
     if not raw or not raw.strip():
         return None
 
-    # Strip optional markdown fences if the model ignored instructions
     cleaned = raw.strip()
     if cleaned.startswith("```"):
         cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
@@ -117,7 +107,6 @@ def _plan_via_llm(task_text: str) -> Plan | None:
     try:
         data = json.loads(cleaned)
     except Exception:
-        # last-ditch: find first { ... } block
         m = re.search(r"\{[\s\S]*\}", cleaned)
         if not m:
             return None
@@ -133,9 +122,8 @@ def _plan_via_llm(task_text: str) -> Plan | None:
     risks = [str(x).strip() for x in (data.get("risks") or []) if str(x).strip()]
     done = [str(x).strip() for x in (data.get("done_criteria") or []) if str(x).strip()]
     if not milestones:
-        return None  # too empty to be useful
+        return None
 
-    # Surface existing tools even on the LLM path
     existing = _matching_tools(task_text)
     if existing:
         milestones.insert(
@@ -158,25 +146,17 @@ def _plan_via_llm(task_text: str) -> Plan | None:
 
 
 def plan(task_text: str) -> Plan:
-    """
-    Create a Plan from a natural-language task description.
-
-    Prefer the LLM adapter when UJ_PLANNER_LLM=1 and the model returns
-    usable JSON; otherwise fall back to the deterministic heuristic.
-    """
+    """Create a Plan; prefer LLM when UJ_PLANNER_LLM=1 else heuristic."""
     llm_plan = _plan_via_llm(task_text)
     if llm_plan is not None:
         return llm_plan
 
-    # Deterministic heuristic fallback
     text = (task_text or "").strip()
     if not text:
         title = "Untitled task"
     else:
-        # First line or first 80 chars as title
         title = text.split("\n")[0][:80].strip() or "Untitled task"
 
-    # Simple heuristic milestones
     milestones = [
         "Understand requirements and constraints",
         "Implement core functionality",
@@ -206,6 +186,27 @@ def plan(task_text: str) -> Plan:
         risks.append(
             "Reimplementing a capability that already exists in the registry"
         )
+
+    # Surface related past jobs from durable memory (if any)
+    try:
+        from core.memory import recall
+        tokens = [t for t in text.lower().replace("-", " ").split() if len(t) > 3][:3]
+        related = []
+        for tok in tokens:
+            related.extend(recall(tok, limit=3, tag="job"))
+        seen = set()
+        unique = []
+        for e in related:
+            f = e.get("fact") or ""
+            if f and f not in seen:
+                seen.add(f)
+                unique.append(f)
+        if unique:
+            milestones.append(
+                "Review related past jobs: " + "; ".join(unique[:3])
+            )
+    except Exception:
+        pass
 
     return Plan(
         title=title,
