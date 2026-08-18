@@ -24,9 +24,9 @@
 
 ---
 
-# PARTE 1 — LE DUE REGOLE PRIMARIE
+# PARTE 1 — LE TRE REGOLE PRIMARIE
 
-Queste due regole vengono **prima** di qualunque task tecnica. Sono ordini diretti del
+Queste tre regole vengono **prima** di qualunque task tecnica. Sono ordini diretti del
 proprietario, quindi `USER_CONSTRAINT` secondo §5 del prompt canonico, e stanno al
 livello più alto della gerarchia della verità (§7.2).
 
@@ -66,6 +66,43 @@ Precisazioni operative, per non lasciare margine di interpretazione:
 - se una task finisce male, il resoconto si scrive **lo stesso**, descrivendo il
   fallimento. Un fallimento documentato vale più di un successo non registrato.
 
+## REGOLA 3 — A fine lavoro, spiega a Christian cosa hai fatto. In italiano, da persona
+
+**Ordine diretto del proprietario, 2026-08-18:** *"alla fine di ogni tuo lavoro, in modo umano
+e no AI slop, scrivi che hai fatto e le tue riflessioni, perché altrimenti io non capisco."*
+
+Il resoconto tecnico (Regola 1) serve alla sessione successiva. **Questa spiegazione serve a
+Christian**, ed è una cosa diversa. Non sostituisce il resoconto: si aggiunge, e va alla fine
+del messaggio in chat, non in un file.
+
+Come si scrive:
+
+- **In italiano, discorsivo.** Frasi normali. Se una tabella serve davvero, una sola e piccola.
+- **Prima cosa: che cos'era rotto e perché contava.** Non "ho aggiornato l'artefatto X": *"il
+  documento diceva ancora che il lavoro era pronto per la review, mentre il pacchetto accanto
+  diceva che era bloccato — due carte sullo stesso tavolo che dicono il contrario"*.
+- **Poi: cosa ho fatto e cosa ho scoperto strada facendo**, incluso ciò che non mi aspettavo.
+- **Poi: gli errori miei, detti come li direbbe una persona**, senza girarci intorno e senza
+  flagellarsi. Se ho dato un'istruzione sbagliata, si dice che era sbagliata.
+- **Poi: che cosa penso davvero.** Un'opinione, non un riassunto. Se una cosa mi sembra fragile
+  o mal progettata, lo dico — anche se è mia.
+- **Ultima cosa: che cosa serve da lui**, in una riga, se serve qualcosa.
+
+Come NON si scrive:
+
+- niente muri di hash, SHA-256, exit code e nomi di commit: quelli stanno nei documenti, e a
+  Christian servono solo se li chiede;
+- niente grassetto ogni tre parole;
+- niente elenchi di dieci punti tutti uguali di importanza;
+- niente frasi che suonano bene e non dicono niente (*"ho consolidato il workflow garantendo
+  la coerenza end-to-end"*). Se una frase si può cancellare senza perdere informazione, si
+  cancella;
+- **niente entusiasmo per lavoro non verificato.** Se una cosa è a metà, si dice a metà.
+
+**Il criterio per capire se è scritta bene:** Christian deve poterla leggere una volta sola,
+senza rileggere, e sapere che cosa è successo e se deve fare qualcosa. Se deve chiedere
+*"quindi in pratica?"*, è scritta male.
+
 ### Checklist di chiusura task (da eseguire ogni volta)
 
 ```
@@ -76,6 +113,9 @@ Precisazioni operative, per non lasciare margine di interpretazione:
 [ ] 5. Aggiornato il RESUME_POINT in fondo a questo file
 [ ] 6. git add / commit / push sul branch designato
 [ ] 7. Verificato che i test citati passino DAVVERO (comando + esito, non memoria)
+[ ] 8. Scritta a Christian la spiegazione in italiano della Regola 3, in fondo al
+       messaggio: cos'era rotto, cosa ho fatto, cosa ho sbagliato, cosa penso,
+       cosa serve da lui. Senza hash e senza slop
 ```
 
 ---

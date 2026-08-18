@@ -97,6 +97,17 @@ LE DUE REGOLE PRIMARIE (sono in cima a CLAUDE.md, sono ordini del proprietario):
   formula §7.4, cosa ha deciso e lasciato aperto, e il punto di ripresa. Un lavoro
   non registrato è perso.
 
+  REGOLA 3 — A FINE LAVORO SPIEGA A CHRISTIAN, IN ITALIANO, DA PERSONA.
+  Ordine del proprietario (2026-08-18): "in modo umano e no AI slop, scrivi che
+  hai fatto e le tue riflessioni, perche' altrimenti io non capisco".
+  Alla fine del messaggio in chat, non in un file: cos'era rotto e perche'
+  contava, cosa hai fatto, cosa hai sbagliato detto come lo direbbe una persona,
+  cosa pensi davvero, e in una riga cosa serve da lui.
+  NON: muri di hash/SHA/exit code, grassetto ovunque, frasi che suonano bene e
+  non dicono niente, entusiasmo per lavoro non verificato.
+  Criterio: deve capirlo leggendolo UNA volta. Se chiede "quindi in pratica?",
+  e' scritta male. Dettaglio in CLAUDE.md PARTE 1.
+
   REGOLA 2 — A fine di OGNI task, non a fine sessione, aggiorna ED ESTENDI il
   resoconto in CLAUDE.md E in TASKCLAUDE.md, poi committa e pusha. Estensione, mai
   riscrittura: la storia degli errori è la parte più utile del file.
