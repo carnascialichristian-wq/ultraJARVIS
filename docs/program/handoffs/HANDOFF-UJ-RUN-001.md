@@ -72,6 +72,42 @@ quarta vittima.
 > di prove specificate e NON implementate** (22 + 11) ed è misurato. Sono grandezze opposte:
 > il primo asseriva lavoro fatto, il secondo dichiara lavoro non fatto.
 
+### 0.4 La stessa forma, quattro volte nello stesso set di consegna
+
+Cercare l'istanza segnalata da CHATGPT non bastava. Una scansione dell'intero set per
+*«dichiarazioni di stato o di branch scritte al presente e già superate»* ne ha trovate
+**quattro**, tutte in artefatti che il packet hasha:
+
+| # | Artefatto | Dichiarava | Gravità relativa |
+|---:|---|---|---|
+| 1 | `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | branch e stato della sessione 1, `33` test | è quella segnalata |
+| 2 | `packages/contracts/src/runtime/index.ts` | `RUNTIME_CONTRACTS_PROVENANCE.status = "REVIEW"` | **la peggiore** |
+| 3 | `packages/contracts/package.json` | `description: "… status REVIEW."` | minore |
+| 4 | `docs/architecture/RUNTIME_BLUEPRINT.md` | il prompt canonico *«non è ancora su `main`»* | minore, ma falsa |
+
+**Perché la n. 2 è la peggiore, anche se è una riga.** È l'**unica copia leggibile da una
+macchina** dello stato, ed è offerta dal suo stesso commento *«for the Program OS ledger»*.
+Un integratore che leggesse la provenienza dal codice invece che dal packet avrebbe ottenuto
+`REVIEW` da una consegna `BLOCKED`. Lo stesso file, venticinque righe più su, dichiarava
+`Status: PROPOSAL`: due stati diversi nello stesso file. Ora i due assi sono separati —
+*maturità del contratto* (`PROPOSAL`) e *ammissibilità della consegna* (`BLOCKED`) — perché
+non sono la stessa cosa e confonderli è ciò che ha generato la contraddizione.
+
+**La n. 4 era falsa, verificato:** `git show origin/main:docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
+| sha256sum` e `git show b8a7697:…` restituiscono lo stesso `a3fcdfc9…a69a87`. Il prompt è su
+`main` da quando la PR #1 è stata mergiata. La provenienza resta valida; cambiava solo dove
+leggerlo.
+
+**La lezione, e non è nuova.** Il `33` era stato corretto nel blueprint in sessione 5 e
+lasciato nel file accanto. Lo stato `REVIEW` era stato corretto nel blueprint in sessione 5 e
+lasciato in altri tre file. È la trappola 20 della mia memoria operativa — *un difetto corretto
+in un file non è corretto nel file accanto* — alla sua terza occorrenza, dopo il byte NUL
+rimosso da `checkpoint.ts` e lasciato in `depth-guard.ts` per quattro sessioni.
+**La contromisura non è l'attenzione: è il grep.** Quando si corregge un valore condiviso —
+uno stato, un conteggio, il nome di un branch — va cercato in **tutta** la consegna prima di
+dichiarare chiusa la correzione. Questa scansione è ora una voce di `verification.checks_run`
+nel packet, così il giro successivo la eredita invece di doverla riscoprire.
+
 ---
 
 ## 1. Perché `BLOCKED`, e perché resta `BLOCKED`

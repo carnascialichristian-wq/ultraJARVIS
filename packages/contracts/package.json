@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Shared, provider-neutral contracts for ultraJARVIS. Runtime contracts are UJ-RUN-001 (CLAUDE), status REVIEW.",
+  "description": "Shared, provider-neutral contracts for ultraJARVIS. Runtime contracts are UJ-RUN-001 (CLAUDE); the delivery status is BLOCKED on the delegation card read_ref, not on the contracts themselves.",
   "exports": {
     "./runtime": "./src/runtime/index.ts"
   },

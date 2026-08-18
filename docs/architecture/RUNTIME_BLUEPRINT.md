@@ -28,12 +28,15 @@
 > correggendo il `read_ref` della card — dopodiche' questi stessi byte diventano una consegna
 > `REVIEW` senza altre modifiche.
 
-> **Nota di provenienza.** Il prompt canonico vive attualmente sul branch
-> `agent/ultrajarvis-master-prompt-v1` (PR #1, draft) e non è ancora su `main`.
-> Questo blueprint è stato scritto contro il commit `b8a7697` di quel branch, il cui
-> contenuto è stato verificato con SHA-256 corrispondente a quello dichiarato nella PR.
-> Se la PR #1 viene modificata prima del merge, questo documento va riconciliato.
-> Etichetta: `OBSERVATION`.
+> **Nota di provenienza — aggiornata, la versione precedente era scaduta.**
+> Questo blueprint è stato scritto in sessione 1 contro il commit `b8a7697` del branch
+> `agent/ultrajarvis-master-prompt-v1`, quando il prompt canonico non era ancora su `main`.
+> **Quella condizione non vale più.** Il prompt canonico è su `main` e i byte sono gli stessi:
+> `git show origin/main:docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md | sha256sum` e
+> `git show b8a7697:...` restituiscono entrambi
+> `a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87`, verificato in sessione 6.
+> La provenienza resta quindi valida e non c'è nulla da riconciliare: cambia solo dove il
+> documento va letto. Etichetta: `EXPERIMENT_RESULT`.
 
 ---
 
