@@ -1,70 +1,77 @@
-# CONSEGNA UJ-RUN-001 — da inoltrare a CHATGPT via HUMAN_BRIDGE
+# CONSEGNA UJ-RUN-001 — blocchi da inoltrare a CHATGPT via HUMAN_BRIDGE
 
-> **Christian:** copia da «INIZIO BLOCCO DA INCOLLARE» a «FINE BLOCCO DA INCOLLARE»
-> e incollalo nella sessione di integrazione ChatGPT. Non accorciare, non riformattare.
+> **Christian:** ogni blocco delimitato qui sotto va copiato **per intero**, dai marcatori
+> `===` inclusi. Non accorciare e non riformattare. Il blueprint e' grande: se il canale
+> tronca, e' meglio inviare **questo file** che un blocco tagliato a meta' — un blocco
+> troncato e' esattamente il motivo per cui la prima consegna di Gemini e' stata respinta.
 
 | | |
 |---|---|
-| Task | `UJ-RUN-001` |
+| Task | `UJ-RUN-001` — owner CLAUDE, reviewer GEMINI, peso 13 |
 | Card | `UJ-CARD-RUN-001-CLAUDE` |
-| Gate a cui risponde | `prompts/handoffs/CLAUDE_RUN_UJ-RUN-001_REQUEST_20260818.md` |
+| Mission | `UJ-MISSION-M0-COUNCIL-001` |
+| Stato proposto | **REVIEW** |
+| Peso accettato | **0 / 13, invariato** |
+| `source_commit_sha` | `8ed53286ea805118d26c9a27caf4281904cf7fbe` |
 | Ref da fetchare | `origin/claude/claude-md-resume-point-tvej1u` |
-| `source_commit_sha` | `01d7d3016175a46c17a50f4f3d26ce0490a23704` |
-| Blocchi FILE nel blocco | **1** (`docs/architecture/RUNTIME_BLUEPRINT.md`) |
-| Byte del file incluso | **56785**, sha256 `bc0fcc4bf577dc97abe8af5725c4aa85b01e2f2980073b619d6f3fdfeda88480` |
+| Blocchi FILE | **1** — `docs/architecture/RUNTIME_BLUEPRINT.md`, **84318 byte**, sha256 `a0be04069692d89399eefe183d489d8ad8bea472c232444676883331c23c2538` |
 | Newline finale del file | presente (LF) |
-| Peso accettato proposto | **0 / 13, invariato** |
+| Generato | 2026-08-18T13:50:28Z |
 
-## Perché un solo blocco FILE e non quindici
+## Cosa e' cambiato rispetto alla consegna precedente
 
-Il gate dice *"Se non serve, non aggiungere un secondo blocco FILE"*, e `return_channel`
-della card dice di usare *"a review branch/PR only if GitHub write is actually available"*.
-La scrittura su branch **è** disponibile: gli altri quattordici artefatti sono committati e
-pushati al commit dichiarato, ciascuno con il proprio SHA nel packet. Non sono omessi —
-sono consegnati per riferimento, che è il canale che la card indica quando il branch esiste.
-Incollarli a mano significherebbe far ricopiare a Christian circa 200 KB già verificabili
-con un `git fetch`.
+Ho **misurato** la copertura del blueprint contro i 24 punti richiesti invece di assumerla.
+Cinque punti avevano **zero occorrenze** nel documento — decomposizione dei task, selezione e
+assegnazione degli agenti, demo end-to-end, fallback locale a costo zero — e due erano deboli:
+conflitti fra agenti (1 occorrenza), HUMAN_BRIDGE (2).
 
-| Artefatto consegnato per ref | SHA-256 dei byte finali | media type |
-|---|---|---|
-| `packages/contracts/src/runtime/agent-manifest.ts` | `0401bf8c364cad5e6f8d430c84a4dc1b66e3b5420e7e2834e88e2a891ebb5b26` | application/typescript |
-| `packages/contracts/src/runtime/checkpoint.ts` | `21df12f40d2ffe93e672ed95a13d3ca1125fcd0dad05abfd967b41b2d9612fce` | application/typescript |
-| `packages/contracts/src/runtime/common.ts` | `86baa7e4050a252f5d4650be35753585ae4f1bd3733691a8b4ba31ef70919c51` | application/typescript |
-| `packages/contracts/src/runtime/depth-guard.ts` | `515b8a9f36fa3fae9594552d30a58bc33bf52d155d6b29fe45e7f01bdcca19b7` | application/typescript |
-| `packages/contracts/src/runtime/envelopes.ts` | `1e3f94558b69abd2852f2c8d5af3691db4d31a9ca947ae7d093581ec4a483b79` | application/typescript |
-| `packages/contracts/src/runtime/index.ts` | `08e06bde8eb51ab1ac9636a1bebfae12c6bd373643ba1c77180b1da64b85de1a` | application/typescript |
-| `packages/contracts/src/runtime/run-ledger.ts` | `e40c5004152b7bdcb150b26effff634f73a9356f45fe25605b8b2d58959314a7` | application/typescript |
-| `packages/contracts/src/runtime/supervisor.ts` | `d9d4078c69fd1dfede055571c546d0b3ca092bd14a1807eab6eb16d99dd72779` | application/typescript |
-| `packages/contracts/src/runtime/team-spec.ts` | `d5a6e5adb50d0cdff3d920ce7dd20dacbef8d8012659f129723d64411653f9ff` | application/typescript |
-| `packages/contracts/package.json` | `3c085ad42466251192a5ecfa7ee71750bd6825d4f5cb6fa56df0c257c4f3980a` | application/json |
-| `packages/contracts/tsconfig.json` | `d438c3e078c5acc567c703f7d1c119d17d9b135810acd22cd0b5c8013415a5fe` | application/json |
-| `tests/contracts/runtime-invariants.test.mjs` | `0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0` | application/javascript |
-| `docs/threat-models/RUNTIME_THREAT_NOTES.md` | `b84a9a721c5544df9ad1b84e48760a2382783eed3556a7b0c60ba2a6d34bdb60` | text/markdown |
-| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | `5b943a125bddfb70659daadceda7609527fed464d1ff9f1fb26c88887e7c5e45` | text/markdown |
+Ho aggiunto le sezioni **16-22** invece di riscrivere le 0-15. Quelle sono citate per numero
+dal ResponsePacket, dalla review checklist §13, dagli header dei contratti in
+`packages/contracts/src/runtime/` e dalle threat notes: rinumerarle romperebbe quei riferimenti
+in silenzio. **Un solo hash su quindici e' cambiato**, quello del blueprint: e' la prova che
+l'estensione non ha toccato gli altri quattordici artefatti.
 
-## Evidenza per criterio
+**Bilancio dichiarato, §22:** 24 requisiti su 24 hanno ora una sezione. **NON** 24 su 24 hanno
+una prova eseguita. Le sezioni nuove specificano **24 prove da implementare**, ognuna marcata
+`PROVA DA IMPLEMENTARE`, e il resto poggia sui 140 test che passano oggi.
 
-`docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md` — path, hash e un controllo **eseguito**
-per ognuno di AC-01…AC-05, piu' tre rilievi sul gate stesso (la card non esiste al commit
-di lettura che il gate indica; il gate dice `path` dove lo schema dice `ref`; il
-`source_commit_sha` non e' raggiungibile da `main`).
+## Gli altri quattordici artefatti, consegnati per riferimento
 
-## Avvertenza a CHATGPT, scoperta dopo aver preparato questo blocco
+`return_channel` della card dice di usare un branch **se la scrittura e' disponibile**: lo e'.
+Sono committati al `source_commit_sha` dichiarato, ognuno col proprio hash nel packet. Non sono
+omessi — sono verificabili con un `git fetch`.
 
-I cinque criteri che ho verificato sono quelli della **delegation card**. Il tuo validatore li
-legge dal `BACKLOG.json`, che per `UJ-RUN-001` ne dichiara **due**. Un `ReviewResult` di Gemini
-scritto sui cinque criteri della card verra' respinto con *"unknown criterion AC-03/04/05"*:
-misurato eseguendo il validatore su un caso reale. Vale per **tutte e quattro** le card.
+| Artefatto | SHA-256 dei byte finali |
+|---|---|
+| `packages/contracts/src/runtime/agent-manifest.ts` | `0401bf8c364cad5e6f8d430c84a4dc1b66e3b5420e7e2834e88e2a891ebb5b26` |
+| `packages/contracts/src/runtime/checkpoint.ts` | `21df12f40d2ffe93e672ed95a13d3ca1125fcd0dad05abfd967b41b2d9612fce` |
+| `packages/contracts/src/runtime/common.ts` | `86baa7e4050a252f5d4650be35753585ae4f1bd3733691a8b4ba31ef70919c51` |
+| `packages/contracts/src/runtime/depth-guard.ts` | `515b8a9f36fa3fae9594552d30a58bc33bf52d155d6b29fe45e7f01bdcca19b7` |
+| `packages/contracts/src/runtime/envelopes.ts` | `1e3f94558b69abd2852f2c8d5af3691db4d31a9ca947ae7d093581ec4a483b79` |
+| `packages/contracts/src/runtime/index.ts` | `08e06bde8eb51ab1ac9636a1bebfae12c6bd373643ba1c77180b1da64b85de1a` |
+| `packages/contracts/src/runtime/run-ledger.ts` | `e40c5004152b7bdcb150b26effff634f73a9356f45fe25605b8b2d58959314a7` |
+| `packages/contracts/src/runtime/supervisor.ts` | `d9d4078c69fd1dfede055571c546d0b3ca092bd14a1807eab6eb16d99dd72779` |
+| `packages/contracts/src/runtime/team-spec.ts` | `d5a6e5adb50d0cdff3d920ce7dd20dacbef8d8012659f129723d64411653f9ff` |
+| `packages/contracts/package.json` | `3c085ad42466251192a5ecfa7ee71750bd6825d4f5cb6fa56df0c257c4f3980a` |
+| `packages/contracts/tsconfig.json` | `d438c3e078c5acc567c703f7d1c119d17d9b135810acd22cd0b5c8013415a5fe` |
+| `tests/contracts/runtime-invariants.test.mjs` | `0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0` |
+| `docs/threat-models/RUNTIME_THREAT_NOTES.md` | `b84a9a721c5544df9ad1b84e48760a2382783eed3556a7b0c60ba2a6d34bdb60` |
+| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | `5b943a125bddfb70659daadceda7609527fed464d1ff9f1fb26c88887e7c5e45` |
 
-E a monte: il validatore importa solo per task in `REVIEW`, mentre `UJ-RUN-001` e' ancora
-`READY` **benche' il ResponsePacket qui sotto esista e validi a exit 0**. Nessuno script del
-repository applica la transizione proposta.
+## Rilievi sul gate, gia' segnalati e non risolti
 
-Analisi completa: `docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`.
+1. La card `UJ-RUN-001-CLAUDE.json` **non esiste** al commit `3611b1b4` al quale il gate ordina
+   di leggerla: entra con `d48e1e85`, dodici minuti dopo. I quattro hash **pinati** coincidono
+   tutti a `3611b1b4`, quindi non ho restituito `BLOCKED`.
+2. Il gate dice `path`, lo schema dice `ref`. Con `additionalProperties: false` un artifact con
+   `path` fallisce la validazione. Ho seguito lo schema.
+3. Il gate chiede la mappatura per criterio **dentro** il packet; lo schema non ha alcun campo
+   per criterio. E' in `docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md`.
+4. `UJ-RUN-001` dichiara **cinque** criteri nella card e **due** nel `BACKLOG.json`. Una review
+   scritta sui cinque criteri assegnati verra' respinta come *"unknown criterion"*. Misurato
+   eseguendo il validatore. Vale per tutte e quattro le card.
 
 ---
-
-INIZIO BLOCCO DA INCOLLARE
 === FILE: docs/architecture/RUNTIME_BLUEPRINT.md ===
 # RUNTIME BLUEPRINT — ultraJARVIS Agent Runtime v0.1
 
@@ -1204,18 +1211,541 @@ Nessun critical failure di §43: nessuna API a pagamento proposta come attiva, n
 automazione di UI consumer, nessun modello locale, nessun segreto esposto, nessun
 billing, nessuna percentuale o test inventati, nessuna skill autopromossa, nessun
 repository copiato, nessun side effect non approvato.
+
+---
+
+# PARTE II — sezioni aggiunte in sessione 5 (2026-08-18)
+
+> **Perché numerate da 16 e non intercalate.** Le sezioni 0–15 sono citate per numero dal
+> `ResponsePacket` di `UJ-RUN-001`, dalla review checklist §13, dai contratti in
+> `packages/contracts/src/runtime/` (che riportano `Blueprint §N` nei loro header) e dalle
+> threat notes. Rinumerarle romperebbe quei riferimenti in silenzio. Le sezioni nuove si
+> aggiungono in coda: **estensione, mai riscrittura.**
+>
+> **Stato delle prove in questa parte.** Dove una prova **esiste già** è nominata con il file
+> e il nome del test. Dove **non esiste**, è scritto `PROVA DA IMPLEMENTARE` con l'asserzione
+> esatta che dovrà fare. Nessuna delle due categorie è dichiarata eseguita se non lo è: le
+> sezioni 16–21 specificano contratti, non risultati.
+
+---
+
+## 16. Decomposizione dei task
+
+### 16.1 Responsabilità
+
+Trasformare una `MissionSpec` in un **DAG di task**, ciascuno con un solo owner, un reviewer
+diverso dall'owner, un peso e criteri di accettazione verificabili. La decomposizione è la
+sola sede in cui nascono i task: nessun agente può crearne uno a runtime.
+
+**La parte strutturale è una funzione pura.** Non richiede alcuna chiamata a modello: dato lo
+stesso `MissionSpec` e lo stesso registro di capability, produce lo stesso DAG byte per byte.
+Un modello può *proporre* una decomposizione, ma la proposta entra come input dati e passa
+per gli stessi controlli di una scritta a mano. Questo è ciò che rende la decomposizione
+testabile e a costo zero.
+
+### 16.2 Input
+
+| Campo | Tipo | Vincolo |
+|---|---|---|
+| `missionId` | `MissionId` | esiste nel ledger, stato `OPEN` |
+| `objective` | `string` | non vuoto |
+| `capabilityIndex` | `readonly CapabilityTag[]` | chiuso: nessun tag inventato in decomposizione |
+| `budget` | `QuotaBudget` | `costClass` di ogni ramo deve essere `ZERO_*` (§20) |
+| `ceilings` | `{ maxDepth, maxFanOut, maxActive }` | non modificabili dagli agenti (`DG-1..DG-3`) |
+
+### 16.3 Output
+
+```ts
+interface TaskNode {
+  readonly taskId: TaskId;
+  readonly parentId: TaskId | null;
+  readonly depth: number;              // 0 per la radice
+  readonly weight: number;             // intero > 0
+  readonly owner: AiId;
+  readonly reviewer: AiId;             // invariante: reviewer !== owner
+  readonly requiredCapabilities: readonly CapabilityTag[];
+  readonly acceptanceCriteria: readonly Criterion[];  // >= 1, ognuno falsificabile
+  readonly dependsOn: readonly TaskId[];
+}
+interface Decomposition {
+  readonly missionId: MissionId;
+  readonly nodes: readonly TaskNode[];
+  readonly contentHash: ContentHash;   // sui nodi ordinati per taskId
+}
+```
+
+### 16.4 Stato
+
+`DRAFT → VALIDATED → FROZEN`. Solo una decomposizione `FROZEN` può generare delegation card.
+`FROZEN` è **append-only**: aggiungere un task richiede una nuova decomposizione con un nuovo
+`contentHash` e un evento `mission.decomposition.superseded` che nomina la precedente.
+
+### 16.5 Errori
+
+| Codice | Condizione | Effetto |
+|---|---|---|
+| `DEC-E01` | ciclo nel DAG | rifiuto, nessun task creato |
+| `DEC-E02` | somma dei pesi dei figli ≠ peso del padre | rifiuto |
+| `DEC-E03` | `reviewer === owner` su almeno un nodo | rifiuto, nodo nominato |
+| `DEC-E04` | nodo senza `acceptanceCriteria` o con criteri non falsificabili | rifiuto |
+| `DEC-E05` | `depth > maxDepth` o `fanOut > maxFanOut` | rifiuto, invariante `DG-*` nominata |
+| `DEC-E06` | `requiredCapabilities` contiene un tag fuori da `capabilityIndex` | rifiuto |
+| `DEC-E07` | task irraggiungibile dalla radice | rifiuto |
+
+Tutti gli errori sono **rifiuti in blocco**: non esiste decomposizione parzialmente accettata.
+Una decomposizione a metà è peggio di nessuna, perché produce task orfani che nessuno possiede.
+
+### 16.6 Controlli
+
+1. **Aciclicità** — ordinamento topologico; fallisce se resta un nodo con archi entranti.
+2. **Conservazione del peso** — per ogni nodo non foglia, `weight === Σ weight(figli)`.
+3. **Indipendenza del reviewer** — `reviewer !== owner`, verificato su ogni nodo.
+4. **Falsificabilità dei criteri** — ogni `Criterion` deve avere un `verification` che nomina
+   un artefatto o un comando. Un criterio la cui verità dipende solo dal verdetto del reviewer
+   **non è falsificabile e va rifiutato** (`DEC-E04`).
+5. **Determinismo** — due esecuzioni sullo stesso input producono lo stesso `contentHash`.
+
+> **Il controllo 4 esiste per un difetto osservato, non per ipotesi.** Nel `BACKLOG.json`
+> corrente, 41 criteri di accettazione su 43 task hanno la forma *"`<REVIEWER>` issues an
+> evidence-backed PASS or PASS_WITH_ACTIONS review"*. Un criterio del genere è vero se e solo
+> se il reviewer approva: nessuna proprietà del deliverable lo rende vero o falso. `DEC-E04`
+> impedisce meccanicamente che una decomposizione futura ne produca altri.
+
+### 16.7 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-DEC-1` un DAG con ciclo è rifiutato con `DEC-E01` | **PROVA DA IMPLEMENTARE** |
+| `T-DEC-2` pesi che non si conservano sono rifiutati con `DEC-E02` | **PROVA DA IMPLEMENTARE** |
+| `T-DEC-3` `reviewer === owner` è rifiutato e il nodo è nominato | **PROVA DA IMPLEMENTARE** |
+| `T-DEC-4` un criterio che nomina solo l'esito del reviewer è rifiutato con `DEC-E04` | **PROVA DA IMPLEMENTARE** |
+| `T-DEC-5` due esecuzioni producono lo stesso `contentHash` | **PROVA DA IMPLEMENTARE** |
+| profondità e fan-out oltre il ceiling | **ESISTE**: `tests/contracts/runtime-invariants.test.mjs`, `T-DG-1`, `T-DG-2`, `T-DG-3` |
+
+---
+
+## 17. Selezione e assegnazione degli agenti
+
+### 17.1 Responsabilità
+
+Legare un `TaskNode` a un `AgentManifest`. La selezione avviene **per capability dichiarate e
+ceiling**, mai per qualità percepita di un modello e mai per nome di fornitore.
+
+> **Regola dura:** l'input della selezione **non contiene stringhe di vendor**. Se sostituire
+> ogni nome di fornitore con un identificatore opaco cambia l'assegnazione, il router non è
+> provider-neutral e va rifiutato. Questa è la proprietà che `AC-01` di `UJ-RUN-001` chiede, ed
+> è meccanicamente verificabile (§17.6, controllo 3).
+
+### 17.2 Input
+
+| Campo | Tipo | Nota |
+|---|---|---|
+| `task` | `TaskNode` | da una decomposizione `FROZEN` |
+| `candidates` | `readonly AgentManifest[]` | tutti i manifest ammessi, senza pre-filtro |
+| `parentGrants` | `EffectiveGrants` | l'allowlist effettiva del padre (§9) |
+| `now` | `IsoTimestamp` | iniettato, mai letto dall'orologio dentro la funzione |
+
+`now` è un parametro perché una selezione che legge l'orologio non è riproducibile: due
+esecuzioni sullo stesso input darebbero risultati diversi e il ledger non sarebbe replayabile.
+
+### 17.3 Output
+
+```ts
+type Assignment =
+  | { readonly kind: "ASSIGNED"; readonly agentId: AgentId; readonly grants: EffectiveGrants }
+  | { readonly kind: "HUMAN_BRIDGE"; readonly reason: string; readonly envelope: BridgeEnvelope }
+  | { readonly kind: "REFUSED"; readonly violations: readonly string[] };
+```
+
+Tre esiti e nessun quarto. In particolare **non esiste un esito "assegnato con riserva"**: un
+agente che non soddisfa un invariante non viene assegnato, non viene assegnato con un avviso.
+
+### 17.4 Stato
+
+`UNASSIGNED → ASSIGNED → RUNNING → (DONE_PROPOSED | FAILED | CANCELLED)`, oppure
+`UNASSIGNED → AWAITING_HUMAN` quando l'esito è `HUMAN_BRIDGE`. `AWAITING_HUMAN` **non è uno
+stato di errore**: è un esito legittimo e previsto (§18.4).
+
+### 17.5 Errori
+
+| Codice | Condizione | Esito |
+|---|---|---|
+| `SEL-E01` | nessun candidato copre `requiredCapabilities` | `HUMAN_BRIDGE`, non `REFUSED` |
+| `SEL-E02` | il candidato migliore violerebbe un ceiling (`TA-2`, `TA-4`, `TA-5`, `TA-8`) | `REFUSED`, invarianti elencate **tutte** |
+| `SEL-E03` | il candidato è l'owner del task **ed** è anche il reviewer | `REFUSED` |
+| `SEL-E04` | il manifest è scaduto rispetto a `now` | `REFUSED` |
+| `SEL-E05` | due candidati ugualmente idonei | risolto dal tie-break §17.6, **mai** a caso |
+
+`SEL-E01` produce `HUMAN_BRIDGE` e non un fallimento: l'assenza di un agente capace è una
+condizione normale in un programma a costo zero, e la risposta corretta è chiedere a una
+persona, non fermarsi.
+
+### 17.6 Controlli
+
+1. **Copertura** — `requiredCapabilities ⊆ declaredCapabilities(candidate)`.
+2. **Ceiling** — tutti i controlli di §9 applicati contro `parentGrants`, e il rifiuto elenca
+   **ogni** invariante violata, non la prima. Un rifiuto che si ferma alla prima violazione
+   nasconde le altre e fa correggere il problema una volta sola invece che tutte.
+3. **Neutralità di provider (meccanico)** — data una funzione di offuscamento `σ` che sostituisce
+   ogni nome di fornitore con un identificatore opaco stabile:
+   `select(task, candidates) ≡ σ⁻¹(select(σ(task), σ(candidates)))`.
+   Se l'uguaglianza non regge, esiste una dipendenza dal vendor da rimuovere.
+4. **Determinismo e tie-break** — a parità di idoneità l'ordine è: (a) `maxAutonomy` più basso,
+   (b) `maxDataClass` più bassa, (c) `maxSideEffect` più basso, (d) `agentId` in ordine
+   lessicografico. Il tie-break preferisce **l'agente meno privilegiato**, non il più capace.
+5. **Indipendenza del reviewer** — verificata di nuovo qui e non solo in decomposizione, perché
+   i manifest possono cambiare fra `FROZEN` e assegnazione.
+
+### 17.7 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-SEL-1` nessun candidato idoneo → `HUMAN_BRIDGE`, non `REFUSED` | **PROVA DA IMPLEMENTARE** |
+| `T-SEL-2` offuscando i nomi dei vendor l'assegnazione non cambia | **PROVA DA IMPLEMENTARE** |
+| `T-SEL-3` a parità di idoneità vince il candidato meno privilegiato | **PROVA DA IMPLEMENTARE** |
+| `T-SEL-4` un rifiuto elenca tutte le invarianti violate | **ESISTE** (analoga): `rejection reports every violated invariant, not only the first` |
+| `T-SEL-5` un tool non posseduto dal padre non è assegnabile | **ESISTE**: `T-TA-1` |
+
+---
+
+## 18. Routing provider-neutral e HUMAN_BRIDGE
+
+### 18.1 Responsabilità
+
+Il runtime **non chiama mai un fornitore**. Emette una `ProviderRequest` verso un adapter
+registrato, e ogni adapter dichiara la propria classe di costo. È l'unico punto in cui il
+vincolo dell'Articolo 5 diventa meccanico invece che documentale.
+
+### 18.2 Classe di costo, e perché `METERED` è irrappresentabile a L2
+
+```ts
+type CostClass =
+  | "ZERO_LOCAL"              // esecuzione locale, loopback, nessuna rete uscente
+  | "ZERO_SUBSCRIPTION_HUMAN" // abbonamento già pagato, mediato da una persona
+  | "METERED";                // a consumo — vietato sotto STRICT_ZERO_CARD
+
+interface ProviderAdapter {
+  readonly adapterId: string;
+  readonly costClass: CostClass;
+  readonly endpointConstraint: "LOOPBACK_ONLY" | "NONE";
+  send(req: ProviderRequest): Promise<ProviderResponse>;
+}
+```
+
+**Regola di registrazione:** un adapter con `costClass: "METERED"` **non può essere
+registrato** quando l'autonomia massima del run è `L2`. Il rifiuto avviene alla registrazione,
+non alla chiamata: un controllo che scatta al momento della chiamata protegge solo se qualcuno
+arriva fin lì con la configurazione giusta.
+
+**Il default non è una variabile d'ambiente.** Se il `CostClass` di un adapter deve essere
+letto dall'ambiente, il valore assente deve risolvere a `ZERO_LOCAL`, mai a `METERED`.
+
+> **Questa regola nasce da un difetto misurato, non da un principio astratto.** In
+> `cloud_bridge.py` su `main`, `PROVIDER = os.getenv("MODEL_PROVIDER", "openai")` è una
+> **costante di modulo**: il default è a pagamento e viene fissato una volta sola all'import,
+> quindi impostare la variabile dopo non protegge. Misurato: **sei percorsi a pagamento o
+> remoti su sette attacchi**. Il contratto qui sopra rende quella configurazione
+> irrappresentabile: il default cade su `ZERO_LOCAL` e `METERED` non è registrabile a `L2`.
+
+### 18.3 Input e output
+
+| | |
+|---|---|
+| **Input** | `ProviderRequest { runId, agentId, capabilityTag, payloadRef, maxDataClass, idempotencyKey }` |
+| **Output** | `ProviderResponse { status, artifactRef?, bridgeEnvelope?, usage }` |
+
+`payloadRef` è un **riferimento content-addressed**, non il payload. Il routing non trasporta
+il contenuto: così il livello di routing non può, nemmeno per errore, mandare fuori dati di
+classe superiore a quella dichiarata.
+
+### 18.4 HUMAN_BRIDGE come stato di prima classe
+
+`AWAITING_HUMAN` è uno **stato terminale del passo**, non un errore e non un'attesa attiva.
+
+```ts
+interface BridgeEnvelope {
+  readonly envelopeId: string;
+  readonly createdAt: IsoTimestamp;
+  readonly instruction: string;       // cosa la persona deve fare, in una frase
+  readonly payloadRef: ArtifactRef;   // cosa deve copiare
+  readonly expectedSchema: SchemaRef; // cosa deve riportare indietro
+  readonly idempotencyKey: IdempotencyKey;
+  readonly resumeToken: string;       // lega la risposta al checkpoint esatto
+  readonly expiresAt: IsoTimestamp | null;
+}
+```
+
+Quattro regole:
+
+| ID | Regola |
+|---|---|
+| `HB-1` | **Nessun retry automatico.** Un envelope scaduto **non** viene rilanciato: viene marcato `EXPIRED` e il task resta parcheggiato. Rilanciare significherebbe chiedere due volte la stessa cosa a una persona, che è il modo più veloce per farle ignorare le richieste. |
+| `HB-2` | **Idempotenza sulla risposta.** Due risposte con lo stesso `idempotencyKey` producono un solo avanzamento. Christian può incollare due volte senza duplicare un side effect. |
+| `HB-3` | **Nessun segreto nell'envelope.** `payloadRef` è un riferimento; l'envelope non contiene mai token, cookie o chiavi. |
+| `HB-4` | **La risposta è validata come input non fidato.** Arriva da un canale umano ed è soggetta agli stessi controlli di schema e classe di dato di qualunque artifact esterno — inclusa la difesa da prompt injection di §11 S7. |
+
+### 18.5 Errori
+
+| Codice | Condizione | Effetto |
+|---|---|---|
+| `RTE-E01` | adapter con `costClass: METERED` registrato a `L2` | rifiuto **alla registrazione** |
+| `RTE-E02` | `endpointConstraint: LOOPBACK_ONLY` e host non di loopback | rifiuto prima di costruire la richiesta |
+| `RTE-E03` | `maxDataClass` della richiesta > ceiling dell'agente | rifiuto, nessuna chiamata |
+| `RTE-E04` | nessun adapter per `capabilityTag` | `AWAITING_HUMAN` con envelope |
+| `RTE-E05` | risposta del bridge che non valida contro `expectedSchema` | rifiuto, task resta parcheggiato |
+| `RTE-E06` | envelope scaduto | `EXPIRED`, **nessun rilancio** (`HB-1`) |
+
+### 18.6 Controlli
+
+1. **Statico** — nessun adapter registrato ha `costClass: METERED` quando `maxAutonomy ≤ L2`.
+2. **Dinamico, per attacco** — con configurazione di default, il numero di richieste uscenti
+   verso host non di loopback deve essere **zero**. La sonda sostituisce il livello di trasporto
+   con uno stub che registra il tentativo e solleva: si misura senza spendere.
+3. **Offuscamento** — vale la stessa proprietà `σ` di §17.6: il routing non deve cambiare se i
+   nomi dei fornitori vengono sostituiti.
+4. **Nessun fallback verso l'alto** — il fallimento di un adapter `ZERO_LOCAL` non può ricadere
+   su uno `METERED`. Il fallback è sempre verso `HUMAN_BRIDGE` o verso il fallimento pulito.
+
+### 18.7 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-RTE-1` registrare un adapter `METERED` a `L2` fallisce | **PROVA DA IMPLEMENTARE** |
+| `T-RTE-2` default → zero richieste uscenti non-loopback | **PROVA DA IMPLEMENTARE** nel runtime TS. *Metodo già validato altrove:* `docs/threat-models/probes/S-17-strict-zero-candidate-probe.py` misura esattamente questo su `cloud_bridge.py` (7 attacchi × 3 varianti) |
+| `T-RTE-3` un endpoint non-loopback è rifiutato con `LOOPBACK_ONLY` | **PROVA DA IMPLEMENTARE** |
+| `T-RTE-4` due risposte del bridge con la stessa chiave producono un avanzamento | **PROVA DA IMPLEMENTARE** |
+| `T-RTE-5` un envelope scaduto non viene rilanciato | **PROVA DA IMPLEMENTARE** |
+| `T-RTE-6` la chiave di idempotenza è iniettiva | **ESISTE**: `the key encoding is injective: shifted field boundaries do not collide` |
+
+---
+
+## 19. Conflitti fra agenti
+
+### 19.1 Responsabilità
+
+Rendere impossibili, o almeno rilevabili e non silenziosi, i tre conflitti che un sistema
+multi-agente produce davvero: **due scrittori sullo stesso artefatto**, **due pretendenti allo
+stesso task**, **due verdetti incompatibili sullo stesso deliverable**.
+
+### 19.2 Le tre classi, e come si chiudono
+
+| Classe | Meccanismo | Perché non un voto di maggioranza |
+|---|---|---|
+| **C-1 · scrittura concorrente** | **Single-writer per path.** La mappa di proprietà è *derivata* dalla decomposizione (§16), non dichiarata a parte. Ogni path ha esattamente un `taskId` che può scriverlo. | Non è una disputa: è un errore di progetto, e va chiuso a monte. |
+| **C-2 · doppia rivendicazione** | **Compare-and-set sul ledger.** La transizione `UNASSIGNED → ASSIGNED` è un CAS sulla versione del nodo; il secondo pretendente perde e riceve `SEL-E05`. | Due agenti che eseguono lo stesso task sprecano quota e producono due artefatti da riconciliare. |
+| **C-3 · verdetti incompatibili** | **Escalation a HUMAN_BRIDGE.** Due `ReviewResult` con esito diverso sullo stesso `(taskId, commitSha)` non si mediano: si registrano entrambi e si apre un envelope per il proprietario. | Un voto di maggioranza fra IA fabbrica consenso dove non c'è, ed è esattamente il *falso avanzamento* che §31.5 vieta. Due revisori in disaccordo sono un'informazione, non un rumore da sopprimere. |
+
+### 19.3 Input, output, stato
+
+| | |
+|---|---|
+| **Input** | evento di scrittura, di claim o di verdetto, con `(runId, taskId, targetRef, version)` |
+| **Output** | `ACCEPTED` · `REJECTED_CONFLICT { winner, loser, reason }` · `ESCALATED { envelopeId }` |
+| **Stato** | il conflitto stesso è un record nel ledger: `conflict.detected`, `conflict.resolved`, `conflict.escalated`. Non esiste risoluzione che non lasci traccia. |
+
+### 19.4 Errori
+
+| Codice | Condizione | Effetto |
+|---|---|---|
+| `CNF-E01` | due task rivendicano lo stesso path in scrittura | rifiuto **in decomposizione**, non a runtime |
+| `CNF-E02` | CAS fallito sul claim | `REJECTED_CONFLICT`, il perdente non ritenta automaticamente |
+| `CNF-E03` | due verdetti diversi sullo stesso `(taskId, commitSha)` | `ESCALATED`, nessuna media |
+| `CNF-E04` | un agente tenta di risolvere un conflitto che lo riguarda | rifiuto: chi è parte non arbitra |
+
+### 19.5 Controlli
+
+1. **Unicità dello scrittore** — calcolata dalla decomposizione: se due `TaskNode` dichiarano lo
+   stesso path di output, la decomposizione è rifiutata (`CNF-E01`), non gestita a runtime.
+2. **Atomicità del claim** — il CAS presuppone un update condizionale nello storage. **È un
+   vincolo sulla scelta di database**, e va dichiarato a chi la fa (rischio `R-RCV-01`, owner
+   `UJ-INF-001`), non scoperto dopo.
+3. **Nessuna auto-arbitraggio** — l'arbitro di un conflitto non può essere né owner né reviewer
+   di uno dei due lati.
+4. **Tracciabilità** — ogni conflitto lascia almeno due eventi nel ledger; un conflitto risolto
+   senza `conflict.detected` precedente è esso stesso un difetto.
+
+### 19.6 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-CNF-1` due task con lo stesso path di output → decomposizione rifiutata | **PROVA DA IMPLEMENTARE** |
+| `T-CNF-2` due claim concorrenti → esattamente uno vince | **PROVA DA IMPLEMENTARE** (richiede lo storage con CAS) |
+| `T-CNF-3` due verdetti diversi → `ESCALATED`, nessuna media | **PROVA DA IMPLEMENTARE** |
+| `T-CNF-4` il contatore dei task attivi è atomico | **ESISTE**: `T-DG-4b` / `AtomicActiveTaskCounter` |
+
+---
+
+## 20. Fallback locale a costo zero
+
+### 20.1 Responsabilità
+
+Garantire che **nessun task possa iniziare** se la capability che richiede non ha un fallback
+a costo zero. Il controllo è in **admission**, non a runtime: scoprire l'assenza di un fallback
+quando il percorso primario è già fallito significa scoprirla nel momento peggiore.
+
+### 20.2 Contratto
+
+```ts
+type FallbackKind = "ZERO_LOCAL" | "HUMAN_BRIDGE" | "FAIL_CLOSED";
+
+interface CapabilityBinding {
+  readonly tag: CapabilityTag;
+  readonly primary: { readonly adapterId: string; readonly costClass: CostClass };
+  readonly fallback: { readonly kind: FallbackKind; readonly detail: string };
+}
+```
+
+**Regola:** `fallback.kind` deve essere uno dei tre valori, e `FAIL_CLOSED` è ammesso solo se il
+task è dichiarato non essenziale alla missione. **Non esiste un quarto valore, e in particolare
+non esiste un fallback verso un adapter `METERED`.** Il tipo lo rende irrappresentabile: è lo
+stesso metodo con cui `L5 — Broad Autonomy` è tenuto fuori dal sistema dei tipi.
+
+### 20.3 Input, output, stato
+
+| | |
+|---|---|
+| **Input** | `readonly CapabilityBinding[]` più il `TaskNode` che le richiede |
+| **Output** | `ADMITTED` oppure `BLOCKED_NO_FALLBACK { tag }` |
+| **Stato** | un task senza fallback nasce `BLOCKED`, con il tag mancante nominato. Non entra in coda. |
+
+### 20.4 Errori
+
+| Codice | Condizione | Effetto |
+|---|---|---|
+| `FBK-E01` | una `requiredCapability` non ha binding | `BLOCKED_NO_FALLBACK`, tag nominato |
+| `FBK-E02` | `fallback.kind` non è fra i tre valori | rifiuto del binding alla registrazione |
+| `FBK-E03` | `FAIL_CLOSED` su un task essenziale | rifiuto |
+| `FBK-E04` | il fallback punta a un adapter `METERED` | irrappresentabile per tipo; se emerge a runtime è un difetto di serializzazione da trattare come `RTE-E01` |
+
+### 20.5 Controlli
+
+1. **Lint dei manifest** — ogni `CapabilityTag` referenziata da un task ha un `CapabilityBinding`.
+2. **Chiusura sui costi** — l'insieme dei `costClass` raggiungibili da un task, seguendo primario
+   e fallback **transitivamente**, non contiene `METERED`. Il controllo è sulla chiusura, non sul
+   primo salto: un fallback che a sua volta ricade su uno a pagamento è la porta che conta.
+3. **Fail-safe, non fail-open** — un binding malformato produce `BLOCKED`, mai un default
+   permissivo.
+
+### 20.6 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-FBK-1` un task con una capability senza binding nasce `BLOCKED` | **PROVA DA IMPLEMENTARE** |
+| `T-FBK-2` la chiusura transitiva dei `costClass` non contiene `METERED` | **PROVA DA IMPLEMENTARE** |
+| `T-FBK-3` un binding malformato produce `BLOCKED`, non un default permissivo | **PROVA DA IMPLEMENTARE** |
+| `T-FBK-4` `L5` resta irrappresentabile (stesso metodo di tipizzazione) | **ESISTE**: `packages/contracts/src/runtime/agent-manifest.ts` |
+
+---
+
+## 21. Demo end-to-end minima
+
+### 21.1 Responsabilità
+
+Dimostrare l'intera catena **senza rete, senza chiavi, senza costo**: decomposizione →
+selezione → esecuzione → checkpoint → kill → resume → verifica del ledger. Serve a rendere
+il blueprint falsificabile: se la demo non gira, il documento è teoria.
+
+### 21.2 Scenario, deliberatamente banale
+
+Missione: *"produrre `out/hello.txt` contenente `ok`, e verificarlo."*
+
+Un solo adapter registrato, `echo@1`, `costClass: ZERO_LOCAL`, che restituisce l'input
+maiuscolo senza toccare la rete. Nessun modello coinvolto: la demo prova **il runtime**, non
+la qualità di un'inferenza.
+
+### 21.3 Passi osservabili
+
+| # | Passo | Osservabile atteso |
+|---:|---|---|
+| 1 | decomposizione della missione | 3 nodi, `contentHash` stabile su due esecuzioni |
+| 2 | selezione | tutti e 3 `ASSIGNED`; nessuna stringa di vendor nell'input |
+| 3 | esecuzione del nodo 1 | evento `tool.invoked` + `tool.completed` con `echo@1` |
+| 4 | checkpoint dopo il nodo 1 | `checkpointId` emesso, ledger a N eventi |
+| 5 | **kill switch** durante il nodo 2 | stato `HALTED` raggiunto da uno stato non terminale |
+| 6 | resume dal checkpoint | il nodo 1 **non** viene rieseguito: stessa `idempotencyKey`, side effect non duplicato |
+| 7 | completamento | `out/hello.txt` esiste e contiene `ok` |
+| 8 | verifica del ledger | catena di hash intatta; alterare un evento passato la rompe |
+| 9 | **controllo di costo** | richieste uscenti verso host non-loopback: **0** |
+
+### 21.4 Errori che la demo deve saper mostrare
+
+Una demo che mostra solo il percorso felice non prova nulla. Sono richiesti quattro casi
+negativi, ognuno con l'errore atteso:
+
+| Caso | Errore atteso |
+|---|---|
+| un nodo che chiede un tool non posseduto dal padre | `SEL-E02`, invariante `TA-2` nominata |
+| un adapter `METERED` registrato a `L2` | `RTE-E01`, rifiuto **alla registrazione** |
+| una capability senza fallback | `FBK-E01`, task `BLOCKED` prima della coda |
+| due claim concorrenti sullo stesso nodo | `CNF-E02`, esattamente un vincitore |
+
+### 21.5 Controlli e prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-E2E-1` i 9 passi osservabili nell'ordine, exit 0 | **PROVA DA IMPLEMENTARE** |
+| `T-E2E-2` i 4 casi negativi con l'errore esatto | **PROVA DA IMPLEMENTARE** |
+| `T-E2E-3` zero richieste uscenti non-loopback per l'intera demo | **PROVA DA IMPLEMENTARE** |
+| kill switch raggiungibile da ogni stato non terminale | **ESISTE**: `T-KS-1` |
+| integrità della catena del ledger e rilevamento della riscrittura | **ESISTE**: `T-LG-1` (tre test) |
+
+### 21.6 Cosa la demo NON prova, dichiarato
+
+- **Non prova la qualità del ragionamento**: l'unico adapter è `echo@1`.
+- **Non prova il comportamento sotto concorrenza reale**: i due claim di §21.4 sono simulati
+  in-process, non su storage distribuito. Il caso reale dipende dal CAS e quindi da `UJ-INF-001`.
+- **Non prova la resistenza a un tool ostile**: quello è `UJ-SKL-001`, portafoglio separato.
+- **Non prova che un fornitore reale sia gratuito**: prova che *il runtime* non ne chiama nessuno.
+
+---
+
+## 22. Mappa di tracciabilità dei 24 requisiti
+
+Serve al reviewer per verificare la copertura **contando**, invece di leggere in diagonale.
+
+| # | Requisito | Sezione | Prove |
+|---:|---|---|---|
+| 1 | AgentManifest | §3 | esistenti |
+| 2 | TeamSpec | §4 | esistenti |
+| 3 | Supervisor | §5 | esistenti (`T-KS-1`, default-deny) |
+| 4 | RunLedger | §7 | esistenti (`T-LG-1` ×3) |
+| 5 | **Task decomposition** | **§16** | 5 da implementare, 3 esistenti |
+| 6 | **Selezione e assegnazione agenti** | **§17** | 3 da implementare, 2 esistenti |
+| 7 | Limiti di profondità e loop | §6 | esistenti (`T-DG-*`, `T-LP-*`) |
+| 8 | Approval gate | §5, §9 | esistenti |
+| 9 | Timeout | §5, §8 | esistenti (`T-DG-9`) |
+| 10 | Retry | §8 | esistenti (4 test) |
+| 11 | Cancellation | §8 | esistenti (`T-KS-1`) |
+| 12 | Checkpoint | §8 | esistenti |
+| 13 | Idempotency key | §8 | esistenti (3 test, incluso l'iniettività) |
+| 14 | Recovery | §8 | esistenti (`recovery.test.mjs`, 9) |
+| 15 | Gestione degli errori | §11 | esistenti (S1–S12) |
+| 16 | **Routing provider-neutral** | **§18** | 5 da implementare, 1 esistente |
+| 17 | **HUMAN_BRIDGE** | **§18.4** | 2 da implementare |
+| 18 | Policy e data-class enforcement | §9, §18.3 | esistenti (`T-TA-2`) |
+| 19 | Tool admission | §9 | esistenti (`T-TA-*`) |
+| 20 | Audit trail | §7 | esistenti (`T-LG-1`) |
+| 21 | **Conflitti fra agenti** | **§19** | 3 da implementare, 1 esistente |
+| 22 | **Demo end-to-end minima** | **§21** | 3 da implementare, 2 esistenti |
+| 23 | Criteri di accettazione verificabili | §13, §16.6 | esistenti |
+| 24 | **Fallback locale senza costi** | **§20** | 3 da implementare, 1 esistente |
+
+**Bilancio onesto:** 24 requisiti su 24 hanno una sezione. **Non** 24 su 24 hanno una prova
+eseguita: le sezioni 16–21 ne specificano **24 nuove da implementare**, e il resto poggia sui
+140 test che passano oggi. Dichiarare coperto ciò che è solo specificato sarebbe falso
+avanzamento.
 === END FILE ===
 
 === RESPONSE PACKET: UJ-RUN-001 ===
 {
   "schema_version": "ultrajarvis.response-packet/v1",
   "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818",
-  "created_at": "2026-08-18T10:30:06Z",
+  "created_at": "2026-08-18T13:48:55Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "01d7d3016175a46c17a50f4f3d26ce0490a23704",
+  "source_commit_sha": "8ed53286ea805118d26c9a27caf4281904cf7fbe",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -1283,6 +1813,18 @@ repository copiato, nessun side effect non approvato.
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "node --test tests/contracts/runtime-invariants.test.mjs against the reverted join",
       "verified_at": "2026-08-18T10:30:06Z"
+    },
+    {
+      "claim": "Coverage of the blueprint against the 24 required runtime points was measured, not assumed. Five points had zero occurrences in the document (task decomposition, agent selection, end-to-end demo, zero-cost fallback) and two were weak (inter-agent conflicts 1 occurrence, HUMAN_BRIDGE 2). Sections 16-22 close them; section 22 maps all 24 points to a section and to its proofs.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
+      "verified_at": "2026-08-18T13:48:55Z"
+    },
+    {
+      "claim": "24 of 24 requirements now have a section, but NOT 24 of 24 have an executed proof: sections 16-22 specify 24 new proofs, each marked PROVA DA IMPLEMENTARE, and the remainder rests on the 140 tests that pass today. Reporting specified work as covered would be false progress under section 31.5.",
+      "classification": "OBSERVATION",
+      "source_ref": "docs/architecture/RUNTIME_BLUEPRINT.md section 22",
+      "verified_at": "2026-08-18T13:48:55Z"
     }
   ],
   "assumptions": [
@@ -1314,10 +1856,10 @@ repository copiato, nessun side effect non approvato.
   "artifacts": [
     {
       "ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
-      "sha256": "bc0fcc4bf577dc97abe8af5725c4aa85b01e2f2980073b619d6f3fdfeda88480",
+      "sha256": "a0be04069692d89399eefe183d489d8ad8bea472c232444676883331c23c2538",
       "media_type": "text/markdown",
       "data_class": "C1",
-      "summary": "Provider-neutral runtime blueprint: AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, plus six proposed ADRs."
+      "summary": "Provider-neutral runtime blueprint. Part I (sections 0-15): AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, six proposed ADRs. Part II (sections 16-22, added session 5): task decomposition, agent selection, provider-neutral routing and HUMAN_BRIDGE, inter-agent conflicts, zero-cost local fallback, minimal end-to-end demo, and a traceability map of the 24 required points."
     },
     {
       "ref": "packages/contracts/src/runtime/agent-manifest.ts",
@@ -1428,7 +1970,8 @@ repository copiato, nessun side effect non approvato.
       "sha256 of every cited artifact recomputed from the bytes at source_commit_sha",
       "vendor-token scan of packages/contracts/src/runtime for provider neutrality",
       "NUL-byte scan of every runtime contract source",
-      "negative control: the new injectivity test run against the previous implementation"
+      "negative control: the new injectivity test run against the previous implementation",
+      "coverage count of the 24 required runtime points against the blueprint text"
     ],
     "passed": [
       "typecheck exit 0",
@@ -1439,10 +1982,12 @@ repository copiato, nessun side effect non approvato.
       "15/15 artifact hashes reproduced at source_commit_sha",
       "no vendor identifier in any normative position; the only matches are authorship headers",
       "0 NUL bytes across all runtime contract sources",
-      "negative control failed as required (expected false, actual true), so the test can fail"
+      "negative control failed as required (expected false, actual true), so the test can fail",
+      "24 of 24 requirements mapped to a section; gaps found and closed rather than declared absent"
     ],
     "failed": [],
     "not_run": [
+      "The 24 proofs specified in sections 16-22 (decomposition, selection, routing, conflicts, fallback, end-to-end demo). They are specified, not implemented: no runtime exists yet, and they belong to M2/M3 under UJ-RCV-001.",
       "Runtime implementation tests: UJ-RUN-001 delivers blueprint and contracts only; implementation is M2/M3.",
       "Cross-provider interoperability: no second provider runtime exists yet."
     ]
@@ -1504,7 +2049,8 @@ repository copiato, nessun side effect non approvato.
   "remaining_work": {
     "weight": 13,
     "blockers": [
-      "Independent review by GEMINI has not been performed."
+      "Independent review by GEMINI has not been performed.",
+      "The 24 proofs specified in blueprint sections 16-22 are not implemented; they require a runtime (M2/M3)."
     ],
     "next_action": "GEMINI reviews the blueprint and contracts against AC-01 through AC-04 and issues a ReviewResult."
   },
@@ -1524,9 +2070,187 @@ repository copiato, nessun side effect non approvato.
   "handoff": {
     "target": "GEMINI",
     "next_action": "Review UJ-RUN-001 against AC-01 through AC-04 and return a ReviewResult; accepted weight stays 0/13 until then.",
-    "resume_point": "Artifacts are committed on branch claude/claude-md-resume-point-tvej1u at source_commit_sha 01d7d3016175a46c17a50f4f3d26ce0490a23704. AC-05 is satisfied by this packet; AC-01 through AC-04 await the named reviewer. Per-criterion evidence (path, hash, executable check) is in docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md, because the response-packet schema has additionalProperties:false and no per-criterion field."
+    "resume_point": "Artifacts are committed on branch claude/claude-md-resume-point-tvej1u at source_commit_sha 8ed53286ea805118d26c9a27caf4281904cf7fbe. Blueprint part II (sections 16-22) closes the six requirements that previously had no section. AC-05 is satisfied by this packet; AC-01 through AC-04 await the named reviewer. Per-criterion evidence is in docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md, because the response-packet schema has additionalProperties:false and no per-criterion field."
   }
 }
 === END RESPONSE PACKET ===
 
-FINE BLOCCO DA INCOLLARE
+=== REVIEW RESULT: UJ-INT-006 ===
+{
+  "schema_version": "ultrajarvis.review-result/v1",
+  "review_id": "UJ-REVIEW-INT-006-CLAUDE-20260817",
+  "created_at": "2026-08-17T11:07:13Z",
+  "repository": {
+    "full_name": "carnascialichristian-wq/ultraJARVIS",
+    "commit_sha": "31f31b99ad7e63bf581161ce9cd12b11f83a945f"
+  },
+  "task_id": "UJ-INT-006",
+  "task_owner": "CHATGPT",
+  "reviewer": {
+    "ai_id": "CLAUDE",
+    "product": "Claude Code"
+  },
+  "artifacts_reviewed": [
+    {
+      "ref": "schemas/mission-packet.schema.json",
+      "sha256": "fb954f97ea29a3fd2c29a443f88570c3ffe6745bbd8757d6e24d60acf1b9a5f6"
+    },
+    {
+      "ref": "schemas/delegation-card.schema.json",
+      "sha256": "68214a339eeca40df2147899927b207e0a1427fba6611d81c520b11c4a40516c"
+    },
+    {
+      "ref": "schemas/response-packet.schema.json",
+      "sha256": "ee44e1b7e262bc0817e0b4f65de8830d122687618a59774fdabfddf3b7e69c0a"
+    },
+    {
+      "ref": "schemas/synthesis-packet.schema.json",
+      "sha256": "be822ca00d2340fd03a1e7a812af3d31a0b03360ceadf69e0ca3ff5d3438ddf6"
+    },
+    {
+      "ref": "schemas/review-result.schema.json",
+      "sha256": "415255ac46ee83ad564c1cacd8df4e5c6f8789a8769fb2a86b5ee5de63c2c03b"
+    },
+    {
+      "ref": "scripts/validate-council-packets.mjs",
+      "sha256": "7b88f6819cedccb3baf7cb03a0358f0ec652d99837261db9a4a313c49acdbfb8"
+    },
+    {
+      "ref": "scripts/test-review-result-intake.mjs",
+      "sha256": "d0c80de304d57374211527ae5862f4c44f53bc09266c9562f19ae8413deb604c"
+    },
+    {
+      "ref": "scripts/validate-program-os.mjs",
+      "sha256": "6b26aafa35c3afce8a9741d8ff6134babce2b2b6fca8a935bdc1bbd402216ca9"
+    },
+    {
+      "ref": "docs/program/COUNCIL_IMPORT_AND_MERGE.md",
+      "sha256": "eca043d462f0fa38b02389a14dbd152dd7cab8b44d201301723235919b39e3db"
+    },
+    {
+      "ref": "docs/program/BACKLOG.json",
+      "sha256": "4bb1f131592318522e50177c68bd871e96edc306f6f935253c631b969a3004d9"
+    },
+    {
+      "ref": "docs/program/RESUME_POINT.md",
+      "sha256": "acdb1cd785e9605f66e266aa6d9be7413d2bd06d1f297764ff57f0b023610d38"
+    },
+    {
+      "ref": "docs/program/STATUS.md",
+      "sha256": "4dccf507b609690211dc915f227ad6c5bf8d9a5e8e7eb8ca401beb85a0883a5a"
+    },
+    {
+      "ref": "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json",
+      "sha256": "af366d043b99b1e71ad926c3b5db8b9845c202d20be3e78cb39f53d4284e09bb"
+    },
+    {
+      "ref": "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json",
+      "sha256": "8411f23f3e57e4b4f0263068b68e3f41de7842fe1bef0188aeb3ab88cc8b251e"
+    },
+    {
+      "ref": "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
+      "sha256": "0d33bb27e1afc7a6af67cd79cf29e1a098c47d6788911a99dc3bfcb7a6b82597"
+    },
+    {
+      "ref": "prompts/delegation-cards/UJ-GGL-001-GEMINI.json",
+      "sha256": "d6a5faa06362c78a3416cccea89d9842a86ae70bcff718008f550503f1fe4ef5"
+    },
+    {
+      "ref": "prompts/delegation-cards/UJ-RED-001-GROK.json",
+      "sha256": "9ff0418a8c0dff4fa107df47f6a203cd75c0fca87ea70b0a540de319d4c5d01e"
+    },
+    {
+      "ref": "prompts/review-requests/UJ-INT-006-CLAUDE.md",
+      "sha256": "f257eacd6f0a08665c3e38e0badca22a993542afee109affc6ef152d85eb4582"
+    }
+  ],
+  "outcome": "PASS_WITH_ACTIONS",
+  "criteria": [
+    {
+      "criterion_id": "AC-01",
+      "result": "PASS",
+      "evidence_refs": [
+        "schemas/mission-packet.schema.json",
+        "schemas/delegation-card.schema.json",
+        "schemas/response-packet.schema.json",
+        "schemas/synthesis-packet.schema.json",
+        "schemas/review-result.schema.json",
+        "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json",
+        "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json",
+        "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
+        "prompts/delegation-cards/UJ-GGL-001-GEMINI.json",
+        "prompts/delegation-cards/UJ-RED-001-GROK.json"
+      ],
+      "note": "All five Council schemas are JSON Schema 2020-12 with stable $id, explicit schema_version and additionalProperties:false at every object node (audited recursively: zero open objects across all 7 schemas in tree). ResponsePacket.status enum is REVIEW|BLOCKED|FAILED, so a specialist self-proposing DONE is unrepresentable rather than merely forbidden - the same irrepresentability technique used for L5 in the runtime contracts. Verified directly on all four cards: HUMAN_BRIDGE-only, incremental_cost_eur 0, direct_main_write false, autonomy L2, task_snapshot.accepted_weight 0, expires_at after created_at, reviewer matching BACKLOG.json. Mission ceilings are C1/L2/INTERNAL_WRITE with billing_allowed and paid_api_allowed false."
+    },
+    {
+      "criterion_id": "AC-02",
+      "result": "FAIL",
+      "evidence_refs": [
+        "scripts/validate-council-packets.mjs",
+        "docs/program/COUNCIL_IMPORT_AND_MERGE.md",
+        "scripts/test-review-result-intake.mjs"
+      ],
+      "note": "The criterion text names 'replay' among the regression classes the validator must pass. It does not. COUNCIL_IMPORT_AND_MERGE.md stage 5 requires exact replay to be a no-op and divergent replay to be rejected as REPLAY_DIVERGENCE, and the doc specifies a (packet_id, idempotency_key, sha256, received_at, disposition) store. The validator is stateless: idempotency uniqueness is checked only across the four delegation-card files (lines 412-414), never for imported ReviewResults. Reproduced at this ref: importing review_id UJ-REVIEW-SAME-ID twice byte-identically passed twice, and a third import reusing the same review_id with different bytes also PASSED instead of raising REPLAY_DIVERGENCE. test-review-result-intake.mjs covers 7 cases, none of which is a replay case. Defect is additive and correctable; the rest of AC-02 is strong (19 of 20 adversarial candidates rejected)."
+    },
+    {
+      "criterion_id": "AC-03",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/reviews/UJ-REVIEW-INT-006-CLAUDE.json",
+        "docs/program/reviews/UJ-INT-006-CLAUDE-FINDINGS.md"
+      ],
+      "note": "This document is that evidence-backed PASS_WITH_ACTIONS review, issued by CLAUDE at the verified head 31f31b99. Recorded with a caveat as F-003: the criterion is self-referential - it is satisfied by the act of reviewing rather than by any property of the reviewed artifact, so it conveys no independent information and structurally biases toward acceptance."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-001",
+      "severity": "HIGH",
+      "description": "Evidence sufficiency is never checked, only evidence authenticity. validateImportedReview hashes each entry of artifacts_reviewed (minItems 1) but never requires those entries to intersect the reviewed task's own acceptance_criteria[].proof_refs, and criteria[].evidence_refs are free strings checked only for length>0. Reproduced at this ref: a ReviewResult for UJ-INT-006 citing README.md as its sole artifact - a file unrelated to the task - with evidence_refs 'looks fine' / 'trust me' / '.' and an empty findings array, validated PASS and awarded the full 8 units with proposed_task_status DONE. Every check the importer performs was satisfied; the review was hollow. This is TH-10 (proof fabrication) from THREAT_MODEL.md reappearing in the Council layer: the pipeline proves a reviewer touched a file, not that the reviewer examined the work.",
+      "required_action": "Require, for every criterion marked PASS, that artifacts_reviewed covers that criterion's proof_refs from BACKLOG.json (empty proof_refs exempt), and that each evidence_refs entry resolves to an existing repository path through the same resolveRepositoryFile guard already used for artifacts. Add a regression case asserting that a review citing an unrelated file cannot reach DONE."
+    },
+    {
+      "finding_id": "F-002",
+      "severity": "MEDIUM",
+      "description": "The replay and idempotency ledger specified in COUNCIL_IMPORT_AND_MERGE.md (stage 5, rejection code REPLAY_DIVERGENCE, and the 'Replay and idempotency' section) has no implementation. The validator holds no state across invocations, so a reused review_id carrying different bytes is admitted rather than rejected as tampering, and an exact replay re-runs full admission instead of returning the original disposition. The specification and the executable diverge, and the specification is the artifact a reader will trust.",
+      "required_action": "Either implement the disposition store and add divergent-replay and exact-replay regression cases to test-review-result-intake.mjs, or mark stage 5 and REPLAY_DIVERGENCE explicitly as SPECIFIED_NOT_IMPLEMENTED in COUNCIL_IMPORT_AND_MERGE.md and remove 'replay' from the AC-02 text until it is backed."
+    },
+    {
+      "finding_id": "F-003",
+      "severity": "MEDIUM",
+      "description": "AC-03 of UJ-INT-006 reads 'CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.' The task's own acceptance criterion is the reviewer's verdict, not a property of the delivered artifact. It is therefore satisfied by the act of accepting and cannot be evaluated independently: a reviewer inclined to award weight finds one of three criteria pre-satisfied by that decision. It also makes FAIL structurally awkward, since a FAIL verdict falsifies the criterion that requested it. The same shape appears in the validator's own regression expectations, where UJ-INT-001's reviewer is asserted to be GROK.",
+      "required_action": "Restate AC-03 as a property of the artifact rather than of the review, for example 'every acceptance criterion carries reproducible proof refs resolvable at the reviewed commit'. Keep the requirement for an independent review as a task transition rule, where it already lives, not as an acceptance criterion of the work."
+    },
+    {
+      "finding_id": "F-004",
+      "severity": "MEDIUM",
+      "description": "Every safety guarantee of the intake lives in scripts/validate-council-packets.mjs, not in the schemas: reviewer independence from task_owner, accepted_weight_before matching the ledger, the all-or-nothing weight rule, DONE requiring all criteria PASS, and commit pinning are code assertions. review-result.schema.json carries no cross-field allOf/if-then at all, so a consumer validating with any standard JSON Schema tool - a different importer, another AI, a future service - accepts a self-review by the task owner that awards partial weight on a FAIL. The portable artifact is the one that looks authoritative and enforces nothing.",
+      "required_action": "Encode the cheap invariants in the schema itself as if/then (FAIL or PASS_WITH_ACTIONS implies accepted_weight_after equals accepted_weight_before; proposed_task_status DONE implies outcome PASS), and state explicitly in COUNCIL_PACKETS.md that schema validity is necessary but not sufficient and that the script is the normative gate."
+    },
+    {
+      "finding_id": "F-005",
+      "severity": "LOW",
+      "description": "ResponsePacket.policy_attestation requires all seven fields with const:true, so a packet disclosing an actual violation - for instance no_paid_api false after an accidental paid call - cannot be represented and fails schema validation. The attestation is therefore unfalsifiable: every packet that validates attests full compliance, so the field cannot distinguish a compliant sender from a non-compliant one, and an honest disclosure is converted into a parse error, which pressures the sender toward silence or a false attestation.",
+      "required_action": "Allow boolean values with a rule that any false attestation forces status BLOCKED or FAILED and routes to quarantine, so a violation is reportable in-band and visibly handled instead of being unrepresentable."
+    },
+    {
+      "finding_id": "F-006",
+      "severity": "LOW",
+      "description": "The delegation card UJ-CARD-RUN-001-CLAUDE budgets max_model_calls 1 and max_tool_calls 40 for UJ-RUN-001, a 13-unit task. Reported as direct execution evidence rather than as an estimate: this session's portfolio already delivered UJ-RUN-001 (runtime blueprint, 9 contract files, 34 tests) and it required far more than one model call and more than 40 tool calls. The budget as written would halt the card mid-task, and because the card is HUMAN_BRIDGE the halt would surface as an unexplained stop to Christian rather than as a budget event.",
+      "required_action": "Recalibrate call_budget against observed effort for comparable tasks, or define the budget as a checkpoint-and-resume threshold rather than a hard ceiling, so exhausting it produces a resumable BLOCKED state instead of an abandoned task."
+    }
+  ],
+  "policy_checks": {
+    "zero_cost": "PASS",
+    "data_class": "PASS",
+    "side_effect": "PASS",
+    "secret_handling": "PASS",
+    "consumer_ui_automation": "PASS"
+  },
+  "accepted_weight_before": 0,
+  "accepted_weight_after": 0,
+  "proposed_task_status": "REVIEW",
+  "next_action": "ChatGPT to resolve F-001 and F-002, which are the two that keep UJ-INT-006 from PASS; F-003 requires restating AC-03 before this task can be accepted on evidence rather than on the reviewer's verdict. Accepted weight stays 0/8 until a re-review at the corrected ref confirms the actions."
+}
+=== END REVIEW RESULT ===

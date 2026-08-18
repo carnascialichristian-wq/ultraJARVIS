@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
   "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818",
-  "created_at": "2026-08-18T10:30:06Z",
+  "created_at": "2026-08-18T13:48:55Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "01d7d3016175a46c17a50f4f3d26ce0490a23704",
+  "source_commit_sha": "8ed53286ea805118d26c9a27caf4281904cf7fbe",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -74,6 +74,18 @@
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "node --test tests/contracts/runtime-invariants.test.mjs against the reverted join",
       "verified_at": "2026-08-18T10:30:06Z"
+    },
+    {
+      "claim": "Coverage of the blueprint against the 24 required runtime points was measured, not assumed. Five points had zero occurrences in the document (task decomposition, agent selection, end-to-end demo, zero-cost fallback) and two were weak (inter-agent conflicts 1 occurrence, HUMAN_BRIDGE 2). Sections 16-22 close them; section 22 maps all 24 points to a section and to its proofs.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
+      "verified_at": "2026-08-18T13:48:55Z"
+    },
+    {
+      "claim": "24 of 24 requirements now have a section, but NOT 24 of 24 have an executed proof: sections 16-22 specify 24 new proofs, each marked PROVA DA IMPLEMENTARE, and the remainder rests on the 140 tests that pass today. Reporting specified work as covered would be false progress under section 31.5.",
+      "classification": "OBSERVATION",
+      "source_ref": "docs/architecture/RUNTIME_BLUEPRINT.md section 22",
+      "verified_at": "2026-08-18T13:48:55Z"
     }
   ],
   "assumptions": [
@@ -105,10 +117,10 @@
   "artifacts": [
     {
       "ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
-      "sha256": "bc0fcc4bf577dc97abe8af5725c4aa85b01e2f2980073b619d6f3fdfeda88480",
+      "sha256": "a0be04069692d89399eefe183d489d8ad8bea472c232444676883331c23c2538",
       "media_type": "text/markdown",
       "data_class": "C1",
-      "summary": "Provider-neutral runtime blueprint: AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, plus six proposed ADRs."
+      "summary": "Provider-neutral runtime blueprint. Part I (sections 0-15): AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, six proposed ADRs. Part II (sections 16-22, added session 5): task decomposition, agent selection, provider-neutral routing and HUMAN_BRIDGE, inter-agent conflicts, zero-cost local fallback, minimal end-to-end demo, and a traceability map of the 24 required points."
     },
     {
       "ref": "packages/contracts/src/runtime/agent-manifest.ts",
@@ -219,7 +231,8 @@
       "sha256 of every cited artifact recomputed from the bytes at source_commit_sha",
       "vendor-token scan of packages/contracts/src/runtime for provider neutrality",
       "NUL-byte scan of every runtime contract source",
-      "negative control: the new injectivity test run against the previous implementation"
+      "negative control: the new injectivity test run against the previous implementation",
+      "coverage count of the 24 required runtime points against the blueprint text"
     ],
     "passed": [
       "typecheck exit 0",
@@ -230,10 +243,12 @@
       "15/15 artifact hashes reproduced at source_commit_sha",
       "no vendor identifier in any normative position; the only matches are authorship headers",
       "0 NUL bytes across all runtime contract sources",
-      "negative control failed as required (expected false, actual true), so the test can fail"
+      "negative control failed as required (expected false, actual true), so the test can fail",
+      "24 of 24 requirements mapped to a section; gaps found and closed rather than declared absent"
     ],
     "failed": [],
     "not_run": [
+      "The 24 proofs specified in sections 16-22 (decomposition, selection, routing, conflicts, fallback, end-to-end demo). They are specified, not implemented: no runtime exists yet, and they belong to M2/M3 under UJ-RCV-001.",
       "Runtime implementation tests: UJ-RUN-001 delivers blueprint and contracts only; implementation is M2/M3.",
       "Cross-provider interoperability: no second provider runtime exists yet."
     ]
@@ -295,7 +310,8 @@
   "remaining_work": {
     "weight": 13,
     "blockers": [
-      "Independent review by GEMINI has not been performed."
+      "Independent review by GEMINI has not been performed.",
+      "The 24 proofs specified in blueprint sections 16-22 are not implemented; they require a runtime (M2/M3)."
     ],
     "next_action": "GEMINI reviews the blueprint and contracts against AC-01 through AC-04 and issues a ReviewResult."
   },
@@ -315,6 +331,6 @@
   "handoff": {
     "target": "GEMINI",
     "next_action": "Review UJ-RUN-001 against AC-01 through AC-04 and return a ReviewResult; accepted weight stays 0/13 until then.",
-    "resume_point": "Artifacts are committed on branch claude/claude-md-resume-point-tvej1u at source_commit_sha 01d7d3016175a46c17a50f4f3d26ce0490a23704. AC-05 is satisfied by this packet; AC-01 through AC-04 await the named reviewer. Per-criterion evidence (path, hash, executable check) is in docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md, because the response-packet schema has additionalProperties:false and no per-criterion field."
+    "resume_point": "Artifacts are committed on branch claude/claude-md-resume-point-tvej1u at source_commit_sha 8ed53286ea805118d26c9a27caf4281904cf7fbe. Blueprint part II (sections 16-22) closes the six requirements that previously had no section. AC-05 is satisfied by this packet; AC-01 through AC-04 await the named reviewer. Per-criterion evidence is in docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md, because the response-packet schema has additionalProperties:false and no per-criterion field."
   }
 }
