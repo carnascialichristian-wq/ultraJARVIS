@@ -5,11 +5,11 @@
 | Task | `UJ-RUN-001` — owner CLAUDE, reviewer GEMINI, peso 13 |
 | Card | `UJ-CARD-RUN-001-CLAUDE` |
 | Branch | `agent/uj-run-001-blueprint-20260818` — **verificato con `git branch -a --contains`**, non presunto |
-| **`source_commit_sha` unico** | `a7e03e979baee5a8b796007313ad93408299f840` |
-| Supersede | `79408449bd096613d2823efe6872ed424b757ee6` — i cui byte dell'handoff erano ancora il documento della sessione 1 (§0-bis). A sua volta superava `2dad45a40798a8059b5e2b7db077b76e77fcc88b`, i cui byte del blueprint contenevano tre incoerenze interne |
+| **`source_commit_sha` unico** | `cfee1316cf83a6171871fedd541e7c4cd286389f` |
+| Supersede | `a7e03e979baee5a8b796007313ad93408299f840` — il cui handoff chiedeva una correzione del `read_ref` che `main` non avrebbe potuto risolvere (§0-ter). A sua volta superava `79408449bd096613d2823efe6872ed424b757ee6`, i cui byte dell'handoff erano ancora il documento della sessione 1 (§0-bis), e prima ancora `2dad45a40798a8059b5e2b7db077b76e77fcc88b` |
 | Stato proposto | **`BLOCKED`** |
 | Peso accettato | **0 / 13, invariato** |
-| Generato | 2026-08-18T20:14:46Z |
+| Generato | 2026-08-18T21:19:36Z |
 
 ## 0. Perche' BLOCKED, e perche' resta BLOCKED
 
@@ -98,6 +98,58 @@ che registra la **classe** del difetto invece della singola istanza. Sono state 
 proposito: un lettore che avesse gia' visto la versione precedente deve poter capire che cosa ha
 smesso di essere vero, e cancellarle in silenzio glielo impedirebbe.
 
+## 0-ter. Il giro successivo — `main` e' stato riscritto, e la correzione che chiedevo era sbagliata
+
+Verificando il blocker **contro il remoto** invece che contro la memoria, e' emerso che la
+storia di `main` e' stata **riscritta**. Nessuno dei commit che questa consegna nomina e' piu'
+raggiungibile da `origin/main`:
+
+```
+git merge-base --is-ancestor <commit> origin/main
+  3611b1b4  -> NO      il read_ref dichiarato dalla card
+  d48e1e85  -> NO      il commit che introduce la card
+  31f31b9   -> NO      il tip del branch di ChatGPT
+  99dece5   -> NO      il merge di PR #1 e PR #2 su main, sessione 3
+```
+
+Sopravvivono solo su rami laterali. **Un secondo indizio indipendente dello stesso fatto:**
+all'inizio della sessione 6 un `git fetch` senza `+` ha rifiutato l'aggiornamento di
+`origin/main` come *non-fast-forward* — esattamente cio' che produce una storia remota
+riscritta. Sul momento l'avevo classificato come un difetto della mia ricetta di fetch, ed
+era anche quello; ma era **anche** il sintomo di questo.
+
+**Perche' conta: la correzione che questa consegna chiedeva era insufficiente.**
+*"Porta il `read_ref` a un commit pari o successivo a `d48e1e85`"* soddisfa **una sola** delle
+due clausole necessarie. Seguito alla lettera produrrebbe un `read_ref` che `main` non puo'
+risolvere — lo stesso difetto in forma nuova.
+
+**La condizione corretta:** il commit deve **contenere la card** *e* essere **raggiungibile da
+`origin/main`**. Candidati verificati:
+
+| Commit | Contiene la card | Raggiungibile da `main` |
+|---|---|---|
+| `3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1` | si | si |
+| `25b1b7d53ff5bc4b05348453ebb704aba3a88630` (tip) | si | si |
+
+**E il difetto e' su tutte e quattro le card**, non solo sulla mia — quindi Gemini lo incontrera'
+due volte e Grok una:
+
+| Card | `read_ref` | Esiste a quel commit? |
+|---|---|---|
+| `UJ-RUN-001-CLAUDE.json` | `3611b1b4…` | **no** |
+| `UJ-CAP-001-GEMINI.json` | `3611b1b4…` | **no** |
+| `UJ-GGL-001-GEMINI.json` | `3611b1b4…` | **no** |
+| `UJ-RED-001-GROK.json` | `3611b1b4…` | **no** |
+
+Correggerle tutte e quattro in un colpo solo costa **un** giro di `HUMAN_BRIDGE` invece di tre.
+
+**Fragilita' da registrare:** i quattro input pinati si risolvono **ancora** a `3611b1b4`, 4 su
+4, ma solo perche' quei rami laterali esistono. Cancellandoli, anche i pin diventerebbero
+irrisolvibili.
+
+**Un solo hash su 15 e' cambiato** in questo giro — l'handoff, che ora porta la §1.1 con questa
+analisi. Gli altri 14 sono byte-identici.
+
 ## 1. Il conteggio dei test, risolto definitivamente
 
 Circolavano quattro numeri diversi. Ecco cosa era ciascuno e qual e' quello vero.
@@ -144,7 +196,7 @@ Suite completa, riseguita in questa sessione, file per file:
 ## 2. Il branch, verificato e non supposto
 
 ```
-$ git branch -a --contains a7e03e979bae
+$ git branch -a --contains cfee1316cf83
 * agent/uj-run-001-blueprint-20260818
   remotes/origin/agent/uj-run-001-blueprint-20260818
 ```
@@ -156,9 +208,9 @@ stato scrivere un output non misurato.
 Verificato anche in negativo, che e' la meta' che di solito si omette:
 
 ```
-git merge-base --is-ancestor a7e03e979bae origin/main                              -> non contiene
-git merge-base --is-ancestor a7e03e979bae origin/claude/claude-md-resume-point-tvej1u -> non contiene
-git merge-base --is-ancestor a7e03e979bae origin/claude/ultrajarvis-program-setup-2noca9 -> non contiene
+git merge-base --is-ancestor cfee1316cf83 origin/main                              -> non contiene
+git merge-base --is-ancestor cfee1316cf83 origin/claude/claude-md-resume-point-tvej1u -> non contiene
+git merge-base --is-ancestor cfee1316cf83 origin/claude/ultrajarvis-program-setup-2noca9 -> non contiene
 ```
 
 Nessun `UNVERIFIED` e' necessario: la domanda ha una risposta dimostrabile.
@@ -174,7 +226,7 @@ la mappatura sta qui, e il packet la cita da `handoff.resume_point`.
 
 ### AC-01 — contratti provider-neutral
 
-| Artefatto | SHA-256 a `a7e03e979bae` |
+| Artefatto | SHA-256 a `cfee1316cf83` |
 |---|---|
 | `docs/architecture/RUNTIME_BLUEPRINT.md` | `bccc5a08d3ab8fc9245c0e6dcb8f946d1616bdda40f8e001d3ad1e3504e0cf6c` |
 | `packages/contracts/src/runtime/agent-manifest.ts` | `0401bf8c364cad5e6f8d430c84a4dc1b66e3b5420e7e2834e88e2a891ebb5b26` |
@@ -189,7 +241,7 @@ paternita'. **Esito `0`** occorrenze in posizione normativa. Falsificabile: intr
 
 ### AC-02 — semantiche binary-testable
 
-| Artefatto | SHA-256 a `a7e03e979bae` |
+| Artefatto | SHA-256 a `cfee1316cf83` |
 |---|---|
 | `packages/contracts/src/runtime/checkpoint.ts` | `21df12f40d2ffe93e672ed95a13d3ca1125fcd0dad05abfd967b41b2d9612fce` |
 | `tests/contracts/runtime-invariants.test.mjs` | `0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0` |
@@ -201,7 +253,7 @@ cancellation `T-KS-1` · replay e integrita' del ledger `T-LG-1` ×3 · failure 
 
 ### AC-03 — tool access default-deny, mai ereditato implicitamente
 
-| Artefatto | SHA-256 a `a7e03e979bae` |
+| Artefatto | SHA-256 a `cfee1316cf83` |
 |---|---|
 | `packages/contracts/src/runtime/depth-guard.ts` | `515b8a9f36fa3fae9594552d30a58bc33bf52d155d6b29fe45e7f01bdcca19b7` |
 | `packages/contracts/src/runtime/supervisor.ts` | `d9d4078c69fd1dfede055571c546d0b3ca092bd14a1807eab6eb16d99dd72779` |
@@ -212,10 +264,10 @@ provider, e *the state machine denies by default*.
 
 ### AC-04 — schemi e checklist completi per la review
 
-| Artefatto | SHA-256 a `a7e03e979bae` |
+| Artefatto | SHA-256 a `cfee1316cf83` |
 |---|---|
 | `docs/threat-models/RUNTIME_THREAT_NOTES.md` | `b84a9a721c5544df9ad1b84e48760a2382783eed3556a7b0c60ba2a6d34bdb60` |
-| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | `f1d4db2d608f39fc88510b524c59030c346f6f6f1e97436d496b5674de35d74d` |
+| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | `a2f5934113d5d2254394da8d31accc591e6751d2576822ddd1df0e081531bfcd` |
 | `packages/contracts/src/runtime/index.ts` | `8a42d88fb9526fc107970d628abbfbe239609423fb2c7fc5bd8b817c44f4ea5d` |
 | `packages/contracts/src/runtime/common.ts` | `86baa7e4050a252f5d4650be35753585ae4f1bd3733691a8b4ba31ef70919c51` |
 | `packages/contracts/src/runtime/envelopes.ts` | `1e3f94558b69abd2852f2c8d5af3691db4d31a9ca947ae7d093581ec4a483b79` |
@@ -236,7 +288,7 @@ $ node scripts/validate-response-packet.mjs docs/program/packets/UJ-RESP-RUN-001
 exit 0
 - status proposed : READY -> BLOCKED
 - accepted weight : 0 -> 0 / 13 (unchanged)
-- artifacts       : 15 cited, all hashes verified at a7e03e979bae
+- artifacts       : 15 cited, all hashes verified at cfee1316cf83
 ```
 
 Dichiararlo soddisfatto proponendo `REVIEW` significherebbe aggirare la condizione di blocco

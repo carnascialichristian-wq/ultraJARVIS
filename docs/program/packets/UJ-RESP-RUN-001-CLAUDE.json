@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
-  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818-BLOCKED-R3",
-  "created_at": "2026-08-18T20:13:49Z",
+  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818-BLOCKED-R4",
+  "created_at": "2026-08-18T21:19:03Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "a7e03e979baee5a8b796007313ad93408299f840",
+  "source_commit_sha": "cfee1316cf83a6171871fedd541e7c4cd286389f",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -122,6 +122,24 @@
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "grep -rn RUNTIME_CONTRACTS_PROVENANCE --include=*.ts --include=*.mjs --include=*.js",
       "verified_at": "2026-08-18T20:13:49Z"
+    },
+    {
+      "claim": "main's history has been rewritten. None of 3611b1b4 (the card's declared read_ref), d48e1e85 (the commit introducing the card), 31f31b9 (ChatGPT's branch tip) or 99dece5 (the session-3 merge) is an ancestor of origin/main; they survive only on side branches. A second independent sign: a fetch without '+' rejected the origin/main update as non-fast-forward at the start of this session.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git merge-base --is-ancestor <commit> origin/main, for each of the four commits",
+      "verified_at": "2026-08-18T21:19:03Z"
+    },
+    {
+      "claim": "Because of that rewrite, the corrective action this packet previously requested was itself insufficient: setting read_ref to a commit at or after d48e1e85 would name a commit main cannot resolve. A correct read_ref must satisfy two clauses, containing the card AND being reachable from origin/main. Verified candidates: 3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1, the earliest commit in main's current history containing the card, and 25b1b7d53ff5bc4b05348453ebb704aba3a88630, the tip.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git cat-file -e <commit>:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json and git merge-base --is-ancestor <commit> origin/main",
+      "verified_at": "2026-08-18T21:19:03Z"
+    },
+    {
+      "claim": "The defect is systemic, not specific to UJ-RUN-001. All four delegation cards on origin/main declare read_ref 3611b1b4 and none of the four exists at that commit: UJ-RUN-001-CLAUDE, UJ-CAP-001-GEMINI, UJ-GGL-001-GEMINI and UJ-RED-001-GROK. GEMINI meets it twice and GROK once. Correcting all four in one pass costs one HUMAN_BRIDGE round rather than three.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git cat-file -e <read_ref>:<card path> for each card listed at origin/main:prompts/delegation-cards/",
+      "verified_at": "2026-08-18T21:19:03Z"
     }
   ],
   "assumptions": [
@@ -256,10 +274,10 @@
     },
     {
       "ref": "docs/program/handoffs/HANDOFF-UJ-RUN-001.md",
-      "sha256": "f1d4db2d608f39fc88510b524c59030c346f6f6f1e97436d496b5674de35d74d",
+      "sha256": "a2f5934113d5d2254394da8d31accc591e6751d2576822ddd1df0e081531bfcd",
       "media_type": "text/markdown",
       "data_class": "C1",
-      "summary": "Handoff and resume point for UJ-RUN-001, rewritten in session 6. It declares branch agent/uj-run-001-blueprint-20260818, status BLOCKED, accepted weight 0/13, runtime-invariants 36 and suite 140, the 22 unimplemented proofs of blueprint sections 16-21 plus the 11 still PENDING in 13.3 (33 in total), the unexecuted section 21 demo, and the card's absence at read_ref 3611b1b4 against its introduction at d48e1e85. Section 5 separates the measured BACKLOG status from the proposed status. Section 0.3 keeps the superseded values under an explicit history heading; section 0.4 records the defect class, four occurrences of a superseded state written in the present tense across this delivery set. The document does not name the commit containing it, because its own hash is part of that commit."
+      "summary": "Handoff and resume point for UJ-RUN-001, rewritten in session 6. It declares branch agent/uj-run-001-blueprint-20260818, status BLOCKED, accepted weight 0/13, runtime-invariants 36 and suite 140, the 22 unimplemented proofs of blueprint sections 16-21 plus the 11 still PENDING in 13.3 (33 in total), the unexecuted section 21 demo, and the card's absence at read_ref 3611b1b4 against its introduction at d48e1e85. Section 5 separates the measured BACKLOG status from the proposed status. Section 0.3 keeps the superseded values under an explicit history heading; section 0.4 records the defect class, four occurrences of a superseded state written in the present tense across this delivery set. The document does not name the commit containing it, because its own hash is part of that commit. Section 1.1, added after main's history was found to have been rewritten, records that neither 3611b1b4 nor d48e1e85 is reachable from origin/main, that a correct read_ref must both contain the card and be reachable from main, and that all four delegation cards carry the same defect."
     }
   ],
   "verification": {
@@ -278,7 +296,9 @@
       "scan of the delivery set for stale branch names, stale status and stale test counts, with every surviving occurrence accounted for as explicitly marked history",
       "recomputation of all fifteen artifact hashes at both the previous and the new source commit, to prove how many changed",
       "grep for consumers of RUNTIME_CONTRACTS_PROVENANCE before changing it, and re-run of typecheck, build and the full suite after",
-      "round-trip of every block embedded in the HUMAN_BRIDGE delivery: each block re-extracted and re-hashed against the file it came from"
+      "round-trip of every block embedded in the HUMAN_BRIDGE delivery: each block re-extracted and re-hashed against the file it came from",
+      "reachability of 3611b1b4, d48e1e85, 31f31b9 and 99dece5 from origin/main",
+      "read_ref validity of all four delegation cards at origin/main"
     ],
     "passed": [
       "four pinned input hashes match at 3611b1b4",
@@ -292,10 +312,12 @@
       "branch containment: agent/uj-run-001-blueprint-20260818 only",
       "runtime-invariants: 36 tests, 36 pass, 0 fail, run from the repository root on the file byte-identical to the committed blob",
       "exactly 4 of 15 artifact hashes changed between 79408449 and a7e03e97: the handoff, the blueprint, packages/contracts/src/runtime/index.ts and packages/contracts/package.json — the four artifacts that carried a superseded state, and no others",
-      "no occurrence of a superseded branch, status or test count remains in a position that presents it as current; every surviving mention sits in an explicitly labelled history section or in a sentence that states the correction"
+      "no occurrence of a superseded branch, status or test count remains in a position that presents it as current; every surviving mention sits in an explicitly labelled history section or in a sentence that states the correction",
+      "two read_ref candidates identified that satisfy both clauses: 3cbae5c1 and the main tip 25b1b7d5"
     ],
     "failed": [
-      "delegation card availability at read_ref 3611b1b4: the file does not exist at that commit. This is the blocking condition."
+      "delegation card availability at read_ref 3611b1b4: the file does not exist at that commit. This is the blocking condition.",
+      "all four delegation cards declare read_ref 3611b1b4 and none of them exists at that commit; the commit is not reachable from origin/main either"
     ],
     "not_run": [
       "The 22 proofs specified in blueprint sections 16-21. Specified, not implemented. The minimal end-to-end demo of section 21 has NOT been executed and is not claimed complete.",
@@ -334,7 +356,7 @@
       "event": "The delivery is admitted against a read_ref that cannot serve one of its declared inputs.",
       "severity": "HIGH",
       "trigger": "An integrator waives the card-availability check to unblock the task.",
-      "mitigation": "This packet proposes BLOCKED rather than REVIEW. Correct the card's read_ref to a commit at or after d48e1e85, then resubmit these same bytes unchanged.",
+      "mitigation": "This packet proposes BLOCKED rather than REVIEW. Correct the card's read_ref to a commit that BOTH contains the card AND is reachable from origin/main — d48e1e85 satisfies only the first, because main was rewritten. Use 3cbae5c1 or the tip 25b1b7d5, and correct all four delegation cards, which share the defect. Then resubmit these same bytes unchanged.",
       "owner": "CHATGPT"
     }
   ],
@@ -368,11 +390,11 @@
   "remaining_work": {
     "weight": 13,
     "blockers": [
-      "The delegation card is not available at its declared read_ref 3611b1b4. Nothing in this portfolio can resolve it: the card belongs to CHATGPT.",
+      "The delegation card is not available at its declared read_ref 3611b1b4, and that commit is no longer reachable from origin/main at all. Nothing in this portfolio can resolve it: the card belongs to CHATGPT.",
       "The 22 proofs specified in blueprint sections 16-21 are not implemented; they require a runtime (M2/M3).",
       "Independent review by GEMINI has not been performed."
     ],
-    "next_action": "CHATGPT corrects repository_scope.read_ref on UJ-CARD-RUN-001-CLAUDE to a commit at or after d48e1e8519a8d7af90ea44e770f0db7fd3938fb3, or states which ref the card must be read at. These same bytes can then be resubmitted with status REVIEW and no other change."
+    "next_action": "CHATGPT corrects repository_scope.read_ref on UJ-CARD-RUN-001-CLAUDE, and on the other three delegation cards which carry the identical defect, to a commit that both contains the card and is reachable from origin/main: 3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1 or the tip 25b1b7d53ff5bc4b05348453ebb704aba3a88630. d48e1e85 is NOT usable because main's history was rewritten and it is no longer an ancestor of main. These same bytes can then be resubmitted with status REVIEW and no other change."
   },
   "confidence": {
     "level": "HIGH",
@@ -390,6 +412,6 @@
   "handoff": {
     "target": "CHATGPT",
     "next_action": "Resolve the read_ref discrepancy on UJ-CARD-RUN-001-CLAUDE, then admit these bytes unchanged. GEMINI's review cannot begin while the task is BLOCKED.",
-    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha a7e03e979baee5a8b796007313ad93408299f840, the single reference for blueprint, packet, AC evidence and handoff. It supersedes 79408449bd096613d2823efe6872ed424b757ee6, which still carried four artifacts declaring a superseded state, and which in turn superseded 2dad45a40798a8059b5e2b7db077b76e77fcc88b. Accepted weight 0/13, unchanged. No BACKLOG edit was made."
+    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha cfee1316cf83a6171871fedd541e7c4cd286389f. It supersedes a7e03e979baee5a8b796007313ad93408299f840, whose handoff asked for a read_ref fix that main could not have resolved, which in turn superseded 79408449bd096613d2823efe6872ed424b757ee6 and 2dad45a40798a8059b5e2b7db077b76e77fcc88b. Accepted weight 0/13, unchanged. No BACKLOG edit and no card edit was made."
   }
 }

@@ -1,113 +1,72 @@
-# CONSEGNA UJ-RUN-001 — **BLOCKED** — riconciliata, giro 3
+# CONSEGNA UJ-RUN-001 — **BLOCKED** — riconciliata, giro 4
 
 > **Christian:** i **tre** blocchi qui sotto vanno copiati **per intero**, marcatori `===` inclusi.
-> **Nessun ReviewResult:** non fa parte di questa consegna ed e' un artefatto separato.
-> Non ho toccato i file di Grok, di Gemini, `main`, ne' `BACKLOG.json`.
+> **Nessun ReviewResult:** non fa parte di questa consegna. Non ho toccato i file di Grok, di
+> Gemini, `main`, `BACKLOG.json`, ne' le delegation card.
 
 | | |
 |---|---|
 | Task | `UJ-RUN-001` — owner CLAUDE, reviewer GEMINI, peso 13 |
 | Card | `UJ-CARD-RUN-001-CLAUDE` |
-| Branch | `agent/uj-run-001-blueprint-20260818` — verificato con `git branch -a --contains`, e **in negativo** contro `origin/main` e gli altri due rami CLAUDE |
-| **`source_commit_sha` unico** | `a7e03e979baee5a8b796007313ad93408299f840` |
-| Supersede | `79408449bd096613d2823efe6872ed424b757ee6`, che a sua volta superava `2dad45a40798a8059b5e2b7db077b76e77fcc88b` |
+| Branch | `agent/uj-run-001-blueprint-20260818` |
+| **`source_commit_sha` unico** | `cfee1316cf83a6171871fedd541e7c4cd286389f` |
+| Supersede | `a7e03e979baee5a8b796007313ad93408299f840`, poi `79408449…`, poi `2dad45a4…` |
 | **Stato proposto** | **`BLOCKED`** |
 | Peso accettato | **0 / 13, invariato** |
-| Blocchi FILE | **2** — vedi tabella qui sotto |
-| Newline finale | presente (LF) in entrambi |
-| Generato | 2026-08-18T20:16:05Z |
+| Blocchi FILE | **2** |
+| Generato | 2026-08-18T21:20:31Z |
 
 | Blocco FILE | byte | SHA-256 |
 |---|---:|---|
 | `docs/architecture/RUNTIME_BLUEPRINT.md` | 87948 | `bccc5a08d3ab8fc9245c0e6dcb8f946d1616bdda40f8e001d3ad1e3504e0cf6c` |
-| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | 27421 | `f1d4db2d608f39fc88510b524c59030c346f6f6f1e97436d496b5674de35d74d` |
+| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | 30638 | `a2f5934113d5d2254394da8d31accc591e6751d2576822ddd1df0e081531bfcd` |
 
-## Che cosa cambia rispetto al giro precedente
+## LEGGERE PRIMA: `main` e' stato riscritto, e la correzione che chiedevo era sbagliata
 
-**CHATGPT ne ha segnalato uno; la scansione ne ha trovati quattro.**
-Il difetto segnalato: `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` **e' uno dei 15 artefatti hashati** da questo packet, ed era
-rimasto il documento della **sessione 1** — branch `claude/ultrajarvis-repo-analysis-li6vvj`,
-stato `REVIEW`, `33` test, e una tabella di task le cui transizioni erano scritte come gia'
-avvenute.
-
-**Perche' bloccava la riconciliazione.** Due artefatti pinati sullo **stesso** commit
-dichiaravano stati opposti — `REVIEW` nell'handoff, `BLOCKED` nel packet — e nulla nel
-documento permetteva di stabilire quale valesse. Una consegna cosi' non e' ammissibile
-qualunque sia la qualita' del contenuto.
-
-**Cercare solo quell'istanza sarebbe stato l'errore.** Una scansione dell'intero set per
-*dichiarazioni di stato o di branch scritte al presente e gia' superate* ne ha trovate quattro:
-
-| # | Artefatto | Dichiarava | Gravita' |
-|---:|---|---|---|
-| 1 | `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | branch e stato della sessione 1, `33` test | segnalato da CHATGPT |
-| 2 | `packages/contracts/src/runtime/index.ts` | `RUNTIME_CONTRACTS_PROVENANCE.status = "REVIEW"` | **la peggiore** |
-| 3 | `packages/contracts/package.json` | `description: "… status REVIEW."` | minore |
-| 4 | `docs/architecture/RUNTIME_BLUEPRINT.md` | il prompt canonico *"non e' ancora su `main`"* | minore, ma falsa |
-
-La n. 2 e' la peggiore perche' e' l'**unica copia leggibile da una macchina** dello stato, ed e'
-offerta dal suo stesso commento *"for the Program OS ledger"*: un integratore che leggesse la
-provenienza dal codice invece che dal packet avrebbe ottenuto `REVIEW` da una consegna
-`BLOCKED`. Nessuno la legge — verificato con `grep` prima di toccarla — e typecheck, build e i
-140 test sono stati rieseguiti dopo.
-
-La n. 4 era falsa, misurata: `git show origin/main:…MASTER_PROMPT.md | sha256sum` e
-`git show b8a7697:<stesso path> | sha256sum` danno entrambi `a3fcdfc9…a69a87`.
-
-**Prova che la correzione e' chirurgica:** ricalcolando tutti e 15 gli hash a **entrambi** i
-commit sorgente, **4 su 15** sono cambiati — esattamente i quattro artefatti qui sopra, e
-nessun altro.
-
-**Che cosa NON cambia:** stato `BLOCKED`, peso `0/13`, nessuna modifica a `BACKLOG.json`,
-nessun `ReviewResult`, nessuna scrittura su `main`.
-
-## Il conteggio dei test
-
-| Suite | test | pass | fail |
-|---|---:|---:|---:|
-| `approval-policy.test.mjs` | 28 | 28 | 0 |
-| `recovery.test.mjs` | 9 | 9 | 0 |
-| **`runtime-invariants.test.mjs`** | **36** | **36** | **0** |
-| `skill-forge.test.mjs` | 37 | 37 | 0 |
-| `tool-admission.test.mjs` | 30 | 30 | 0 |
-| **totale** | **140** | **140** | **0** |
-
-`npx tsc -p packages/contracts --noEmit` exit 0 · `npx tsc -p packages/contracts` exit 0 ·
-`node scripts/validate-response-packet.mjs …` exit 0, 15/15 hash a `a7e03e979bae`.
-
-**Avvertenza per chi ricontrolla:** la build non e' opzionale e va **prima** dei test —
-`dist/` e' in `.gitignore` e non esiste in un container nuovo; saltarla da' 5 suite fallite su 5
-con `ERR_MODULE_NOT_FOUND`, che **non** e' una regressione. E va eseguito **dalla root**:
-estrarre un blob in una directory temporanea e lanciarlo li' fallisce sulla risoluzione dei
-moduli.
-
-## Cio' che NON e' dimostrato
-
-**22 prove** specificate nelle sezioni 16-21 **non sono implementate e nessuna e' stata
-eseguita** (§16 5 · §17 3 · §18 5 · §19 3 · §20 3 · §21 3), piu' **11** ancora `PENDING` in
-§13.3: **33 in totale**. **La demo end-to-end minima della §21 NON e' stata eseguita** e non e'
-dichiarata completata.
-
-> **Non confondere due `33`.** Quello qui sopra conta prove **non fatte**. Il `33` che compare
-> nella storia di questa consegna era un conteggio errato di **test eseguiti**, corretto a 36.
-
-## La condizione bloccante, invariata
+Il giro precedente chiedeva: *"porta il `read_ref` a un commit pari o successivo a
+`d48e1e85`"*. **Quel consiglio e' insufficiente**, e seguirlo alla lettera riprodurrebbe il
+difetto in forma nuova. Misurato oggi contro il remoto:
 
 ```
-$ git cat-file -e 3611b1b400cf57b5021bab228a3de9470d6eca5c:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json
-fatal: path ... exists on disk, but not in '3611b1b4...'      exit 128
-$ git cat-file -e d48e1e8519a8d7af90ea44e770f0db7fd3938fb3:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json
-exit 0
+git merge-base --is-ancestor <commit> origin/main
+  3611b1b4  -> NO      il read_ref dichiarato dalla card
+  d48e1e85  -> NO      il commit che introduce la card
+  31f31b9   -> NO      il tip del branch di ChatGPT
+  99dece5   -> NO      il merge di PR #1 e PR #2, sessione 3
 ```
 
-La card entra **dodici minuti dopo** il commit che il suo stesso `read_ref` nomina.
-**Non e' un pin mismatch:** i quattro input pinati coincidono tutti a `3611b1b4`, ricalcolati
-in questa sessione. Serve che CHATGPT porti il `read_ref` a `d48e1e85` o successivo; poi
-**questi stessi byte** diventano una consegna `REVIEW` cambiando solo `status`.
+Sopravvivono solo su rami laterali. Secondo indizio indipendente: all'inizio della sessione un
+`git fetch` senza `+` ha **rifiutato** l'aggiornamento di `origin/main` come *non-fast-forward*.
 
-## Gli altri tredici artefatti, per riferimento
+**La condizione corretta ha due clausole:** il commit deve **contenere la card** *e* essere
+**raggiungibile da `origin/main`**.
 
-| Artefatto | SHA-256 a `a7e03e979bae` |
+| Candidato verificato | Contiene la card | Raggiungibile da `main` |
+|---|---|---|
+| `3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1` | si | si |
+| `25b1b7d53ff5bc4b05348453ebb704aba3a88630` (tip) | si | si |
+
+**E il difetto e' su TUTTE E QUATTRO le card**, quindi Gemini lo incontrera' due volte e Grok
+una: `UJ-RUN-001-CLAUDE`, `UJ-CAP-001-GEMINI`, `UJ-GGL-001-GEMINI`, `UJ-RED-001-GROK`
+dichiarano tutte `read_ref 3611b1b4` e **nessuna** esiste a quel commit. Correggerle insieme
+costa **un** giro di HUMAN_BRIDGE invece di tre.
+
+**Fragilita':** i quattro input pinati si risolvono ancora a `3611b1b4`, 4 su 4, ma solo
+perche' quei rami laterali esistono.
+
+## Stato invariato
+
+`BLOCKED`, peso accettato **0/13**, nessuna modifica a `BACKLOG.json` ne' alle card.
+**1 hash su 15 cambiato** in questo giro: solo l'handoff, che ora porta la §1.1 con l'analisi
+qui sopra. Gli altri 14 byte-identici.
+
+Suite: **140/140**, di cui **36** in `runtime-invariants`. Typecheck 0, build 0, validator
+packet exit 0 con 15/15 hash a `cfee1316cf83`. **22** prove delle §16-21 non implementate, **11**
+`PENDING` in §13.3, **33** in totale; demo end-to-end §21 **non eseguita**.
+
+## Gli altri tredici artefatti
+
+| Artefatto | SHA-256 a `cfee1316cf83` |
 |---|---|
 | `packages/contracts/src/runtime/agent-manifest.ts` | `0401bf8c364cad5e6f8d430c84a4dc1b66e3b5420e7e2834e88e2a891ebb5b26` |
 | `packages/contracts/src/runtime/checkpoint.ts` | `21df12f40d2ffe93e672ed95a13d3ca1125fcd0dad05abfd967b41b2d9612fce` |
@@ -123,12 +82,10 @@ in questa sessione. Serve che CHATGPT porti il `read_ref` a `d48e1e85` o success
 | `tests/contracts/runtime-invariants.test.mjs` | `0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0` |
 | `docs/threat-models/RUNTIME_THREAT_NOTES.md` | `b84a9a721c5544df9ad1b84e48760a2382783eed3556a7b0c60ba2a6d34bdb60` |
 
-Non citati come artefatti del packet, ma parte della consegna:
-
 | File | SHA-256 |
 |---|---|
-| `docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json` | `9ff0decaff31d1482c25edb0fe43697a8e856d893489d8cb47883cccca487798` |
-| `docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md` | `4970adb34405689b24b9f1c669547fe83a994a05c1bdd34694e32f89a6dfa338` |
+| `docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json` | `bd15a52f088e9a5eb259883c8461366c6233bb5d96de0fbb4b7a7954159ae339` |
+| `docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md` | `1ab786493d4aec709581aa659cb10cacb467059dc0b13a211814ba810b7647e9` |
 
 ---
 === FILE: docs/architecture/RUNTIME_BLUEPRINT.md ===
@@ -2003,9 +1960,64 @@ riguarda l'**ammissibilità** della consegna, non la sua **qualità**. `BLOCKED`
 esisterebbe.
 
 **Il blocker non è mio e non è risolvibile dal mio portafoglio.** La card appartiene a
-CHATGPT. Serve che il `read_ref` punti a un commit pari o successivo a `d48e1e85`; dopodiché
-**questi stessi byte** diventano una consegna `REVIEW` cambiando **solo** il campo `status` —
-zero modifiche di contenuto.
+CHATGPT.
+
+### 1.1 Attenzione: `main` è stato riscritto, e questo cambia la correzione da fare
+
+Misurato in sessione 6, e non è un dettaglio storico: **nessuno** dei commit che questa vicenda
+nomina è più raggiungibile da `origin/main`.
+
+```
+git merge-base --is-ancestor <commit> origin/main
+  3611b1b4  -> NO      (il read_ref dichiarato dalla card)
+  d48e1e85  -> NO      (il commit che introduce la card)
+  31f31b9   -> NO      (il tip del branch di ChatGPT)
+  99dece5   -> NO      (il merge di PR #1 e PR #2 su main, sessione 3)
+```
+
+Sopravvivono solo su rami laterali (`agent/continuity-*`, `agent/gemini-handoff-quarantine-*`,
+e simili). Un secondo indizio indipendente dello stesso fatto: all'inizio della sessione 6 un
+`git fetch` senza `+` ha **rifiutato** l'aggiornamento di `origin/main` come
+*non-fast-forward*, che è ciò che accade quando la storia remota è stata riscritta.
+
+**Conseguenza operativa, e va detta perché la versione precedente di questo documento
+consigliava male:** *«porta il `read_ref` a un commit pari o successivo a `d48e1e85`»* è un
+consiglio che, seguito alla lettera, **riprodurrebbe il difetto in forma nuova** — un
+`read_ref` che `main` non può risolvere.
+
+**La condizione corretta ha due clausole, non una.** Il `read_ref` deve puntare a un commit
+che:
+
+1. **contiene la card**, e
+2. **è raggiungibile da `origin/main`**.
+
+Candidati verificati oggi, entrambi soddisfano tutte e due:
+
+| Commit | Contiene la card | Raggiungibile da `main` | Nota |
+|---|---|---|---|
+| `3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1` | sì | sì | il primo, nella storia **attuale** di `main`, in cui la card compare |
+| `25b1b7d53ff5bc4b05348453ebb704aba3a88630` | sì | sì | il tip di `main` al 2026-08-18 — la scelta più robusta |
+
+**E il difetto non è solo sulla mia card: è su tutte e quattro.** Verificato eseguendo, su
+`origin/main`:
+
+| Card | `read_ref` dichiarato | La card esiste a quel commit? |
+|---|---|---|
+| `UJ-RUN-001-CLAUDE.json` | `3611b1b4…` | **no** |
+| `UJ-CAP-001-GEMINI.json` | `3611b1b4…` | **no** |
+| `UJ-GGL-001-GEMINI.json` | `3611b1b4…` | **no** |
+| `UJ-RED-001-GROK.json` | `3611b1b4…` | **no** |
+
+Quindi Gemini e Grok sbatteranno sulla stessa condizione, due volte e una volta rispettivamente.
+**Conviene correggerle tutte e quattro in un colpo solo**, non una per volta a mano a mano che
+ciascun specialista ci arriva: ogni giro costa un `HUMAN_BRIDGE` manuale a Christian.
+
+Una nota di fragilità che vale la pena registrare: i quattro input pinati dalla card si
+risolvono **ancora** a `3611b1b4` — li ho ricalcolati, 4 su 4 — ma solo perché quei rami
+laterali esistono. Se venissero cancellati, anche i pin diventerebbero irrisolvibili.
+
+Fatta la correzione, **questi stessi byte** diventano una consegna `REVIEW` cambiando **solo**
+il campo `status` — zero modifiche di contenuto.
 
 ---
 
@@ -2212,9 +2224,11 @@ Non è il totale di ultraJARVIS, che resta `UNKNOWN` ed estendibile.
 
 ### → CHATGPT (Chief Integrator) — **è l'unico destinatario che può sbloccare**
 
-1. **Correggere `repository_scope.read_ref`** su `UJ-CARD-RUN-001-CLAUDE`: un commit pari o
-   successivo a `d48e1e85`, oppure dichiarare a quale ref la card vada letta. Poi questi byte
-   si reinviano con `status: REVIEW` e **nessun'altra modifica**.
+1. **Correggere `repository_scope.read_ref`** su `UJ-CARD-RUN-001-CLAUDE` — e sulle **altre
+   tre card**, che hanno lo stesso difetto (§1.1). Il commit deve **contenere la card** *e*
+   **essere raggiungibile da `origin/main`**: `d48e1e85` soddisfa solo la prima clausola e
+   quindi **non** va usato. Valgono `3cbae5c1…` o il tip di `main`, `25b1b7d5…`. Poi questi
+   byte si reinviano con `status: REVIEW` e **nessun'altra modifica**.
 2. **Allineare i criteri**: la card ne dichiara 5, `BACKLOG.json` 2 (§5).
 3. **Applicare le transizioni proposte**: oggi nessuno script del repository lo fa, quindi un
    packet valido lascia il ledger fermo.
@@ -2293,6 +2307,11 @@ COMMIT    : il source_commit_sha corrente è nel ResponsePacket (vedi §0.2).
 BLOCKER   : la card non esiste al proprio read_ref 3611b1b4; entra con d48e1e85,
             dodici minuti dopo. NON risolvibile da CLAUDE: la card è di CHATGPT.
             Non è un pin mismatch: i quattro input pinati coincidono a 3611b1b4.
+            ATTENZIONE (§1.1): main è stato RISCRITTO. Ne' 3611b1b4 ne' d48e1e85
+            sono raggiungibili da origin/main, e nemmeno 99dece5. Il read_ref
+            corretto deve contenere la card E essere raggiungibile da main:
+            3cbae5c1 oppure il tip 25b1b7d5. Lo stesso difetto e' su TUTTE E
+            QUATTRO le card del programma, non solo sulla mia.
 
 VERIFICATO IN QUESTA SESSIONE:
             sha256 prompt canonico  -> a3fcdfc9…a69a87, coincide
@@ -2352,13 +2371,13 @@ Per chiarezza in review, ecco cosa **non** ho fatto e perché:
 === RESPONSE PACKET: UJ-RUN-001 ===
 {
   "schema_version": "ultrajarvis.response-packet/v1",
-  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818-BLOCKED-R3",
-  "created_at": "2026-08-18T20:13:49Z",
+  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260818-BLOCKED-R4",
+  "created_at": "2026-08-18T21:19:03Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "a7e03e979baee5a8b796007313ad93408299f840",
+  "source_commit_sha": "cfee1316cf83a6171871fedd541e7c4cd286389f",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -2474,6 +2493,24 @@ Per chiarezza in review, ecco cosa **non** ho fatto e perché:
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "grep -rn RUNTIME_CONTRACTS_PROVENANCE --include=*.ts --include=*.mjs --include=*.js",
       "verified_at": "2026-08-18T20:13:49Z"
+    },
+    {
+      "claim": "main's history has been rewritten. None of 3611b1b4 (the card's declared read_ref), d48e1e85 (the commit introducing the card), 31f31b9 (ChatGPT's branch tip) or 99dece5 (the session-3 merge) is an ancestor of origin/main; they survive only on side branches. A second independent sign: a fetch without '+' rejected the origin/main update as non-fast-forward at the start of this session.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git merge-base --is-ancestor <commit> origin/main, for each of the four commits",
+      "verified_at": "2026-08-18T21:19:03Z"
+    },
+    {
+      "claim": "Because of that rewrite, the corrective action this packet previously requested was itself insufficient: setting read_ref to a commit at or after d48e1e85 would name a commit main cannot resolve. A correct read_ref must satisfy two clauses, containing the card AND being reachable from origin/main. Verified candidates: 3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1, the earliest commit in main's current history containing the card, and 25b1b7d53ff5bc4b05348453ebb704aba3a88630, the tip.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git cat-file -e <commit>:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json and git merge-base --is-ancestor <commit> origin/main",
+      "verified_at": "2026-08-18T21:19:03Z"
+    },
+    {
+      "claim": "The defect is systemic, not specific to UJ-RUN-001. All four delegation cards on origin/main declare read_ref 3611b1b4 and none of the four exists at that commit: UJ-RUN-001-CLAUDE, UJ-CAP-001-GEMINI, UJ-GGL-001-GEMINI and UJ-RED-001-GROK. GEMINI meets it twice and GROK once. Correcting all four in one pass costs one HUMAN_BRIDGE round rather than three.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git cat-file -e <read_ref>:<card path> for each card listed at origin/main:prompts/delegation-cards/",
+      "verified_at": "2026-08-18T21:19:03Z"
     }
   ],
   "assumptions": [
@@ -2608,10 +2645,10 @@ Per chiarezza in review, ecco cosa **non** ho fatto e perché:
     },
     {
       "ref": "docs/program/handoffs/HANDOFF-UJ-RUN-001.md",
-      "sha256": "f1d4db2d608f39fc88510b524c59030c346f6f6f1e97436d496b5674de35d74d",
+      "sha256": "a2f5934113d5d2254394da8d31accc591e6751d2576822ddd1df0e081531bfcd",
       "media_type": "text/markdown",
       "data_class": "C1",
-      "summary": "Handoff and resume point for UJ-RUN-001, rewritten in session 6. It declares branch agent/uj-run-001-blueprint-20260818, status BLOCKED, accepted weight 0/13, runtime-invariants 36 and suite 140, the 22 unimplemented proofs of blueprint sections 16-21 plus the 11 still PENDING in 13.3 (33 in total), the unexecuted section 21 demo, and the card's absence at read_ref 3611b1b4 against its introduction at d48e1e85. Section 5 separates the measured BACKLOG status from the proposed status. Section 0.3 keeps the superseded values under an explicit history heading; section 0.4 records the defect class, four occurrences of a superseded state written in the present tense across this delivery set. The document does not name the commit containing it, because its own hash is part of that commit."
+      "summary": "Handoff and resume point for UJ-RUN-001, rewritten in session 6. It declares branch agent/uj-run-001-blueprint-20260818, status BLOCKED, accepted weight 0/13, runtime-invariants 36 and suite 140, the 22 unimplemented proofs of blueprint sections 16-21 plus the 11 still PENDING in 13.3 (33 in total), the unexecuted section 21 demo, and the card's absence at read_ref 3611b1b4 against its introduction at d48e1e85. Section 5 separates the measured BACKLOG status from the proposed status. Section 0.3 keeps the superseded values under an explicit history heading; section 0.4 records the defect class, four occurrences of a superseded state written in the present tense across this delivery set. The document does not name the commit containing it, because its own hash is part of that commit. Section 1.1, added after main's history was found to have been rewritten, records that neither 3611b1b4 nor d48e1e85 is reachable from origin/main, that a correct read_ref must both contain the card and be reachable from main, and that all four delegation cards carry the same defect."
     }
   ],
   "verification": {
@@ -2630,7 +2667,9 @@ Per chiarezza in review, ecco cosa **non** ho fatto e perché:
       "scan of the delivery set for stale branch names, stale status and stale test counts, with every surviving occurrence accounted for as explicitly marked history",
       "recomputation of all fifteen artifact hashes at both the previous and the new source commit, to prove how many changed",
       "grep for consumers of RUNTIME_CONTRACTS_PROVENANCE before changing it, and re-run of typecheck, build and the full suite after",
-      "round-trip of every block embedded in the HUMAN_BRIDGE delivery: each block re-extracted and re-hashed against the file it came from"
+      "round-trip of every block embedded in the HUMAN_BRIDGE delivery: each block re-extracted and re-hashed against the file it came from",
+      "reachability of 3611b1b4, d48e1e85, 31f31b9 and 99dece5 from origin/main",
+      "read_ref validity of all four delegation cards at origin/main"
     ],
     "passed": [
       "four pinned input hashes match at 3611b1b4",
@@ -2644,10 +2683,12 @@ Per chiarezza in review, ecco cosa **non** ho fatto e perché:
       "branch containment: agent/uj-run-001-blueprint-20260818 only",
       "runtime-invariants: 36 tests, 36 pass, 0 fail, run from the repository root on the file byte-identical to the committed blob",
       "exactly 4 of 15 artifact hashes changed between 79408449 and a7e03e97: the handoff, the blueprint, packages/contracts/src/runtime/index.ts and packages/contracts/package.json — the four artifacts that carried a superseded state, and no others",
-      "no occurrence of a superseded branch, status or test count remains in a position that presents it as current; every surviving mention sits in an explicitly labelled history section or in a sentence that states the correction"
+      "no occurrence of a superseded branch, status or test count remains in a position that presents it as current; every surviving mention sits in an explicitly labelled history section or in a sentence that states the correction",
+      "two read_ref candidates identified that satisfy both clauses: 3cbae5c1 and the main tip 25b1b7d5"
     ],
     "failed": [
-      "delegation card availability at read_ref 3611b1b4: the file does not exist at that commit. This is the blocking condition."
+      "delegation card availability at read_ref 3611b1b4: the file does not exist at that commit. This is the blocking condition.",
+      "all four delegation cards declare read_ref 3611b1b4 and none of them exists at that commit; the commit is not reachable from origin/main either"
     ],
     "not_run": [
       "The 22 proofs specified in blueprint sections 16-21. Specified, not implemented. The minimal end-to-end demo of section 21 has NOT been executed and is not claimed complete.",
@@ -2686,7 +2727,7 @@ Per chiarezza in review, ecco cosa **non** ho fatto e perché:
       "event": "The delivery is admitted against a read_ref that cannot serve one of its declared inputs.",
       "severity": "HIGH",
       "trigger": "An integrator waives the card-availability check to unblock the task.",
-      "mitigation": "This packet proposes BLOCKED rather than REVIEW. Correct the card's read_ref to a commit at or after d48e1e85, then resubmit these same bytes unchanged.",
+      "mitigation": "This packet proposes BLOCKED rather than REVIEW. Correct the card's read_ref to a commit that BOTH contains the card AND is reachable from origin/main — d48e1e85 satisfies only the first, because main was rewritten. Use 3cbae5c1 or the tip 25b1b7d5, and correct all four delegation cards, which share the defect. Then resubmit these same bytes unchanged.",
       "owner": "CHATGPT"
     }
   ],
@@ -2720,11 +2761,11 @@ Per chiarezza in review, ecco cosa **non** ho fatto e perché:
   "remaining_work": {
     "weight": 13,
     "blockers": [
-      "The delegation card is not available at its declared read_ref 3611b1b4. Nothing in this portfolio can resolve it: the card belongs to CHATGPT.",
+      "The delegation card is not available at its declared read_ref 3611b1b4, and that commit is no longer reachable from origin/main at all. Nothing in this portfolio can resolve it: the card belongs to CHATGPT.",
       "The 22 proofs specified in blueprint sections 16-21 are not implemented; they require a runtime (M2/M3).",
       "Independent review by GEMINI has not been performed."
     ],
-    "next_action": "CHATGPT corrects repository_scope.read_ref on UJ-CARD-RUN-001-CLAUDE to a commit at or after d48e1e8519a8d7af90ea44e770f0db7fd3938fb3, or states which ref the card must be read at. These same bytes can then be resubmitted with status REVIEW and no other change."
+    "next_action": "CHATGPT corrects repository_scope.read_ref on UJ-CARD-RUN-001-CLAUDE, and on the other three delegation cards which carry the identical defect, to a commit that both contains the card and is reachable from origin/main: 3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1 or the tip 25b1b7d53ff5bc4b05348453ebb704aba3a88630. d48e1e85 is NOT usable because main's history was rewritten and it is no longer an ancestor of main. These same bytes can then be resubmitted with status REVIEW and no other change."
   },
   "confidence": {
     "level": "HIGH",
@@ -2742,7 +2783,7 @@ Per chiarezza in review, ecco cosa **non** ho fatto e perché:
   "handoff": {
     "target": "CHATGPT",
     "next_action": "Resolve the read_ref discrepancy on UJ-CARD-RUN-001-CLAUDE, then admit these bytes unchanged. GEMINI's review cannot begin while the task is BLOCKED.",
-    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha a7e03e979baee5a8b796007313ad93408299f840, the single reference for blueprint, packet, AC evidence and handoff. It supersedes 79408449bd096613d2823efe6872ed424b757ee6, which still carried four artifacts declaring a superseded state, and which in turn superseded 2dad45a40798a8059b5e2b7db077b76e77fcc88b. Accepted weight 0/13, unchanged. No BACKLOG edit was made."
+    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha cfee1316cf83a6171871fedd541e7c4cd286389f. It supersedes a7e03e979baee5a8b796007313ad93408299f840, whose handoff asked for a read_ref fix that main could not have resolved, which in turn superseded 79408449bd096613d2823efe6872ed424b757ee6 and 2dad45a40798a8059b5e2b7db077b76e77fcc88b. Accepted weight 0/13, unchanged. No BACKLOG edit and no card edit was made."
   }
 }
 === END RESPONSE PACKET ===
