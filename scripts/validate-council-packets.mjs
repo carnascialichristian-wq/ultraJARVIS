@@ -430,6 +430,10 @@ if (!schemasOnly) {
     assert(task?.status === "READY", `${path} task must be READY in the source snapshot.`);
     assert(task?.weight === card.task_snapshot.weight, `${path} task weight differs from backlog.`);
     assert(task?.reviewer === card.reviewer, `${path} reviewer differs from backlog.`);
+    assert(mission?.repository?.commit_sha === card.repository_scope.read_ref, `${path} read_ref must match mission repository commit.`);
+    const cardCriteria = (card.acceptance_criteria ?? []).map(({ criterion_id, text }) => ({ criterion_id, text }));
+    const backlogCriteria = (task?.acceptance_criteria ?? []).map(({ criterion_id, text }) => ({ criterion_id, text }));
+    assert(deepEqual(cardCriteria, backlogCriteria), `${path} acceptance criteria must match BACKLOG.json exactly.`);
     assert(card.mission_id === mission?.mission_id, `${path} mission_id mismatch.`);
     assert(card.status === "READY", `${path} must be READY.`);
     assert(card.allowed_modes.length === 1 && card.allowed_modes[0] === "HUMAN_BRIDGE", `${path} must begin as HUMAN_BRIDGE only.`);

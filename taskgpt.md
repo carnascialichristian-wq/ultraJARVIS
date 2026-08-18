@@ -269,3 +269,11 @@ conflitto va registrato, non eliminato.
 - `main` contiene runtime/docs Claude, il codice Python/Grok già presente e i ledger; non contiene ancora l'intero Program OS (`AGENTS.md`, backlog, schemi Council e prompt canonico). Questa distinzione è obbligatoria per le prossime IA.
 - Nessun peso è stato accettato. UJ-CAP-001 e UJ-GGL-001 restano READY/HUMAN_BRIDGE per Gemini; la loro integrazione dovrà avvenire in branch dedicate e con ResponsePacket separati.
 - Prossimo resume point: ricevere l'output completo di Gemini, verificare fonti/hash/schema, aggiornare entrambi i ledger, pubblicare le branch UJ-CAP-001/UJ-GGL-001 e solo dopo riallineare PR #1/#3.
+
+### 2026-08-18 — ChatGPT/Codex — card/ref e criteri Council riallineati
+
+- Branch: `agent/chatgpt-governance-reconcile-20260818`, da `main@25b1b7d53ff5bc4b05348453ebb704aba3a88630`; nessuna modifica diretta a `main`, Claude o Grok.
+- Pin corretto a `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3`: contiene missione e quattro card; `3611…` era un ref privo delle card.
+- Le quattro task specialistiche restano READY 0/13, ma il BACKLOG ora replica AC-01..AC-05 delle card. Validator aggiornato per bloccare future divergenze.
+- Nessuna risposta specialistica viene auto-accettata: Claude resta BLOCKED; lo snapshot Grok v8 non è il packet UJ-RED-001.
+- Resume: inviare le card corrette e attendere packet schema-validi con prove verificabili.
