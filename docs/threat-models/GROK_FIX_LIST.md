@@ -570,3 +570,99 @@ Due test (`test_protected_refusal`, `test_escape_root_refused`) sono verdi **per
 sbagliato**.
 
 Dettaglio: `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §15.
+
+---
+
+## FIX-12 — la promozione cabla `safe=True`, e il gate che hai appena reso vero non può rifiutare · **MEDIUM**
+
+**Prima cosa, e non è una formalità: `FIX-7` funziona.** L'hai applicato, e
+`Registry.call()` alla riga 189 di `core/registry.py` solleva `PermissionError` quando
+`spec.safe` è falso. Nella review di sessione 3 avevo classificato `ToolSpec.safe` fra le
+manopole che non applicano nulla: **non è più vero, e la correzione è tua.** Ho corretto la
+mia review di conseguenza.
+
+Questo rilievo esiste **proprio perché** quel flag adesso conta.
+
+### File e riga
+
+`core/nt_runner.py`, dentro `promote_job_to_tools`, ramo `register=True`.
+
+### Prima
+
+```python
+spec = ToolSpec(
+    name=tool_name,
+    description=f"Promoted helper from job {job_dir.name}",
+    module=module_import,
+    callable_name=callable_name,
+    safe=True,
+    tags=["promoted", tool_prefix],
+)
+```
+
+### Dopo
+
+```python
+spec = ToolSpec(
+    name=tool_name,
+    description=f"Promoted helper from job {job_dir.name}",
+    module=module_import,
+    callable_name=callable_name,
+    # Il codice promosso NON e' safe per default: nessun umano lo ha scritto.
+    # Diventa eseguibile con una decisione esplicita, come i sette tool del
+    # catalogo che sono gia' safe=False (files.safe_write, browser.open_url,
+    # os.*, email.send, automation.*).
+    safe=False,
+    tags=["promoted", tool_prefix, "unreviewed"],
+)
+```
+
+### Perché
+
+`safe=True` è **l'unica occorrenza di `safe=` nella funzione**: non esiste input, esito di
+scan, provenienza o parametro che possa produrre `safe=False`. Per ogni tool scritto a mano
+quel flag è una scelta; per il codice promosso — l'unica categoria che nessun umano ha
+scritto — è una costante permissiva.
+
+Con `UJ_WRITER_LLM=1` la catena è completa: un modello remoto scrive il corpo, gli scan lo
+lasciano passare, la promozione lo scrive in `tools/`, la registrazione lo marca sicuro.
+Nessun passaggio è privo di controlli; il difetto è che l'ultimo riceve sempre lo stesso
+ingresso.
+
+Non è `S-12`/`S-13` che si riapre: quelli erano *"nessun gate"*. Questo è *"il gate c'è e la
+sua condizione è costante"*, la variante più difficile da vedere perché il codice del gate è
+corretto e leggerlo non rivela niente.
+
+### Comando di verifica
+
+Da eseguire **con `root` in una directory temporanea**: non tocca `tools/`.
+
+```python
+import pathlib, sys, tempfile
+sys.path.insert(0, ".")
+from core.nt_runner import promote_job_to_tools
+from core.registry import get_registry
+
+tmp = pathlib.Path(tempfile.mkdtemp()); (tmp/"tools").mkdir()
+job = tmp/"job"; job.mkdir()
+(job/"tool.py").write_text('def run() -> str:\n    return "ok"\n')
+
+reg = get_registry(); before = {t.name for t in reg.list_tools()}
+promote_job_to_tools(job, "demo_promoted", root=tmp, register=True)
+for t in reg.list_tools():
+    if t.name not in before:
+        print(t.name, "safe=", t.safe)
+```
+
+**Prima del fix:** `demo_promoted.run safe= True`
+**Dopo il fix:** `demo_promoted.run safe= False`, e `reg.call("demo_promoted.run")` solleva
+`PermissionError: Tool demo_promoted.run is not marked safe`.
+
+### Ordine rispetto a FIX-10
+
+**`FIX-10` viene prima.** Finché il writer va su un provider a pagamento, il codice promosso è
+sia non gratuito sia marcato sicuro. Chiudendo prima `FIX-12` si ottiene codice a pagamento
+correttamente marcato non sicuro: è meglio, ma non risolve il costo, che è il vincolo
+non negoziabile. Stessa logica di `S-12` prima di `S-13`.
+
+Dettaglio e prove: `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §17.

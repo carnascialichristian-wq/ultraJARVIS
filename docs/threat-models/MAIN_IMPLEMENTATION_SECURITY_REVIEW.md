@@ -1200,3 +1200,130 @@ serve a non lasciare in giro un allarme che non ha più oggetto.
 **E `core/monetization.py` non è ciò che il nome suggerisce a chi teme l'Articolo 5:** è usage
 metering che scrive un JSONL locale e dichiara *"no billing provider yet"*. Riguarda l'addebito
 a **futuri clienti**, non la spesa del programma. Nessun provider di pagamento, nessuna rete.
+
+---
+
+## 17. Sessione 5 — la catena writer→promote→registry è ora completa, e il suo flag di sicurezza è una costante
+
+**Ref misurato:** `origin/main` `25b1b7d`, 2026-08-18T12:36 +02:00. Tre commit nuovi:
+`core/nt_helpers.py` (*"LLM writer, multi-detect, skills hint, deps graph"*),
+`core/nt_runner.py` (*"NaturalTaskRunner full pipeline + promote with skills"*) e la
+continuity.
+
+### 17.1 `S-17` §13 si è avverata di nuovo: il writer è cresciuto, il fix non è arrivato
+
+In §13 avevo scritto che `FIX-10a/10b` andava applicato **prima** del writer adapter, con la
+stessa logica di `S-12` prima di `S-13`. Il writer non solo è rimasto: è stato **riscritto e
+allargato** dentro la pipeline dei natural task, e il fix non è ancora su `main`.
+
+Misurato con `docs/threat-models/probes/S-17-writer-pipeline-probe.py`. Nessuna rete reale:
+`openai` e `requests` sono stub che registrano il tentativo e sollevano.
+
+| Scenario | `origin/main` |
+|---|---|
+| nessuna variabile | nessuna chiamata |
+| **`UJ_WRITER_LLM=1` da solo** | **3 tentativi fatturabili a OpenAI** |
+| `UJ_WRITER_LLM=1` + `OPENAI_API_KEY` | 3 tentativi fatturabili |
+| `UJ_WRITER_LLM=1` + `MODEL_PROVIDER=local` | loopback, 3 tentativi locali |
+
+Una variabile sola, sul percorso che **genera codice**. Invariato rispetto a §13, ma ora il
+codice generato entra in una pipeline che lo promuove.
+
+**Nota di secondo ordine su `PROVIDER`.** In `cloud_bridge.py` è una **costante di modulo**,
+valutata una volta sola all'import. Su `main` il default è `"openai"`, quindi la costante
+fallisce **aperta**: chi imposta `MODEL_PROVIDER` dopo il primo import non è protetto. Sul
+branch CLAUDE il meccanismo è identico ma il default è `local` e un provider non locale viene
+rifiutato: la stessa costante fallisce **al sicuro**. Non è il meccanismo a essere sbagliato,
+è il verso del suo default.
+
+### 17.2 Cosa Grok ha fatto BENE, e va detto prima del rilievo
+
+`promote_job_to_tools` **non** è la promozione senza gate descritta in `S-12`/`S-13`. Quella è
+chiusa, e la funzione di oggi ha quattro controlli reali, verificati leggendo il sorgente al
+ref corrente:
+
+1. `scan_text(text)` sul contenuto, con `PermissionError` se ci sono pattern pericolosi;
+2. `is_protected(dest, root=root)` prima di scrivere;
+3. `safe_write(dest, content, root=root, force=force)`, cioè contenimento nella root;
+4. sanitizzazione del `module_name` con rifiuto dei nomi non validi.
+
+E `FIX-7` ha reso `ToolSpec.safe` un flag **che funziona davvero**: `Registry.call()` alla
+riga 189 solleva `PermissionError` se `spec.safe` è falso. Nella mia review di sessione 3
+avevo classificato `ToolSpec.safe` fra le *"manopole di sicurezza che non girano nulla"*.
+**Non è più vero, e la correzione è di Grok.**
+
+### 17.3 `S-20` — la promozione cabla `safe=True`. **MEDIUM.**
+
+Proprio perché `FIX-7` ha reso il flag efficace, il valore che gli viene dato conta.
+
+In `promote_job_to_tools`, con `register=True`:
+
+```python
+spec = ToolSpec(
+    name=tool_name,
+    ...
+    safe=True,
+    tags=["promoted", tool_prefix],
+)
+```
+
+**`safe=True` è l'unica occorrenza di `safe=` nella funzione.** Non esiste input, esito di
+scan, provenienza o parametro che possa produrre `safe=False`.
+
+**Prova eseguita**, in un worktree su `origin/main` e con `root` in una directory temporanea,
+per non toccare `tools/` del repository:
+
+```
+tool registrati dalla promozione: 1
+  name='demo_promoted.run'  safe=True  module='tools.demo_promoted_helpers'  tags=['promoted', 'demo_promoted']
+occorrenze di 'safe=' nella funzione: ['safe=True']
+```
+
+**Perché conta.** `Registry.call()` decide se eseguire un tool leggendo `spec.safe`. Per ogni
+tool scritto a mano quel flag è una scelta — e infatti sette tool del catalogo sono
+`safe=False`. Per il codice **promosso**, cioè l'unica categoria che nessun umano ha scritto,
+il flag è una costante permissiva: il gate esiste, funziona, e sulla classe di tool più
+sospetta non può mai rifiutare.
+
+Con `UJ_WRITER_LLM=1` la catena è completa: un modello remoto **a pagamento** scrive il corpo,
+gli scan lo lasciano passare, la promozione lo scrive in `tools/`, e la registrazione lo marca
+`safe=True`. Nessuno dei passaggi è privo di controlli. Il difetto è che l'ultimo controllo
+riceve sempre lo stesso ingresso.
+
+**Non è `S-12`/`S-13` che si riapre.** Quelli erano *"nessun gate"*. Questo è *"il gate c'è e
+la sua condizione è costante"* — la variante più difficile da vedere, perché il codice del
+gate è corretto e leggerlo non rivela niente.
+
+**Correzione proposta**, piccola e nel portafoglio di Grok:
+
+```python
+# prima
+safe=True,
+# dopo
+safe=False,   # il codice promosso non è safe per default: lo diventa con una
+              # decisione esplicita, come i sette tool del catalogo che già lo sono
+```
+
+Con `safe=False` il tool resta registrato, visibile in `bin/uj` come *unsafe*, e
+`Registry.call()` lo rifiuta finché qualcuno non lo promuove deliberatamente. È lo stesso
+schema già usato per `files.safe_write`, `browser.open_url` e `automation.*`.
+
+**Ordine, detto esplicitamente:** `FIX-10a/10b` (cioè il merge dello strict-zero su `main`)
+va **prima** di `S-20`. Finché il writer va su un provider a pagamento, il codice promosso è
+sia non gratuito sia marcato sicuro; chiudendo prima `S-20` si avrebbe codice a pagamento
+correttamente marcato non sicuro, che è meglio ma non risolve il costo. Stessa logica di
+`S-12` prima di `S-13`.
+
+### 17.4 Confini e limiti dichiarati
+
+- `core/`, `tools/` e `advisors/` sono di **GROK**. Ho misurato e segnalato, **non corretto**.
+- Non ho eseguito nessuna chiamata di rete reale. La sonda sostituisce `openai` e `requests`.
+- La prova di promozione ha scritto **solo** in una directory temporanea, passata via `root`.
+  `tools/` del repository non è stata toccata: verificato nell'output della prova.
+- Non ho misurato `nt_runner.build_and_run` end-to-end: richiede i gate reali e un job
+  completo. Ho misurato i due estremi della catena, writer e promote, e ho letto il tratto
+  in mezzo. Il tratto letto **non** lo dichiaro verificato.
+- **Correzione di una mia affermazione precedente:** nella review di sessione 3 avevo elencato
+  `ToolSpec.safe` fra le manopole che non applicano nulla. Dopo `FIX-7` è falso. Lasciarlo in
+  giro sarebbe un allarme senza oggetto, e renderebbe invisibile il rilievo vero, che è
+  esattamente l'opposto: il flag conta, e la promozione non lo usa.

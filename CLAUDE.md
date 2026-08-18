@@ -2238,6 +2238,72 @@ nessuna chiamata di rete a pagamento, in nessuna variante, in nessuna sonda.
 
 ---
 
+## Sessione 5, seconda parte — `S-20`: il gate che Grok ha reso vero non può rifiutare
+
+Chiuse le tre task, ho controllato se restava lavoro invece di registrare l'attesa.
+`UJ-INT-007` **non esiste** fra i 43 task del `BACKLOG.json`: `UJ-REV-002` resta `BLOCKED`,
+non lavorabile. Ma `main` si era mossa di altri tre commit, e due si chiamavano
+*"LLM writer"* e *"promote with skills"*: entrambi nel mio perimetro.
+
+### Due falsi negativi della mia stessa sonda, prima del risultato
+
+La prima esecuzione diceva **"nessuna chiamata" in tutti e quattro gli scenari**. Incoerente
+con l'attesa, quindi non l'ho riportata: ho indagato. `nt_helpers` importa anche `safe_write`
+da `core.reliability`, che il mio stub non esponeva. Il modulo **non si caricava affatto** e
+la sonda misurava il fallimento dell'import. È la trappola 12 vista dal lato di chi scrive il
+test: *un test che fallisce per il motivo sbagliato*. Ho aggiunto al probe un **controllo di
+caricamento** che distingue "nessuna chiamata" da "modulo non caricato".
+
+Il secondo giro diceva che `MODEL_PROVIDER=local` finiva **a pagamento**, contraddicendo la
+misura di sessione 4. Anche questo non l'ho riportato. Causa: `PROVIDER` in `cloud_bridge` è
+una **costante di modulo**, valutata una volta all'import, e io non sfrattavo `cloud_bridge`
+da `sys.modules` fra uno scenario e l'altro: il secondo ereditava il provider del primo. Con
+lo sfratto, `local` → loopback, coerente con la sessione 4.
+
+**Due volte di fila il segnale che ha salvato è stato l'incoerenza fra output e attesa.** In
+entrambi i casi avrei consegnato un numero falso — nel secondo, un'accusa falsa a un fix
+approvato dal proprietario.
+
+### Il risultato, misurato
+
+`UJ_WRITER_LLM=1` **da solo** → 3 tentativi fatturabili a OpenAI, sul percorso che **genera
+codice**, su `main` al ref corrente. §13 diceva che `FIX-10a/10b` andava applicato **prima**
+del writer: il writer è stato riscritto e allargato, il fix non è arrivato.
+
+### `S-20`, e perché è più sottile dei precedenti
+
+Ho letto `promote_job_to_tools` aspettandomi `S-12`/`S-13`. **Non c'erano:** quattro controlli
+reali (`scan_text`, `is_protected`, `safe_write` con root, sanitizzazione del nome). E `FIX-7`
+ha reso `ToolSpec.safe` un flag **che funziona davvero** — `Registry.call()` rifiuta se è
+falso. Nella review di sessione 3 lo avevo elencato fra le manopole che non girano nulla:
+**non è più vero, ed è merito di Grok.** Ho corretto la mia review.
+
+Il rilievo esiste **proprio perché** quel flag adesso conta: la promozione lo cabla a `True`,
+unica occorrenza di `safe=` nella funzione. Provato eseguendo, in un worktree su `origin/main`
+e con `root` in una directory temporanea per non toccare `tools/`:
+
+```
+name='demo_promoted.run'  safe=True  module='tools.demo_promoted_helpers'
+occorrenze di 'safe=' nella funzione: ['safe=True']
+```
+
+Il gate esiste, funziona, e sulla classe di tool che nessun umano ha scritto **non può mai
+rifiutare**. Non è *"nessun gate"* come `S-12`: è *"il gate c'è e la sua condizione è
+costante"*, la variante più difficile da vedere, perché leggere il codice del gate non rivela
+niente. Correzione in `GROK_FIX_LIST.md` → `FIX-12`, con `FIX-10` prima.
+
+### Errori di questa parte
+
+| # | Errore | Correzione |
+|---|---|---|
+| E22 | Sonda con stub incompleto: misurava un `ImportError`, non il comportamento | aggiunto un controllo di caricamento esplicito che distingue i due esiti |
+| E23 | Modulo lasciato in `sys.modules` fra scenari: una costante di import inquinava la misura successiva | sfratto esplicito, con il motivo scritto nel commento del probe |
+
+Nessuno dei due è arrivato a un documento consegnato: entrambi fermati dall'incoerenza fra
+output e attesa.
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -2442,6 +2508,29 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  T) S-20 (NUOVO, MEDIUM) — la promozione cabla safe=True. GIA' FATTO, NON RIFARE:
+       MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §17
+       GROK_FIX_LIST.md -> FIX-12
+       docs/threat-models/probes/S-17-writer-pipeline-probe.py
+     MISURATO su main: UJ_WRITER_LLM=1 DA SOLO -> 3 tentativi fatturabili, sul
+     percorso che GENERA CODICE. §13 chiedeva FIX-10a/10b PRIMA del writer: il
+     writer e' stato riscritto e allargato (core/nt_helpers.py, core/nt_runner.py),
+     il fix non e' arrivato.
+     ATTENZIONE, DUE CORREZIONI ALLE MIE STESSE AFFERMAZIONI:
+       - ToolSpec.safe NON e' piu' una manopola che non gira nulla: FIX-7 di Grok
+         l'ha resa vera (registry.py:189 solleva PermissionError). La mia review di
+         sessione 3 su questo era superata.
+       - promote_job_to_tools NON e' la promozione senza gate di S-12/S-13: ha
+         quattro controlli reali. Quelli sono chiusi.
+     IL RILIEVO VERO e' che il gate ora conta e la promozione gli passa sempre
+     safe=True: unica occorrenza di `safe=` nella funzione. Provato eseguendo.
+     ORDINE: FIX-10 (merge strict-zero su main) PRIMA di FIX-12.
+
+  S) UJ-INT-007 NON ESISTE fra i 43 task del BACKLOG.json (verificato al ref
+     corrente). UJ-REV-002 resta BLOCKED e non lavorabile. Non e' un blocco
+     formale da aggirare: il deliverable da revisionare non c'e'.
+
 
   Z) L'AMBIENTE PUO' NON ASSEGNARTI NIENTE. In sessione 5 il container era VUOTO:
      /home/user senza file, repository NON clonato, nessun branch. Il clone atterra
