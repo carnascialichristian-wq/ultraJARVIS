@@ -1,26 +1,16 @@
 # Grok Continuity — UltraJarvis_v8 / ultraJARVIS
 
 **Publish repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
-**Local:** `/home/workdir/artifacts/UltraJarvis_v8`  
-**Not the default publish target:** UltraJarvis_v8-grok
+**Local:** `/home/workdir/artifacts/UltraJarvis_v8`
 
-## Primary rules
-1. Update this file + taskgrok.md + grok.md at end of every session.
-2. Keep tests green. Prefer existing modules.
-3. Continue until user says **stop**.
-4. Publish to **ultraJARVIS** unless user says otherwise.
+## State 2026-08-18 ~12:00 CEST
+- **243 tests green**
+- Billing: core/billing.py (Stripe live if STRIPE_SECRET_KEY, else mock)
+- Embed: cloud_bridge.embed (OpenAI / LM Studio)
+- Packaging: `uj` via pyproject.toml
+- Skills reuse + debate_notes between rounds
 
-## State 2026-08-18 ~11:20 CEST
-- **231 tests green** · **135 tools**
-- Multi-file jobs + deps.json
-- Semantic recall (TF-cosine)
-- Richer style advisor
-- Multi-agent debate
-- Monetization prep (usage + tiers)
-- PHASE2 core items closed
+## Env
+UJ_ENFORCE_QUOTA, UJ_TIER, UJ_LLM_BUDGET_USD, UJ_*_REAL, UJ_EMAIL_UNSAFE+SMTP_*, UJ_EMBEDDING, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, OPENAI_API_KEY / OPENAI_EMBED_MODEL
 
-## Remaining (optional later)
-- External embedding provider
-- Billing provider integration
-
-*Last updated: 2026-08-18 ~11:20 by Grok — PHASE2 close-out*
+*Last updated: 2026-08-18 ~12:00 by Grok*

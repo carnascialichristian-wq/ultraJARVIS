@@ -2,20 +2,18 @@
 
 from __future__ import annotations
 
+import os
+import webbrowser
 from typing import List
 from urllib.parse import urlparse
 
-# Only these domains may be opened
 ALLOWLIST = {
-    "example.com",
-    "github.com",
-    "docs.python.org",
-    "pypi.org",
+    "example.com", "github.com", "docs.python.org", "pypi.org",
+    "duckduckgo.com", "wikipedia.org", "python.org",
 }
 
 
 def is_allowed(url: str) -> bool:
-    """Return True if the URL's host is in the allow-list."""
     try:
         host = (urlparse(url).hostname or "").lower()
         if host.startswith("www."):
@@ -25,13 +23,15 @@ def is_allowed(url: str) -> bool:
         return False
 
 
-def open_url(url: str) -> str:
-    """
-    'Open' a URL if it is allowed.
-
-    In this stub we only validate and return a status message.
-    A real implementation would launch a browser or use playwright.
-    """
+def open_url(url: str, *, real: bool | None = None) -> str:
     if not is_allowed(url):
         raise PermissionError(f"URL not in allow-list: {url}")
+    do_real = real if real is not None else os.environ.get("UJ_BROWSER_REAL", "").strip() == "1"
+    if do_real:
+        webbrowser.open(url)
+        return f"Opened: {url}"
     return f"Would open: {url}"
+
+
+def list_allowed_domains() -> List[str]:
+    return sorted(ALLOWLIST)

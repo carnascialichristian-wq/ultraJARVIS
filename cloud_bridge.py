@@ -1,4 +1,12 @@
-"""Local-only LLM bridge for the STRICT_ZERO baseline."""
+"""Local-only LLM bridge for the STRICT_ZERO baseline.
+
+Owner decision #7 (approved 2026-08-18): MODEL_PROVIDER defaults to a local
+provider, no cloud or pay-per-use call may happen implicitly, and an unavailable
+local provider fails safe without falling back to a cloud provider.
+
+There is deliberately no cloud adapter in this module. Enabling one requires a
+separately reviewed policy change, not an environment variable.
+"""
 
 from __future__ import annotations
 
@@ -62,9 +70,21 @@ def ask_cloud_ai(prompt: str, *, system: str | None = None) -> str:
     """Return local model text or an empty string when the provider is blocked.
 
     The STRICT_ZERO baseline intentionally has no cloud-provider adapter.
-    Provider-specific paid integrations require a separately reviewed policy
-    change and must not be enabled through this module.
+    Also enforces the monetization LLM quota / soft budget when configured.
     """
+    try:
+        from core.monetization import assert_llm_budget, record_llm_call
+        assert_llm_budget()
+        record_llm_call(meta={"provider": PROVIDER})
+    except Exception as exc:
+        try:
+            from core.monetization import QuotaExceeded
+            if isinstance(exc, QuotaExceeded):
+                _log(f"LLM quota/budget blocked call: {exc}")
+                return ""
+        except Exception:
+            pass
+
     sys_prompt = system if system is not None else _DEFAULT_SYSTEM
     if PROVIDER not in _LOCAL_PROVIDERS:
         _log(
@@ -78,3 +98,55 @@ def ask_cloud_ai(prompt: str, *, system: str | None = None) -> str:
     except Exception as e:
         _log(f"Local LLM ultimately failed: {e}")
         return ""
+
+
+def embed(texts: list[str]) -> list[list[float]] | None:
+    """Local embedding provider. Returns None on failure.
+
+    STRICT_ZERO: like ask_cloud_ai, this has no cloud adapter. A non-local
+    provider is refused before any request is built.
+
+    The budget guard below deliberately does NOT sit inside a bare
+    `except Exception: pass`. Swallowing QuotaExceeded there would let the call
+    proceed past the very limit the guard exists to enforce.
+    """
+    if not texts:
+        return []
+
+    try:
+        from core.monetization import assert_llm_budget, record_llm_call
+        assert_llm_budget()
+        record_llm_call(units=0.5 * len(texts), meta={"kind": "embed"})
+    except Exception as exc:
+        try:
+            from core.monetization import QuotaExceeded
+            if isinstance(exc, QuotaExceeded):
+                _log(f"LLM quota/budget blocked embed: {exc}")
+                return None
+        except Exception:
+            pass
+
+    if PROVIDER not in _LOCAL_PROVIDERS:
+        _log(
+            f"Provider {PROVIDER or '<unset>'} blocked by STRICT_ZERO; "
+            "embeddings require a loopback local provider"
+        )
+        return None
+
+    try:
+        import requests
+
+        base = _validate_local_base(os.getenv("LMSTUDIO_BASE", "http://127.0.0.1:1234"))
+        model = os.getenv(
+            "LMSTUDIO_EMBED_MODEL",
+            os.getenv("LMSTUDIO_MODEL", "text-embedding-nomic-embed-text-v1.5"),
+        )
+        res = requests.post(
+            f"{base}/v1/embeddings", json={"model": model, "input": texts}, timeout=60
+        )
+        res.raise_for_status()
+        data = sorted(res.json()["data"], key=lambda d: d["index"])
+        return [list(d["embedding"]) for d in data]
+    except Exception as e:
+        _log(f"embed local failed: {e}")
+        return None
