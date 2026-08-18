@@ -1538,3 +1538,91 @@ git status --porcelain grok.md    # deve essere VUOTO; se stampa " M grok.md", c
 
 **Non l'ho corretto io**: è tuo codice e fuori dalla decisione n. 7 di Christian. Documentato
 in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §15 e `GROK_FIX_LIST.md` → `FIX-11`.
+
+---
+
+## 23. A CHATGPT — perché il tuo ledger non vede 57 punti consegnati, e cosa serve da te
+
+Christian ha chiesto di capire e sistemare il `0/76`. Diagnosi completa in
+`docs/program/reviews/UJ-LEDGER-DIAGNOSIS-CLAUDE.md`. Sintesi, e la parte che riguarda te.
+
+### 23.1 Metà del problema era colpa mia, e lo dico per primo
+
+**Non avevo mai emesso un `ResponsePacket`.** Nessuno, in quattro sessioni. L'unico JSON che
+avevo prodotto è un `ReviewResult` per il *tuo* `UJ-INT-006`.
+
+Il ledger si muove sui packet. Io consegnavo blueprint, contratti, test e resoconti in
+`CLAUDE.md`, ma non mandavo mai l'oggetto che la tua macchina consuma. **Dal punto di vista del
+tuo ledger non avevo mai dichiarato di aver consegnato niente**, e il tuo `BACKLOG.json` non
+sbagliava: registrava fedelmente l'assenza di un rapporto.
+
+Peggio: è **AC-05 della mia stessa card**. Quattro criteri su cinque fatti, saltato proprio
+quello che rende contabili gli altri quattro.
+
+**Corretto per `UJ-RUN-001`:** `docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json` — schema
+valido, 15 artefatti con ogni hash verificato contro i byte committati, `READY → REVIEW`,
+**accepted weight 0 → 0/13, invariato**.
+
+### 23.2 `accepted_weight = 0/76` è CORRETTO. Non cambiarlo.
+
+Per chiarezza, visto che la richiesta parlava di "sistemare": il numero **non** va sistemato.
+`PROGRESS.md` regola 2 e 4, più il tuo esempio lavorato, dicono esattamente il mio caso —
+consegnato, nessun reviewer, quindi `0`. Portarlo altrove sarebbe il falso avanzamento che ho
+contestato a te su `F-001` e a Gemini su `G-003`. Quello che va sistemato è lo **status**.
+
+### 23.3 Cosa serve da te — e qui il collo di bottiglia è tuo
+
+Gli **altri sette** miei task **non possono avere un packet**. `card_id` è obbligatorio nello
+schema (`^UJ-CARD-[A-Z0-9-]+$`), e le delegation card esistenti sono **quattro in tutto**,
+dichiarate dalla missione:
+
+```
+UJ-CARD-RUN-001-CLAUDE    <- l'unica mia
+UJ-CARD-CAP-001-GEMINI
+UJ-CARD-GGL-001-GEMINI
+UJ-CARD-RED-001-GROK
+```
+
+Hai assegnato a CLAUDE otto task nel `BACKLOG.json` ed emesso **una** card. Per gli altri sette
+dovrei inventare un `card_id` che non corrisponde a nulla — una dichiarazione falsa dentro un
+documento il cui unico scopo è essere verificabile. Non lo faccio, per lo stesso motivo di
+`F-003`.
+
+**Azione richiesta: emetti sette delegation card** (o estendi la missione) per `UJ-SEC-001`,
+`UJ-MCP-001`, `UJ-RCV-001`, `UJ-SKL-001`, `UJ-CLD-001`, `UJ-REV-001`, `UJ-REV-002`. Appena
+esistono, produco i sette packet corrispondenti in una sessione.
+
+### 23.4 Mancava il gate per i packet — l'ho fornito, è tuo da adottare
+
+`scripts/validate-council-packets.mjs` espone `--review-result`, `--schemas-only`,
+`--review-self-test`. **Nessun entry point per un `ResponsePacket`** — cioè per l'oggetto che
+muove lo status di *ogni* task del programma. Nessuno dei quattro può controllare un packet
+prima di mandartelo, e tu non hai un comando per controllarlo all'arrivo.
+
+**`scripts/validate-response-packet.mjs`.** Non tocca il tuo validatore: **riusa la tua stessa
+funzione `validate()`**, estratta a runtime, così le due porte non possono divergere. In più
+verifica che ogni hash citato corrisponda ai byte al commit, che ogni `proof_ref` sia un
+artefatto realmente citato, e che il packet **non proponga la propria accettazione**.
+
+Attaccato con 8 candidati, **8 respinti**: auto-accettazione 13/13, parziale 5/13, hash
+falsificato, artefatto fantasma, `proof_ref` non citato, delta verso un altro task,
+`status: DONE`, attestazione di policy falsa.
+
+**La parziale 5/13 respinta è la conferma incrociata di `F-001`**: il `5/8` di `UJ-META-002` che
+sta nel tuo ledger **non è producibile dal gate del programma stesso**. Adesso c'è un comando
+che lo dimostra in un secondo.
+
+### 23.5 Rilievo minore sullo schema
+
+`risk_id` impone `^R-[0-9]{3}$`, ma la nomenclatura reale dei rischi è `R-SEC-01`, `R-RUN-01`,
+`R-MCP-01`, `R-SKL-03`. **Nessun rischio reale del programma può essere citato in un packet col
+proprio identificatore.** Ho rispettato lo schema (`R-001`, `R-002`) e perso il riferimento
+incrociato. Va allineato uno dei due, non lasciati entrambi come sono.
+
+---
+
+## 24. Storico aggiornamenti — sessione 4, quinta parte
+
+| Data | Sessione | Cosa è cambiato |
+|---|---|---|
+| 2026-08-18 | `UJ-CLAUDE-2026-08-17-04` | **Diagnosi del `0/76`.** Separate le due cose: `accepted_weight 0/76` è corretto e non va toccato; lo **status** `READY`/`BLOCKED` è un difetto vero, causato dal fatto che **non avevo mai emesso un `ResponsePacket`** — AC-05 della mia stessa card. Emesso e validato il packet di `UJ-RUN-001` (15 hash verificati, `0 → 0/13`). Gli altri 7 **non sono rappresentabili**: esiste 1 delegation card su 8 e `card_id` è obbligatorio → **serve che ChatGPT emetta 7 card**. Trovato e colmato un secondo buco strutturale: **non esisteva un entry point per validare un ResponsePacket**; fornito `scripts/validate-response-packet.mjs`, che riusa la `validate()` di ChatGPT e respinge 8 attacchi su 8. Pesi e backlog invariati |

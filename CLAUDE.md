@@ -1821,6 +1821,107 @@ Ripristinato (`git checkout -- grok.md`, rimossi i tre file spuri), documentato 
 | Suite contratti | **138/138**, typecheck e build exit 0 |
 | Merge a tre vie: lavoro recente di main preservato? | writer adapter e real gates **presenti** |
 
+---
+
+## Sessione 4, quinta parte — perché il ledger dice `0/76`, e la parte che era colpa mia
+
+**Richiesta di Christian:** *"Cerca di capire e sistemare i 0 su 76 di ChatGPT."*
+
+### La domanda conteneva due cose, e separarle è metà del lavoro
+
+**`accepted_weight = 0/76` è CORRETTO e non va toccato.** `PROGRESS.md` regola 2 e 4, più
+l'esempio lavorato che descrive letteralmente il mio caso: *"produces all artifacts but no
+reviewer has passed them → accepted weight 0/13, contribution to progress 0"*. Portarlo a un
+numero diverso sarebbe il falso avanzamento che ho contestato a ChatGPT (`F-001`) e a Gemini
+(`G-003`). Non l'ho fatto.
+
+**Lo status `READY`/`BLOCKED` invece di `REVIEW` è invece un difetto vero**, e la causa è mia.
+
+### La causa: non ho MAI emesso un `ResponsePacket`
+
+Cercato in tutto il repository: **non esiste un solo `ResponsePacket` firmato CLAUDE**. L'unico
+JSON che avevo prodotto è un `ReviewResult` per il task di ChatGPT.
+
+Il ledger si muove sui packet. Io ho consegnato blueprint, contratti, test, threat model, review
+e handoff, e ho scritto resoconti dettagliati in `CLAUDE.md` — **ma non ho mai mandato l'oggetto
+che la macchina consuma.** Dal punto di vista del ledger non ho mai dichiarato di aver
+consegnato niente.
+
+**E non è una formalità scoperta adesso: è AC-05 della mia stessa card.**
+
+> *"ResponsePacket is valid, cites every artifact hash, proposes REVIEW, and keeps accepted
+> weight at 0/13."* — `prompts/delegation-cards/UJ-RUN-001-CLAUDE.json`
+
+**Ho soddisfatto quattro criteri su cinque e saltato proprio quello che rende contabili gli
+altri quattro.** È il difetto più imbarazzante trovato finora in questo programma, ed è mio.
+
+Il rovescio, per onestà: nessuno me l'ha contestato per quattro sessioni e il `BACKLOG.json` non
+ha mai segnalato l'assenza. **Un criterio che nessuno verifica è un criterio che verrà mancato.**
+
+### Corretto per 1 task su 8, e gli altri 7 non sono correggibili da me
+
+`docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json` — validato, **15 artefatti citati con ogni
+hash verificato contro i byte committati**, `READY → REVIEW`, **accepted weight 0 → 0/13**.
+
+Per gli altri sette **non è possibile in modo veritiero**: `card_id` è obbligatorio nello schema,
+e le delegation card esistenti sono **quattro in tutto** — una sola mia (`UJ-CARD-RUN-001-CLAUDE`).
+Per gli altri dovrei inventare un `card_id` che non corrisponde a nessuna card, cioè scrivere una
+dichiarazione falsa dentro un documento il cui unico scopo è essere verificabile.
+
+Stesso ragionamento di `F-003`: **quando il deliverable corretto non è rappresentabile nel
+formato previsto, si consegna la sostanza e si dichiara l'impedimento.** Serve che ChatGPT emetta
+sette card. **Il collo di bottiglia dei 57 punti consegnati è quello, e non è mio.**
+
+### Secondo difetto strutturale: mancava il gate per i packet
+
+`validate-council-packets.mjs` ha `--review-result`, `--schemas-only`, `--review-self-test`, ma
+**nessun entry point per un `ResponsePacket`** — cioè per l'oggetto che muove lo status di ogni
+task. Nessuno dei quattro poteva controllare un packet prima di mandarlo, né l'integratore
+all'arrivo.
+
+Fornito `scripts/validate-response-packet.mjs`. **Non modifica il validatore di ChatGPT: riusa
+la sua stessa `validate()`**, estratta a runtime, così le due porte non possono divergere.
+
+**L'ho attaccato invece di fidarmene: 8 candidati, 8 respinti** — auto-accettazione 13/13,
+accettazione parziale 5/13, hash falsificato, artefatto fantasma, `proof_ref` non citato, delta
+verso un altro task, `status: DONE`, attestazione di policy falsa.
+
+L'accettazione parziale respinta è la **conferma incrociata di `F-001`**: il `5/8` di
+`UJ-META-002` presente nel ledger non è producibile dal gate del programma stesso.
+
+### Errore commesso in questa parte
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E20 | **Ho scritto il packet a mano prima di validarlo**, assumendo le forme dei campi invece di leggerle | il validatore ha respinto la prima versione con **8 errori**: `response_id` con pattern sbagliato, e `capabilities_actually_used`, `side_effects`, `risks` scritti come stringhe dove lo schema vuole oggetti strutturati | riletto lo schema campo per campo, rigenerato, rivalidato | **è esattamente il difetto che sto diagnosticando, in miniatura**: avevo prodotto un artefatto plausibile senza passarlo dal gate. Che il gate non esistesse ancora non è una scusa — l'ho scritto io dieci minuti dopo. Prima si costruisce la verifica, poi si produce la cosa da verificare |
+
+### Rilievo minore sullo schema
+
+`risk_id` impone `^R-[0-9]{3}$`, ma la nomenclatura reale del programma è `R-SEC-01`, `R-RUN-01`,
+`R-MCP-01`. **Nessun rischio reale può essere citato in un packet col proprio identificatore.**
+Ho rispettato lo schema e perso il riferimento incrociato. Da allineare, uno dei due.
+
+### Prove eseguite
+
+| Verifica | Esito |
+|---|---|
+| `ResponsePacket` firmati CLAUDE esistenti prima di oggi | **zero** |
+| Delegation card per i miei 8 task | **1 su 8** (`UJ-CARD-RUN-001-CLAUDE`) |
+| Schema del packet, campo per campo | 24 campi obbligatori, `card_id` fra questi |
+| Validazione del mio packet | **PASS** |
+| Hash dei 15 artefatti contro i byte al commit | **15 su 15 coincidono, 0 mismatch** |
+| Esistenza del `source_commit_sha` | verificata |
+| Suite avversariale sul validatore nuovo | **8 attacchi, 8 respinti** |
+| `node scripts/validate-council-packets.mjs` | **PASS**, invariato |
+| Suite contratti | **138/138**, typecheck e build exit 0 |
+
+### Confini rispettati
+
+- **`BACKLOG.json` non toccato**, pesi e status invariati: la loro modifica è dell'integratore.
+- **Non ho modificato `validate-council-packets.mjs`**: è di ChatGPT. Il mio script è additivo e
+  riusa la sua logica invece di duplicarla.
+- **Non mi sono assegnato un'unità di peso.** Il packet propone `0 → 0/13`.
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -1934,7 +2035,7 @@ BRANCH    : ATTENZIONE — CAMBIATO IN SESSIONE 4.
             lavoro NON coincide più con main: il pre-verdetto UJ-CAP-001 sta sul
             branch di sessione 4 e NON è su main.
 
-MAIN      : commit 1e40376 (verificato in sessione 4, quarta parte — si era mossa
+MAIN      : commit b4b4b12 (verificato in sessione 4, quinta parte — si era mossa
             di 7 commit in meno di un'ora). La riga sotto dice 302852a/319
             file: era vero a fine sessione 3 ed è già superato — main si muove.
             Contiene il piano canonico, il Program OS di
@@ -2029,6 +2130,27 @@ SESSIONE 4 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
                occorrenza nel programma, terzo autore diverso
      NON è un ReviewResult e NON muove il ledger: UJ-CAP-001 resta 0/13.
      Diventerà un packet al reinvio ammesso da ChatGPT.
+
+  E) IL LEDGER DICE 0/76 PER DUE MOTIVI DIVERSI. NON CONFONDERLI.
+     1. accepted_weight 0/76 e' CORRETTO (PROGRESS.md regole 2 e 4 + esempio
+        lavorato). NON va "sistemato": sarebbe falso avanzamento, §31.5.
+     2. Lo STATUS READY/BLOCKED invece di REVIEW e' un difetto VERO, ed era
+        colpa mia: NON AVEVO MAI EMESSO UN ResponsePacket. Il ledger si muove
+        sui packet; io consegnavo artefatti e resoconti. AC-05 della mia card
+        chiedeva il packet: 4 criteri su 5 fatti, saltato quello che rende
+        contabili gli altri 4.
+     GIA' FATTO, NON RIFARE:
+       docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json (validato, 15 hash
+         verificati, READY->REVIEW, accepted 0->0/13)
+       scripts/validate-response-packet.mjs (il gate NON esisteva; riusa la
+         validate() di ChatGPT invece di duplicarla; 8 attacchi, 8 respinti)
+       docs/program/reviews/UJ-LEDGER-DIAGNOSIS-CLAUDE.md (diagnosi completa)
+     GLI ALTRI 7 TASK NON SONO RAPPRESENTABILI: card_id e' obbligatorio e le
+     delegation card sono QUATTRO in tutto, una sola mia. Inventarne una
+     sarebbe una dichiarazione falsa (stesso ragionamento di F-003).
+     >>> SERVE DA CHATGPT: sette delegation card per i task che mi ha
+     assegnato nel BACKLOG.json senza mai emettere una card. IL COLLO DI
+     BOTTIGLIA DEI 57 PUNTI CONSEGNATI E' QUELLO, E NON E' MIO.
 
   D) NUOVO SU main: cloud_bridge.py + planner LLM adapter. TROVATO S-17, CRITICA.
      ChatGPT l'ha triagiato staticamente e me l'ha PASSATO esplicitamente ("il
