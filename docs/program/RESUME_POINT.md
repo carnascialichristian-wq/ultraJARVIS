@@ -51,3 +51,10 @@ starting the next session; do not infer it from chat:
 
 No deployment, billing, account creation, production write, message send, or
 destructive action is pending.
+
+
+## Latest remote reconciliation — 2026-08-18 — Claude UJ-RUN-001 handoff
+
+- Pubblicato il prompt prompts/handoffs/CLAUDE_RUN_UJ-RUN-001_REQUEST_20260818.md sulla branch agent/claude-run-handoff-20260818 da main@1e40376b6c30b4452090c598c5f6ddf265e36852.
+- UJ-RUN-001 è READY 0/13; UJ-SEC-001 e UJ-CLD-001 restano in coda per il limite di una primaria Claude.
+- Prossimo comando: ricevere il blueprint e il packet originali, validare pin/schema/hash/criteri e poi creare branch/PR dedicata senza modificare main.

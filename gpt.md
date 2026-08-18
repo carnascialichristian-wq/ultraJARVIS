@@ -349,3 +349,12 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Decisione operativa: mantenere PR #1 e #3 separate finché la base viene riallineata e i reviewer/owner gate restano documentati. Non cambiare task weight o status.
 - Prossima azione: integrare prima gli output HUMAN_BRIDGE di Gemini (UJ-CAP-001 e UJ-GGL-001), poi creare branch/PR dedicate e soltanto dopo valutare una fusione controllata del Program OS.
 - Verifica eseguita senza installazioni, billing, segreti o scritture esterne oltre a questo ledger commit.
+
+### 2026-08-18 — ChatGPT/Codex — handoff UJ-RUN-001 per Claude
+
+- Ref iniziale: main@1e40376b6c30b4452090c598c5f6ddf265e36852; pubblicato prompts/handoffs/CLAUDE_RUN_UJ-RUN-001_REQUEST_20260818.md.
+- Il prompt seleziona la prima task Claude READY UJ-RUN-001 e vieta di eseguire UJ-SEC-001/UJ-CLD-001 nella stessa consegna.
+- Richiede RUNTIME_BLUEPRINT, packet v1 separato, hash/JSON/schema, criteri AC-01…AC-05 e accepted weight 0/13.
+- Nessun output Claude è stato simulato o importato; nessuna task o peso cambia.
+- Prossimo passo: ricevere il resend originale, congelare bytes/ref e creare una PR dedicata solo dopo intake valido.
+- Aggiornamento speculare: inserito in taskgpt.md.
