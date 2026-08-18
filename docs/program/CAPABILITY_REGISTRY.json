@@ -1,6 +1,6 @@
 {
   "schema": "ultrajarvis.capability-registry/v1",
-  "registry_version": "1.1.0",
+  "registry_version": "1.1.1",
   "last_updated_utc": "2026-08-18T13:35:00Z",
   "policy_enforcement": {
     "constraint": "STRICT_ZERO_CARD",
@@ -38,24 +38,21 @@
             "account": "Individual Consumer Account",
             "tier": "Consumer Free / Plus",
             "region": "Global (OpenAI supported regions)",
-            "rate_limits": "Dynamic message cap per 3-hour window enforced server-side (dynamic allocation; exact caps vary with system load)",
-            "quota_period": "Rolling 3-hour window",
-            "quota_scope": "Per user session"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "Rolling 3-hour window",
-          "quota_scope": "Per user session",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://openai.com/chatgpt/pricing",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "Default consumer terms allow model training unless explicitly opted out in Data Controls. Team and Enterprise plans exclude training.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "Manual data export via Settings > Data Controls > Export Data (asynchronous ZIP archive containing conversations.json).",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Automated headless browsing, session token scraping, or reverse-engineered endpoint usage violates OpenAI Terms of Service and triggers account suspension.",
           "fallback": "Manual prompt transfer via human operator (Human Bridge Protocol).",
-          "freshness": "Updated as of August 2026",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Verified against official OpenAI consumer terms and pricing documentation."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         },
         {
           "capability_id": "CAP-OAI-002",
@@ -76,24 +73,21 @@
             "account": "Developer Platform Account",
             "tier": "Tier 1 - Tier 5",
             "region": "Global",
-            "rate_limits": "Spend-tier dependent (e.g., Tier 1: 500 RPM, 30,000 TPM; Tier 5: 10,000 RPM, 2,000,000 TPM)",
-            "quota_period": "Per minute / Monthly prepaid balance",
-            "quota_scope": "Per organization project"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "Per minute / Monthly balance",
-          "quota_scope": "Per organization project",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://platform.openai.com/docs/guides/rate-limits",
           "status": "BLOCKED",
-          "privacy_and_data_policy": "Commercial API data is not used for model training by default; retained up to 30 days for abuse monitoring.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "API programmatic response retrieval.",
           "ui_automation_risk": "N/A (Standard REST API)",
           "fallback": "Route tasks to zero-card providers or human bridge operator.",
-          "freshness": "Current official API documentation",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "OpenAI API enforces mandatory paid billing/credit card; strictly BLOCKED under STRICT_ZERO_CARD."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         },
         {
           "capability_id": "CAP-OAI-003",
@@ -114,24 +108,21 @@
             "account": "Consumer Account",
             "tier": "All tiers",
             "region": "Global",
-            "rate_limits": "Manual on-demand trigger; rate-limited to prevent abuse",
-            "quota_period": "On-demand (email delivery)",
-            "quota_scope": "Per user account"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "On-demand",
-          "quota_scope": "Per user account",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://help.openai.com/en/articles/7260999-how-do-i-export-my-chatgpt-history-and-data",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "Contains complete user chat history; exported file contains sensitive PII requiring local encrypted storage.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "ZIP download containing conversations.json, chat.html, user.json.",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Automated scraping of export triggers is prohibited.",
           "fallback": "Manual operator download and ingestion into ultraJARVIS offline corpus.",
-          "freshness": "Active feature in ChatGPT settings",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Verified through standard ChatGPT settings interface documentation."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         },
         {
           "capability_id": "CAP-OAI-004",
@@ -152,24 +143,21 @@
             "account": "Plus Account",
             "tier": "Plus Tier",
             "region": "Global",
-            "rate_limits": "Shares consumer GPT-4o message caps; external actions subject to destination server limits",
-            "quota_period": "3-hour rolling window",
-            "quota_scope": "Per user session"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "3-hour rolling window",
-          "quota_scope": "Per user session",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://openai.com/index/introducing-gpts/",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "Third-party actions dispatch data to external third-party endpoints as configured.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "Schema configuration exportable via OpenAPI JSON/YAML; conversations exportable via account data export.",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Direct programmatic invocation without human UI presence is prohibited.",
           "fallback": "Manual interaction via ChatGPT UI by human operator.",
-          "freshness": "Active feature",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Documented in OpenAI custom GPT developer guides."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         }
       ]
     },
@@ -196,24 +184,21 @@
             "account": "Individual Consumer Account",
             "tier": "Consumer Free / Pro",
             "region": "Global (supported regions)",
-            "rate_limits": "Dynamic message quota per 5-hour window resetting on rolling basis; message length dynamically scales quota consumption",
-            "quota_period": "Rolling 5-hour window",
-            "quota_scope": "Per user session"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "Rolling 5-hour window",
-          "quota_scope": "Per user session",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://support.anthropic.com/en/articles/8325612-does-claude-ai-have-any-message-limits",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "Anthropic commercial terms state user prompts are not used to train generative models unless explicit consent is provided. 30-day safety retention.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "Manual copy of text and standalone Artifact exports (code, markdown, SVG, HTML).",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Automated headless browser control (Puppeteer/Playwright) or unofficial session APIs violate Anthropic Terms of Service.",
           "fallback": "Manual prompt transfer via human operator (Human Bridge Protocol).",
-          "freshness": "Updated as of August 2026",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Verified against Anthropic consumer usage policies and support documentation."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         },
         {
           "capability_id": "CAP-ANT-002",
@@ -234,24 +219,21 @@
             "account": "Developer Platform Account",
             "tier": "Tier 1 - Tier 4",
             "region": "Global",
-            "rate_limits": "Spend-tier dependent (e.g. Tier 1: 50 RPM, 40,000 TPM; Tier 4: 4,000 RPM, 400,000 TPM)",
-            "quota_period": "Per minute / Monthly prepaid balance",
-            "quota_scope": "Per organization workspace"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "Per minute / Monthly balance",
-          "quota_scope": "Per workspace",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://docs.anthropic.com/en/api/rate-limits",
           "status": "BLOCKED",
-          "privacy_and_data_policy": "API data is not used for model training; retained for 30 days for safety screening.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "Structured JSON responses via HTTP stream.",
           "ui_automation_risk": "N/A (Standard REST API)",
           "fallback": "Route tasks through Human Bridge to Claude.ai or zero-cost API providers.",
-          "freshness": "Current official API documentation",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Anthropic API requires active credit purchase; strictly BLOCKED under STRICT_ZERO_CARD."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         },
         {
           "capability_id": "CAP-ANT-003",
@@ -272,24 +254,21 @@
             "account": "Pro Account",
             "tier": "Pro Tier",
             "region": "Global",
-            "rate_limits": "200k token project context window; subject to standard Pro message interval caps",
-            "quota_period": "Per project session",
-            "quota_scope": "Per project workspace"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "Per session",
-          "quota_scope": "Per project workspace",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://support.anthropic.com/en/articles/9517075-what-are-projects",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "Project files remain private to user account; not used for public model training.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "Manual document removal and artifact copy.",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Scripted document uploading/scraping via UI violates Terms of Service.",
           "fallback": "Human operator manually uploads repository context documents into Claude Project.",
-          "freshness": "Active feature",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Verified against Anthropic Projects documentation."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         },
         {
           "capability_id": "CAP-ANT-004",
@@ -310,24 +289,21 @@
             "account": "Local Developer Machine",
             "tier": "Open Source",
             "region": "Localhost",
-            "rate_limits": "Bounded only by local CPU/RAM and underlying tool rate limits",
-            "quota_period": "Unbounded local execution",
-            "quota_scope": "Local system"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "Unbounded local",
-          "quota_scope": "Local process",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://modelcontextprotocol.io/",
           "status": "PREVIEW",
-          "privacy_and_data_policy": "Local client-to-server communication stays on local machine unless server communicates with remote hosts.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "JSON-RPC standard payloads.",
           "ui_automation_risk": "LOW_RISK: Standard developer protocol designed for local agentic tooling.",
           "fallback": "Direct CLI script execution without MCP bridge.",
-          "freshness": "Open Source Specification",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Protocol specification officially released by Anthropic as open standard."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         }
       ]
     },
@@ -344,34 +320,31 @@
           "access_mode": "API",
           "subscription_vs_api_entitlement": "DEVELOPER_API_FREE_TIER",
           "authentication": "API Key created in Google AI Studio (No Credit Card required in eligible countries)",
-          "plan_account_region": "Google AI Studio Free Tier; Available in 180+ regions (including Italy/EEA under eligible Google accounts)",
-          "model_project_tier": "Free Tier (Unpaid Project without linked Cloud Billing Account)",
-          "incremental_cost": "0.00 USD only while the project remains on the Free/unbilled tier; exact capacity is dynamic and not guaranteed",
-          "billing_requirement": "NO_BILLING (Strictly zero card; linking billing shifts project to Paid Tier)",
+          "plan_account_region": "Account, project, model and region dependent; no live entitlement snapshot supplied",
+          "model_project_tier": "Dynamic developer API tier; exact model access and limits require a live AI Studio check",
+          "incremental_cost": "0.00 USD only while an eligible project remains Free/unbilled and within its current quota; live billing state is unverified",
+          "billing_requirement": "UNKNOWN — a live AI Studio/project check is required; paid fallback is forbidden",
           "quota_and_rate_limit": {
             "model": "Dynamic per model: gemini-2.5-flash, gemini-2.5-pro, gemini-3.7-flash (limits vary dynamically by model, tier, account verification status, and project allocation; without an active Google AI Studio account snapshot, exact live rate limits are marked UNKNOWN and must be checked directly in the Google AI Studio project dashboard)",
             "project": "Google Cloud Project linked to Google AI Studio",
             "account": "Standard Google Account (Developer)",
             "tier": "Free Tier (Unpaid)",
             "region": "Eligible regions per Google AI documentation (including Italy / EEA)",
-            "rate_limits": "Dynamic RPM, TPM, and RPD enforced per model. Requests Per Day (RPD) resets daily at 00:00 Pacific Time (PST/PDT). Published figures represent maximum ceilings, not guaranteed capacity.",
-            "quota_period": "Per minute (RPM/TPM) and Daily (RPD, resets at 00:00 Pacific Time)",
-            "quota_scope": "Per Google Cloud Project (shared across all keys in that project)"
+            "rate_limits": "Model/project/account-specific RPM/TPM/RPD; current values must be read in AI Studio and are not guaranteed.",
+            "quota_period": "Per-minute and daily windows; describe the reset as Pacific time without hard-coding a UTC offset.",
+            "quota_scope": "Per Google Cloud project, subject to current account/project configuration."
           },
-          "quota_period": "Per minute and daily windows; use the current AI Studio project view for live values",
-          "quota_scope": "Per project",
+          "quota_period": "Per-minute and daily windows; describe the reset as Pacific time without hard-coding a UTC offset.",
+          "quota_scope": "Per Google Cloud project, subject to current account/project configuration.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://ai.google.dev/gemini-api/docs/rate-limits",
-          "status": "ACTIVE",
-          "privacy_and_data_policy": "DATA POLICY IS CONDITIONAL: Google's Gemini API Additional Terms describe content use and possible human review for Unpaid Services. The same terms state that the Paid Services data-use section applies to all Services for users in the EEA, Switzerland, or the UK even when offered free. Verify the current account, project tier, region, and terms before dispatch. Do not send C2+ data; redact to C0/C1.",
-          "export_policy": "Direct JSON response body and streaming chunks via REST / gRPC.",
-          "ui_automation_risk": "LOW_RISK: Official documented REST API intended for programmatic client integration.",
-          "fallback": "Fallback to human bridge or alternative zero-cost models upon 429 RESOURCE_EXHAUSTED.",
-          "freshness": "Updated as of August 2026",
-          "confidence": {
-            "level": "MEDIUM",
-            "reason": "The existence of a Free tier is documented, but live quota, project billing state, region, account terms, and EEA API-client restrictions require an account-level check."
-          }
+          "status": "UNKNOWN",
+          "privacy_and_data_policy": "Google's Gemini API Additional Terms describe Unpaid Services content use and possible human review. They state that the Paid Services data-use section applies to all Services for users in the EEA, Switzerland or the UK even when access is free. Verify the current account, project tier, region and terms; send only redacted C0/C1 material.",
+          "export_policy": "JSON or streaming responses only after a separately admitted, zero-cost route is proven.",
+          "ui_automation_risk": "No consumer UI automation; automatic API dispatch is not admitted until the live gate passes.",
+          "fallback": "HUMAN_BRIDGE or local processing; never enable billing as a fallback.",
+          "freshness": "Official documentation checked on 2026-08-18; live account/project state was not checked.",
+          "confidence": 0.5
         },
         {
           "capability_id": "CAP-GGL-002",
@@ -382,34 +355,31 @@
           "access_mode": "WEB_UI",
           "subscription_vs_api_entitlement": "DEVELOPER_CONSOLE_WEB_SURFACE",
           "authentication": "Interactive Google Account OAuth2",
-          "plan_account_region": "Developer account; 180+ regions (including Italy/EEA)",
+          "plan_account_region": "Account, project, rollout and region dependent",
           "model_project_tier": "AI Studio Playground",
-          "incremental_cost": "0.00 USD",
-          "billing_requirement": "NO_BILLING",
+          "incremental_cost": "No new spend authorized; account/project billing state is unverified",
+          "billing_requirement": "UNKNOWN — verify the linked project before any API-related dispatch",
           "quota_and_rate_limit": {
             "model": "All available Gemini models in AI Studio",
             "project": "Google Cloud Project (AI Studio default)",
             "account": "Google Developer Account",
             "tier": "Free Tier",
             "region": "Eligible regions (including Italy/EEA)",
-            "rate_limits": "Bound to underlying project's Free Tier developer rate limits (RPM/RPD); RPD resets at 00:00 PT",
-            "quota_period": "Per minute / Daily (resets 00:00 PT)",
-            "quota_scope": "Per developer project"
+            "rate_limits": "UNKNOWN — do not infer API limits from the web UI.",
+            "quota_period": "UNKNOWN",
+            "quota_scope": "Account/project specific"
           },
-          "quota_period": "Per minute / Daily (resets 00:00 PT)",
-          "quota_scope": "Per developer project",
+          "quota_period": "UNKNOWN",
+          "quota_scope": "Account/project specific",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://aistudio.google.com",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "AI Studio data handling depends on the current account/project terms. The cited Gemini API terms describe Unpaid Services data use and apply Paid Services data-use terms to EEA/Switzerland/UK users even when access is free. Treat the web surface as HUMAN_BRIDGE and use only redacted C0/C1 test material until the account terms are verified.",
+          "privacy_and_data_policy": "Current account/project terms govern data handling. Use only redacted C0/C1 material until the exact terms and storage behavior are checked.",
           "export_policy": "Export prompt to code (Python, JavaScript, cURL, Kotlin, Swift) and save to Google Drive.",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Automated headless browser control of the AI Studio UI is prohibited.",
-          "fallback": "Direct REST API integration using CAP-GGL-001.",
-          "freshness": "Active platform surface",
-          "confidence": {
-            "level": "MEDIUM",
-            "reason": "The UI and its manual-only routing are clear, but privacy and quota behavior are account/region dependent."
-          }
+          "fallback": "Manual copy/paste through HUMAN_BRIDGE; no headless browser, cookies or session tokens.",
+          "freshness": "Official documentation checked on 2026-08-18; live account/project state was not checked.",
+          "confidence": 0.5
         },
         {
           "capability_id": "CAP-GGL-003",
@@ -422,32 +392,29 @@
           "authentication": "Google Account Session Login (Human Operator via Browser)",
           "plan_account_region": "Free Consumer Account / Google One AI Premium (19.99/mo); Global (including Italy/EEA)",
           "model_project_tier": "Gemini 2.5 / 3.x Consumer Engine",
-          "incremental_cost": "0.00 USD (utilizing free tier or pre-existing Google One subscription)",
-          "billing_requirement": "NO_BILLING_FOR_FREE_TIER_PREEXISTING_FOR_ADVANCED",
+          "incremental_cost": "Existing free or already-paid consumer entitlement only; no new subscription or billing action authorized",
+          "billing_requirement": "EXISTING_ACCOUNT_ONLY — current plan and account controls were not inspected",
           "quota_and_rate_limit": {
             "model": "Gemini Flash / Advanced models",
             "project": "N/A (Consumer Web Service)",
             "account": "Individual Google Account",
             "tier": "Consumer Free / Advanced",
             "region": "Global (supported regions)",
-            "rate_limits": "Dynamic prompt rate limits governed by Google consumer abuse protections (dynamic capacity; not fixed by public SLA)",
-            "quota_period": "Dynamic rolling window",
-            "quota_scope": "Per user session"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — consumer limits were not independently reverified.",
+            "quota_period": "UNKNOWN",
+            "quota_scope": "Consumer account/session specific"
           },
-          "quota_period": "Dynamic rolling",
-          "quota_scope": "Per user session",
+          "quota_period": "UNKNOWN",
+          "quota_scope": "Consumer account/session specific",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://gemini.google.com",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "Consumer Gemini conversations are saved to Google Account (Gemini Apps Activity) and may be reviewed by human reviewers unless activity is paused.",
+          "privacy_and_data_policy": "Consumer account, region and current terms control data handling; no universal training or retention claim is made in this correction.",
           "export_policy": "Export to Google Docs, Gmail, or manual copy.",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Automated browser interaction, session hijacking, or reverse-engineered client calls violate Google Terms of Service.",
           "fallback": "Manual prompt transfer via human operator (Human Bridge Protocol).",
-          "freshness": "Active consumer service",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Verified against Google consumer terms and service policies."
-          }
+          "freshness": "Official documentation checked on 2026-08-18; live account/project state was not checked.",
+          "confidence": 0.5
         },
         {
           "capability_id": "CAP-GGL-004",
@@ -460,32 +427,29 @@
           "authentication": "Google Cloud IAM / Service Account Key / gcloud auth",
           "plan_account_region": "Google Cloud Platform Project (Multi-region)",
           "model_project_tier": "Vertex AI Pay-as-you-go",
-          "incremental_cost": "PAY_PER_USE (Requires active Cloud Billing Account)",
-          "billing_requirement": "CREDIT_CARD_REQUIRED",
+          "incremental_cost": "Pay-per-use; not permitted under STRICT_ZERO_CARD",
+          "billing_requirement": "BILLING_REQUIRED_OR_ACCOUNT_DEPENDENT",
           "quota_and_rate_limit": {
             "model": "gemini-2.5-flash / gemini-2.5-pro / partner models",
             "project": "Google Cloud Project with linked Billing Account",
             "account": "GCP Organization / Account",
             "tier": "Enterprise Pay-as-you-go",
             "region": "Regional endpoints (e.g. us-central1, europe-west1)",
-            "rate_limits": "High quota limits configured in Cloud Quotas (e.g. 300 to 1,000+ RPM)",
-            "quota_period": "Per minute / Monthly billing consumption",
-            "quota_scope": "Per GCP Project / Region"
+            "rate_limits": "Cloud quotas and billing behavior are account/project/region dependent; no live project was queried.",
+            "quota_period": "UNKNOWN",
+            "quota_scope": "GCP project/region specific"
           },
-          "quota_period": "Per minute / Monthly invoice",
-          "quota_scope": "Per GCP Project / Region",
+          "quota_period": "UNKNOWN",
+          "quota_scope": "GCP project/region specific",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://cloud.google.com/vertex-ai/pricing",
           "status": "BLOCKED",
-          "privacy_and_data_policy": "Enterprise SLA: Customer data is strictly segregated and never used to train Google foundation models.",
-          "export_policy": "Cloud Storage, BigQuery, and REST responses.",
+          "privacy_and_data_policy": "Not evaluated for acceptance; pricing or quota pages do not by themselves prove an enterprise SLA, training exclusion or commercial-rights grant.",
+          "export_policy": "No Vertex AI call or project mutation was performed.",
           "ui_automation_risk": "N/A (Standard Cloud API)",
           "fallback": "Route to Google AI Studio Free Tier (CAP-GGL-001) or Human Bridge.",
-          "freshness": "Current official pricing documentation",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Vertex AI mandates an active Google Cloud Billing Account with payment method; strictly BLOCKED under STRICT_ZERO_CARD."
-          }
+          "freshness": "Official documentation checked on 2026-08-18; live account/project state was not checked.",
+          "confidence": 0.5
         },
         {
           "capability_id": "CAP-GGL-005",
@@ -496,34 +460,31 @@
           "access_mode": "WEB_UI",
           "subscription_vs_api_entitlement": "CONSUMER_LABS_SERVICE",
           "authentication": "Interactive Google Account Login",
-          "plan_account_region": "Consumer / Workspace / Education; 180+ regions (including Italy/EEA)",
+          "plan_account_region": "Consumer, Workspace, Education and region eligibility are not verified",
           "model_project_tier": "NotebookLM Core Runtime",
-          "incremental_cost": "0.00 USD (Free web service)",
-          "billing_requirement": "NO_BILLING",
+          "incremental_cost": "No-cost access may exist, but account, plan and region were not inspected",
+          "billing_requirement": "UNKNOWN — verify current consumer/Workspace terms",
           "quota_and_rate_limit": {
             "model": "Grounded Gemini Assistant",
             "project": "N/A",
             "account": "Personal Google Account",
             "tier": "Free consumer tier",
             "region": "180+ countries (including Italy/EEA)",
-            "rate_limits": "Exact daily query limits and notebook creation caps are UNKNOWN (not published as guaranteed static SLAs by Google; subject to dynamic server-side throttling)",
-            "quota_period": "Dynamic rolling daily limits (UNKNOWN exact SLA)",
-            "quota_scope": "Per user account"
+            "rate_limits": "UNKNOWN — fixed notebook, source and query limits were not established from a dated primary source.",
+            "quota_period": "UNKNOWN",
+            "quota_scope": "Account/plan specific"
           },
-          "quota_period": "Dynamic rolling daily limits (UNKNOWN exact SLA)",
-          "quota_scope": "Per user account",
+          "quota_period": "UNKNOWN",
+          "quota_scope": "Account/plan specific",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://support.google.com/notebooklm/",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "The cited support homepage is insufficient to prove a universal training exclusion. Attach the exact current NotebookLM privacy/FAQ article and applicable Workspace or consumer terms before relying on that statement. Until then, use HUMAN_BRIDGE with C0/C1 redacted material only.",
+          "privacy_and_data_policy": "The NotebookLM support homepage is insufficient to prove a universal training exclusion. Attach the exact dated privacy/FAQ article and applicable account terms; until then use only C0/C1 redacted material.",
           "export_policy": "Export notes to Google Docs, copy audio files (.wav/.mp3), manual copy of study guides.",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Automated headless browser scraping of NotebookLM is prohibited under Google Terms of Service.",
-          "fallback": "Human operator uploads source materials and manually extracts structured synthesis for ultraJARVIS.",
-          "freshness": "Updated as of August 2026",
-          "confidence": {
-            "level": "MEDIUM",
-            "reason": "NotebookLM limits and data-use terms need an exact dated primary citation; the support landing page alone is not enough."
-          }
+          "fallback": "Manual HUMAN_BRIDGE or local retrieval; no automated upload or account access.",
+          "freshness": "Official documentation checked on 2026-08-18; live account/project state was not checked.",
+          "confidence": 0.5
         },
         {
           "capability_id": "CAP-GGL-006",
@@ -536,32 +497,29 @@
           "authentication": "OAuth2 Scopes / Script Authorization",
           "plan_account_region": "Consumer Google Account (@gmail.com) / Google Workspace (@domain.com); Global",
           "model_project_tier": "V8 Runtime Engine",
-          "incremental_cost": "No separate billing for the documented core quotas; account type and associated Google product limits apply and quotas may change without notice",
-          "billing_requirement": "NO_BILLING",
+          "incremental_cost": "The cited table documents core quotas without a separate per-call API price; account type and product boundary are unverified",
+          "billing_requirement": "UNKNOWN — verify account type and any connected Workspace/Cloud service",
           "quota_and_rate_limit": {
             "model": "N/A (JavaScript Serverless Engine)",
             "project": "Apps Script Project",
             "account": "Consumer (@gmail.com) vs Google Workspace (@domain.com)",
             "tier": "Consumer Free vs Workspace Enterprise",
             "region": "Global",
-            "rate_limits": "Execution time: max 6 min/execution. Daily quotas are per-user and reset on a rolling 24-hour window from the first request (e.g. UrlFetch: 20,000 calls/day for Consumer vs 100,000 calls/day for Workspace; Trigger total runtime: 90 min/day for Consumer vs 6 hours/day for Workspace; Email recipients: 100/day for Consumer vs 1,500/day for Workspace; Simultaneous executions: 30/user).",
-            "quota_period": "Rolling 24-hour window per user quota and 6 min per execution",
-            "quota_scope": "Per user account"
+            "rate_limits": "Official examples include 6 min/execution, consumer 90 min/day trigger runtime, 20,000 URL Fetch/day, 100 email recipients/day, and 30 simultaneous executions/user; Workspace values differ and quotas may change.",
+            "quota_period": "Per-user quotas generally reset 24 hours after the first request; verify the current table.",
+            "quota_scope": "Per user/account type and service."
           },
-          "quota_period": "Rolling 24-hour window per user quota and 6 min per execution",
-          "quota_scope": "Per user account",
+          "quota_period": "Per-user quotas generally reset 24 hours after the first request; verify the current table.",
+          "quota_scope": "Per user/account type and service.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://developers.google.com/apps-script/guides/services/quotas",
-          "status": "ACTIVE",
-          "privacy_and_data_policy": "Scripts execute inside user Google Account security perimeter; subject to standard Google Privacy Policy.",
+          "status": "UNKNOWN",
+          "privacy_and_data_policy": "OAuth grants, triggers and document access are account-scoped side effects; quota/pricing evidence does not prove a privacy boundary or authorize a write.",
           "export_policy": "Code exportable via .gs files, clasp CLI, or GitHub integration.",
-          "ui_automation_risk": "LOW_RISK: Fully sanctioned programmatic development platform with official APIs.",
-          "fallback": "Run local node.js / python scripts on host machine.",
-          "freshness": "Verified official developer documentation",
-          "confidence": {
-            "level": "MEDIUM",
-            "reason": "The official quota table documents the cited examples, but limits are explicitly subject to change and account type."
-          }
+          "ui_automation_risk": "Programmatic execution exists, but every trigger, webhook, OAuth grant or external write needs a separate scoped approval.",
+          "fallback": "Local scheduler or local script with no external write.",
+          "freshness": "Official documentation checked on 2026-08-18; live account/project state was not checked.",
+          "confidence": 0.5
         },
         {
           "capability_id": "CAP-GGL-007",
@@ -574,32 +532,29 @@
           "authentication": "Google Account Interactive Session",
           "plan_account_region": "Free Tier; Global (including Italy/EEA)",
           "model_project_tier": "Free Hosted VM (Variable CPU / dynamic GPU allocation)",
-          "incremental_cost": "0.00 USD (No card required)",
-          "billing_requirement": "NO_BILLING",
+          "incremental_cost": "Free resources are not guaranteed; no paid Colab tier is authorized",
+          "billing_requirement": "UNKNOWN — no billing or account state was inspected",
           "quota_and_rate_limit": {
             "model": "N/A (Python Compute VM)",
             "project": "Colab Session VM",
             "account": "Standard Google Account",
             "tier": "Free Tier",
             "region": "Dynamic cloud allocation",
-            "rate_limits": "Resources, idle timeouts, maximum VM lifetime, GPU availability, and usage limits vary over time and are not published as fixed guarantees; use the current Colab runtime as the observation point.",
-            "quota_period": "Ephemeral dynamic session (no fixed duration guarantee)",
-            "quota_scope": "Per user session"
+            "rate_limits": "Free resources, idle timeout, maximum VM lifetime, hardware and usage limits vary and are not fixed guarantees.",
+            "quota_period": "UNKNOWN",
+            "quota_scope": "Account/session and current availability"
           },
-          "quota_period": "Ephemeral dynamic session (no fixed duration guarantee)",
-          "quota_scope": "Per user session",
+          "quota_period": "UNKNOWN",
+          "quota_scope": "Account/session and current availability",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://research.google.com/colaboratory/faq.html",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "Code runs in an ephemeral VM private to the account; scratch disk files wiped on termination.",
+          "privacy_and_data_policy": "Colab/Drive account terms and authorization govern data handling; the FAQ does not establish a universal privacy or retention guarantee.",
           "export_policy": "Download .ipynb, .py, or save directly to GitHub/Google Drive.",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Automated headless execution, background proxy tunneling, torrenting, or scraping violates Colab ToS and results in runtime ban.",
-          "fallback": "Execute Python scripts locally within ultraJARVIS host interpreter.",
-          "freshness": "Verified official Colab FAQ",
-          "confidence": {
-            "level": "MEDIUM",
-            "reason": "The official FAQ confirms dynamic, unguaranteed resources but does not support a fixed 30–90 minute idle range."
-          }
+          "fallback": "Local execution; no background, headless or multi-account automation.",
+          "freshness": "Official documentation checked on 2026-08-18; live account/project state was not checked.",
+          "confidence": 0.5
         },
         {
           "capability_id": "CAP-GGL-008",
@@ -612,32 +567,29 @@
           "authentication": "Firebase Service Account / API Key / App Check",
           "plan_account_region": "Spark Plan (No cost); Global (multi-region)",
           "model_project_tier": "Spark Tier ONLY (Strictly distinguished from Blaze Pay-as-you-go plan)",
-          "incremental_cost": "Spark no-cost quotas apply at project level and require no payment method; features, products, or usage outside those quotas may require the Blaze plan and billing",
-          "billing_requirement": "NO_BILLING (No payment method required on Spark plan)",
+          "incremental_cost": "Spark no-cost quotas require no payment method; features or usage outside those documented quotas may require Blaze billing",
+          "billing_requirement": "UNKNOWN — verify the project is Spark-only and not linked to Cloud Billing",
           "quota_and_rate_limit": {
             "model": "Cloud Firestore NoSQL Engine",
             "project": "Firebase Project on Spark Plan (one free Cloud Firestore database per project)",
             "account": "Google Account",
             "tier": "Spark Tier ONLY",
             "region": "Single default database region",
-            "rate_limits": "Cloud Firestore free quotas: 1 GiB stored data; 50,000 document reads/day; 20,000 document writes/day; 20,000 document deletes/day; 10 GiB/month outbound data transfer. Quotas apply at project level and reset around midnight Pacific time.",
-            "quota_period": "Daily reads/writes (resets midnight PT) and Monthly bandwidth (10 GiB)",
-            "quota_scope": "Per Firebase project (1 database max on Spark)"
+            "rate_limits": "Cloud Firestore examples: 1 GiB stored, 50,000 reads/day, 20,000 writes/day, 20,000 deletes/day and 10 GiB/month outbound transfer; these are project-level no-cost quotas.",
+            "quota_period": "Daily quotas reset around midnight Pacific time; verify current documentation.",
+            "quota_scope": "Firebase project; exactly one free Cloud Firestore database per project."
           },
-          "quota_period": "Daily (resets midnight PT) and Monthly egress",
-          "quota_scope": "Per Firebase project",
+          "quota_period": "Daily quotas reset around midnight Pacific time; verify current documentation.",
+          "quota_scope": "Firebase project; exactly one free Cloud Firestore database per project.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://firebase.google.com/pricing",
-          "status": "ACTIVE",
-          "privacy_and_data_policy": "The pricing and quota sources establish plan limits, not a universal training exclusion or DPA configuration. Verify the applicable Firebase/Google Cloud privacy terms and project settings before storing anything above C1.",
+          "status": "UNKNOWN",
+          "privacy_and_data_policy": "Pricing and Firestore quota pages do not establish a universal training exclusion, DPA configuration or security-rules posture. Verify terms and project settings before storing anything above C1.",
           "export_policy": "JSON export via Firebase Admin SDK or local backup.",
-          "ui_automation_risk": "LOW_RISK: Standard backend REST / Admin SDK API.",
-          "fallback": "Local SQLite / JSON flat-file storage within ultraJARVIS workspace.",
-          "freshness": "Verified official Firebase pricing documentation",
-          "confidence": {
-            "level": "MEDIUM",
-            "reason": "Spark pricing and Firestore quotas are documented, while privacy isolation and project configuration require separate evidence."
-          }
+          "ui_automation_risk": "No Firebase call was performed; any data write requires a separate scoped card and approval.",
+          "fallback": "Local SQLite, JSON or other local persistence.",
+          "freshness": "Official documentation checked on 2026-08-18; live account/project state was not checked.",
+          "confidence": 0.5
         }
       ]
     },
@@ -664,24 +616,21 @@
             "account": "X Premium User Account",
             "tier": "Premium / Premium+",
             "region": "Global",
-            "rate_limits": "Dynamic message cap per 2-hour window (e.g. ~30-60 queries depending on model tier and load)",
-            "quota_period": "Rolling 2-hour window",
-            "quota_scope": "Per user session"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "Rolling 2-hour window",
-          "quota_scope": "Per user session",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://help.x.com/en/using-x/grok",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "X terms indicate user interactions and posts may be used to train Grok models unless opted out in account privacy settings.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "Manual text copy from web interface.",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Automated scraping, headless browser control, or unofficial auth token replay violates X Terms of Service and triggers account suspension.",
           "fallback": "Human operator executes queries manually in Grok UI (Human Bridge Protocol).",
-          "freshness": "Updated as of August 2026",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Verified against X Terms of Service and Grok product specifications."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         },
         {
           "capability_id": "CAP-XAI-002",
@@ -702,24 +651,21 @@
             "account": "Developer Platform Account",
             "tier": "Developer Pay-as-you-go",
             "region": "Global",
-            "rate_limits": "Spend-tier dependent rate limits (e.g. 60 RPM, 100k TPM for initial tier)",
-            "quota_period": "Per minute / Monthly prepaid balance",
-            "quota_scope": "Per team account"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "Per minute / Monthly balance",
-          "quota_scope": "Per team account",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://docs.x.ai/docs/overview",
           "status": "BLOCKED",
-          "privacy_and_data_policy": "Commercial API inputs/outputs are not used to train xAI models per API privacy terms.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "Programmatic JSON responses.",
           "ui_automation_risk": "N/A (Standard REST API)",
           "fallback": "Route tasks through Human Bridge to Grok UI or registered zero-cost engines.",
-          "freshness": "Current official documentation",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "xAI API requires active payment card or prepaid credits; strictly BLOCKED under STRICT_ZERO_CARD."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         },
         {
           "capability_id": "CAP-XAI-003",
@@ -740,24 +686,21 @@
             "account": "X Premium Account",
             "tier": "Premium Tier",
             "region": "Global",
-            "rate_limits": "Governed by interactive Grok message caps",
-            "quota_period": "Rolling 2-hour window",
-            "quota_scope": "Per user session"
+            "rate_limits": "DYNAMIC_OR_UNKNOWN — not independently reverified in this correction.",
+            "quota_period": "UNKNOWN — check current provider documentation and account.",
+            "quota_scope": "UNKNOWN — check current provider documentation and account."
           },
-          "quota_period": "Rolling 2-hour window",
-          "quota_scope": "Per user session",
+          "quota_period": "UNKNOWN — check current provider documentation and account.",
+          "quota_scope": "UNKNOWN — check current provider documentation and account.",
           "verified_at_utc": "2026-08-18T13:35:00Z",
           "official_primary_url": "https://help.x.com/en/using-x/grok",
           "status": "HUMAN_BRIDGE",
-          "privacy_and_data_policy": "Subject to X platform privacy terms and user opt-out controls.",
+          "privacy_and_data_policy": "Provider, account, region and plan terms were not independently reverified in this correction; do not infer training, retention, isolation or commercial rights.",
           "export_policy": "Manual copy of grounded search summaries.",
           "ui_automation_risk": "HIGH_RISK_FORBIDDEN: Automated scraping is prohibited by X ToS.",
           "fallback": "Human operator executes search queries and copies grounding citations.",
-          "freshness": "Active feature",
-          "confidence": {
-            "level": "HIGH",
-            "reason": "Verified against X feature documentation."
-          }
+          "freshness": "Catalog entry from Gemini; not independently reverified in this correction.",
+          "confidence": 0.2
         }
       ]
     }
