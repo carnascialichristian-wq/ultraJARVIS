@@ -279,3 +279,10 @@ conflitto va registrato, non eliminato.
 - È stata aggiunta una review note con il finding e i reviewer richiesti. Nessun task, status o peso cambia.
 - Prossimo passo: review indipendente Claude/Grok e verifica runtime in ambiente completo.
 - Aggiornamento speculare inserito in gpt.md: sì.
+
+### 2026-08-18 — ChatGPT/Codex — PR #7 verification
+
+- AST parse PASS per bridge e test STRICT_ZERO.
+- PR #7 è OPEN/DRAFT; full pytest/runtime resta non eseguito per assenza di checkout/deps.
+- Nessun merge, API, billing, backlog delta o peso; PR #3/#5/#6 non toccate.
+- Next: review Claude/Grok e test completo.

@@ -59,3 +59,11 @@ destructive action is pending.
 - Il finding è il percorso OpenAI/pay-per-use presente nel cloud_bridge originale; la candidate lo blocca e limita il fallback a endpoint loopback.
 - Test e review note sono pubblicati, ma l'esecuzione runtime resta da fare in un checkout con dipendenze. Nessun peso, status backlog o task acceptance cambia.
 - Prossimo comando: verificare la candidate con test reali, poi attendere review Claude/Grok; in parallelo resta aperto l'intake Gemini CAP/GGL.
+
+
+## Latest remote reconciliation — 2026-08-18 — PR #7 verification
+
+- PR #7 è OPEN/DRAFT, branch strict-zero-cloud-bridge-20260818-v2, base main f2b89040f24efddc4669501bf1f7ab8172797cf9; head precedente 4a10090e079dac38e4677127f43a5e3786289117.
+- AST parse PASS per i due file Python della candidate. Pytest/runtime e dipendenze non sono stati eseguiti.
+- PR #3, #5 e #6 restano separate/open draft; nessun peso o status backlog cambia.
+- Prossimo comando: attendere review indipendente e concludere il gate STRICT_ZERO senza promuovere automaticamente la patch.
