@@ -1,19 +1,12 @@
 # Publish status — ultraJARVIS
 
-**Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
-**Target:** ultraJARVIS (not UltraJarvis_v8-grok)
+**Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS
 
-## Published (2026-08-18 ~11:00 CEST)
-
-### Memory integration
-- Jobs recorded via `core.memory.remember` on complete
-- Planner surfaces related past jobs via `recall`
-
-### Prior
-SEC-003 · Phase 2 LLM · real gates · promote auto-register
-
-## Remaining
-- Multi-file jobs (optional)
-- Embeddings (optional)
+## Published 2026-08-18 ~11:20 CEST
+- Multi-file jobs + deps.json
+- recall_semantic (TF-cosine)
+- advisors/style richer + advisors/debate
+- core/monetization usage metering
+- 231 tests green
 
 Continues until user says **stop**.

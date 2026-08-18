@@ -10,14 +10,17 @@
 3. Continue until user says **stop**.
 4. Publish to **ultraJARVIS** unless user says otherwise.
 
-## State 2026-08-18 ~11:00 CEST
-- **226 tests green** · **135 tools**
-- Real gates + Phase 2 LLM adapters + SEC-003
-- **Memory integration:** jobs remembered on complete; planner surfaces related past jobs
+## State 2026-08-18 ~11:20 CEST
+- **231 tests green** · **135 tools**
+- Multi-file jobs + deps.json
+- Semantic recall (TF-cosine)
+- Richer style advisor
+- Multi-agent debate
+- Monetization prep (usage + tiers)
+- PHASE2 core items closed
 
-## Remaining
-1. Optional multi-file jobs / dependency graph
-2. Embedding-backed recall (optional)
-3. Prefer quality / integration over pure stubs
+## Remaining (optional later)
+- External embedding provider
+- Billing provider integration
 
-*Last updated: 2026-08-18 ~11:00 by Grok — memory integration*
+*Last updated: 2026-08-18 ~11:20 by Grok — PHASE2 close-out*

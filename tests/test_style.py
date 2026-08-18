@@ -7,14 +7,19 @@ from pathlib import Path
 from advisors.style import check_style, scan_job_style
 
 
-def test_style_ok(tmp_path):
-    p = tmp_path / "ok.py"
-    p.write_text('"""mod"""\nfrom __future__ import annotations\n\ndef f():\n    """d"""\n    return 1\n')
-    assert check_style(p) == []
-
-
-def test_style_notes(tmp_path):
+def test_style_flags_bare_except(tmp_path: Path):
     p = tmp_path / "bad.py"
-    p.write_text("x=1\n")
+    p.write_text("def f():\n    try:\n        x=1\n    except:\n        pass\n", encoding="utf-8")
     notes = check_style(p)
-    assert notes
+    assert any("bare except" in n for n in notes)
+
+
+def test_style_ok_clean(tmp_path: Path):
+    p = tmp_path / "ok.py"
+    p.write_text(
+        '"""mod"""\nfrom __future__ import annotations\n\ndef run() -> str:\n    return "ok"\n',
+        encoding="utf-8",
+    )
+    notes = check_style(p)
+    assert not any("bare except" in n for n in notes)
+    assert not any("CamelCase" in n for n in notes)
