@@ -1,7 +1,4 @@
-"""Simple persistent memory for UltraJarvis (Phase 2 starter).
-
-Stores short facts as JSONL. Includes lightweight TF-cosine semantic recall.
-"""
+"""Persistent memory for UltraJarvis — JSONL + TF-cosine + optional neural embed."""
 
 from __future__ import annotations
 
@@ -14,29 +11,17 @@ DEFAULT_PATH = Path("workspace/memory.jsonl")
 
 
 def remember(fact: str, *, tags: Optional[List[str]] = None, path: Optional[Path] = None) -> Dict[str, Any]:
-    """Append a fact to memory."""
     if not fact or not fact.strip():
         raise ValueError("fact required")
     path = path or DEFAULT_PATH
-    entry = {
-        "ts": time.time(),
-        "fact": fact.strip(),
-        "tags": tags or [],
-    }
+    entry = {"ts": time.time(), "fact": fact.strip(), "tags": tags or []}
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     return entry
 
 
-def recall(
-    query: str = "",
-    *,
-    limit: int = 20,
-    tag: Optional[str] = None,
-    path: Optional[Path] = None,
-) -> List[Dict[str, Any]]:
-    """Return recent facts, optionally filtered by substring or tag."""
+def recall(query: str = "", *, limit: int = 20, tag: Optional[str] = None, path: Optional[Path] = None) -> List[Dict[str, Any]]:
     path = path or DEFAULT_PATH
     if not path.exists():
         return []
@@ -61,7 +46,6 @@ def clear(path: Path = DEFAULT_PATH) -> None:
 
 
 def list_tags(path: Optional[Path] = None) -> Dict[str, int]:
-    """Return a count of facts per tag (most recent file state)."""
     path = path or DEFAULT_PATH
     counts: Dict[str, int] = {}
     if not path.exists():
@@ -103,19 +87,7 @@ def _cosine(a: dict[str, float], b: dict[str, float]) -> float:
     return dot / (na * nb)
 
 
-def recall_semantic(
-    query: str,
-    *,
-    limit: int = 10,
-    tag: Optional[str] = None,
-    path: Optional[Path] = None,
-    min_score: float = 0.05,
-) -> List[Dict[str, Any]]:
-    """
-    Lightweight embedding-style recall using bag-of-words TF cosine similarity.
-
-    No external model required. Optional upgrade path later via UJ_EMBEDDING.
-    """
+def recall_semantic(query: str, *, limit: int = 10, tag: Optional[str] = None, path: Optional[Path] = None, min_score: float = 0.05) -> List[Dict[str, Any]]:
     path = path or DEFAULT_PATH
     if not path.exists() or not (query or "").strip():
         return []
@@ -134,5 +106,48 @@ def recall_semantic(
             item = dict(e)
             item["score"] = round(score, 4)
             scored.append((score, item))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [e for _, e in scored[:limit]]
+
+
+def embed_texts(texts: list[str]) -> list[list[float]] | None:
+    import os
+    if os.getenv("UJ_EMBEDDING", "").strip() != "1":
+        return None
+    try:
+        from cloud_bridge import embed
+        return embed(texts)
+    except Exception:
+        return None
+
+
+def recall_semantic_embedded(query: str, *, limit: int = 10, tag: Optional[str] = None, path: Optional[Path] = None) -> List[Dict[str, Any]]:
+    path = path or DEFAULT_PATH
+    if not path.exists() or not (query or "").strip():
+        return []
+    facts = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if tag and tag not in (e.get("tags") or []):
+            continue
+        facts.append(e)
+    if not facts:
+        return []
+    vectors = embed_texts([query] + [f.get("fact") or "" for f in facts])
+    if not vectors or len(vectors) != len(facts) + 1:
+        return recall_semantic(query, limit=limit, tag=tag, path=path)
+    qv = vectors[0]
+    scored = []
+    for e, v in zip(facts, vectors[1:]):
+        dot = sum(a * b for a, b in zip(qv, v))
+        na = sum(a * a for a in qv) ** 0.5
+        nb = sum(b * b for b in v) ** 0.5
+        score = (dot / (na * nb)) if na and nb else 0.0
+        item = dict(e)
+        item["score"] = round(score, 4)
+        scored.append((score, item))
     scored.sort(key=lambda x: x[0], reverse=True)
     return [e for _, e in scored[:limit]]
