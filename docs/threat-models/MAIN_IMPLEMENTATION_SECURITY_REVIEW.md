@@ -810,3 +810,93 @@ ponte è aperta quando nessuno decide.**
   quando è stato scritto ed è ora superato — l'ho verificato con `git log`, non assunto.
 - **Non ho toccato una riga** di `cloud_bridge.py`, `core/planner.py` o `core/config.py`: è
   codice di Grok, e la correzione è una decisione di baseline, non mia.
+
+---
+
+## 13. S-17 — ESCALATION. Il writer adapter è arrivato prima del fix. **CRITICA, invariata ma raddoppiata.**
+
+> Aggiunto il 2026-08-18, poche ore dopo §12. `main` @ `8c4224c`.
+
+### 13.1 Quello che §12.8 chiedeva di non fare, è stato fatto
+
+§12.8 diceva, testualmente:
+
+> *"`FIX-10a`/`FIX-10b` vanno applicati **PRIMA** che il writer adapter esista … un difetto
+> di fondazione replicato costa il doppio a togliere, e il secondo punto è più pericoloso del
+> primo."*
+
+`main` è avanzata di 3 commit e ha portato `_code_via_llm` — il **Writer LLM adapter**, opt-in
+`UJ_WRITER_LLM=1`, in `core/natural_tasks.py`. Il fix non c'è.
+
+Verificato al ref corrente, non assunto:
+
+```
+cloud_bridge.py:12    PROVIDER = os.getenv("MODEL_PROVIDER", "openai").lower()   → INVARIATO
+core/config.py:43     model_provider=os.getenv("MODEL_PROVIDER", "openai")       → INVARIATO
+git grep UJ_ALLOW_PAID_API                                                        → ASSENTE
+```
+
+**Nota sul branch `agent/strict-zero-cloud-bridge-20260818`.** Il nome promette esattamente
+questo fix. Contenuto reale: `6af4a37`, cioè **0 commit avanti e 6 indietro rispetto a `main`**.
+È un puntatore a un commit vecchio, non una correzione. Chi lo leggesse per nome concluderebbe
+che `S-17` è in lavorazione: **non lo è.** L'ho verificato con `git rev-list --count`, ed è il
+motivo per cui questa sezione esiste invece di una riga di attesa.
+
+### 13.2 Misurato: la seconda porta è identica alla prima
+
+Stesso metodo di §12.4 — sottoprocessi isolati, modulo `openai` finto, **nessuna rete**.
+Guidato `core.natural_tasks._code_for_prompt()`, cioè il percorso che **genera codice**.
+
+| Scenario | Provider risolto | Tentativi fatturabili |
+|---|---|---:|
+| default, nessun gate | `openai` | **0** |
+| **solo `UJ_WRITER_LLM=1`** | `openai` | **3** |
+| `UJ_WRITER_LLM=1` + chiave | `openai` | **3**, chiave trasmessa |
+| `UJ_WRITER_LLM=1` + `MODEL_PROVIDER=local` | `local` | **0** |
+
+### 13.3 Perché il conteggio delle porte è la cosa che conta
+
+Prima di questo push esisteva **una** variabile che, da sola, metteva il programma sul
+provider a pagamento: `UJ_PLANNER_LLM`. Adesso ce ne sono **due**, indipendenti:
+`UJ_PLANNER_LLM` e `UJ_WRITER_LLM`. Nessuna delle due richiede di toccare `MODEL_PROVIDER`.
+
+La superficie non è cresciuta del doppio in senso lato: è cresciuta **esattamente** del doppio,
+perché ogni gate è una condizione `!= "1"` separata sullo stesso ponte immutato.
+
+E la seconda porta è peggiore della prima per una ragione di merito, non di conteggio: il
+planner produce **testo di piano**, il writer produce **codice** che `promote_job_to_tools()`
+scrive dentro `tools/`, cioè nella directory da cui il registry importa ed esegue.
+
+### 13.4 Onestà: cosa Grok ha fatto BENE in questo push
+
+Non è una ripetizione peggiorata del primo. Ci sono due miglioramenti reali:
+
+- **Il writer passa il codice generato per `advisors.safety.scan_text`** prima di accettarlo
+  (`core/natural_tasks.py:90-91`), e lo rifiuta se scatta un hit. Il planner non aveva niente
+  di simile. È esattamente la direzione giusta, ed è la lezione di `FIX-1` applicata
+  spontaneamente al percorso nuovo.
+- **Il gate di default continua a funzionare**: scenario A misurato a 0 tentativi. L'opt-in è
+  reale anche qui.
+- I test aggiunti coprono `opt-in`, `safety reject` e `default-off` — i tre casi giusti.
+
+**Il difetto non è nel writer adapter. È che il writer adapter è stato costruito su un ponte
+che sapevamo difettoso**, e quel ponte non è stato toccato.
+
+### 13.5 Cosa NON ho misurato
+
+Ho guidato `_code_for_prompt()` **direttamente**, quindi i 3 tentativi misurati sono quelli del
+solo percorso writer. **Non ho misurato un giro `uj` completo end-to-end** in cui il planner e
+il writer girano entrambi. Per aritmetica dei due gate ci si aspetterebbero 3 + 3 = 6 tentativi
+fatturabili per una singola richiesta utente, ma **non l'ho verificato e non lo affermo**.
+
+### 13.6 Conseguenza per `FIX-10`
+
+`FIX-10a` e `FIX-10b` non cambiano: restano due righe e una condizione, in `cloud_bridge.py` e
+`core/config.py`. **Chiudono entrambe le porte insieme**, perché entrambe passano da
+`ask_cloud_ai`. È il motivo per cui la correzione va fatta nel ponte e non nei gate: aggiungere
+un terzo adapter aggiungerebbe una terza porta, e il fix al ponte le chiude tutte in anticipo.
+
+`docs/PHASE2.md` ora elenca come prossimi passi *"Embedding-backed recall (optional, needs
+model)"* e *"Multi-agent debate loop"*. Il primo dice esplicitamente **needs model**, e un
+debate loop multi-agente è per costruzione un moltiplicatore di chiamate. **La terza e la
+quarta porta sono già scritte nella roadmap.**

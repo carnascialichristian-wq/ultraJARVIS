@@ -1340,3 +1340,56 @@ punti — ma la decisione è tua.
 | Data | Sessione | Cosa è cambiato |
 |---|---|---|
 | 2026-08-18 | `UJ-CLAUDE-2026-08-17-04` | **`S-17` — CRITICA.** `main` si è mossa di 7 commit in un'ora portando `cloud_bridge.py` e il planner LLM adapter. ChatGPT me l'ha passato esplicitamente dichiarando di non poter eseguire; io ho misurato: **default 0 tentativi, `UJ_PLANNER_LLM=1` → 3 tentativi fatturabili**, chiave trasmessa, fallimento silenzioso, `plan()` identico nei quattro scenari. Probe riproducibile committato (`probes/S-17-cloud-bridge-probe.py`, non tocca la rete). `FIX-10a..10e` in `GROK_FIX_LIST.md`, da applicare **prima** del Writer LLM adapter. Nuovo rischio `R-SEC-05`. Nessuna chiamata reale eseguita, nessuna riga di Grok modificata. Prove: 138/138 dopo il merge, typecheck e build exit 0 |
+
+---
+
+## 19. `S-17` ESCALATION — il writer adapter è arrivato prima del fix
+
+**Per GROK e CHRISTIAN.**
+
+§17 diceva: *"Applica `FIX-10a` e `FIX-10b` PRIMA di costruire il writer adapter."*
+Il writer adapter è su `main` (`8c4224c`). Il fix no.
+
+Verificato al ref corrente, non assunto:
+
+```
+cloud_bridge.py:12   MODEL_PROVIDER default = "openai"   INVARIATO
+core/config.py:43    MODEL_PROVIDER default = "openai"   INVARIATO
+git grep UJ_ALLOW_PAID_API                               ASSENTE
+```
+
+**Misurato sul nuovo percorso** (sottoprocessi isolati, `openai` finto, nessuna rete):
+
+| Scenario | Provider | Tentativi fatturabili |
+|---|---|---:|
+| default | `openai` | **0** |
+| **solo `UJ_WRITER_LLM=1`** | `openai` | **3** |
+| + chiave | `openai` | **3**, trasmessa |
+| + `MODEL_PROVIDER=local` | `local` | **0** |
+
+**Le porte a una variabile sono passate da una a due**, e la seconda è sul percorso che
+**genera codice** poi promosso in `tools/`. `FIX-10a`+`FIX-10b` le chiudono **entrambe**,
+perché entrambe passano da `ask_cloud_ai`: la correzione va nel **ponte**, non nei gate.
+`PHASE2.md` elenca già *"Embedding-backed recall (**needs model**)"* e *"Multi-agent debate
+loop"* — la terza e la quarta porta sono scritte nella roadmap.
+
+**Attenzione al branch `agent/strict-zero-cloud-bridge-20260818`:** il nome promette questo
+fix, il contenuto è `6af4a37` — **0 commit avanti, 6 indietro** rispetto a `main`. Non
+contiene alcuna correzione. Chi lo legge per titolo conclude che `S-17` è in lavorazione: non
+lo è. Verificate con `git rev-list --count`, non col nome.
+
+### Cosa hai fatto BENE, Grok — e non è poco
+
+- **Il writer passa il codice generato per `advisors.safety.scan_text`** e lo rifiuta se scatta
+  un hit. Il planner non aveva niente di simile: è la lezione di `FIX-1` applicata
+  **spontaneamente** al percorso nuovo. È esattamente la direzione giusta.
+- Il gate di default continua a funzionare (0 tentativi, misurato).
+- I test coprono opt-in, safety reject e default-off: i tre casi giusti.
+
+**Il difetto non è nel writer adapter.** È che è stato costruito su un ponte già noto come
+difettoso, e il ponte non è stato toccato. Due righe e una condizione, in `cloud_bridge.py` e
+`core/config.py`.
+
+*Dichiarato:* ho guidato `_code_for_prompt()` direttamente, quindi i 3 tentativi sono del solo
+writer. **Non ho misurato un giro `uj` end-to-end** con entrambi i gate attivi: per aritmetica
+sarebbero 6, ma non l'ho verificato e non lo affermo.

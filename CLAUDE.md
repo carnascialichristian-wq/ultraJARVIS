@@ -1563,6 +1563,94 @@ codice di Grok e la correzione è una decisione di baseline. La tentazione era c
 
 **Non ho eseguito nessuna chiamata reale** e non ho installato `openai`.
 
+---
+
+## Sessione 4, terza parte — `S-17` escalation: il writer adapter è arrivato prima del fix
+
+**Richiesta di Christian:** *"CONTINUA CON I TUOI LAVORI E SE FINITI PUBBLICALI SU GIT"*, più
+la domanda su quanto ho completato (risposta con la formula §7.4, non a sensazione).
+
+### Trappola 11, quarta volta di fila che paga
+
+`main` si era mossa di nuovo (`04ae305` → `8c4224c`) ed era comparso un branch nuovo,
+`agent/strict-zero-cloud-bridge-20260818`.
+
+**Il branch non contiene il fix.** Il nome promette esattamente `FIX-10`, il contenuto è
+`6af4a37`: **0 commit avanti, 6 indietro** rispetto a `main`. Verificato con
+`git rev-list --count`, non dedotto dal nome. Chi lo leggesse per titolo concluderebbe che
+`S-17` è in lavorazione. Non lo è.
+
+**È la stessa forma dei sette "controlli che non controllano" già trovati su `main`:** una cosa
+che *sembra* una difesa perché si chiama come una difesa. Stavolta però l'oggetto è un branch,
+non una funzione — e mi ha quasi ingannato: stavo per scrivere "il fix è in corso".
+
+### Quello che §12.8 chiedeva di non fare è stato fatto
+
+`S-17` §12.8 diceva: *"`FIX-10a`/`FIX-10b` vanno applicati PRIMA che il writer adapter
+esista."* Grok ha pubblicato `_code_via_llm` (opt-in `UJ_WRITER_LLM=1`) senza il fix.
+
+Verificato al ref corrente: `MODEL_PROVIDER` è **ancora** `openai` in `cloud_bridge.py:12` e
+`core/config.py:43`; `UJ_ALLOW_PAID_API` **non esiste**.
+
+### Misurato: la superficie è esattamente raddoppiata
+
+Stesso metodo, sottoprocessi isolati e modulo `openai` finto, nessuna rete. Guidato
+`core.natural_tasks._code_for_prompt()`:
+
+| Scenario | Provider | Tentativi fatturabili |
+|---|---|---:|
+| default | `openai` | **0** |
+| **solo `UJ_WRITER_LLM=1`** | `openai` | **3** |
+| + chiave | `openai` | **3**, trasmessa |
+| + `MODEL_PROVIDER=local` | `local` | **0** |
+
+Prima c'era **una** variabile che da sola apriva il percorso a pagamento. Ora ce ne sono
+**due**, indipendenti, e la seconda è sul percorso che **genera codice** poi promosso in
+`tools/`.
+
+Non è cresciuta "in generale": è cresciuta **esattamente** del doppio, perché ogni gate è una
+condizione separata sullo stesso ponte immutato. Ed è la ragione per cui `FIX-10a`/`FIX-10b`
+vanno nel **ponte** e non nei gate: chiudono entrambe le porte insieme, e prevengono la terza.
+
+`PHASE2.md` ora elenca *"Embedding-backed recall (**needs model**)"* e *"Multi-agent debate
+loop"*. **La terza e la quarta porta sono già scritte nella roadmap.**
+
+### Ho scritto cosa Grok ha fatto BENE, perché non è una ripetizione peggiorata
+
+- **Il writer passa il codice generato per `advisors.safety.scan_text`** e lo rifiuta se scatta
+  un hit (`natural_tasks.py:90-91`). Il planner non aveva niente di simile: è la lezione di
+  `FIX-1` applicata **spontaneamente** al percorso nuovo.
+- Il gate di default continua a funzionare: scenario A a 0 tentativi, misurato.
+- I test coprono opt-in, safety reject e default-off — i tre casi giusti.
+
+**Il difetto non è nel writer adapter. È che è stato costruito su un ponte già noto come
+difettoso, e quel ponte non è stato toccato.**
+
+### Cosa NON ho misurato, dichiarato
+
+Ho guidato `_code_for_prompt()` **direttamente**: i 3 tentativi sono del solo percorso writer.
+**Non ho misurato un giro `uj` end-to-end** con planner e writer entrambi attivi. Per aritmetica
+ci si aspetterebbero 6 tentativi per una singola richiesta utente, ma non l'ho verificato e
+**non lo affermo**.
+
+### Errori commessi in questa parte
+
+Nessun errore tecnico. Un errore di concetto evitato: **stavo per registrare `S-17` come "in
+lavorazione presso Grok"** sulla base del nome del branch `agent/strict-zero-cloud-bridge-*`.
+Due comandi (`git rev-parse`, `git rev-list --count`) hanno mostrato che è vuoto. È
+letteralmente la trappola 11 applicata a un branch invece che a una consegna: **il nome
+descrive un'intenzione, i commit descrivono lo stato.**
+
+### Prove eseguite
+
+| Verifica | Esito |
+|---|---|
+| `MODEL_PROVIDER` default al ref corrente | **`openai`**, invariato in entrambi i punti |
+| `git grep UJ_ALLOW_PAID_API` | **assente** — FIX-10b non applicato |
+| Branch `strict-zero-cloud-bridge` vs `main` | **0 avanti, 6 indietro** — non contiene il fix |
+| Percorso writer, 4 scenari | **0 / 3 / 3 / 0** |
+| Suite contratti dopo il merge | **138/138**, typecheck e build exit 0 |
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -1676,7 +1764,7 @@ BRANCH    : ATTENZIONE — CAMBIATO IN SESSIONE 4.
             lavoro NON coincide più con main: il pre-verdetto UJ-CAP-001 sta sul
             branch di sessione 4 e NON è su main.
 
-MAIN      : commit 04ae305 (verificato in sessione 4, seconda parte — si era mossa
+MAIN      : commit 8c4224c (verificato in sessione 4, terza parte — si era mossa
             di 7 commit in meno di un'ora). La riga sotto dice 302852a/319
             file: era vero a fine sessione 3 ed è già superato — main si muove.
             Contiene il piano canonico, il Program OS di
@@ -1792,6 +1880,15 @@ SESSIONE 4 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      ORDINE: FIX-10a/10b PRIMA del "Writer LLM adapter" che PHASE2.md mette come
      prossimo passo — userebbe lo stesso cloud_bridge sul percorso che genera
      codice. Stessa logica di S-12 prima di S-13.
+     >>> AGGIORNAMENTO (terza parte, main @ 8c4224c): IL WRITER ADAPTER È
+     ARRIVATO PRIMA DEL FIX. Verificato: MODEL_PROVIDER ancora "openai",
+     UJ_ALLOW_PAID_API assente. Ora le porte a una variabile sono DUE
+     (UJ_PLANNER_LLM, UJ_WRITER_LLM) e la seconda genera CODICE. Misurato:
+     UJ_WRITER_LLM=1 da solo -> 3 tentativi fatturabili. Dettaglio in §13
+     della security review. ATTENZIONE: il branch
+     agent/strict-zero-cloud-bridge-20260818 NON contiene il fix — è a
+     6af4a37, 0 avanti e 6 indietro rispetto a main. Il nome promette, i
+     commit no: verifica con git rev-list --count, non col titolo.
      NON ho eseguito nessuna chiamata reale e NON ho toccato il codice di Grok.
 
   C) SEI BRANCH che il vecchio RESUME_POINT non citava. Nessun altro dovere mio

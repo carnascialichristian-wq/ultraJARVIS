@@ -396,6 +396,18 @@ Ogni fix qui sopra ha il suo comando di verifica proprio per questo.
 
 ## FIX-10 — `cloud_bridge` va sul percorso a pagamento per default · **CRITICA**
 
+> **AGGIORNAMENTO 2026-08-18, poche ore dopo.** Il writer adapter è arrivato su `main`
+> (`8c4224c`) **prima** che questo fix fosse applicato. Verificato: `MODEL_PROVIDER` è ancora
+> `openai` in entrambi i punti e `UJ_ALLOW_PAID_API` non esiste. Ora le variabili che da sole
+> aprono il percorso a pagamento sono **due**: `UJ_PLANNER_LLM` e `UJ_WRITER_LLM`, e la
+> seconda è sul percorso che **genera codice**. Misurato: `UJ_WRITER_LLM=1` da solo → **3
+> tentativi fatturabili**. `FIX-10a`+`FIX-10b` chiudono **entrambe** le porte, perché entrambe
+> passano da `ask_cloud_ai`: per questo la correzione va nel ponte e non nei gate.
+> Il branch `agent/strict-zero-cloud-bridge-20260818` **non contiene il fix**: è fermo a
+> `6af4a37`, 0 commit avanti e 6 indietro rispetto a `main`.
+> Dettaglio in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §13.
+
+
 **Questo è il fix più urgente della lista, e va applicato PRIMA del "Writer LLM adapter"
 che `docs/PHASE2.md` mette come prossimo passo.** Motivo: il writer adapter userebbe lo
 stesso `cloud_bridge`, sul percorso che genera codice. Un difetto di fondazione replicato
