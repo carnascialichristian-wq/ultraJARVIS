@@ -2304,6 +2304,79 @@ output e attesa.
 
 ---
 
+## Sessione 5, terza parte — Gemini ha rispedito `UJ-CAP-001`, e il verdetto è emettibile ma non importabile
+
+Ultimo controllo dei ref prima di chiudere: **due rami nuovi comparsi alle 12:40**, dopo che
+avevo iniziato — `agent/uj-cap-001-gemini-review-20260818` e il gemello GGL. È il caso 1-bis
+del RESUME_POINT: *"se Gemini ha rispedito `UJ-CAP-001`, è tuo"*. **Ottava volta che la
+trappola 11 paga**, e stavolta il ramo è nato **durante** la sessione.
+
+### Il test dichiarato in anticipo ha fatto il suo lavoro
+
+Avevo scritto che avrei eseguito due `grep` **prima** di leggere il merito. Fatto:
+
+| Misura | Quarantena | Reinvio (MD / JSON) |
+|---|---:|---:|
+| `UNKNOWN` | 1 in 528 righe | **42 / 70** |
+| date ISO | 0 | **20 / 20** |
+| URL primarie distinte | — | **18 su 19** |
+
+Il criterio serviva a distinguere una verifica da un reimballaggio, e ha distinto. **Il
+reinvio passa.** Da 9 capability a 19, da un insieme sparso a **27 campi** per record.
+
+`G-002` chiuso bene — quota strutturata per modello/progetto/account, 19 valori distinti,
+nessun numero universale sopravvive. `G-004` chiuso — le quattro UI web sono `HUMAN_BRIDGE`,
+e Gemini l'ha fatto **senza aver ricevuto il mio addendum**, non ancora inoltrato.
+
+### Verdetto: **FAIL**, 3 criteri su 5. Era 1 su 5
+
+`AC-01` PASS · `AC-02` PASS · `AC-03` PASS · `AC-04` **FAIL** (`local-compute`: 0 occorrenze)
+· `AC-05` **FAIL** (nessun `ResponsePacket` al ref).
+
+**`AC-03` l'ho dato PASS, e la scelta è deliberata.** Il criterio chiede fonte e data: ci
+sono, letteralmente. Il difetto — `verified_at_utc` è **una costante su 19 capability**, al
+secondo, identica al timestamp di impacchettamento — è una debolezza dell'evidenza, non il
+mancato rispetto della lettera. Ho bocciato Gemini in `G-004` per aver violato la *propria*
+definizione: reinterpretare un criterio per farlo fallire sarebbe lo stesso errore col segno
+opposto. Il difetto sta nei findings, con l'azione richiesta.
+
+**`F-002` è la forma nuova di `G-003`: il campo che dovrebbe dimostrare la verifica è una
+costante.** È letteralmente la stessa struttura di `S-20`, che ho aperto oggi sul codice di
+Grok — un meccanismo corretto la cui condizione non varia mai. Due autori diversi, due
+linguaggi diversi, stessa forma, nella stessa giornata.
+
+**`F-004`:** `G-006` è stato chiuso **rimuovendo** la capability. *"Agent SDK"* e *"computer
+use"*: 0 occorrenze. La lacuna non è risolta, è diventata invisibile.
+
+### Ho eseguito il validatore invece di dichiarare valido il mio ReviewResult
+
+Tre blocchi, tutti strutturali, **nessuno risolvibile da Gemini**:
+
+1. **Deadlock del ledger, seconda occorrenza.** *"may only be imported for a task currently in
+   REVIEW; UJ-CAP-001 is READY."* Lo stato diventa `REVIEW` solo con un `ResponsePacket`, che
+   non esiste. È **esattamente** la diagnosi che avevo scritto in sessione 4 per i miei sette
+   task, ora confermata su un task di un'altra IA: non era un mio problema di condotta, è una
+   proprietà del meccanismo.
+2. **`UJ-CAP-001` ha due liste di criteri diverse.** La card ne ha **cinque**, il
+   `BACKLOG.json` ne ha **due**. Gemini è stata istruita dalla card; il validatore giudica sul
+   BACKLOG. Una review scritta sui criteri realmente ricevuti **non è importabile**.
+   E il testo dell'`AC-02` del BACKLOG è: *"CLAUDE issues an evidence-backed **PASS or
+   PASS_WITH_ACTIONS** review"* — un criterio di accettazione che nomina solo gli esiti
+   positivi del reviewer, cioè soddisfatto se e solo se approvo. Non è un criterio, è una
+   conclusione scritta in anticipo.
+3. Gli artefatti vivono sul ramo di Gemini, non nell'albero di chi valida.
+
+Il ReviewResult resta quindi un **candidato**, con lo stesso suffisso già usato per
+`UJ-REV-001`. `0/13` prima, `0/13` dopo.
+
+### Errore di questa parte
+
+| # | Errore | Correzione |
+|---|---|---|
+| E24 | Ho scritto il `commit_sha` del ReviewResult come segnaposto (`27b3717` + zeri) intendendo sostituirlo, e l'ho quasi validato così | il pattern dello schema è `^[0-9a-f]{40}$`, quindi 40 zeri **avrebbero passato la forma**: la validazione non mi avrebbe salvato. Sostituito col ref reale prima di eseguire il validatore. **Un segnaposto che rispetta il formato è più pericoloso di uno che non lo rispetta** |
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -2508,6 +2581,25 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  R) GEMINI HA RISPEDITO UJ-CAP-001 ed E' GIA' STATO REVISIONATO. NON RIFARE.
+     Ref: agent/uj-cap-001-gemini-review-20260818 @ 27b37174c10b86122f7b7ba71e697dfda91647d2
+       docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260818.md
+       docs/program/reviews/UJ-CAP-001-CLAUDE-REVIEWRESULT-CANDIDATE.json
+     ESITO: FAIL, 3 criteri su 5 (era 1 su 5). AC-04 e AC-05 falliti.
+     Il test dei due grep e' passato: UNKNOWN 1 -> 42/70, date 0 -> 20/20.
+     G-002 e G-004 chiusi bene. G-006 chiuso RIMUOVENDO la capability.
+     F-002 (HIGH): verified_at_utc e' UNA COSTANTE su 19 capability, al secondo,
+     identica al timestamp di impacchettamento. Stessa forma di S-20.
+     IL REVIEWRESULT NON E' IMPORTABILE, e i 3 motivi sono findings per CHATGPT:
+       1. deadlock del ledger: importabile solo se il task e' in REVIEW, ma
+          diventa REVIEW solo con un ResponsePacket, che non esiste. SECONDA
+          occorrenza della diagnosi di sessione 4, su un task di un'altra IA.
+       2. UJ-CAP-001 ha DUE liste di criteri: la card ne ha 5, BACKLOG.json 2.
+          E l'AC-02 del BACKLOG dice "CLAUDE issues a PASS or PASS_WITH_ACTIONS
+          review": un criterio che nomina solo gli esiti positivi del reviewer.
+       3. gli artefatti sono sul ramo di Gemini, non nell'albero di chi valida.
+
 
   T) S-20 (NUOVO, MEDIUM) — la promozione cabla safe=True. GIA' FATTO, NON RIFARE:
        MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §17

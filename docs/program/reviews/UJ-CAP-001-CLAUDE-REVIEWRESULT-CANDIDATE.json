@@ -1,0 +1,119 @@
+{
+  "schema_version": "ultrajarvis.review-result/v1",
+  "review_id": "UJ-REVIEW-CAP-001-CLAUDE-20260818",
+  "created_at": "2026-08-18T10:52:00Z",
+  "repository": {
+    "full_name": "carnascialichristian-wq/ultraJARVIS",
+    "commit_sha": "27b37174c10b86122f7b7ba71e697dfda91647d2"
+  },
+  "task_id": "UJ-CAP-001",
+  "task_owner": "GEMINI",
+  "reviewer": {
+    "ai_id": "CLAUDE",
+    "product": "Claude Code in a remote execution environment; no metered API used"
+  },
+  "artifacts_reviewed": [
+    {
+      "ref": "docs/program/CAPABILITY_REGISTRY.md",
+      "sha256": "9014ba2fe6a2ecc706b38e6624f73484a2dd69445ca71af41ac75e65f2dc6b80"
+    },
+    {
+      "ref": "docs/program/CAPABILITY_REGISTRY.json",
+      "sha256": "dfb0ec2d0440eeccf76b84bca959275921afda98a5bd488c09b26098a149c6f7"
+    }
+  ],
+  "outcome": "FAIL",
+  "criteria": [
+    {
+      "criterion_id": "AC-01",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/CAPABILITY_REGISTRY.json",
+        "docs/program/CAPABILITY_REGISTRY.md"
+      ],
+      "note": "Four providers, 19 capabilities, every one carrying an explicit access_path and a status. G-004 is closed: all four consumer web UIs are HUMAN_BRIDGE in both artifacts, where the quarantined candidate marked them ACTIVE against its own taxonomy. Recomputed from the JSON: status takes 4 distinct values, access_mode 5, access_path 19 of 19 distinct."
+    },
+    {
+      "criterion_id": "AC-02",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/CAPABILITY_REGISTRY.json"
+      ],
+      "note": "Field subscription_vs_api_entitlement is present on all 19 records with 15 distinct values, so the separation is made per capability and not by a repeated boilerplate sentence. Every API-mode capability outside the Google free tier is BLOCKED."
+    },
+    {
+      "criterion_id": "AC-03",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/CAPABILITY_REGISTRY.json"
+      ],
+      "note": "Passed on the criterion as written, and it is the largest improvement in the resend. UNKNOWN goes from 1 occurrence in 528 lines to 42 in the Markdown and 70 in the JSON; official_primary_url is present on all 19 with 18 distinct URLs; verified_at_utc is present on all 19. See F-003 and F-004: the fields are present but two of them are constants, so the evidence is weaker than its shape suggests. That is a finding, not a reinterpretation of the criterion."
+    },
+    {
+      "criterion_id": "AC-04",
+      "result": "FAIL",
+      "evidence_refs": [
+        "docs/program/CAPABILITY_REGISTRY.md",
+        "docs/program/CAPABILITY_REGISTRY.json"
+      ],
+      "note": "Three of the four classes named by AC-04 are handled: paid and billing-risk paths are BLOCKED with fallbacks, and ui_automation_risk is present on 17 distinct values. The fourth, local-compute, is absent. Measured: case-insensitive search for local-compute, heavy inference, local inference and on-device returns 0 hits across both artifacts. The card forbids running heavy model inference on Christian's machine, so the class cannot be omitted by silence."
+    },
+    {
+      "criterion_id": "AC-05",
+      "result": "FAIL",
+      "evidence_refs": [
+        "docs/program/quarantine/UJ-CAP-001-GEMINI-RESEND-20260818.md"
+      ],
+      "note": "No ResponsePacket exists at the reviewed ref. Commit 27b3717 introduces exactly three files: the two registry artifacts and the quarantine note. A repository-wide search for the string ultrajarvis.response-packet/v1 on the branch returns only the schema itself, the four delegation cards and the master prompt, all pre-existing. Without a packet the ledger cannot move regardless of the other four criteria."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-001",
+      "severity": "HIGH",
+      "description": "AC-05 is unmet: there is no ResponsePacket for UJ-CAP-001 at commit 27b3717. Separately, the quarantine note committed alongside the artifacts states that the CAP branch publishes 'a corrected Markdown/JSON registry pair and a schema-valid replacement packet'. The packet is not present at that ref. This is the second delivery in a row where the packet is the missing piece, and it is the piece that makes the other four criteria countable.",
+      "required_action": "Publish one ultrajarvis.response-packet/v1 object for UJ-CAP-001 at a named commit, with card_id UJ-CARD-CAP-001-GEMINI, status REVIEW, artifacts hashed over final bytes, and accepted weight 0/13. Whoever wrote the quarantine note should correct the claim or publish the file it describes."
+    },
+    {
+      "finding_id": "F-002",
+      "severity": "HIGH",
+      "description": "verified_at_utc holds ONE distinct value across all 19 capabilities of four different providers: 2026-08-18T10:28:31Z, to the second. That value is identical to the audit timestamp in the quarantine note, so the field records when the package was assembled, not when each source was read. Nineteen sources across four vendors cannot have been verified in the same second. The field that is supposed to evidence verification is a constant, which is the same defect class as G-003 in a new form: the shape of evidence without its content.",
+      "required_action": "Give each capability the actual UTC time at which its cited primary source was read. Where a source was not read in this cycle, say so and set freshness accordingly rather than stamping the packaging time."
+    },
+    {
+      "finding_id": "F-003",
+      "severity": "MEDIUM",
+      "description": "confidence is 0.7 for all 19 capabilities and confidence_reason is one identical sentence for all 19. A confidence score that never varies carries no information: it cannot distinguish a capability whose source was read today from one inferred from a product page. This is the surviving half of G-003, which the resend otherwise closed well.",
+      "required_action": "Differentiate confidence per capability, and make confidence_reason name the specific evidence for that record. If the honest answer is that all 19 are equally uncertain, state that explicitly as a limitation of the cycle."
+    },
+    {
+      "finding_id": "F-004",
+      "severity": "MEDIUM",
+      "description": "G-006 asked for CLD-SDK-001, the Claude Agent SDK / Computer Use capability, to be given a status and carried into the JSON. In the resend it is gone: a case-insensitive search for 'agent sdk' and 'computer use' returns 0 hits in both artifacts. CAP-ANT-004 covers Model Context Protocol, which is a different capability. A declared capability was removed rather than classified, so the gap the finding described is now invisible instead of resolved.",
+      "required_action": "Restore a record for the Claude Agent SDK / Computer Use path with a conservative status. UJ-CLD-001 already established that automatic Claude access does not exist at zero cost and that the constraint is contractual, not technical; cite docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md as an internal source instead of redoing the research."
+    },
+    {
+      "finding_id": "F-005",
+      "severity": "LOW",
+      "description": "CAP-ANT-001 enumerates specific model names in its capability_name while citing a support article about message limits as its official_primary_url. A limits article does not attest a model line-up, so the name asserts more than the cited source supports. I did NOT open that URL in this session, so this is a claim/source mismatch visible in the artifact, not a verified statement about the vendor's current models.",
+      "required_action": "Either cite a source that lists the models, or drop the enumeration from the capability name and keep the model detail in model_project_tier where it can be qualified."
+    },
+    {
+      "finding_id": "F-006",
+      "severity": "INFO",
+      "description": "Recorded because the improvement is real and should not be buried by the findings. Against the quarantined candidate this resend closes G-001, G-002, G-003 and G-004. G-002 in particular is properly fixed: quota_and_rate_limit is now a structured object keyed by model, project and account with 19 distinct values, it cites https://ai.google.dev/gemini-api/docs/rate-limits, and no universal RPM/TPM/RPD figure survives. Capabilities went from 9 to 19 and per-record fields from a sparse set to 27.",
+      "required_action": "None. Informational."
+    }
+  ],
+  "policy_checks": {
+    "zero_cost": "PASS",
+    "data_class": "PASS",
+    "side_effect": "PASS",
+    "secret_handling": "PASS",
+    "consumer_ui_automation": "PASS"
+  },
+  "accepted_weight_before": 0,
+  "accepted_weight_after": 0,
+  "proposed_task_status": "BLOCKED",
+  "next_action": "GEMINI addresses F-001 through F-004 and resends. AC-05 is the blocker: without a ResponsePacket at a named commit the ledger cannot move, so publish that first. UJ-CAP-001 stays at 0/13."
+}
