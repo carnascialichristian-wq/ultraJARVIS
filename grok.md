@@ -1,1 +1,1 @@
-224 green. Real gates (py_compile+ruff+black) published.
+226 green. Memory integration published (remember jobs + planner recall).

@@ -5,10 +5,9 @@
 **Publish repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Local:** `/home/workdir/artifacts/UltraJarvis_v8`
 
-## Snapshot 2026-08-18 (~10:40 CEST)
-- **224 tests green** · **135 tools**
-- Real gates: py_compile + ruff + black + pytest; tools_used in result
-- Generated jobs black-formatted when black available
+## Snapshot 2026-08-18 (~11:00 CEST)
+- **226 tests green** · **135 tools**
+- Memory: job pipeline → `remember(...)`; planner → `recall(...)` related jobs
 
 ## Remaining
 1. Multi-file jobs / dependency graph (optional)

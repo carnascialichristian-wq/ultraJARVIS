@@ -3,12 +3,14 @@
 **Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Target:** ultraJARVIS (not UltraJarvis_v8-grok)
 
-## Published (2026-08-18 ~10:40 CEST)
+## Published (2026-08-18 ~11:00 CEST)
 
-### Security + Phase 2 + Real gates
-- UJ-SEC-003 · promote register · planner/writer LLM adapters
-- Real gates: py_compile (always) + ruff/black/pytest when present
-- tools_used in gate result · black format on generated jobs
+### Memory integration
+- Jobs recorded via `core.memory.remember` on complete
+- Planner surfaces related past jobs via `recall`
+
+### Prior
+SEC-003 · Phase 2 LLM · real gates · promote auto-register
 
 ## Remaining
 - Multi-file jobs (optional)

@@ -40,17 +40,14 @@ def test_write_plan_md(tmp_path: Path):
 
 def test_plan_surfaces_existing_tools():
     p = plan("Implement is_even and factorial helpers for integers")
-    # registry has math.is_even and math.factorial
     joined = " ".join(p.milestones) + " " + " ".join(p.risks)
     assert "is_even" in joined or "factorial" in joined or "existing tools" in joined.lower()
     assert any("existing tools" in m.lower() or "is_even" in m for m in p.milestones)
 
 
 def test_plan_llm_adapter_opt_in(monkeypatch):
-    """When UJ_PLANNER_LLM=1 and model returns JSON, use it; else heuristic."""
-    import os
     import json
-    from core import planner as planner_mod
+    import cloud_bridge
 
     payload = {
         "title": "LLM Plan Title",
@@ -63,13 +60,6 @@ def test_plan_llm_adapter_opt_in(monkeypatch):
         return json.dumps(payload)
 
     monkeypatch.setenv("UJ_PLANNER_LLM", "1")
-    monkeypatch.setattr(
-        "cloud_bridge.ask_cloud_ai",
-        fake_ask,
-        raising=False,
-    )
-    # also patch the import site used inside _plan_via_llm
-    import cloud_bridge
     monkeypatch.setattr(cloud_bridge, "ask_cloud_ai", fake_ask)
 
     p = plan("Build something interesting")
@@ -79,7 +69,6 @@ def test_plan_llm_adapter_opt_in(monkeypatch):
 
 
 def test_plan_llm_disabled_by_default(monkeypatch):
-    """Without UJ_PLANNER_LLM=1 the heuristic path is used even if LLM would work."""
     import json
     import cloud_bridge
 
@@ -94,4 +83,15 @@ def test_plan_llm_disabled_by_default(monkeypatch):
 
     p = plan("Heuristic only path")
     assert p.title != "Should Not Appear"
-    assert calls == []  # never called
+    assert calls == []
+
+
+def test_plan_surfaces_related_memory(tmp_path, monkeypatch):
+    """Planner mentions related past jobs from memory when available."""
+    from core import memory as mem
+    mem_path = tmp_path / "mem.jsonl"
+    monkeypatch.setattr(mem, "DEFAULT_PATH", mem_path)
+    mem.remember("job:job_abc title='factorial helper' status=PASS", tags=["job", "pass"])
+    p = plan("Write a factorial function")
+    joined = " ".join(p.milestones)
+    assert "related past jobs" in joined.lower() or "factorial" in joined.lower()
