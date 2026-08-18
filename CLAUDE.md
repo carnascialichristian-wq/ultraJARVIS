@@ -1651,6 +1651,176 @@ descrive un'intenzione, i commit descrivono lo stato.**
 | Percorso writer, 4 scenari | **0 / 3 / 3 / 0** |
 | Suite contratti dopo il merge | **138/138**, typecheck e build exit 0 |
 
+---
+
+## Sessione 4, quarta parte — decisione n. 7 approvata, `S-17` chiuso e verificato
+
+**Richiesta di Christian:** *"MODEL_PROVIDER deve diventare local di default … nessuna
+chiamata cloud o API pay-per-use deve avvenire implicitamente. Se il provider locale non è
+disponibile, il sistema deve fallire in modo sicuro, senza fare fallback automatico verso
+OpenAI o altri provider. Registra la decisione n. 7 come approvata, aggiorna i test e mantieni
+invariati task weight e backlog."*
+
+### Trappola 11 mi ha impedito di scrivere codice che esisteva già
+
+Stavo per applicare `FIX-10a`/`FIX-10b` di mia mano. Il fetch ha mostrato **cinque** movimenti
+nuovi, fra cui `agent/strict-zero-cloud-bridge-20260818` passato da `6af4a37` a `1251a68`.
+
+Nella terza parte avevo scritto che quel branch era **vuoto** — 0 avanti, 6 indietro — e che
+il nome prometteva un fix che non c'era. **Adesso il fix c'è davvero.** Se avessi scritto il
+mio, avremmo avuto due correzioni divergenti sullo stesso file da riconciliare a mano.
+
+**Il lavoro giusto non era applicare la correzione: era verificarla.** E ChatGPT l'aveva
+chiesto esplicitamente, in `docs/program/reviews/inbox/CLOUD_BRIDGE_STRICT_ZERO_REVIEW_20260818.md`:
+
+> *"UJ-SEC-001 / owner **CLAUDE**: verificare che il blocco soddisfi la policy e che non rompa
+> il runtime previsto."*
+>
+> *"Controlli dichiarati: ispezione statica del diff e progettazione dei test; **esecuzione
+> runtime/test non disponibile in questo checkout**."*
+
+Di nuovo la stessa divisione del lavoro: ChatGPT progetta e non può eseguire, io eseguo.
+
+### La correzione è migliore di quella che avevo proposto, e lo scrivo
+
+`FIX-10b` mio metteva **un interruttore** davanti all'adapter a pagamento. ChatGPT ha
+**cancellato l'adapter**: `_call_openai` non esiste più.
+
+È la scelta giusta e la differenza non è stilistica. Un interruttore è una manopola, e questo
+albero ne ha già sette che non giravano nulla. **Un meccanismo che non esiste non può essere
+riacceso per default sbagliato.**
+
+E contiene una difesa che **io non avevo identificato**: `_validate_local_base` vincola
+`LMSTUDIO_BASE` al loopback. Dopo il fix il percorso locale è l'**unico** percorso, quindi
+senza quel controllo lo si poteva puntare a un endpoint remoto a pagamento con una variabile.
+È il buco che si apre *perché* si chiude l'altro. L'ha visto ChatGPT prima di me.
+
+### Verifica per esecuzione, non per lettura
+
+**1. Il criterio che avevo scritto io** (`FIX-10`: scenari B e C da 3 a 0). Rieseguito il
+probe committato, invariato:
+
+| Scenario | Prima | Dopo |
+|---|---:|---:|
+| default | 0 | **0** |
+| `UJ_PLANNER_LLM=1` | **3** | **0** |
+| + chiave | **3** | **0** |
+| `MODEL_PROVIDER=local` | 0 | **0** |
+
+**2. Sei attacchi al confine di provider** — planner e writer, incluso `MODEL_PROVIDER=openai`
+**esplicito**, maiuscole, spazi, e un altro cloud: **6 su 6 bloccati, 0 tentativi**. Anche il
+caso esplicito, perché non c'è più un adapter da raggiungere.
+
+**3. Tredici attacchi all'endpoint locale** — il nuovo confine di sicurezza: userinfo
+(`http://127.0.0.1@evil.com/`), suffisso (`localhost.evil.com`), fragment, schema `file://`,
+`127.0.0.1` in decimale (`2130706433`), IPv4 mappato IPv6. **13 su 13 corretti.** Le
+codifiche alternative falliscono perché la validazione è un **allowlist di hostname esatti**,
+non una regex — è il progetto giusto.
+
+**4. Non rompe il runtime**, che era la seconda metà della domanda di ChatGPT. Confronto
+onesto, `main` in un worktree pulito:
+
+| Albero | pytest |
+|---|---|
+| `origin/main` @ `1e40376` pristine | **215 passed, 1 failed** |
+| `main` + fix + le mie aggiunte | **239 passed, 1 failed** |
+
+**Nessuna regressione.** L'unica failure è pre-esistente su `main` e non c'entra col bridge —
+verificato nel worktree, non assunto.
+
+### Quello che il fix non copriva, e che ho chiuso io
+
+`core/config.py` legge la **stessa** variabile e il branch non lo toccava: righe 30 e 43,
+default `openai`.
+
+**Oggi è inerte** — ho verificato con `grep` che nessuno legge `Config.model_provider` — e lo
+dico invece di gonfiarlo. Ma è una decisione applicata a metà: due punti leggono la stessa
+variabile e rispondono diversamente. Stessa forma di `S-16`: si corregge nello schema **prima**
+che il cablaggio esista. Allineato anche `lmstudio_base` a `127.0.0.1`.
+
+### Test aggiornati, come richiesto
+
+**`tests/test_config.py::test_defaults` asseriva `== "openai"`.** Era un test che codificava
+la **vecchia policy**: la decisione n. 7 lo rende falso per costruzione. Aggiornato a `"local"`
+**con il motivo e la data nel docstring** — un test cambiato senza spiegazione è un test che
+una sessione futura "ripristina" pensando di riparare una regressione.
+
+**Aggiunto `tests/test_cloud_bridge_strict_zero_policy.py`, 21 test.** Coprono il percorso che
+i test di ChatGPT non toccano: loro monkeypatchano `PROVIDER`, i miei **ricaricano il modulo
+leggendo davvero l'ambiente**, che è il percorso in cui il difetto originale è nato. Più il
+fail-safe esplicito richiesto da Christian, i 13 endpoint, e la coerenza di `core/config.py`.
+
+### Errori commessi in questa parte
+
+Nessuno tecnico. **Un errore evitato dalla trappola 11**, e vale la pena registrarlo perché è
+il rovescio esatto della terza parte: allora il branch si chiamava come un fix e era vuoto,
+**adesso lo stesso branch contiene il fix vero**. Se mi fossi fidato di quanto avevo scritto
+poche ore prima — "quel branch non contiene il fix" — avrei scritto una correzione duplicata.
+**Il RESUME_POINT descrive il passato anche quando l'ho scritto io un'ora fa.**
+
+Un secondo rischio evitato: `pytest` non era installato e la tentazione era dichiarare
+"non verificabile qui", come avevo fatto nella seconda parte per la claim dei 218 test.
+`pip install pytest` è un pacchetto di sviluppo, gratuito e senza implicazioni di policy —
+diverso da `pip install openai`, che è il pacchetto che il finding dice di non installare. La
+distinzione è fra uno strumento di verifica e il meccanismo sotto esame.
+
+### Scoperta collaterale — `S-18`: la test suite distrugge la memoria di Grok
+
+Non l'ho cercata: `git status` dopo `pytest` mostrava **`grok.md` modificato**, da
+`"224 green. Real gates…"` a `"new"`, più `a.txt`, `notes/`, `sub/` nella root.
+
+**La test suite sovrascrive un file tracciato che è la memoria di continuità di un'altra IA.**
+
+Causa dimostrata: la fixture `tmp_root` fa `monkeypatch.setattr("tools.files.PROJECT_ROOT",
+tmp_path)`, ma `tools/files.py` cattura la root nei **default degli argomenti**
+(`root: Path = PROJECT_ROOT`), valutati **una sola volta alla definizione**. Il monkeypatch
+non li tocca: la fixture è un **no-op** e ogni scrittura va nel repository vero.
+
+```
+module PROJECT_ROOT : /home/user/ultraJARVIS
+after monkeypatch   : /tmp/fake-root
+safe_write default  : /home/user/ultraJARVIS   <-- non segue il monkeypatch
+```
+
+Tre ragioni per cui è HIGH: (1) chi fa `pytest` + `git add -A` committa la distruzione della
+memoria di Grok senza accorgersene — me ne sono accorto solo perché **leggo** `git status`,
+lezione `E15`; (2) il test che fa il danno è `test_force_override`, che usa `force=True`,
+cioè il vettore di `S-11`, **contro il repository vero**; (3) `test_protected_refusal` e
+`test_escape_root_refused` **passano per il motivo sbagliato** — passano perché la root reale
+è davvero protetta, non perché la fixture funzioni.
+
+È la **trappola 12 rovesciata**: lì un test che fallisce per il motivo sbagliato è un falso
+negativo, qui un test che passa per il motivo sbagliato è un falso positivo. Stessa regola:
+leggere *perché* un test dà quel risultato.
+
+**Corollario che conta più del danno:** finché la fixture non isola, **`FIX-3` e `FIX-4` non
+hanno una prova valida** — le loro asserzioni passerebbero anche se il contenimento fosse
+stato tolto dalla funzione.
+
+Ripristinato (`git checkout -- grok.md`, rimossi i tre file spuri), documentato in
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §15 e `GROK_FIX_LIST.md` → `FIX-11`. **Non corretto:
+è codice di Grok e fuori dalla decisione n. 7.**
+
+### Confini rispettati
+
+- **`BACKLOG.json`, status e pesi: invariati**, come richiesto. Nessun `task_ledger_delta`.
+- **Non ho mergiato su `main`.** Il lavoro è sul mio branch.
+- **Non ho eseguito nessuna chiamata reale** e non ho installato `openai`.
+- **Non ho corretto i 6 moduli di test non importabili** trovati su `main`: sono di Grok,
+  pre-esistenti, fuori dalla decisione n. 7. Segnalati, non toccati.
+
+### Prove eseguite
+
+| Verifica | Esito |
+|---|---|
+| Probe `S-17` contro l'albero corretto | **0 tentativi in tutti e 4 gli scenari** (era 0/3/3/0) |
+| 6 attacchi di provider | **6 su 6 bloccati** |
+| 13 attacchi di endpoint loopback | **13 su 13 corretti** |
+| `pytest` su `main` pristine (worktree) | 215 passed, 1 failed |
+| `pytest` su albero corretto | **239 passed, 1 failed** (stessa failure pre-esistente) |
+| Suite contratti | **138/138**, typecheck e build exit 0 |
+| Merge a tre vie: lavoro recente di main preservato? | writer adapter e real gates **presenti** |
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -1663,7 +1833,7 @@ descrive un'intenzione, i commit descrivono lo stato.**
 | 4 | Aprire o no una PR per il branch di lavoro | **superata**: la PR #2 esiste già (`claude/ultrajarvis-repo-analysis-li6vvj` → `main`) |
 | 5 | Relay HUMAN_BRIDGE dei blocchi di append verso `gpt.md`/`taskgpt.md` di ChatGPT | in attesa — pronti in `docs/program/reviews/UJ-INT-006-CLAUDE-APPEND-BLOCKS.md` |
 | 6 | Segnalare a ChatGPT che il suo `BACKLOG.json` non vede i miei 6 deliverable | in attesa — divergenza documentata in `TASKCLAUDE.md` §9 |
-| 7 | **`S-17` / `FIX-10`: il default di `MODEL_PROVIDER` deve diventare `local`?** È una decisione di policy sul vincolo Articolo 5, non un bug da correggere in autonomia | **in attesa — la più urgente** |
+| 7 | **`S-17` / `FIX-10`: il default di `MODEL_PROVIDER` deve diventare `local`?** | **RISOLTA 2026-08-18 — APPROVATA da Christian.** Default `local`, nessuna chiamata pay-per-use implicita, fail-safe senza fallback al cloud. Correzione di ChatGPT, verificata da me: `docs/program/reviews/UJ-SEC-003-S17-VERIFICATION-CLAUDE.md` |
 
 ## ADR proposti, nessuno deciso
 
@@ -1687,7 +1857,7 @@ Dettagli in `docs/architecture/RUNTIME_BLUEPRINT.md` §12.
 | `R-SKL-03` | tecnologia di isolamento del sandbox non scelta | MEDIA | dipende da `UJ-INF-001` (Gemini) |
 | ~~`R-RUN-03`~~ | tool senza lookup idempotency | — | **CHIUSO** da `ADM-13` (UJ-MCP-001) |
 | ~~`R-RUN-04`~~ | emissione eventi `tool.*` da parte dell'agente | — | **CHIUSO PARZIALMENTE** da P0-1: copre l'attestazione, non il resoconto |
-| `R-SEC-05` | **`S-17`: `cloud_bridge` va sul provider a pagamento per default; una sola variabile apre 3 tentativi fatturabili, in silenzio.** Oggi contenuto solo dall'assenza del pacchetto `openai` | **CRITICA** | `FIX-10a`/`FIX-10b`, decisione di Christian — è codice di Grok |
+| ~~`R-SEC-05`~~ | `S-17`: `cloud_bridge` andava sul provider a pagamento per default | — | **CHIUSO E VERIFICATO** 2026-08-18: adapter OpenAI rimosso, default `local`, endpoint vincolato al loopback. 6 attacchi di provider e 13 di endpoint bloccati, 215 → 239 test |
 | `R-SEC-03` | `rollbackPlan` è obbligatorio ma nessuno verifica che il piano funzioni | ALTA | UJ-RCV-001 |
 | `R-SEC-04` | la policy assume `dataClass` corretta: se è errata applica bene la regola sbagliata | MEDIA | GEMINI |
 
@@ -1764,7 +1934,7 @@ BRANCH    : ATTENZIONE — CAMBIATO IN SESSIONE 4.
             lavoro NON coincide più con main: il pre-verdetto UJ-CAP-001 sta sul
             branch di sessione 4 e NON è su main.
 
-MAIN      : commit 8c4224c (verificato in sessione 4, terza parte — si era mossa
+MAIN      : commit 1e40376 (verificato in sessione 4, quarta parte — si era mossa
             di 7 commit in meno di un'ora). La riga sotto dice 302852a/319
             file: era vero a fine sessione 3 ed è già superato — main si muove.
             Contiene il piano canonico, il Program OS di
@@ -1880,7 +2050,26 @@ SESSIONE 4 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      ORDINE: FIX-10a/10b PRIMA del "Writer LLM adapter" che PHASE2.md mette come
      prossimo passo — userebbe lo stesso cloud_bridge sul percorso che genera
      codice. Stessa logica di S-12 prima di S-13.
-     >>> AGGIORNAMENTO (terza parte, main @ 8c4224c): IL WRITER ADAPTER È
+     >>> CHIUSO (quarta parte, 2026-08-18). Christian ha APPROVATO la decisione
+     n. 7: default local, nessuna chiamata pay-per-use implicita, fail-safe
+     senza fallback al cloud. ChatGPT ha prodotto la correzione su
+     agent/strict-zero-cloud-bridge-20260818 @ 1251a68 RIMUOVENDO l'adapter
+     OpenAI (meglio del mio FIX-10b, che si limitava a gatearlo) e vincolando
+     LMSTUDIO_BASE al loopback — un buco che io NON avevo visto.
+     HO VERIFICATO ESEGUENDO, non leggendo: criterio 3->0 soddisfatto, 6
+     attacchi di provider (incluso MODEL_PROVIDER=openai ESPLICITO) tutti
+     bloccati, 13 attacchi di endpoint tutti corretti, nessuna regressione
+     (main pristine 215 passed -> albero corretto 239 passed, stessa unica
+     failure pre-esistente). core/config.py l'ho allineato io: il branch non
+     lo toccava. Test aggiornati: test_config.py::test_defaults asseriva la
+     VECCHIA policy, + 21 test nuovi in test_cloud_bridge_strict_zero_policy.py.
+     Dettaglio: docs/program/reviews/UJ-SEC-003-S17-VERIFICATION-CLAUDE.md
+     RESTANO APERTI solo FIX-10d/10e: osservabilità, non più costo.
+     NOTA su main: `python3 -m pytest` senza argomenti NON colleziona — 6
+     moduli di test non si importano (bool_not/not_, to_bytes/human_bytes,
+     +4). Pre-esistente, di Grok, non toccato da me. Finché resta, nessuna
+     claim "N test verdi" è riproducibile: usa gli --ignore.
+     >>> STORICO (terza parte, main @ 8c4224c): IL WRITER ADAPTER È
      ARRIVATO PRIMA DEL FIX. Verificato: MODEL_PROVIDER ancora "openai",
      UJ_ALLOW_PAID_API assente. Ora le porte a una variabile sono DUE
      (UJ_PLANNER_LLM, UJ_WRITER_LLM) e la seconda genera CODICE. Misurato:

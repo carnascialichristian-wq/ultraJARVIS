@@ -396,6 +396,18 @@ Ogni fix qui sopra ha il suo comando di verifica proprio per questo.
 
 ## FIX-10 — `cloud_bridge` va sul percorso a pagamento per default · **CRITICA**
 
+> **STATO 2026-08-18: APPLICATO E VERIFICATO — non rifare.** Christian ha approvato la
+> decisione n. 7 (default `local`, nessuna chiamata pay-per-use implicita, fail-safe senza
+> fallback al cloud). ChatGPT ha prodotto la correzione su
+> `agent/strict-zero-cloud-bridge-20260818` @ `1251a68`, **rimuovendo l'adapter OpenAI**
+> invece di limitarsi a gatearlo, e aggiungendo la validazione loopback su `LMSTUDIO_BASE`.
+> Io ho verificato eseguendo: criterio `3 → 0` soddisfatto, 6 attacchi di provider e 13
+> attacchi di endpoint tutti bloccati, nessuna regressione (215 → 239 test passati).
+> `core/config.py` l'ho allineato io: il branch non lo toccava. Restano aperti solo
+> `FIX-10d` ed `FIX-10e` (osservabilità, non più costo).
+> Dettaglio: `docs/program/reviews/UJ-SEC-003-S17-VERIFICATION-CLAUDE.md`.
+
+
 > **AGGIORNAMENTO 2026-08-18, poche ore dopo.** Il writer adapter è arrivato su `main`
 > (`8c4224c`) **prima** che questo fix fosse applicato. Verificato: `MODEL_PROVIDER` è ancora
 > `openai` in entrambi i punti e `UJ_ALLOW_PAID_API` non esiste. Ora le variabili che da sole
@@ -508,3 +520,53 @@ Con `FIX-10a`+`FIX-10b` applicati, lo scenario B e lo scenario C devono passare 
 - il percorso locale esiste ed è quello conforme. **Manca solo che sia il default.**
 
 Il problema non è il ponte verso un LLM. È **quale estremità è aperta quando nessuno decide.**
+
+---
+
+## FIX-11 — la test suite sovrascrive `grok.md` nel repository · **HIGH**
+
+**Grok: questo cancella la tua memoria di continuità.** Eseguendo `python3 -m pytest`,
+`grok.md` passa da `"224 green. Real gates..."` a `"new"`, e compaiono `a.txt`,
+`notes/hello.txt`, `sub/b.txt` nella root del repository.
+
+**Causa dimostrata:** la fixture `tmp_root` di `tests/test_files.py` fa
+`monkeypatch.setattr("tools.files.PROJECT_ROOT", tmp_path)`, ma `tools/files.py` cattura la
+root nei **default degli argomenti** (`root: Path = PROJECT_ROOT`), valutati una sola volta
+alla definizione della funzione. Il monkeypatch non li tocca: **la fixture e' un no-op** e
+ogni scrittura finisce nel repository vero. Misurato:
+
+```
+module PROJECT_ROOT : /home/user/ultraJARVIS
+after monkeypatch   : /tmp/fake-root
+safe_write default  : /home/user/ultraJARVIS     <-- non segue il monkeypatch
+```
+
+**Correzione (opzione consigliata):** risolvere la root a runtime invece che alla definizione.
+
+```python
+# prima
+def safe_write(path, content, *, encoding="utf-8", root: Path = PROJECT_ROOT, force=False):
+
+# dopo
+def safe_write(path, content, *, encoding="utf-8", root: Path | None = None, force=False):
+    root = root if root is not None else PROJECT_ROOT
+```
+
+Stessa modifica per `safe_read`, `safe_list`, `is_protected`, `_resolve`, `_is_protected`.
+E' preferibile al patch della fixture perche' il difetto tornerebbe alla prima funzione nuova
+aggiunta con lo stesso default.
+
+**Verifica che fallisce finche' il difetto e' presente:**
+
+```bash
+python3 -m pytest tests/test_files.py -q
+git status --porcelain grok.md     # deve essere VUOTO; se stampa " M grok.md" il difetto c'e'
+```
+
+**Effetto collaterale che conta piu' del danno:** finche' la fixture non isola, **`FIX-3` e
+`FIX-4` non hanno una prova valida** — le loro asserzioni girano contro la root reale, dove il
+contenimento esiste davvero, quindi passerebbero anche se la logica fosse stata tolta.
+Due test (`test_protected_refusal`, `test_escape_root_refused`) sono verdi **per il motivo
+sbagliato**.
+
+Dettaglio: `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §15.

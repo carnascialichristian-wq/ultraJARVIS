@@ -900,3 +900,199 @@ un terzo adapter aggiungerebbe una terza porta, e il fix al ponte le chiude tutt
 model)"* e *"Multi-agent debate loop"*. Il primo dice esplicitamente **needs model**, e un
 debate loop multi-agente è per costruzione un moltiplicatore di chiamate. **La terza e la
 quarta porta sono già scritte nella roadmap.**
+
+---
+
+## 14. S-17 — **CHIUSO E VERIFICATO.** Decisione n. 7 approvata dal proprietario
+
+> 2026-08-18. La correzione è di **ChatGPT** (`agent/strict-zero-cloud-bridge-20260818` @
+> `1251a68`); la decisione di policy è di **Christian**; la verifica indipendente è mia.
+
+**Christian ha approvato la decisione n. 7:** `MODEL_PROVIDER` default `local`, nessuna
+chiamata cloud o pay-per-use implicita, e fallimento sicuro **senza fallback automatico** al
+cloud se il provider locale non è disponibile.
+
+ChatGPT ha prodotto la correzione dichiarando *"esecuzione runtime/test non disponibile in
+questo checkout"* e ha chiesto esplicitamente la mia verifica. Eseguita.
+
+**Esito: PASS.** Dettaglio completo in
+`docs/program/reviews/UJ-SEC-003-S17-VERIFICATION-CLAUDE.md`.
+
+| Verifica | Esito |
+|---|---|
+| Il criterio di `FIX-10` (scenari B e C da 3 a 0 tentativi) | **soddisfatto: 3 → 0** |
+| 6 attacchi al confine di provider, incluso `MODEL_PROVIDER=openai` **esplicito** | **6 su 6 bloccati** |
+| 13 attacchi all'endpoint locale (userinfo, suffisso, fragment, IP decimale, IPv6-mapped) | **13 su 13 corretti** |
+| Regressione runtime: `main` pristine vs corretto | **215 → 239 passed**, stessa unica failure pre-esistente |
+
+**La correzione è migliore di quella che avevo proposto.** `FIX-10b` metteva un interruttore
+davanti all'adapter a pagamento; ChatGPT ha **cancellato l'adapter**. Un meccanismo che non
+esiste non può essere riacceso per default sbagliato — e questo albero ha già collezionato
+sette manopole che non giravano nulla. In più `_validate_local_base` chiude un buco che **io
+non avevo identificato**: dopo il fix il percorso locale è l'unico, quindi `LMSTUDIO_BASE`
+poteva essere puntato a un endpoint remoto. Merito suo.
+
+**Chiuso da me in aggiunta:** `core/config.py` leggeva la stessa variabile con default
+`openai` e il branch non lo toccava. Oggi inerte (nessun consumatore, verificato), ma è una
+decisione applicata a metà — corretta nello schema prima che il cablaggio esista, come `S-16`.
+
+**Restano aperti** `FIX-10d` (esito strutturato invece di `""`) e `FIX-10e` (evento per
+tentativo, confluisce in `S-07`). Non costano più denaro: costano osservabilità.
+
+`R-SEC-05` passa da **CRITICA aperta** a **chiusa e verificata**.
+
+### Nota su `main`: un `pytest` senza argomenti non colleziona
+
+Trovato durante la verifica, **non causato dal fix** e pre-esistente su `main` @ `1e40376`:
+sei moduli di test non si importano — `test_bool_not_helpers` importa `bool_not` ma il modulo
+definisce `not_`, `test_bytes_helpers` importa `to_bytes` ma il modulo definisce
+`human_bytes`, e altri quattro uguali. `pytest.ini` non li esclude, quindi
+`python3 -m pytest` si ferma a `6 errors during collection`.
+
+Non l'ho corretto: è codice di Grok, fuori dalla decisione n. 7. Ma va detto, perché
+**finché restano, nessuna claim del tipo "N test verdi" è riproducibile da un terzo** — ed è
+esattamente la classe di affermazione che questo programma continua a produrre.
+
+---
+
+## 15. S-18 — eseguire la test suite **sovrascrive la memoria di Grok** nel repository. **HIGH.**
+
+> Trovato il 2026-08-18 durante la verifica di `S-17`, **non cercandolo**: `git status` dopo
+> `pytest` mostrava `grok.md` modificato. `main` @ `1e40376`. Difetto pre-esistente.
+
+### 15.1 Il fatto
+
+Dopo aver eseguito `python3 -m pytest`, il working tree conteneva:
+
+```
+ M grok.md          <-- file TRACCIATO, memoria di continuità di Grok
+?? a.txt
+?? notes/hello.txt
+?? sub/b.txt
+```
+
+E il contenuto di `grok.md` era passato da
+
+```
+224 green. Real gates (py_compile+ruff+black) published.
+```
+
+a
+
+```
+new
+```
+
+**La test suite ha distrutto il file di continuità di un'altra IA**, sostituendolo con la
+stringa letterale `"new"`. Ripristinato con `git checkout -- grok.md`; i tre file spuri
+rimossi.
+
+### 15.2 La causa, dimostrata
+
+`tests/test_files.py` ha una fixture che *intende* isolare:
+
+```python
+@pytest.fixture
+def tmp_root(tmp_path, monkeypatch):
+    """Isolate PROJECT_ROOT to a temporary directory."""
+    monkeypatch.setattr("tools.files.PROJECT_ROOT", tmp_path)
+    return tmp_path
+```
+
+Ma `tools/files.py` cattura la root **nei default degli argomenti**:
+
+```python
+PROJECT_ROOT = Path(__file__).resolve().parent.parent          # riga 33
+def safe_write(path, content, *, encoding="utf-8", root: Path = PROJECT_ROOT, force=False)
+def safe_read (path, ...,                          root: Path = PROJECT_ROOT)
+def safe_list (                                    root: Path = PROJECT_ROOT)
+def _resolve  (path,                               root: Path = PROJECT_ROOT)
+```
+
+**In Python il valore di default di un parametro è valutato una sola volta, alla definizione
+della funzione.** Rebindare l'attributo di modulo dopo l'import non cambia i default già
+catturati. Misurato:
+
+```
+module PROJECT_ROOT : /home/user/ultraJARVIS
+after monkeypatch   : /tmp/fake-root
+safe_write default  : /home/user/ultraJARVIS     <-- non segue il monkeypatch
+```
+
+**La fixture è un no-op.** Ogni chiamata dei test scrive nel repository reale.
+
+### 15.3 Perché è HIGH e non un fastidio
+
+Tre ragioni, in ordine crescente.
+
+1. **Perdita di dati su un file tracciato.** `grok.md` è la memoria di continuità di Grok,
+   esattamente come `CLAUDE.md` è la mia. Chi esegue `pytest` e poi `git add -A` **committa la
+   distruzione della memoria di un'altra IA** senza accorgersene. Io me ne sono accorto solo
+   perché leggo `git status` invece di lanciarlo — è la lezione `E15` che mi ero scritto dopo
+   aver committato 16 `.pyc` per lo stesso motivo.
+
+2. **Il test che fa il danno è quello che esercita il bypass di `PROTECTED`.**
+   `test_force_override` chiama `safe_write("grok.md", "new", force=True)`. `force=True` è
+   precisamente il vettore di `S-11`, e `grok.md` è nella lista `PROTECTED`. Il test **usa il
+   bypass contro il repository vero**, non contro una copia.
+
+3. **Due test di protezione passano per il motivo sbagliato.** `test_protected_refusal`
+   verifica che scrivere `grok.md` sollevi `PermissionError`, e passa — ma passa perché
+   `grok.md` è protetto nella root **reale**, non perché la fixture abbia preparato un file
+   protetto in `tmp_path`. Idem `test_escape_root_refused`. Sono verdi, e non stanno
+   verificando quello che credono di verificare.
+
+   È la trappola 12 del mio `CLAUDE.md` in forma rovesciata: lì un test che **fallisce** per
+   il motivo sbagliato è un falso negativo; qui un test che **passa** per il motivo sbagliato
+   è un falso positivo. In entrambi i casi la regola è la stessa — leggere *perché* un test dà
+   quel risultato, non solo *che* risultato dà.
+
+**Corollario che rende il tutto peggiore:** finché la fixture non isola, **`FIX-3` e `FIX-4`
+non hanno una prova valida**. Le loro asserzioni di contenimento girano contro la root reale,
+dove il contenimento esiste per davvero, quindi passerebbero anche se la logica fosse stata
+rimossa dalla funzione.
+
+### 15.4 La correzione — `FIX-11`
+
+Non serve toccare la logica: serve che la fixture passi la root **esplicitamente**, oppure che
+le funzioni la risolvano a runtime.
+
+```python
+# opzione A - la più piccola: la fixture patcha i default già catturati
+@pytest.fixture
+def tmp_root(tmp_path, monkeypatch):
+    monkeypatch.setattr("tools.files.PROJECT_ROOT", tmp_path)
+    for fn in ("safe_write", "safe_read", "safe_list", "is_protected", "_resolve",
+               "_is_protected"):
+        f = getattr(tools.files, fn)
+        f.__defaults__ = None            # se root e' keyword-only usa __kwdefaults__
+        monkeypatch.setitem(f.__kwdefaults__, "root", tmp_path)
+    return tmp_path
+```
+
+```python
+# opzione B - piu' pulita, cambia tools/files.py: risolvere la root a runtime
+def safe_write(path, content, *, encoding="utf-8", root: Path | None = None, force=False):
+    root = root if root is not None else PROJECT_ROOT      # letto ORA, non alla def
+```
+
+**L'opzione B è quella giusta**, perché rende la fixture esistente corretta senza che nessuno
+debba ricordarsi di un elenco di nomi di funzione, e perché il difetto tornerebbe alla prima
+funzione nuova aggiunta con lo stesso default.
+
+### Verifica che fallisce finché il difetto è presente
+
+```bash
+git status --porcelain grok.md          # deve essere VUOTO dopo una run completa
+python3 -m pytest tests/test_files.py -q
+git status --porcelain grok.md          # se stampa " M grok.md", il difetto c'e' ancora
+```
+
+### 15.5 Cosa NON ho fatto
+
+**Non ho applicato la correzione.** È codice di Grok — `tools/files.py` e `tests/test_files.py`
+— e la decisione n. 7 di Christian riguardava `cloud_bridge`, non questo. Ho ripristinato il
+danno (`git checkout -- grok.md`, rimozione di `a.txt`, `notes/`, `sub/`) e l'ho documentato.
+
+**Non ho contato `workspace/`** fra i file spuri: è una directory di runtime già prevista da
+`pytest.ini` (`norecursedirs`), non un effetto collaterale inatteso.
