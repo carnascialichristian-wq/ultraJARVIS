@@ -2800,6 +2800,80 @@ auto-assegnato, nessuna chiamata a pagamento.
   prossima sessione, come già scritto nel punto AA.
 - **Non ho corretto i pesi né lo status nel `BACKLOG.json`**: è dell'integratore.
 
+
+## Sessione 6, seconda parte — `main` è stato riscritto, e la correzione che chiedevo era sbagliata
+
+Il proprietario ha confermato la diagnosi: *«il packet è BLOCKED perché la card indicava un
+`read_ref` che non conteneva la card stessa … non ammissibili finché la correzione della card
+non entra in main»*. Invece di registrare l'accordo e fermarmi, ho verificato le due cose che
+quella frase dà per scontate. **Una era falsa, ed era una mia istruzione.**
+
+### La scoperta
+
+`main` **è stato riscritto.** Nessuno dei commit che l'intera vicenda nomina è più raggiungibile
+da `origin/main`:
+
+| Commit | Che cos'è | Antenato di `origin/main`? |
+|---|---|---|
+| `3611b1b4` | il `read_ref` dichiarato dalla card | **no** |
+| `d48e1e85` | il commit che introduce la card | **no** |
+| `31f31b9` | il tip del branch di ChatGPT | **no** |
+| `99dece5` | **il mio merge di PR #1 e PR #2 su main**, sessione 3 | **no** |
+
+Sopravvivono solo su rami laterali. **Un secondo indizio indipendente, che avevo già in mano
+senza riconoscerlo:** a inizio sessione il `git fetch` senza `+` aveva rifiutato l'aggiornamento
+di `origin/main` come *non-fast-forward* (E30). L'avevo classificato come difetto della mia
+ricetta di fetch — ed era anche quello — ma era **anche** il sintomo di questo. Un sintomo letto
+per metà è un sintomo perso.
+
+### Perché conta: la mia istruzione avrebbe fatto sprecare un giro
+
+La consegna diceva a ChatGPT: *«porta il `read_ref` a un commit pari o successivo a
+`d48e1e85`»*. Soddisfa **una sola** delle due clausole necessarie. Seguita alla lettera
+produrrebbe un `read_ref` che `main` **non può risolvere** — lo stesso difetto in forma nuova,
+scoperto dopo un altro giro di HUMAN_BRIDGE pagato a mano.
+
+**La condizione corretta:** il commit deve **contenere la card** *e* essere **raggiungibile da
+`origin/main`**. Candidati verificati: `3cbae5c1` (il primo, nella storia attuale di `main`, in
+cui la card compare) e il tip `25b1b7d5`.
+
+### E il difetto è su tutte e quattro le card
+
+| Card | `read_ref` | Esiste a quel commit? |
+|---|---|---|
+| `UJ-RUN-001-CLAUDE.json` | `3611b1b4` | **no** |
+| `UJ-CAP-001-GEMINI.json` | `3611b1b4` | **no** |
+| `UJ-GGL-001-GEMINI.json` | `3611b1b4` | **no** |
+| `UJ-RED-001-GROK.json` | `3611b1b4` | **no** |
+
+Gemini lo incontrerà **due** volte e Grok **una**. Correggerle insieme costa **un** giro di
+HUMAN_BRIDGE invece di tre — e quelli li paga Christian a mano.
+
+**Fragilità registrata:** i quattro input pinati si risolvono ancora a `3611b1b4`, 4 su 4, ma
+**solo perché quei rami laterali esistono**. Cancellandoli, anche i pin diventerebbero
+irrisolvibili.
+
+### Metodo, e l'errore che questa parte corregge
+
+| # | Errore | Correzione |
+|---|---|---|
+| E31 | **Ho scritto un'istruzione correttiva verificando solo metà della condizione.** *«un commit pari o successivo a `d48e1e85`»* controllava che la card ci fosse, non che il commit fosse raggiungibile da `main` | La regola generale: **quando prescrivi un ref a qualcun altro, verifica che sia risolvibile dal punto di vista di chi lo userà**, non solo dal tuo. Un ref esiste sempre *da qualche parte*: la domanda utile è *da dove* |
+| E32 | **Ho letto un sintomo per metà** (E30): il fetch rifiutato come non-fast-forward era la prova che `main` era stato riscritto, e l'ho archiviato come difetto della mia ricetta | Un `! [rejected] … (non-fast-forward)` su un ref remoto **non è mai solo** un problema di refspec: dice anche che la storia remota è cambiata. Vanno lette entrambe le implicazioni |
+
+Un bug operativo minore, senza conseguenze: uno script di patch degli append blocks è fallito
+con `KeyError` su una `.format()` applicata a un pattern con graffe. Il file non è stato
+toccato (l'eccezione precede la scrittura, verificato con `grep`), e l'ho rigenerato da zero
+invece di patcharlo con regex fragili — che era comunque la scelta giusta.
+
+### Consegna del giro 4
+
+`source_commit_sha` `cfee1316cf83a6171871fedd541e7c4cd286389f`, delivery commit `d414306f2928c7ae3f1324aa5100805a23a40107`.
+**1 hash su 15 cambiato**: solo l'handoff, che guadagna la §1.1 con i comandi di raggiungibilità
+e le due tabelle. Packet `-R4`, AC-evidence §0-ter, delivery e append rigenerati.
+`BLOCKED` invariato, **0/13** invariato, **nessuna card toccata** — sono di ChatGPT, e i loro
+byte sul mio branch sono identici a quelli su `main`, confrontati.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -2956,6 +3030,15 @@ Sintesi operativa degli errori sopra, in forma di regole:
     commit **superati** e quelli **esterni** alla consegna, che sono stabili. Scriverlo dentro
     l'artefatto significa o mentire o inseguire il proprio hash a ogni giro.
 
+29. **Un ref che prescrivi a qualcun altro va verificato dal punto di vista di CHI LO USERA'**
+    (E31, sessione 6). Avevo chiesto a ChatGPT di portare il `read_ref` a *«un commit pari o
+    successivo a `d48e1e85`»*: avevo controllato che la card **esistesse** a quel commit, non
+    che il commit fosse **raggiungibile da `main`**. Non lo era — `main` era stato riscritto —
+    quindi l'istruzione, seguita alla lettera, avrebbe riprodotto il difetto e sprecato un giro
+    di HUMAN_BRIDGE. Un commit esiste sempre *da qualche parte*: la domanda utile è **da dove**.
+    Corollario (E32): un `! [rejected] … (non-fast-forward)` su un ref remoto non è **mai solo**
+    un problema di refspec — dice anche che la storia remota e' cambiata. Vanno lette entrambe.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -3068,6 +3151,32 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AF) main E' STATO RISCRITTO, E QUESTO CAMBIA LA CORREZIONE DA CHIEDERE A CHATGPT.
+     LEGGERE PRIMA DI RIPETERE LA RICHIESTA DI SBLOCCO.
+     Misurato: 3611b1b4, d48e1e85, 31f31b9 e ANCHE 99dece5 (il mio merge di PR #1
+     e PR #2 su main, sessione 3) NON sono raggiungibili da origin/main.
+     Sopravvivono solo su rami laterali. Secondo indizio dello stesso fatto: il
+     fetch senza '+' rifiutato come non-fast-forward (E30) — l'avevo letto solo
+     come difetto della mia ricetta, era ANCHE il sintomo del rewrite.
+     LA MIA ISTRUZIONE PRECEDENTE ERA SBAGLIATA: "read_ref a un commit pari o
+     successivo a d48e1e85" verifica solo che la card ci sia, NON che il commit
+     sia risolvibile da main. Seguita alla lettera riproduce il difetto.
+     CONDIZIONE CORRETTA, due clausole: il commit deve CONTENERE LA CARD **e**
+     ESSERE RAGGIUNGIBILE DA origin/main.
+     Candidati verificati: 3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1 (il primo
+     nella storia ATTUALE di main in cui la card compare) oppure il tip
+     25b1b7d53ff5bc4b05348453ebb704aba3a88630.
+     E IL DIFETTO E' SU TUTTE E QUATTRO LE CARD: UJ-RUN-001-CLAUDE,
+     UJ-CAP-001-GEMINI, UJ-GGL-001-GEMINI, UJ-RED-001-GROK dichiarano tutte
+     read_ref 3611b1b4 e NESSUNA esiste a quel commit. Gemini lo incontra due
+     volte, Grok una. Correggerle insieme costa UN giro di HUMAN_BRIDGE invece
+     di tre. NON ho toccato le card: sono di ChatGPT.
+     FRAGILITA': i 4 input pinati si risolvono ancora a 3611b1b4 (4/4) ma SOLO
+     perche' quei rami laterali esistono. Cancellandoli, saltano anche i pin.
+     CONSEGNA GIRO 4: source cfee1316cf83, delivery d414306f2928,
+     packet -R4, 1 hash su 15 cambiato (solo l'handoff, che guadagna la §1.1).
+
 
   AB) UJ-RUN-001 RICONCILIATA UNA TERZA VOLTA E RESTA BLOCKED. GIA' FATTO, NON RIFARE.
      Ref: agent/uj-run-001-blueprint-20260818
