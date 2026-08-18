@@ -32,3 +32,32 @@ def test_gates_with_simple_file(tmp_path: Path):
     result = run_gates(tmp_path, files=["hello.py"], use_real=True)
     assert isinstance(result, dict)
     assert "Overall:" in result["text"]
+
+
+def test_py_compile_gate_on_valid_file(tmp_path: Path):
+    (tmp_path / "ok.py").write_text("def f():\n    return 1\n", encoding="utf-8")
+    result = run_gates(tmp_path, files=["ok.py"], use_real=True)
+    assert result["any_real"] is True
+    assert "py_compile" in result.get("tools_used", [])
+    assert "py_compile ........ PASS" in result["text"]
+    # valid file should not fail solely on py_compile
+    assert "py_compile ........ FAIL" not in result["text"]
+
+
+def test_py_compile_gate_on_syntax_error(tmp_path: Path):
+    (tmp_path / "bad.py").write_text("def broken(\n", encoding="utf-8")
+    result = run_gates(tmp_path, files=["bad.py"], use_real=True)
+    assert result["any_real"] is True
+    assert result["ok"] is False
+    assert "py_compile ........ FAIL" in result["text"]
+
+
+def test_real_tools_listed_when_available(tmp_path: Path):
+    (tmp_path / "hello.py").write_text("x = 1\n", encoding="utf-8")
+    result = run_gates(tmp_path, files=["hello.py"], use_real=True)
+    assert "tools_used" in result
+    assert "py_compile" in result["tools_used"]
+    # ruff/black installed in this environment
+    text = result["text"]
+    assert "ruff check" in text
+    assert "black --check" in text

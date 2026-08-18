@@ -49,6 +49,7 @@ def run_gates(
     Returns a structured dict:
       - ok: True | False | None  (None = stub / no real tools run)
       - any_real: whether real tools were invoked
+      - tools_used: list of tool names that ran
       - text: human-readable report
     Callers must use the boolean, not parse the text (FIX-6).
     """
@@ -71,16 +72,52 @@ def run_gates(
         return {
             "ok": None,  # not a real pass – caller must not treat as success of quality
             "any_real": False,
+            "tools_used": [],
             "text": "\n".join(lines),
         }
 
     any_real = False
     any_fail = False
+    tools_used: List[str] = []
+
+    # --- py_compile (always available – real signal without extra deps) ---
+    py_targets: List[Path] = []
+    if files:
+        for f in files:
+            p = target_dir / f if not Path(f).is_absolute() else Path(f)
+            if p.suffix == ".py" and p.is_file():
+                py_targets.append(p)
+    else:
+        py_targets = sorted(target_dir.glob("**/*.py"))[:40]
+
+    if py_targets:
+        any_real = True
+        tools_used.append("py_compile")
+        compile_fail = False
+        compile_notes: List[str] = []
+        for p in py_targets:
+            code, out = _run(
+                [sys.executable, "-m", "py_compile", str(p)],
+                cwd=target_dir,
+                timeout=30.0,
+            )
+            if code != 0:
+                compile_fail = True
+                compile_notes.append(f"{p.name}: {out[:200] or 'compile error'}")
+        if compile_fail:
+            any_fail = True
+            lines.append("py_compile ........ FAIL")
+            lines.extend(compile_notes[:5])
+        else:
+            lines.append(f"py_compile ........ PASS ({len(py_targets)} files)")
+    else:
+        lines.append("py_compile ........ SKIP (no .py files)")
 
     # --- ruff ---
     ruff = _which("ruff")
     if ruff:
         any_real = True
+        tools_used.append("ruff")
         targets = files if files else ["."]
         code, out = _run([ruff, "check", *targets], cwd=target_dir)
         status = "PASS" if code == 0 else "FAIL"
@@ -96,6 +133,7 @@ def run_gates(
     black = _which("black")
     if black:
         any_real = True
+        tools_used.append("black")
         targets = files if files else ["."]
         code, out = _run([black, "--check", "--quiet", *targets], cwd=target_dir)
         status = "PASS" if code == 0 else "FAIL"
@@ -116,6 +154,7 @@ def run_gates(
         if test_files:
             pytest_cmd.extend(test_files)
             any_real = True
+            tools_used.append("pytest")
             code, out = _run(pytest_cmd, cwd=target_dir, timeout=90.0)
             status = "PASS" if code == 0 else "FAIL"
             if code != 0:
@@ -137,6 +176,7 @@ def run_gates(
             if out:
                 lines.append(out[:800])
         any_real = True
+        tools_used.append("pytest")
 
     lines.append("")
     if not any_real:
@@ -145,10 +185,12 @@ def run_gates(
         ok: Optional[bool] = None
     else:
         ok = not any_fail
+        lines.append(f"Tools: {', '.join(tools_used) if tools_used else '(none)'}")
         lines.append(f"Overall: {'FAIL' if any_fail else 'PASS'}")
 
     return {
         "ok": ok,
         "any_real": any_real,
+        "tools_used": tools_used,
         "text": "\n".join(lines),
     }
