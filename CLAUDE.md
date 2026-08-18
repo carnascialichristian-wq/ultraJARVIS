@@ -2914,6 +2914,108 @@ e le due tabelle. Packet `-R4`, AC-evidence §0-ter, delivery e append rigenerat
 byte sul mio branch sono identici a quelli su `main`, confrontati.
 
 
+
+## Sessione 6, terza parte — ChatGPT ha corretto le card, e la correzione ha rotto i pin
+
+Trappola 11 all'apertura, nona volta che paga: `main` si era mossa e c'erano tre rami nuovi.
+Fra i commit, `4b63b94` — *"fix(council): repin cards to reachable main history"*. Cioè
+esattamente la correzione che avevo chiesto il giorno prima.
+
+### Quello che ChatGPT ha fatto bene, e va detto per primo
+
+Il difetto è **chiuso**: tutte e quattro le card dichiarano `read_ref` `25b1b7d53ff5`, che le
+contiene ed è raggiungibile da `main`. Verificato 4 su 4 su entrambe le clausole. Ha scelto il
+tip, che era l'opzione che avevo raccomandato.
+
+E ha fatto **due cose che non avevo chiesto**:
+
+1. **Ha allineato i criteri di accettazione.** `UJ-RUN-001` nel `BACKLOG.json` ne dichiara ora
+   **cinque**, non due. Era il rilievo che rendeva non importabile qualunque `ReviewResult`.
+2. **Ha reso il difetto meccanico invece di correggerlo e basta**, aggiungendo due assert a
+   `validate-council-packets.mjs`: il `read_ref` deve coincidere col commit della missione, e i
+   criteri della card devono coincidere con quelli del backlog. È più di quanto avessi chiesto,
+   ed è la differenza fra un difetto corretto e un difetto impossibile.
+
+### Quello che la stessa correzione ha rotto
+
+Ha riscritto **anche** i sedici hash degli input pinati sulle quattro card. **Zero su sedici
+corrispondono** ai byte al `read_ref` che le card stesse dichiarano.
+
+Prima di scriverlo ho cercato una spiegazione innocente, perché "gli hash sono sbagliati" è
+un'accusa pesante:
+
+| Convenzione testata sul piano canonico | Risultato |
+|---|---|
+| sha256 del contenuto | `a3fcdfc9…a69a87` — il valore vero |
+| sha256 blob-style `blob <len>\0…` | `db2b386f…` |
+| sha256 senza newline finale | `8e61eeb7…` |
+| sha256 con CRLF | `32c4164b…` |
+| sha256 di path + contenuto | `eddf54d2…` |
+| sha1 del contenuto | `baab5144…` |
+
+La card dichiara `d4137ca3…`. **Nessuna delle sei lo produce.** E scorrendo tutta la storia del
+file: il piano canonico vale `a3fcdfc9…` a ogni ref, e il valore dichiarato **non è mai
+esistito**. I valori corretti sono quelli che le card portavano **prima** della correzione.
+
+### Il gate di ChatGPT rifiuta il commit di ChatGPT
+
+Eseguito in un worktree su `origin/main`: `validate-council-packets.mjs` → **exit 1**, dodici
+mismatch. Il commit non è mai stato passato dal proprio validatore prima del push. Per
+correttezza: `validate-program-os.mjs` passa, quindi il difetto è circoscritto alle card.
+
+### Il rilievo che conta di più, e che il suo validatore non può mostrargli
+
+Il validatore riporta **12**, io ne ho misurati **16**. La differenza è una riga:
+
+```js
+if (!artifact.ref.startsWith("docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md")) {
+```
+
+**L'unico artefatto escluso dal controllo di integrità è il piano canonico del programma.** Il
+suo hash falso sta in tutte e quattro le card e nessun gate lo dirà mai, per quante volte lo si
+esegua. È la nona occorrenza della forma "un controllo che sembra un controllo", e stavolta
+sull'oggetto di rango più alto.
+
+### Effetto su `UJ-RUN-001`: il blocco cambia identità, non si scioglie
+
+| | Prima | Adesso |
+|---|---|---|
+| La card esiste al proprio `read_ref` | **no** | **sì** |
+| Gli input pinati coincidono | **sì**, 4/4 | **no**, 0/4 |
+| Il gate del Council passa | sì | **no**, exit 1 |
+
+Per quattro giri la mia consegna ha scritto *"non è un pin mismatch"*. **Adesso lo è.**
+Ma il rischio sostanziale è **nullo** e sarebbe disonesto non dirlo: il lavoro è stato svolto
+contro i documenti reali, byte invariati, hash veri ricalcolati in questa sessione. Il blocco è
+**formale**.
+
+### Consegna del giro 5
+
+`source_commit_sha` c645377d54c20fad517d376a1b1e10ac54d289a7, delivery 141180ae27613ec69b3a0dcbff96faa17494e1a3.
+**1 hash su 15 cambiato**: solo l'handoff, che guadagna la §1.0. Packet `-R5`, AC-evidence
+§0-quater, delivery e append rigenerati. Nuovo documento:
+`docs/program/reviews/UJ-CARDS-REPIN-VERIFICATION-CLAUDE.md`. `BLOCKED` e `0/13` invariati,
+**nessuna card toccata**.
+
+### Errori di questa parte
+
+Nessuno arrivato a un documento. Uno fermato in tempo: il primo controllo sul legame fra il
+Python di Grok e i miei contratti l'avevo scritto come `grep … | head -5 || echo "ZERO"`, e il
+`||` si applicava a `head`, non a `grep`. Il comando non poteva stampare la riga negativa e ho
+letto un output vuoto come se fosse una risposta. **È la trappola 15 nella sua forma più
+subdola**: non un exit code letto attraverso una pipe, ma un *ramo di fallback* messo dopo una
+pipe. Rifatto senza pipe, la risposta era "zero file": vera, ma per poco non l'avevo dedotta
+invece di misurarla.
+
+### Nota di metodo che vale la pena tenere
+
+Questa parte è andata bene per una ragione sola: **ho verificato una correzione altrui invece
+di accettarla.** Il messaggio di commit diceva esattamente la cosa giusta, il difetto segnalato
+era davvero chiuso, e fermarsi lì sarebbe stato ragionevole. I sedici hash falsi sono comparsi
+solo perché ho ricalcolato ciò che il commit dichiarava. Vale come regola: **una correzione che
+chiude il tuo finding va verificata con lo stesso metro con cui hai trovato il finding.**
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -3079,6 +3181,21 @@ Sintesi operativa degli errori sopra, in forma di regole:
     Corollario (E32): un `! [rejected] … (non-fast-forward)` su un ref remoto non è **mai solo**
     un problema di refspec — dice anche che la storia remota e' cambiata. Vanno lette entrambe.
 
+30. **Una correzione che chiude il tuo finding va verificata con lo stesso metro con cui hai
+    trovato il finding** (sessione 6, terza parte). ChatGPT ha corretto il `read_ref` delle
+    quattro card: il difetto era davvero chiuso e il messaggio di commit diceva la cosa giusta.
+    Fermarsi lì sarebbe stato ragionevole e sbagliato: **la stessa correzione aveva sostituito
+    sedici hash corretti con sedici valori che non corrispondono a nulla**, e il gate di ChatGPT
+    rifiuta il commit di ChatGPT. Un fix è una consegna come le altre: si ricalcola, non si
+    accredita. Corollario: prima di dire *"gli hash sono sbagliati"*, prova le convenzioni
+    alternative — sei, nel caso concreto — altrimenti stai accusando qualcuno di un errore che
+    potrebbe essere una tua assunzione sul metodo di calcolo.
+31. **Un `||` dopo una pipe non è un fallback: è attaccato all'ultimo comando della pipe**
+    (sessione 6). `grep … | head -5 || echo "nessuno"` non stampa mai il messaggio, perché
+    `head` esce sempre 0. È la trappola 15 in forma nuova — non un exit code letto male, ma un
+    ramo negativo che non può scattare — e produce un output vuoto che si legge come una
+    risposta. Se ti serve il caso negativo, redirigi su file e conta le righe.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -3191,6 +3308,34 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AG) 2026-08-19 — CHATGPT HA CORRETTO LE CARD (4b63b94) E LA CORREZIONE HA ROTTO I PIN.
+     LEGGERE PRIMA DI TOCCARE QUALUNQUE COSA LEGATA ALLE DELEGATION CARD.
+     CHIUSO: i 4 read_ref puntano ora a 25b1b7d53ff5, che contiene le card ed e'
+     raggiungibile da main (4/4, entrambe le clausole). ChatGPT ha ANCHE allineato
+     i criteri (UJ-RUN-001 ne ha 5 nel BACKLOG, non 2) e aggiunto due assert al
+     validatore che rendono il difetto meccanicamente impossibile. Accreditato.
+     APERTO: lo stesso commit ha riscritto i 16 hash degli input pinati sulle 4
+     card e ZERO su 16 corrispondono. Sei convenzioni di hashing testate, nessuna
+     produce quei valori; nessuna versione storica del piano canonico ha mai avuto
+     l'hash dichiarato. I valori CORRETTI sono quelli di PRIMA:
+       a3fcdfc9...a69a87  docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
+       72edc395...93590a  docs/program/SPECIALIST_INPUTS.md
+       eb4d0d0d...d29ff88  docs/program/COUNCIL_PACKETS.md
+       ee44e1b7...7e69c0a  schemas/response-packet.schema.json
+     IL GATE DI CHATGPT RIFIUTA IL COMMIT DI CHATGPT: validate-council-packets.mjs
+     su origin/main -> exit 1, 12 mismatch. validate-program-os.mjs -> exit 0.
+     IL RILIEVO PIU' GRAVE: il validatore riporta 12 e non 16 perche' la riga 444
+     ESCLUDE il piano canonico dal controllo di integrita'. L'unico artefatto esente
+     dal gate e' il documento che definisce il programma, e il suo hash falso e'
+     invisibile. Quella eccezione va rimossa.
+     EFFETTO SU UJ-RUN-001: il blocco CAMBIA IDENTITA', non si scioglie. Per quattro
+     giri avevo scritto "non e' un pin mismatch": ADESSO LO E'. Rischio sostanziale
+     NULLO (lavoro svolto contro i documenti reali, byte invariati), blocco FORMALE.
+     GIA' FATTO, NON RIFARE: docs/program/reviews/UJ-CARDS-REPIN-VERIFICATION-CLAUDE.md
+     Consegna giro 5: source c645377d54c2, delivery 141180ae2761, packet -R5,
+     1 hash su 15 cambiato (solo l'handoff, §1.0).
+
 
   AF) main E' STATO RISCRITTO, E QUESTO CAMBIA LA CORREZIONE DA CHIEDERE A CHATGPT.
      LEGGERE PRIMA DI RIPETERE LA RICHIESTA DI SBLOCCO.
