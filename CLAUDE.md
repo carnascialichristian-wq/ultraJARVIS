@@ -14,9 +14,9 @@
 | AI_ID | CLAUDE |
 | Ruolo | Runtime, Security & Skill Architect |
 | Repository | `carnascialichristian-wq/ultraJARVIS` (privata) |
-| Branch di lavoro | `claude/claude-md-resume-point-tvej1u` (sessioni 4 e 5). Sessioni 1-3: `claude/ultrajarvis-repo-analysis-li6vvj`. **L'ambiente può non assegnarne uno**: vedi RESUME_POINT punto Z |
+| Branch di lavoro | **Sessione 6: `agent/uj-run-001-blueprint-20260818`** — consegna UJ-RUN-001 **e** memoria aggiornata (questo file vive lì). Sessioni 4-5: `claude/claude-md-resume-point-tvej1u`, ora indietro. Sessioni 1-3: `claude/ultrajarvis-repo-analysis-li6vvj`. **L'ambiente può non assegnarne uno, o assegnarne uno vuoto**: vedi RESUME_POINT, blocco BRANCH e punti Z e AE |
 | File gemello per le altre IA | `TASKCLAUDE.md` |
-| Ultimo aggiornamento | 2026-08-18 — sessione `UJ-CLAUDE-2026-08-18-05` |
+| Ultimo aggiornamento | 2026-08-18 — sessione `UJ-CLAUDE-2026-08-18-06` |
 
 > Nota sul nome: il file è `CLAUDE.md` in maiuscolo perché è la convenzione che
 > Claude Code carica automaticamente come istruzioni di progetto. Se lo rinomini in
@@ -105,9 +105,12 @@ controlla la tabella di stato: se un artefatto esiste già, va riconciliato, non
 ### Comandi di verifica (non fidarti della memoria, riesegui)
 
 ```bash
-# integrità del prompt canonico
-git fetch origin 'refs/heads/*:refs/remotes/origin/*'
-git show origin/agent/ultrajarvis-master-prompt-v1:docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md | sha256sum
+# fetch di TUTTI i branch — il '+' NON e' opzionale, vedi errore E30
+git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+git rev-parse HEAD main origin/main    # controlla i ref PRIMA di interpretare un diff
+
+# integrità del prompt canonico (ora e' su main, non serve piu' un branch)
+sha256sum docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
 
 # i contratti compilano in strict mode
 npx tsc -p packages/contracts --noEmit
@@ -2646,6 +2649,159 @@ dal proprietario.
 
 ---
 
+## Sessione 6 — `UJ-CLAUDE-2026-08-18-06` — 2026-08-18
+
+**Richiesta del proprietario, via ChatGPT:** riconciliare completamente la consegna di
+`UJ-RUN-001`. `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` era ancora obsoleto — branch
+`claude/ultrajarvis-repo-analysis-li6vvj`, stato `REVIEW`, 33 test — e contraddiceva packet e
+blueprint. Mantenere `BLOCKED`, nuovo source commit, 15 hash ricalcolati, tutto rigenerato,
+pushare **solo** il branch autorizzato.
+
+### Il difetto segnalato era reale, e la sua causa è la mia trappola 20
+
+L'handoff **è uno dei 15 artefatti che il mio stesso packet hasha**. Due artefatti pinati sullo
+**stesso** commit dichiaravano stati opposti — `REVIEW` nell'handoff, `BLOCKED` nel packet — e
+nessuno dei due conteneva qualcosa che permettesse di stabilire quale valesse. Una consegna così
+non è ammissibile a prescindere dalla qualità del contenuto.
+
+La causa non è distrazione: in sessione 5 avevo corretto `REVIEW` e `33` **nel blueprint** e
+li avevo lasciati **nel file accanto**. È la trappola 20 — *un difetto corretto in un file non è
+corretto nel file accanto* — dopo il byte NUL rimosso da `checkpoint.ts` e lasciato in
+`depth-guard.ts` per quattro sessioni.
+
+### Cercare l'istanza segnalata sarebbe stato l'errore: le occorrenze erano quattro
+
+Invece di correggere il file indicato, ho scandito **tutto** il set di consegna cercando la
+**classe**: *dichiarazioni di stato o di branch scritte al presente e già superate*.
+
+| # | Artefatto | Dichiarava | Chi l'ha trovata |
+|---:|---|---|---|
+| 1 | `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | branch e stato di sessione 1, `33` test | **ChatGPT** |
+| 2 | `packages/contracts/src/runtime/index.ts` | `RUNTIME_CONTRACTS_PROVENANCE.status = "REVIEW"` | la scansione |
+| 3 | `packages/contracts/package.json` | `description: "… status REVIEW."` | la scansione |
+| 4 | `docs/architecture/RUNTIME_BLUEPRINT.md` | il prompt canonico *«non è ancora su `main`»* | la scansione |
+
+**La n. 2 è la peggiore, ed è una riga.** È l'**unica copia leggibile da una macchina** dello
+stato, ed è offerta dal suo stesso commento *«for the Program OS ledger»*: un integratore che
+leggesse la provenienza dal codice invece che dal packet avrebbe ottenuto `REVIEW` da una
+consegna `BLOCKED`. Lo stesso file, venticinque righe più su, dichiarava `Status: PROPOSAL` —
+due stati diversi nello stesso file. Ho separato i due assi, *maturità del contratto* e
+*ammissibilità della consegna*, perché confonderli è ciò che ha prodotto la contraddizione.
+Prima di toccarla ho verificato con `grep` che **nessuno la legge**, e ho rieseguito typecheck,
+build e i 140 test dopo.
+
+**La n. 4 era falsa, misurata:** `git show origin/main:…MASTER_PROMPT.md | sha256sum` e
+`git show b8a7697:<stesso path> | sha256sum` danno entrambi `a3fcdfc9…a69a87`. Il prompt è su
+`main`; la provenienza resta valida, cambiava solo dove leggerlo.
+
+### Il metodo che ha reso verificabile la correzione
+
+Ho ricalcolato **tutti e 15** gli hash a **entrambi** i commit sorgente. **4 su 15 cambiati**,
+esattamente i quattro artefatti sopra, e nessun altro. Non è un dettaglio contabile: è la prova
+che non ho toccato altri byte per far quadrare il risultato, ed è falsificabile — se avessi
+"sistemato" qualcos'altro, il conteggio sarebbe stato 5.
+
+### Che cosa dice ora l'handoff, e che cosa ho deciso di NON cancellare
+
+Riscritto sui valori rimisurati: branch `agent/uj-run-001-blueprint-20260818`, stato
+`BLOCKED`, peso `0/13`, `runtime-invariants` **36**, suite **140**, **22** prove non
+implementate nelle §16-21 più **11** `PENDING` in §13.3 (**33** in totale), demo end-to-end
+**non eseguita**, card assente al `read_ref` `3611b1b4` e introdotta da `d48e1e85`.
+
+Tre scelte di progetto che vale la pena registrare:
+
+1. **§0.3 conserva i valori superati sotto un'intestazione esplicita di storia**, ciascuno
+   accanto al valore che vale oggi. Cancellarli in silenzio impedirebbe a chi ha visto la
+   versione precedente di capire che cosa ha smesso di essere vero.
+2. **§0.4 registra la classe, non l'istanza** — le quattro occorrenze e la contromisura: quando
+   si corregge un valore condiviso, si greppa **tutta** la consegna. È ora una voce di
+   `verification.checks_run` nel packet, così il giro successivo la eredita.
+3. **L'handoff non nomina il commit che lo contiene.** Il suo hash è parte di quel commit:
+   scriverlo dentro è impossibile per costruzione. Il `source_commit_sha` sta in **un solo
+   posto**, il packet. È la stessa disciplina che il blueprint già seguiva.
+
+Aggiunta anche una tabella §5 che separa **stato misurato nel `BACKLOG.json`** e **stato
+proposto dal packet**: la versione precedente dichiarava transizioni come *avvenute* quando
+nulla, nel repository, applica una transizione proposta.
+
+### La delivery ora porta due blocchi FILE, non uno
+
+Ho aggiunto l'handoff come secondo blocco estraibile accanto al blueprint, così ChatGPT può
+riverificare l'artefatto corretto **senza clonare il branch**. Round-trip verificato: ogni
+blocco riestratto rihasha identico alla sua sorgente, packet incluso.
+
+### `response_id` cambiato di proposito
+
+Da `…-BLOCKED` a `…-BLOCKED-R3`. Il mio finding `F-002` di sessione 3 dice che il validatore
+del Council è **stateless** e non rileva un replay divergente: stesso id, byte diversi, passa.
+Riusare l'id sarebbe stato produrre esattamente il caso che ho segnalato come difetto altrui.
+
+### ERRORI COMMESSI IN QUESTA SESSIONE
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E28 | **Falso negativo per campo sbagliato**, quasi consegnato: ho controllato `UJ-INT-007` con `tasks.map(t => t.id)`, ma il campo è `task_id`. Il confronto avveniva contro `undefined` | il primo script ha stampato `UJ-INT-007 presente: false` — e nello stesso output un altro `find` è esploso su `undefined`, che è ciò che mi ha insospettito | riletto lo schema del task (`Object.keys`), rifatto il controllo | **è la trappola 12 dal lato di chi scrive il controllo**: un check che fallisce per il motivo sbagliato conferma qualunque cosa ti aspetti. Il segnale che ha salvato è stata l'incoerenza fra due output dello stesso script |
+| E29 | **Sopravvalutata una mia prova.** Nell'handoff avevo scritto che i valori Jaccard `0.7778`/`0.9130` sono *"pinnati in un test"* | aprendo il test: asserisce `< 0.95` e `> 0.7`, cioè i **limiti**; i due valori esatti stanno nel commento | frase corretta prima del commit, con la distinzione esplicita | citare una prova **come è**, non come la si ricorda. Il test impedisce di ritarare la soglia; non congela le due cifre. Trappola 14 applicata a me stesso |
+| E30 | **Il comando di fetch documentato nella mia stessa memoria è difettoso.** `git fetch origin 'refs/heads/*:refs/remotes/origin/*'`, senza `+`, **rifiuta** l'aggiornamento di un ref remoto riscritto | eseguito il comando come documentato: `! [rejected] main -> origin/main (non-fast-forward)`, e `origin/main` è rimasto a `9d2a93d` (un solo commit, "Initial commit") mentre il vero era `25b1b7d` | rieseguito con `+refs/heads/*:…`; corretto in **CLAUDE.md PARTE 2 e AVVIO_NUOVA_SESSIONE.md**, e riprodotto in modo deterministico con un ref di prova | **è la trappola 17 causata dalla procedura che dovrebbe prevenirla.** Se non me ne fossi accorto, ogni confronto fra branch sarebbe stato contro un `origin/main` di un commit, e i diffstat sarebbero stati assurdi *senza che nulla lo dicesse*. La riga `! [rejected]` è una sola in mezzo a diciotto `[new branch]`: va **letta**, non scorsa |
+
+### Correzione a un'affermazione della sessione 5
+
+Il punto `S` del RESUME_POINT diceva: *"UJ-INT-007 NON ESISTE fra i 43 task del BACKLOG.json
+(verificato al ref corrente)"*. **È falso.** `UJ-INT-007` esiste — owner CHATGPT, reviewer
+GEMINI, peso 13, milestone **M10**, stato `DEFERRED` — ed esisteva già a `31f31b9`, verificato
+a quattro ref diversi.
+
+Con ogni probabilità quella verifica fu lo **stesso** falso negativo di E28, commesso senza
+accorgersene. La conclusione operativa non cambia — `UJ-REV-002` resta non lavorabile — ma la
+causa sì: *«la dipendenza esiste e non è accettata»*, non *«la dipendenza non esiste»*. **È la
+causa a dire chi può sbloccare cosa**, e con la causa sbagliata una sessione futura cercherebbe
+un task inesistente invece di aspettare M10.
+
+### Prove eseguite in questa sessione
+
+| Prova | Comando | Esito |
+|---|---|---|
+| Integrità piano canonico | `sha256sum docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md` | `a3fcdfc9…a69a87` **coincide** |
+| Typecheck | `npx tsc -p packages/contracts --noEmit` | **exit 0** |
+| Build | `npx tsc -p packages/contracts` | **exit 0** |
+| Suite completa | `for f in tests/contracts/*.test.mjs; do node --test "$f"; done` | **140/140 pass, 0 fail** |
+| Card al `read_ref` | `git cat-file -e 3611b1b4:…UJ-RUN-001-CLAUDE.json` | **exit 128** — condizione bloccante |
+| Card a `d48e1e85` | `git cat-file -e d48e1e85:…` | exit 0 |
+| I 4 input pinati a `3611b1b4` | ricalcolo sha256 | **4/4 coincidono** — non è un pin mismatch |
+| 15 hash al nuovo source commit | `git show <commit>:<ref> \| sha256sum` | **15/15**, e **4 cambiati su 15** vs il precedente |
+| Validatore packet | `node scripts/validate-response-packet.mjs …` | **exit 0**, `READY -> BLOCKED`, `0 -> 0/13` |
+| Ogni SHA-256 citato nell'AC-evidence | cross-check contro gli hash reali | **15 su 15 riconosciuti, 0 sconosciuti** |
+| Round-trip della delivery | riestrazione e rihash dei 3 blocchi | **3/3 identici** |
+| Conteggi ancorati nel blueprint | `grep -cE '^\|.*PROVA DA IMPLEMENTARE'` e `'^\|.*PENDING'` | **22** e **11** |
+| Conteggio test, statico e dinamico | `grep -c '^test('` e `node --test` | **36** e **36** |
+| Consumatori di `RUNTIME_CONTRACTS_PROVENANCE` | `grep -rn` | **nessuno**, solo la dichiarazione |
+| Branch containment | `git branch -a --contains` + `merge-base --is-ancestor` ×3 | un solo branch e il suo remoto; **non** su main né sugli altri due rami CLAUDE |
+| Validatori di ChatGPT | `validate-council-packets`, `validate-program-os` | **exit 0** entrambi — non ho rotto niente di suo |
+| Difetto del fetch (E30) | ref di prova, con e senza `+` | **riprodotto**: senza `+` il ref resta al valore vecchio |
+| `git push` | letto dal comando vero, mai da una pipe | **exit 0**, due volte |
+
+### Confini rispettati
+
+Otto file toccati, **tutti miei**: blueprint, handoff, `index.ts`, `package.json`, packet,
+AC-evidence, delivery, append-blocks — più `CLAUDE.md`, `TASKCLAUDE.md` e
+`AVVIO_NUOVA_SESSIONE.md` per la Regola 2. Verificato per esecuzione che **non** ho toccato
+`core/`, `tools/`, `advisors/`, `bin/`, i test Python, `cloud_bridge.py` (GROK), né
+`BACKLOG.json`, `PROGRESS.md`, `schemas/`, `scripts/` (CHATGPT), né `gpt.md`, `taskgpt.md`,
+`grok.md`, `taskgrok.md`. `origin/main` è invariato. Nessun `ReviewResult` emesso, nessun peso
+auto-assegnato, nessuna chiamata a pagamento.
+
+### Cosa NON ho fatto, e perché
+
+- **Non ho portato `UJ-RUN-001` a `REVIEW`.** Il `read_ref` della card è di ChatGPT e non è
+  cambiato. I test che passano non sciolgono una condizione di ammissibilità.
+- **Non ho aperto il terzo invio di `UJ-CAP-001`** (`agent/uj-cap-001-gemini-review-20260818`
+  @ `0f1c536`): la task esplicita di questa sessione era la riconciliazione di `UJ-RUN-001`, e
+  aprire una review nuova avrebbe significato consegnarne due a metà. Resta il primo task della
+  prossima sessione, come già scritto nel punto AA.
+- **Non ho corretto i pesi né lo status nel `BACKLOG.json`**: è dell'integratore.
+
+---
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -2777,6 +2933,29 @@ Sintesi operativa degli errori sopra, in forma di regole:
     confine — e trasforma *"non funziona"* in *"funziona, e queste sono le precondizioni che
     mancano"*, che è più vero e più utile a chi deve correggere.
 
+26. **Correggi la CLASSE del difetto, non l'istanza segnalata** (sessione 6). ChatGPT ha
+    segnalato **un** artefatto che dichiarava uno stato superato; scandendo tutto il set ne sono
+    emersi **quattro**, e il peggiore non era quello segnalato — era una costante TypeScript
+    (`RUNTIME_CONTRACTS_PROVENANCE.status`), cioè l'unica copia **leggibile da una macchina**
+    dello stato. Quando qualcuno segnala un'incoerenza, la domanda giusta non è *«dov'è quel
+    file?»* ma *«questa forma dove altro compare?»*. Contromisura meccanica: un grep sull'intero
+    set di consegna ogni volta che si corregge un valore condiviso — uno stato, un conteggio, il
+    nome di un branch — prima di dichiarare chiusa la correzione. Prova che la correzione è
+    chirurgica: ricalcolare **tutti** gli hash a entrambi i commit e mostrare che ne sono
+    cambiati esattamente quanti erano i difetti.
+27. **Il `+` nel refspec di `git fetch` non è opzionale** (E30). `git fetch origin
+    'refs/heads/*:refs/remotes/origin/*'` **rifiuta** l'aggiornamento di un ref remoto riscritto
+    e lascia `origin/main` al valore vecchio, stampando una sola riga `! [rejected] …
+    (non-fast-forward)` in mezzo a decine di `[new branch]`. Da lì ogni confronto fra branch è
+    sbagliato **senza che nulla lo segnali**: è la trappola 17 prodotta dalla procedura che
+    dovrebbe prevenirla. Usa sempre `+refs/heads/*:refs/remotes/origin/*` e, dopo il fetch,
+    **verifica che `origin/main` sia dove ti aspetti** invece di darlo per aggiornato.
+28. **Un artefatto hashato non può contenere il SHA del commit che lo contiene** (sessione 6).
+    È impossibile per costruzione: l'hash dipende dal contenuto che dovrebbe dichiararlo. Il
+    `source_commit_sha` va in **una sede sola** — il packet — e gli artefatti citano al più i
+    commit **superati** e quelli **esterni** alla consegna, che sono stabili. Scriverlo dentro
+    l'artefatto significa o mentire o inseguire il proprio hash a ogni giro.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -2796,20 +2975,32 @@ BRANCH    : ATTENZIONE — L'AMBIENTE PUO' NON ASSEGNARTELO (sessione 5: contain
             lavoro NON coincide più con main: il pre-verdetto UJ-CAP-001 sta sul
             branch di sessione 4 e NON è su main.
 
-            ATTENZIONE — SESSIONE 5, FINE SESSIONE: ORA CI SONO DUE BRANCH MIEI, NON
-            UNO. Non confonderli:
-              claude/claude-md-resume-point-tvej1u  -> CASA. CLAUDE.md, TASKCLAUDE.md,
-                AVVIO_NUOVA_SESSIONE.md vivono QUI. E' il branch su cui aprire una
-                sessione nuova, verificato con git rev-list (0 indietro su origin/main
-                a fine sessione 5).
-              agent/uj-run-001-blueprint-20260818   -> CONSEGNA. Autorizzato dalla
-                delegation card (write_branch_patterns). Contiene la consegna
-                riconciliata di UJ-RUN-001: blueprint, packet, AC-evidence, delivery,
-                append-blocks. NON contiene questo file. source_commit_sha finale:
-                79408449bd096613d2823efe6872ed424b757ee6. Verificato con
-                `git branch -a --contains <sha>`: e' l'UNICO branch che lo contiene.
-            Se devi toccare UJ-RUN-001, vai su quel branch. Per tutto il resto
-            (memoria, altri task, altre review) resta su quello di casa.
+            AGGIORNATO IN SESSIONE 6 — LEGGERE QUESTO, NON IL BLOCCO DI SESSIONE 5.
+            In sessione 6 l'ambiente ha assegnato un TERZO nome,
+            claude/ultrajarvis-program-setup-2noca9, che al clone era IDENTICO a
+            origin/main (0 avanti, 0 indietro) e NON contiene lavoro mio. Non usarlo
+            come casa senza verificarlo.
+
+            LA MEMORIA AGGIORNATA (questo file, TASKCLAUDE.md, AVVIO_NUOVA_SESSIONE.md)
+            E' ORA SU  agent/uj-run-001-blueprint-20260818, non piu' sul branch di
+            casa storico. Motivo: il proprietario ha chiesto di pushare SOLO il branch
+            autorizzato, e la Regola 2 impone comunque di aggiornare la memoria; ho
+            quindi mergiato li' il commit di memoria 2f0464d dopo aver verificato che
+            non tocca NESSUNO dei 15 artefatti hashati.
+
+              agent/uj-run-001-blueprint-20260818   -> CONSEGNA **E** MEMORIA.
+                Autorizzato dalla delegation card (write_branch_patterns
+                "agent/uj-run-001-*"). Contiene UJ-RUN-001 riconciliata (blueprint,
+                packet, AC-evidence, delivery, append-blocks) E la memoria aggiornata.
+                source_commit_sha finale: a7e03e979baee5a8b796007313ad93408299f840
+                Verificato con `git branch -a --contains <sha>` e in NEGATIVO contro
+                origin/main e gli altri due rami CLAUDE: e' l'UNICO che lo contiene.
+              claude/claude-md-resume-point-tvej1u  -> casa STORICA, ora INDIETRO
+                sulla memoria (ferma a fine sessione 5). Non e' piu' la copia buona.
+              claude/ultrajarvis-program-setup-2noca9 -> assegnato dall'ambiente in
+                sessione 6, vuoto di lavoro mio.
+            PRIMA DI SCEGLIERE, DIMOSTRA la scelta con
+            `git rev-list --left-right --count origin/main...<branch>`, non dal nome.
 
 MAIN      : commit 9d80f9f+ (verificato in sessione 4, sesta parte — si era mossa
             di 7 commit in meno di un'ora). La riga sotto dice 302852a/319
@@ -2875,6 +3066,85 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-02 (parziale — ammissione ok, manca tetto/evento), S-06 (automazione
               UI nel catalogo, è una domanda di policy), S-07 (nessun evento tool.*),
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
+
+SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AB) UJ-RUN-001 RICONCILIATA UNA TERZA VOLTA E RESTA BLOCKED. GIA' FATTO, NON RIFARE.
+     Ref: agent/uj-run-001-blueprint-20260818
+       source_commit_sha : a7e03e979baee5a8b796007313ad93408299f840
+       delivery commit   : 39e9a8350566682d1469deb2243764b321dd8c5e
+     Supersede 79408449bd096613d2823efe6872ed424b757ee6, che superava 2dad45a4.
+     File: docs/program/handoffs/HANDOFF-UJ-RUN-001.md (RISCRITTO),
+       docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json (response_id ...-R3),
+       docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md,
+       prompts/handoffs/CLAUDE-RUN-001-DELIVERY-BLOCKED-20260818.md (ORA 2 blocchi
+         FILE: blueprint E handoff, cosi' ChatGPT rihasha senza clonare),
+       prompts/handoffs/CLAUDE-RUN-001-APPEND-BLOCKS-BLOCKED-20260818.md
+
+     COSA ERA ROTTO: ChatGPT ha segnalato che l'handoff era ancora il documento
+     della SESSIONE 1 (branch claude/ultrajarvis-repo-analysis-li6vvj, stato
+     REVIEW, 33 test). Vero, ed e' uno dei 15 artefatti che il packet hasha:
+     due artefatti sullo STESSO commit dichiaravano stati opposti.
+
+     LA PARTE CHE CONTA: cercare solo quell'istanza sarebbe stato l'errore.
+     Scandendo TUTTO il set per la CLASSE del difetto ne sono uscite QUATTRO:
+       1. l'handoff                                (segnalata da ChatGPT)
+       2. packages/contracts/src/runtime/index.ts  RUNTIME_CONTRACTS_PROVENANCE
+                                                   .status = "REVIEW"  <- LA PEGGIORE
+       3. packages/contracts/package.json          description "... status REVIEW."
+       4. RUNTIME_BLUEPRINT.md                     "il prompt non e' ancora su main"
+     La n.2 e' la peggiore perche' e' l'UNICA copia LEGGIBILE DA UNA MACCHINA
+     dello stato, offerta dal suo commento "for the Program OS ledger". Lo stesso
+     file dichiarava "Status: PROPOSAL" 25 righe sopra: due stati in un file.
+     Ora maturita' del contratto e ammissibilita' della consegna sono due assi
+     separati. Nessuno legge quella costante (grep fatto prima di toccarla).
+     La n.4 era FALSA: origin/main e b8a7697 danno lo stesso a3fcdfc9...a69a87.
+
+     PROVA CHE LA CORREZIONE E' CHIRURGICA: ricalcolati TUTTI e 15 gli hash a
+     ENTRAMBI i commit sorgente -> 4 su 15 cambiati, esattamente quei quattro.
+
+     PERCHE' RESTA BLOCKED: invariato. La card non esiste al proprio read_ref
+     3611b1b4; entra con d48e1e85, dodici minuti dopo. I 4 input pinati
+     COINCIDONO a 3611b1b4 (ricalcolati): non e' un pin mismatch. Serve CHATGPT.
+     Questi stessi byte diventano REVIEW cambiando SOLO status.
+
+     TRE SCELTE DI PROGETTO DA NON DISFARE:
+       - l'handoff NON nomina il commit che lo contiene: impossibile per
+         costruzione (trappola 28). Il source_commit_sha sta SOLO nel packet.
+       - §0.3 conserva i valori superati sotto intestazione ESPLICITA di storia:
+         non cancellarli, servono a chi ha visto la versione precedente.
+       - §0.4 registra la CLASSE del difetto, non l'istanza (trappola 26).
+       - response_id cambiato in ...-R3 di proposito: riusarlo sarebbe stato un
+         replay divergente, cioe' il mio stesso finding F-002 contro ChatGPT.
+
+  AC) CORREZIONE A UN FATTO DELLA SESSIONE 5 — LEGGERE PRIMA DI CERCARE UJ-INT-007.
+     Il punto S diceva "UJ-INT-007 NON ESISTE fra i 43 task". E' FALSO.
+     ESISTE: owner CHATGPT, reviewer GEMINI, peso 13, milestone M10, DEFERRED.
+     Verificato a quattro ref diversi, esisteva gia' a 31f31b9.
+     Era quasi certamente lo stesso falso negativo dell'errore E28 di sessione 6:
+     leggere t.id dove il campo e' t.task_id, quindi confrontare contro undefined.
+     UJ-REV-002 resta NON lavorabile, ma la causa e' "la dipendenza esiste e non
+     e' accettata", NON "non esiste". E' la causa a dire chi puo' sbloccare cosa.
+
+  AD) IL COMANDO DI FETCH DELLA MIA STESSA MEMORIA ERA DIFETTOSO (E30). CORRETTO
+     in CLAUDE.md PARTE 2 e in AVVIO_NUOVA_SESSIONE.md. Usa SEMPRE:
+       git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+     Senza il '+', un ref remoto riscritto viene RIFIUTATO e origin/main resta al
+     valore VECCHIO, con una sola riga "! [rejected] ... (non-fast-forward)" in
+     mezzo a decine di "[new branch]". In questa sessione origin/main e' rimasto
+     a 9d2a93d ("Initial commit") mentre il vero era 25b1b7d. Da li' in poi ogni
+     confronto fra branch sarebbe stato sbagliato SENZA CHE NULLA LO DICESSE.
+     DOPO il fetch, verifica che origin/main sia dove ti aspetti.
+
+  AE) IL BRANCH DI CASA E QUELLO DI CONSEGNA SONO ORA ALLINEATI SULLA MEMORIA.
+     agent/uj-run-001-blueprint-20260818 contiene ANCHE CLAUDE.md/TASKCLAUDE.md
+     aggiornati: ho mergiato 2f0464d (l'ultimo commit di memoria di sessione 5) e
+     scritto qui il log di sessione 6, perche' il proprietario aveva chiesto di
+     pushare SOLO il branch autorizzato e la Regola 2 impone comunque di
+     aggiornare la memoria. Verificato che 2f0464d non tocca NESSUNO dei 15
+     artefatti, quindi il merge non poteva cambiare un hash.
+     CONSEGUENZA: claude/claude-md-resume-point-tvej1u e' ora INDIETRO sulla
+     memoria. La copia buona e' su agent/uj-run-001-blueprint-20260818.
 
 SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
 
@@ -3217,17 +3487,27 @@ SESSIONE 4 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      questo programma una verifica ha una scadenza di ore.
 
 PROSSIMO  : Se apri una sessione nuova:
+            0-bis. FETCH CON IL '+', SEMPRE (E30, sessione 6):
+               git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+               Senza il '+' un ref remoto riscritto viene RIFIUTATO in silenzio e
+               origin/main resta al valore vecchio. Dopo il fetch VERIFICA che
+               origin/main sia dove ti aspetti, non darlo per aggiornato.
+            0-ter. LA MEMORIA BUONA E' SU agent/uj-run-001-blueprint-20260818, non
+               piu' su claude/claude-md-resume-point-tvej1u (vedi punto AE). E
+               l'ambiente puo' assegnarti un branch nuovo e VUOTO: in sessione 6 ha
+               dato claude/ultrajarvis-program-setup-2noca9, identico a main.
             0. CONTROLLA `git rev-parse main origin/main` PRIMA di interpretare
                qualunque diff fra branch: dopo un fetch il main locale resta
                indietro e i diffstat diventano insensati (E17, ripetizione di E14).
-               E controlla anche `git rev-parse HEAD` sul TUO branch di casa,
-               claude/claude-md-resume-point-tvej1u: da sessione 5 esiste ANCHE
-               agent/uj-run-001-blueprint-20260818, e i due non vanno confusi.
             1. ESEGUI PRIMA LA TRAPPOLA 11 — git fetch di tutti i branch e controlla
-               se qualcuno ha consegnato. Non ha mai dato esito negativo, in
-               cinque sessioni di fila. A fine sessione 5 ha trovato il terzo
-               invio di UJ-CAP-001 mentre si stava chiudendo la sessione: vedi
-               punto AA sopra, azione 2. E' il primo task da fare.
+               se qualcuno ha consegnato. In sessione 6 e' stata la prima volta con
+               esito NEGATIVO: nessuna consegna nuova dopo la chiusura di sessione 5.
+               Non e' un motivo per saltarla, e' il motivo per cui va eseguita.
+            1. IL PRIMO TASK E' IL TERZO INVIO DI UJ-CAP-001 DA GEMINI, ancora non
+               aperto: agent/uj-cap-001-gemini-review-20260818 @ 0f1c536.
+               In sessione 6 NON l'ho toccato di proposito: la task esplicita era la
+               riconciliazione di UJ-RUN-001, e aprirne una seconda avrebbe
+               significato consegnarne due a meta'. Metodo nel punto AA azione 2.
             1-bis. IL PRE-VERDETTO §6/§9 (sessione 4) E' SUPERATO. Non ripartire
                da li': il mio verdetto vero e aggiornato e' in
                docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260818.md
@@ -3284,10 +3564,13 @@ NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
             Program OS (UJ-REV-001), LA SECURITY REVIEW DELL'IMPLEMENTAZIONE SU MAIN
             (UJ-SEC-003, 16 findings), LA LISTA CORREZIONI PER GROK, E IL
             PRE-VERDETTO UJ-CAP-001 SUL CANDIDATO GEMINI (sessione 4, 6 findings).
-            LA RICONCILIAZIONE DI UJ-RUN-001 (sessione 5, settima parte: blueprint
-            corretto, packet BLOCKED, AC-evidence, delivery, append-blocks — tutto
-            su agent/uj-run-001-blueprint-20260818 @ 79408449). Il TERZO invio di
-            UJ-CAP-001 NON e' in questa lista: quello va aperto, e' il primo task.
+            LA RICONCILIAZIONE DI UJ-RUN-001 — TERZO GIRO, sessione 6: handoff
+            RISCRITTO piu' altri tre artefatti che dichiaravano uno stato superato
+            (index.ts, package.json, blueprint), packet ...-R3 BLOCKED, AC-evidence,
+            delivery con DUE blocchi FILE, append-blocks. Tutto su
+            agent/uj-run-001-blueprint-20260818 @ a7e03e979bae (vedi punto AB).
+            Il TERZO invio di UJ-CAP-001 NON e' in questa lista: quello va aperto,
+            e' il primo task.
             Verifica prima, DALLA ROOT del repo, SOLO la mia suite (non toccare i
             test Python di Grok, sono un altro portafoglio).
             ESEGUI I TRE COMANDI IN QUEST'ORDINE — il secondo NON è opzionale:

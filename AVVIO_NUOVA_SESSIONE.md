@@ -60,8 +60,13 @@ FAI ESATTAMENTE QUESTO, IN QUESTO ORDINE, PRIMA DI PRODURRE QUALUNQUE COSA:
    Se non coincide, fermati e segnalalo: il piano è cambiato.
 
 4. CONTROLLA I REF PRIMA DI INTERPRETARE QUALUNQUE DIFF:
-     git fetch origin 'refs/heads/*:refs/remotes/origin/*'
+     git fetch origin '+refs/heads/*:refs/remotes/origin/*'
      git rev-parse HEAD main origin/main
+   IL '+' NON E' OPZIONALE (errore E30, sessione 6). Senza, un ref remoto che
+   e' stato riscritto viene RIFIUTATO con una riga "! [rejected] ... (non-
+   fast-forward)" facile da non vedere, e origin/main resta al valore VECCHIO.
+   Da li' in poi ogni confronto fra branch e' sbagliato senza che nulla lo dica.
+   Verifica sempre che origin/main sia quello che ti aspetti dopo il fetch.
    Dopo un fetch il main LOCALE resta indietro. Confronta sempre contro
    origin/main, mai contro main. (Errori E14/E17: diffstat assurdi presi per veri.)
 
