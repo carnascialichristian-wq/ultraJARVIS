@@ -30,12 +30,84 @@ JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 
-def _code_for_prompt(prompt: str, title: str) -> str:
-    """Heuristic code body for common utility patterns.
-
-    Prefer self-contained implementations that mirror the pure helpers
-    in tools/*_helpers.py so generated jobs stay isolated and testable.
+def _code_via_llm(prompt: str, title: str) -> str | None:
     """
+    Optional LLM-backed code writer (Phase 2 adapter).
+
+    Enabled only when UJ_WRITER_LLM=1. Returns a Python body that defines
+    at least ``def run()`` or None on any failure so the heuristic path
+    remains the safe fallback.
+
+    Generated text is safety-scanned; dangerous patterns are rejected.
+    """
+    import os
+    import re
+
+    if os.getenv("UJ_WRITER_LLM", "").strip() != "1":
+        return None
+    if not (prompt or "").strip():
+        return None
+
+    try:
+        from cloud_bridge import ask_cloud_ai
+    except Exception:
+        return None
+
+    system = (
+        "You are the UltraJarvis code writer. "
+        "Reply with ONLY valid Python source code (no markdown fences, no prose). "
+        "The module must define a public function `run() -> str` that returns a string "
+        "containing 'ok'. Add any helper functions needed for the task. "
+        "Keep the code self-contained, no external imports beyond the standard library."
+    )
+    user = (
+        f"Task title: {title}\n"
+        f"Task prompt:\n{prompt.strip()[:1500]}\n\n"
+        "Write the Python module body now."
+    )
+    raw = ask_cloud_ai(user, system=system)
+    if not raw or not raw.strip():
+        return None
+
+    body = raw.strip()
+    # Strip markdown fences if the model ignored instructions
+    if body.startswith("```"):
+        body = re.sub(r"^```(?:python)?\s*", "", body)
+        body = re.sub(r"\s*```$", "", body)
+        body = body.strip()
+
+    if "def run" not in body:
+        return None
+
+    # Must be syntactically valid Python
+    try:
+        compile(body, "<llm-writer>", "exec")
+    except SyntaxError:
+        return None
+
+    # Safety gate – never promote/use LLM code that matches dangerous patterns
+    try:
+        from advisors.safety import scan_text
+        hits = scan_text(body)
+        if hits:
+            return None
+    except Exception:
+        return None
+
+    return body
+
+
+def _code_for_prompt(prompt: str, title: str) -> str:
+    """Code body for a job module.
+
+    Prefer the LLM writer when UJ_WRITER_LLM=1 and the model returns usable,
+    safe Python; otherwise use deterministic heuristics that mirror the pure
+    helpers in tools/*_helpers.py.
+    """
+    llm_body = _code_via_llm(prompt, title)
+    if llm_body is not None:
+        return llm_body
+
     low = prompt.lower()
 
     # --- math ---
