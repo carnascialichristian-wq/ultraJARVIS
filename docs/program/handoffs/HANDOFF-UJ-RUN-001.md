@@ -146,7 +146,50 @@ esisterebbe.
 **Il blocker non è mio e non è risolvibile dal mio portafoglio.** La card appartiene a
 CHATGPT.
 
-### 1.1 Attenzione: `main` è stato riscritto, e questo cambia la correzione da fare
+### 1.0 AGGIORNAMENTO 2026-08-19 — il blocco è cambiato di natura, non è sciolto
+
+CHATGPT ha corretto le card con il commit `4b63b94` su `main`. **Il difetto descritto nella
+§1.1 qui sotto è chiuso**, e la §1.1 va letta come storia: tutte e quattro le card dichiarano
+ora `read_ref` `25b1b7d53ff5bc4b05348453ebb704aba3a88630`, che le contiene ed è raggiungibile
+da `main`. Verificato, 4 su 4, entrambe le clausole.
+
+**Lo stesso commit ha però riscritto i sedici hash degli input pinati, e nessuno dei sedici
+corrisponde ai byte reali.** Verificato al `read_ref` che le card stesse dichiarano:
+
+| Card | pin coincidenti | divergenti |
+|---|---:|---:|
+| `UJ-RUN-001-CLAUDE.json` | 0 | **4** |
+| `UJ-CAP-001-GEMINI.json` | 0 | **4** |
+| `UJ-GGL-001-GEMINI.json` | 0 | **4** |
+| `UJ-RED-001-GROK.json` | 0 | **4** |
+
+Non è una convenzione di hashing diversa (sei testate, nessuna produce quei valori) e non è un
+hash preso da un altro commit (il piano canonico vale `a3fcdfc9…a69a87` a **ogni** ref della
+storia). I valori corretti sono **quelli che le card dichiaravano prima** di `4b63b94`.
+
+`node scripts/validate-council-packets.mjs`, eseguito su `origin/main`, **rifiuta il commit con
+`exit 1`** e dodici mismatch.
+
+**Quindi il blocco cambia identità.** Per quattro giri questo documento ha detto *"non è un pin
+mismatch"*. Adesso lo è, ed è l'unica cosa che resta fra questa consegna e `REVIEW`.
+
+**Il rischio sostanziale è nullo, e va detto.** Il lavoro è stato svolto contro i documenti
+reali, i cui byte non sono cambiati e i cui hash veri sono stati ricalcolati. Nessuna
+conclusione del blueprint dipende dai valori scritti nella card. Il blocco è **formale**: una
+consegna non è ammissibile mentre la card che la governa fallisce il proprio gate.
+
+Analisi completa, con i sedici valori corretti da riscrivere e i comandi di riproduzione:
+`docs/program/reviews/UJ-CARDS-REPIN-VERIFICATION-CLAUDE.md`.
+
+**Due cose che CHATGPT ha fatto bene nello stesso commit**, e che vanno accreditate: ha
+allineato i criteri di accettazione — `UJ-RUN-001` nel `BACKLOG.json` ne dichiara ora **cinque**,
+non due, chiudendo il rilievo che rendeva non importabile qualunque `ReviewResult` — e ha
+aggiunto al validatore due assert che rendono **meccanico** il difetto del `read_ref` invece di
+limitarsi a correggerlo. È più di quanto avessi chiesto.
+
+---
+
+### 1.1 STORICO — `main` è stato riscritto (difetto chiuso da `4b63b94`, vedi §1.0)
 
 Misurato in sessione 6, e non è un dettaglio storico: **nessuno** dei commit che questa vicenda
 nomina è più raggiungibile da `origin/main`.
