@@ -6,7 +6,7 @@
 | Milestone | M0 / M2 |
 | Owner | CLAUDE (Runtime, Security & Skill Architect) |
 | Reviewer | GEMINI |
-| Stato | REVIEW |
+| Stato | **BLOCKED** — vedi nota di stato qui sotto |
 | Peso | 13 |
 | Data class | C1 INTERNAL |
 | Side effect | INTERNAL_WRITE (solo file su branch dedicato) |
@@ -15,6 +15,18 @@
 | Prompt SHA-256 | `a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87` (verificato in sessione) |
 | Contratti collegati | `packages/contracts/src/runtime/*.ts` |
 | Threat notes | `docs/threat-models/RUNTIME_THREAT_NOTES.md` |
+
+> **Nota di stato — perche' BLOCKED e non REVIEW.** Questo documento ha dichiarato `REVIEW`
+> dalla sessione 1 alla sessione 5. Non e' piu' vero. La delegation card
+> `UJ-CARD-RUN-001-CLAUDE` **non esiste** al commit che il suo stesso
+> `repository_scope.read_ref` nomina, `3611b1b400cf57b5021bab228a3de9470d6eca5c`; entra nella
+> storia con `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3`, dodici minuti dopo. Per decisione del
+> proprietario, una card non disponibile al `read_ref` produce `BLOCKED` invece di procedere.
+>
+> Gli artefatti tecnici sono completi e verificati: **non e' questo a essere in dubbio**. Il
+> blocco e' sull'ammissibilita' della consegna, non sulla sua qualita', e si scioglie
+> correggendo il `read_ref` della card — dopodiche' questi stessi byte diventano una consegna
+> `REVIEW` senza altre modifiche.
 
 > **Nota di provenienza.** Il prompt canonico vive attualmente sul branch
 > `agent/ultrajarvis-master-prompt-v1` (PR #1, draft) e non è ancora su `main`.
@@ -1035,8 +1047,26 @@ Le funzioni pure di questo deliverable sono **già testate**; i test di livello 
 non lo sono, perché il runtime non esiste ancora. La distinzione è esplicita: dichiarare
 superati test che non girano sarebbe falso avanzamento (§31.5).
 
-**Stato:** 33 test eseguiti, 33 passati.
-Comando: `cd packages/contracts && npx tsc && cd ../.. && node --test tests/contracts/runtime-invariants.test.mjs`
+**Stato:** **36 test eseguiti, 36 passati** in `tests/contracts/runtime-invariants.test.mjs`.
+Nella suite completa dei contratti: **140 eseguiti, 140 passati, 0 falliti**
+(`approval-policy` 28 · `recovery` 9 · **`runtime-invariants` 36** · `skill-forge` 37 ·
+`tool-admission` 30).
+
+Comando, e la riga di **build non e' opzionale** — i test importano da `dist/`, che e' in
+`.gitignore` e in un container nuovo non esiste:
+
+```bash
+npx tsc -p packages/contracts --noEmit    # typecheck
+npx tsc -p packages/contracts             # BUILD
+node --test tests/contracts/runtime-invariants.test.mjs
+```
+
+> **Correzione di un conteggio stantio.** Questa riga ha dichiarato `33` dalla sessione 1 fino
+> alla sessione 5, senza essere riaggiornata mentre la suite cresceva: 33 alla stesura, 34 dopo
+> la regressione sulla idempotency key, **36** dopo i due test di regressione di `E6` (la
+> seconda occorrenza del separatore NUL, in `depth-guard.ts`). Il numero e' stato rimisurato
+> eseguendo il file identico al blob committato, non dedotto dalla tabella qui sotto — che
+> elenca gli **ID** dei test, non il loro totale, e per questo non e' mai stata in conflitto.
 
 #### Implementati e verdi (`tests/contracts/runtime-invariants.test.mjs`)
 
@@ -1124,13 +1154,13 @@ una risposta rassicurante.
 | vincoli e zero-cost truthfulness | 15 | 15 | nessuna API a pagamento, nessun compute locale, nessun sempre-on |
 | fattibilità tecnica e sostituibilità | 15 | 13 | contratti provider-neutral; kernel non ancora scelto per esperimento M2 |
 | sicurezza, privacy, approval | 15 | 13 | invarianti e threat notes presenti; threat model completo è UJ-SEC-001 |
-| artifact concreti e testabilità | 15 | 14 | contratti che compilano; 22 test specificati ma non ancora implementati |
+| artifact concreti e testabilità | 15 | 14 | contratti che compilano; **36/36** test runtime verdi e **140/140** nella suite; **33 prove specificate e non implementate** (11 di §13.3 + 22 delle §16-21) |
 | fonti e disciplina epistemica | 10 | 9 | prompt canonico verificato con hash; fonti esterne raccolte, non asserite |
 | roadmap ed estendibilità | 10 | 8 | ADR aperti dichiarati; non invado milestone altrui |
 | status e remaining work | 10 | 9 | pesi e delta nell'handoff, formula §7.4 applicata |
 | collaborazione e handoff | 5 | 5 | handoff per tutte e tre le altre IA + Christian |
 | chiarezza | 5 | 4 | documento lungo per necessità di contratto |
-| **Totale** | **100** | **90** | soglia "pronto per review" raggiunta |
+| **Totale** | **100** | **90** | soglia raggiunta **sul contenuto**. Non è un giudizio di ammissibilità: il task è `BLOCKED` per il `read_ref` della card, non per la qualità dell'artefatto |
 
 Nessun critical failure di §43: nessuna API a pagamento proposta come attiva, nessuna
 automazione di UI consumer, nessun modello locale, nessun segreto esposto, nessun
@@ -1656,6 +1686,34 @@ Serve al reviewer per verificare la copertura **contando**, invece di leggere in
 | 24 | **Fallback locale senza costi** | **§20** | 3 da implementare, 1 esistente |
 
 **Bilancio onesto:** 24 requisiti su 24 hanno una sezione. **Non** 24 su 24 hanno una prova
-eseguita: le sezioni 16–21 ne specificano **24 nuove da implementare**, e il resto poggia sui
-140 test che passano oggi. Dichiarare coperto ciò che è solo specificato sarebbe falso
-avanzamento.
+eseguita: le sezioni 16-21 ne specificano **22 nuove da implementare**, e il resto poggia sui
+**140 test che passano oggi** (di cui **36** in `runtime-invariants`). Dichiarare coperto cio'
+che e' solo specificato sarebbe falso avanzamento.
+
+**Le 22, contate per sezione** — così il numero e' ricontabile invece che asserito:
+
+| Sezione | Prove specificate |
+|---|---:|
+| §16 decomposizione dei task | 5 |
+| §17 selezione e assegnazione agenti | 3 |
+| §18 routing provider-neutral e HUMAN_BRIDGE | 5 |
+| §19 conflitti fra agenti | 3 |
+| §20 fallback locale a costo zero | 3 |
+| §21 demo end-to-end minima | 3 |
+| **totale §16-21** | **22** |
+
+A queste si aggiungono le **11** gia' elencate come `⏳ PENDING` in §13.3, che richiedono lo
+stesso runtime assente. **Totale specificato e non implementato: 33.**
+
+Comando che riproduce il conteggio:
+
+```bash
+grep -cE '^\|.*PROVA DA IMPLEMENTARE' docs/architecture/RUNTIME_BLUEPRINT.md   # -> 22
+grep -cE '^\|.*⏳ PENDING'            docs/architecture/RUNTIME_BLUEPRINT.md   # -> 11
+```
+
+**L'ancora `^\|` non e' un dettaglio.** Senza di essa i due comandi restituiscono 24 e 13
+invece di 22 e 11, perche' contano anche le menzioni in prosa — comprese quelle di questo
+stesso paragrafo. Documentare un comando di conteggio dentro il documento che conta ne cambia
+il risultato: e' il motivo per cui entrambi i comandi sono ancorati alle righe di tabella, che
+sono le sole a rappresentare una prova.
