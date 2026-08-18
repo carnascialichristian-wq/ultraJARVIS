@@ -627,19 +627,45 @@
         }
       ],
       "proof": [
-        { "ref": "schemas/mission-packet.schema.json" },
-        { "ref": "schemas/delegation-card.schema.json" },
-        { "ref": "schemas/response-packet.schema.json" },
-        { "ref": "schemas/synthesis-packet.schema.json" },
-        { "ref": "schemas/review-result.schema.json" },
-        { "ref": "docs/program/COUNCIL_PACKETS.md" },
-        { "ref": "docs/program/COUNCIL_IMPORT_AND_MERGE.md" },
-        { "ref": "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json" },
-        { "ref": "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json" },
-        { "ref": "prompts/delegation-cards/UJ-CAP-001-GEMINI.json" },
-        { "ref": "prompts/delegation-cards/UJ-GGL-001-GEMINI.json" },
-        { "ref": "prompts/delegation-cards/UJ-RED-001-GROK.json" },
-        { "ref": "scripts/validate-council-packets.mjs" }
+        {
+          "ref": "schemas/mission-packet.schema.json"
+        },
+        {
+          "ref": "schemas/delegation-card.schema.json"
+        },
+        {
+          "ref": "schemas/response-packet.schema.json"
+        },
+        {
+          "ref": "schemas/synthesis-packet.schema.json"
+        },
+        {
+          "ref": "schemas/review-result.schema.json"
+        },
+        {
+          "ref": "docs/program/COUNCIL_PACKETS.md"
+        },
+        {
+          "ref": "docs/program/COUNCIL_IMPORT_AND_MERGE.md"
+        },
+        {
+          "ref": "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json"
+        },
+        {
+          "ref": "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json"
+        },
+        {
+          "ref": "prompts/delegation-cards/UJ-CAP-001-GEMINI.json"
+        },
+        {
+          "ref": "prompts/delegation-cards/UJ-GGL-001-GEMINI.json"
+        },
+        {
+          "ref": "prompts/delegation-cards/UJ-RED-001-GROK.json"
+        },
+        {
+          "ref": "scripts/validate-council-packets.mjs"
+        }
       ],
       "data_class": "C1",
       "side_effect": "INTERNAL_WRITE",
@@ -792,13 +818,31 @@
       "acceptance_criteria": [
         {
           "criterion_id": "AC-01",
-          "text": "The Runtime blueprint with AgentManifest, TeamSpec, Supervisor, DepthGuard, and RunLedger artifact exists and conforms to its declared contract.",
+          "text": "Runtime blueprint defines AgentManifest, TeamSpec, Supervisor, DepthGuard, and RunLedger as provider-neutral contracts.",
           "state": "PENDING",
           "proof_refs": []
         },
         {
           "criterion_id": "AC-02",
-          "text": "GEMINI issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "text": "Checkpoint, cancellation, retry, idempotency, loop, replay, and failure containment semantics are binary-testable.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-03",
+          "text": "Tool access is default-deny and never inherited implicitly.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-04",
+          "text": "Proposed schemas and integration checklist are complete enough for ChatGPT and Gemini review.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-05",
+          "text": "ResponsePacket is valid, cites every artifact hash, proposes REVIEW, and keeps accepted weight at 0/13.",
           "state": "PENDING",
           "proof_refs": []
         }
@@ -816,7 +860,7 @@
       },
       "blocker": null,
       "next_action": "Produce the schema-first runtime blueprint and ResponsePacket.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "updated_at": "2026-08-18T17:28:46.783Z"
     },
     {
       "task_id": "UJ-SEC-001",
@@ -1217,13 +1261,31 @@
       "acceptance_criteria": [
         {
           "criterion_id": "AC-01",
-          "text": "The Official-source Capability Registry with access modes and freshness artifact exists and conforms to its declared contract.",
+          "text": "All four primary AI products have explicit access paths and conservative provider modes.",
           "state": "PENDING",
           "proof_refs": []
         },
         {
           "criterion_id": "AC-02",
-          "text": "CLAUDE issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "text": "Subscription and API entitlement are separated for every provider.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-03",
+          "text": "Current claims carry official source and verification date; unknowns are not promoted.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-04",
+          "text": "Paid, billing-risk, UI-automation, and local-compute paths are disabled or blocked with fallbacks.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-05",
+          "text": "ResponsePacket is valid, hashes artifacts, proposes REVIEW, and keeps accepted weight at 0/13.",
           "state": "PENDING",
           "proof_refs": []
         }
@@ -1241,7 +1303,7 @@
       },
       "blocker": null,
       "next_action": "Produce a coordinated evidence pack with UJ-GGL-001.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "updated_at": "2026-08-18T17:28:46.783Z"
     },
     {
       "task_id": "UJ-GGL-001",
@@ -1266,13 +1328,31 @@
       "acceptance_criteria": [
         {
           "criterion_id": "AC-01",
-          "text": "The Official-source Google capability evidence pack artifact exists and conforms to its declared contract.",
+          "text": "Relevant Google capabilities are classified without turning the product list into required architecture.",
           "state": "PENDING",
           "proof_refs": []
         },
         {
           "criterion_id": "AC-02",
-          "text": "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "text": "Every material status, quota, billing, and automation claim has a current official source and date.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-03",
+          "text": "Strict-zero-card eligibility and subscription/API separation are explicit.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-04",
+          "text": "Deprecated, preview, Labs, unknown, or unnecessary products are visibly separated from active candidates.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-05",
+          "text": "ResponsePacket is valid, separate from UJ-CAP-001, proposes REVIEW, and keeps accepted weight at 0/13.",
           "state": "PENDING",
           "proof_refs": []
         }
@@ -1290,7 +1370,7 @@
       },
       "blocker": null,
       "next_action": "Produce a coordinated evidence pack with UJ-CAP-001 while keeping weights separate.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "updated_at": "2026-08-18T17:28:46.783Z"
     },
     {
       "task_id": "UJ-INF-001",
@@ -1647,13 +1727,31 @@
       "acceptance_criteria": [
         {
           "criterion_id": "AC-01",
-          "text": "The Falsification report with evidence requirements, mitigations, owners, and STOP/GO conditions artifact exists and conforms to its declared contract.",
+          "text": "Every material assumption has a falsification test, impact, severity, probability, detectability, mitigation, owner, and STOP/GO condition.",
           "state": "PENDING",
           "proof_refs": []
         },
         {
           "criterion_id": "AC-02",
-          "text": "CHATGPT issues an evidence-backed PASS or PASS_WITH_ACTIONS review.",
+          "text": "Zero-card/cloud-only/automatic/subscription conflicts and provider failure scenarios are covered.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-03",
+          "text": "DepthGuard, bridge, memory, Skill Forge, supply-chain, and progress-gaming attacks are covered.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-04",
+          "text": "Simpler reversible alternatives are compared without presenting unverified free services as active.",
+          "state": "PENDING",
+          "proof_refs": []
+        },
+        {
+          "criterion_id": "AC-05",
+          "text": "ResponsePacket is valid, hashes artifacts, proposes REVIEW, and keeps accepted weight at 0/13.",
           "state": "PENDING",
           "proof_refs": []
         }
@@ -1671,7 +1769,7 @@
       },
       "blocker": null,
       "next_action": "Produce the falsification ResponsePacket without generic criticism.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "updated_at": "2026-08-18T17:28:46.783Z"
     },
     {
       "task_id": "UJ-RSK-001",
