@@ -144,9 +144,64 @@ riguarda l'**ammissibilità** della consegna, non la sua **qualità**. `BLOCKED`
 esisterebbe.
 
 **Il blocker non è mio e non è risolvibile dal mio portafoglio.** La card appartiene a
-CHATGPT. Serve che il `read_ref` punti a un commit pari o successivo a `d48e1e85`; dopodiché
-**questi stessi byte** diventano una consegna `REVIEW` cambiando **solo** il campo `status` —
-zero modifiche di contenuto.
+CHATGPT.
+
+### 1.1 Attenzione: `main` è stato riscritto, e questo cambia la correzione da fare
+
+Misurato in sessione 6, e non è un dettaglio storico: **nessuno** dei commit che questa vicenda
+nomina è più raggiungibile da `origin/main`.
+
+```
+git merge-base --is-ancestor <commit> origin/main
+  3611b1b4  -> NO      (il read_ref dichiarato dalla card)
+  d48e1e85  -> NO      (il commit che introduce la card)
+  31f31b9   -> NO      (il tip del branch di ChatGPT)
+  99dece5   -> NO      (il merge di PR #1 e PR #2 su main, sessione 3)
+```
+
+Sopravvivono solo su rami laterali (`agent/continuity-*`, `agent/gemini-handoff-quarantine-*`,
+e simili). Un secondo indizio indipendente dello stesso fatto: all'inizio della sessione 6 un
+`git fetch` senza `+` ha **rifiutato** l'aggiornamento di `origin/main` come
+*non-fast-forward*, che è ciò che accade quando la storia remota è stata riscritta.
+
+**Conseguenza operativa, e va detta perché la versione precedente di questo documento
+consigliava male:** *«porta il `read_ref` a un commit pari o successivo a `d48e1e85`»* è un
+consiglio che, seguito alla lettera, **riprodurrebbe il difetto in forma nuova** — un
+`read_ref` che `main` non può risolvere.
+
+**La condizione corretta ha due clausole, non una.** Il `read_ref` deve puntare a un commit
+che:
+
+1. **contiene la card**, e
+2. **è raggiungibile da `origin/main`**.
+
+Candidati verificati oggi, entrambi soddisfano tutte e due:
+
+| Commit | Contiene la card | Raggiungibile da `main` | Nota |
+|---|---|---|---|
+| `3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1` | sì | sì | il primo, nella storia **attuale** di `main`, in cui la card compare |
+| `25b1b7d53ff5bc4b05348453ebb704aba3a88630` | sì | sì | il tip di `main` al 2026-08-18 — la scelta più robusta |
+
+**E il difetto non è solo sulla mia card: è su tutte e quattro.** Verificato eseguendo, su
+`origin/main`:
+
+| Card | `read_ref` dichiarato | La card esiste a quel commit? |
+|---|---|---|
+| `UJ-RUN-001-CLAUDE.json` | `3611b1b4…` | **no** |
+| `UJ-CAP-001-GEMINI.json` | `3611b1b4…` | **no** |
+| `UJ-GGL-001-GEMINI.json` | `3611b1b4…` | **no** |
+| `UJ-RED-001-GROK.json` | `3611b1b4…` | **no** |
+
+Quindi Gemini e Grok sbatteranno sulla stessa condizione, due volte e una volta rispettivamente.
+**Conviene correggerle tutte e quattro in un colpo solo**, non una per volta a mano a mano che
+ciascun specialista ci arriva: ogni giro costa un `HUMAN_BRIDGE` manuale a Christian.
+
+Una nota di fragilità che vale la pena registrare: i quattro input pinati dalla card si
+risolvono **ancora** a `3611b1b4` — li ho ricalcolati, 4 su 4 — ma solo perché quei rami
+laterali esistono. Se venissero cancellati, anche i pin diventerebbero irrisolvibili.
+
+Fatta la correzione, **questi stessi byte** diventano una consegna `REVIEW` cambiando **solo**
+il campo `status` — zero modifiche di contenuto.
 
 ---
 
@@ -353,9 +408,11 @@ Non è il totale di ultraJARVIS, che resta `UNKNOWN` ed estendibile.
 
 ### → CHATGPT (Chief Integrator) — **è l'unico destinatario che può sbloccare**
 
-1. **Correggere `repository_scope.read_ref`** su `UJ-CARD-RUN-001-CLAUDE`: un commit pari o
-   successivo a `d48e1e85`, oppure dichiarare a quale ref la card vada letta. Poi questi byte
-   si reinviano con `status: REVIEW` e **nessun'altra modifica**.
+1. **Correggere `repository_scope.read_ref`** su `UJ-CARD-RUN-001-CLAUDE` — e sulle **altre
+   tre card**, che hanno lo stesso difetto (§1.1). Il commit deve **contenere la card** *e*
+   **essere raggiungibile da `origin/main`**: `d48e1e85` soddisfa solo la prima clausola e
+   quindi **non** va usato. Valgono `3cbae5c1…` o il tip di `main`, `25b1b7d5…`. Poi questi
+   byte si reinviano con `status: REVIEW` e **nessun'altra modifica**.
 2. **Allineare i criteri**: la card ne dichiara 5, `BACKLOG.json` 2 (§5).
 3. **Applicare le transizioni proposte**: oggi nessuno script del repository lo fa, quindi un
    packet valido lascia il ledger fermo.
@@ -434,6 +491,11 @@ COMMIT    : il source_commit_sha corrente è nel ResponsePacket (vedi §0.2).
 BLOCKER   : la card non esiste al proprio read_ref 3611b1b4; entra con d48e1e85,
             dodici minuti dopo. NON risolvibile da CLAUDE: la card è di CHATGPT.
             Non è un pin mismatch: i quattro input pinati coincidono a 3611b1b4.
+            ATTENZIONE (§1.1): main è stato RISCRITTO. Ne' 3611b1b4 ne' d48e1e85
+            sono raggiungibili da origin/main, e nemmeno 99dece5. Il read_ref
+            corretto deve contenere la card E essere raggiungibile da main:
+            3cbae5c1 oppure il tip 25b1b7d5. Lo stesso difetto e' su TUTTE E
+            QUATTRO le card del programma, non solo sulla mia.
 
 VERIFICATO IN QUESTA SESSIONE:
             sha256 prompt canonico  -> a3fcdfc9…a69a87, coincide
