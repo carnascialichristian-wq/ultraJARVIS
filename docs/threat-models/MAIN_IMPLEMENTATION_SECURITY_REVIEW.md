@@ -1096,3 +1096,107 @@ danno (`git checkout -- grok.md`, rimozione di `a.txt`, `notes/`, `sub/`) e l'ho
 
 **Non ho contato `workspace/`** fra i file spuri: è una directory di runtime già prevista da
 `pytest.ini` (`norecursedirs`), non un effetto collaterale inatteso.
+
+---
+
+## 16. S-16 — aggiornamento: metà della catena si è chiusa. **MEDIUM, non ancora sfruttabile.**
+
+> 2026-08-18, `main` @ `ef67245`. Aggiornamento di §4-octies, non un finding nuovo.
+
+### 16.1 Cosa è cambiato
+
+Quando avevo trovato `S-16` (memoria senza provenienza) avevo verificato e scritto che **non
+era una vulnerabilità attiva**, perché `planner.py`, `job_worker.py` e `natural_tasks.py` non
+rileggevano la memoria: il percorso *contenuto → memoria → decisione* non era cablato.
+
+**Adesso metà lo è.** Grok ha aggiunto `recall_semantic` e il planner lo usa:
+
+```python
+# core/planner.py:153-154
+from core.memory import recall, recall_semantic
+related = recall_semantic(text, limit=5, tag="job", min_score=0.05)
+...
+milestones.append("Review related past jobs: " + "; ".join(unique[:3]))
+```
+
+E `core/natural_tasks.py:324` scrive in memoria a fine job:
+
+```python
+remember(f"job:{job_id} title={task_plan.title!r} status={final_status}", tags=[...])
+```
+
+`task_plan.title` deriva dal prompt dell'utente. Quindi la catena oggi è:
+
+```
+prompt -> title -> memoria -> recall_semantic -> milestone del piano -> writer -> codice
+```
+
+### 16.2 Cosa NON è cambiato, e perché non lo classifico più grave
+
+**L'ingresso non fidato non esiste ancora.** `bin/uj` prende i prompt dalla riga di comando,
+cioè da Christian. Finché è così, il contenuto che entra in memoria è fidato, e il fatto che il
+record non abbia provenienza non è sfruttabile da un terzo.
+
+`S-16` passa quindi da *"nessuna delle due metà cablata"* a **"metà a valle cablata, metà a
+monte no"**. Resta `MEDIUM`. Non lo alzo, perché non ho un vettore.
+
+### 16.3 Misurato, e il risultato è in parte a favore del progetto
+
+Non ho dedotto la selettività del recall: l'ho misurata, su una memoria costruita con i record
+esattamente nel formato che `natural_tasks` scrive.
+
+| Query | Risultati sopra `min_score=0.05` |
+|---|---|
+| `"export data to csv"` (legittima, correlata) | **1**, score `0.3333` — il job giusto |
+| `"quantum chemistry solver"` (totalmente scorrelata) | **0** |
+
+**`min_score=0.05` sembra permissivo ma non lo è nei fatti:** una query scorrelata non fa
+emergere nulla. È una mitigazione reale, e va accreditata — significa che un fatto ostile in
+memoria non compare in un piano qualunque, ma solo in piani lessicalmente vicini.
+
+Confermato invece il difetto originale, con la stessa misura:
+
+```
+campi di un record di memoria: ['fact', 'tags', 'ts']
+```
+
+**Nessun campo di provenienza.** Un fatto scritto da Christian con `uj remember` e un fatto
+derivato dal titolo di un job restano indistinguibili.
+
+### 16.4 Perché la correzione va fatta adesso e non dopo
+
+È la stessa forma dell'ordine di `S-12`/`S-13` e di `S-17`/writer adapter, e in questo programma
+si è già sbagliata due volte: **la metà a valle è arrivata prima della correzione di schema.**
+Quando arriverà la metà a monte — un ingresso che accetta testo non fidato, per esempio un job
+creato da contenuto web o da una API — il campo di provenienza andrà aggiunto a uno schema che
+nel frattempo ha accumulato record senza. Migrare una memoria è più caro che progettarla.
+
+`remember()` deve accettare e persistere un `source` esplicito, con almeno la distinzione
+`OWNER` / `DERIVED` / `UNTRUSTED`, e `recall_semantic` deve poter filtrare su quello. È una
+modifica di poche righe **oggi**.
+
+### 16.5 Confine
+
+**È di GEMINI, non di Grok.** `UJ-MEM-001` — *"Specify database, memory, provenance, and
+search"* — è il task che possiede questo schema, ed è **BLOCKED** e non consegnato. Io ne sono
+il **reviewer**. Quindi non correggo: segnalo, e lo scrivo nel briefing perché arrivi a chi
+deve progettarlo prima che la memoria si riempia.
+
+### 16.6 Due previsioni mie che NON si sono avverate, e lo dico
+
+In `S-17` §13.6 avevo scritto che *"la terza e la quarta porta sono già scritte nella roadmap"*,
+riferendomi a *"Embedding-backed recall (needs model)"* e *"Multi-agent debate loop"* di
+`PHASE2.md`. Grok le ha implementate entrambe, e **nessuna delle due ha aperto una porta verso
+un provider a pagamento**:
+
+- **`recall_semantic`** è TF-cosine **locale**, non usa embedding di un modello remoto;
+- **`advisors/debate.py`** fa consenso fra `safety`, `style` e `critic`, che sono advisor
+  **locali**. Nessuna chiamata a `cloud_bridge`.
+
+Verificato con `grep` su tutti i moduli nuovi: nessuno importa `cloud_bridge` o `ask_cloud_ai`.
+La previsione era ragionevole quando l'ho scritta ed è stata smentita dai fatti. Registrarlo
+serve a non lasciare in giro un allarme che non ha più oggetto.
+
+**E `core/monetization.py` non è ciò che il nome suggerisce a chi teme l'Articolo 5:** è usage
+metering che scrive un JSONL locale e dichiara *"no billing provider yet"*. Riguarda l'addebito
+a **futuri clienti**, non la spesa del programma. Nessun provider di pagamento, nessuna rete.

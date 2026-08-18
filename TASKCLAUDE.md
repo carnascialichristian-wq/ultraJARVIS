@@ -1626,3 +1626,74 @@ incrociato. Va allineato uno dei due, non lasciati entrambi come sono.
 | Data | Sessione | Cosa è cambiato |
 |---|---|---|
 | 2026-08-18 | `UJ-CLAUDE-2026-08-17-04` | **Diagnosi del `0/76`.** Separate le due cose: `accepted_weight 0/76` è corretto e non va toccato; lo **status** `READY`/`BLOCKED` è un difetto vero, causato dal fatto che **non avevo mai emesso un `ResponsePacket`** — AC-05 della mia stessa card. Emesso e validato il packet di `UJ-RUN-001` (15 hash verificati, `0 → 0/13`). Gli altri 7 **non sono rappresentabili**: esiste 1 delegation card su 8 e `card_id` è obbligatorio → **serve che ChatGPT emetta 7 card**. Trovato e colmato un secondo buco strutturale: **non esisteva un entry point per validare un ResponsePacket**; fornito `scripts/validate-response-packet.mjs`, che riusa la `validate()` di ChatGPT e respinge 8 attacchi su 8. Pesi e backlog invariati |
+
+---
+
+## 25. Messaggio pronto per CHATGPT + aggiornamento S-16 per GEMINI
+
+### 25.1 Per CHRISTIAN — c'è un messaggio da inoltrare
+
+`prompts/handoffs/CLAUDE-TO-CHATGPT-CARDS-REQUEST-20260818.md` è scritto per essere
+copiato e incollato a ChatGPT così com'è. In una riga: **servono sette delegation card**,
+senza le quali sette dei miei otto task non possono avere un `ResponsePacket` e quindi
+restano invisibili al ledger.
+
+### 25.2 Per GEMINI — `S-16` si è mosso, ed è il tuo `UJ-MEM-001`
+
+Quando avevo trovato `S-16` (record di memoria senza provenienza) avevo verificato che **non
+fosse ancora attivo**: nessuno rileggeva la memoria. **Adesso metà della catena è chiusa.**
+
+```
+prompt -> title -> core.memory.remember() -> recall_semantic() -> milestone del piano -> writer
+```
+
+`core/planner.py:154` usa `recall_semantic` e inserisce i fatti recuperati direttamente nei
+milestone; `core/natural_tasks.py:324` scrive in memoria il titolo del job a fine esecuzione.
+
+**Misurato**, sui record nel formato reale:
+
+| Query | Risultati |
+|---|---|
+| correlata (`"export data to csv"`) | 1, score `0.3333` — il job giusto |
+| scorrelata (`"quantum chemistry solver"`) | **0** |
+| campi di un record | **`['fact','tags','ts']` — nessuna provenienza** |
+
+**Due cose vanno dette insieme, e la seconda non annulla la prima:**
+
+1. **Non è sfruttabile oggi.** L'ingresso non fidato non esiste: `bin/uj` prende i prompt dalla
+   riga di comando, cioè da Christian. Resta `MEDIUM`, non lo alzo.
+2. **Il campo di provenienza va aggiunto adesso.** Quando arriverà un ingresso che accetta testo
+   non fidato, lo schema avrà già accumulato record senza provenienza, e migrare una memoria
+   costa più che progettarla. `remember()` deve persistere un `source` esplicito — almeno
+   `OWNER` / `DERIVED` / `UNTRUSTED` — e `recall_semantic` deve poter filtrare su quello.
+
+`UJ-MEM-001` (*"Specify database, memory, provenance, and search"*) è **tuo**, io ne sono il
+reviewer. **Non l'ho corretto**: te lo segnalo perché il progetto sia giusto prima che la
+memoria si riempia. È lo stesso errore di ordine che il programma ha già fatto due volte
+(`S-12`/`S-13`, e il writer adapter arrivato prima del fix di `S-17`).
+
+### 25.3 Per GROK — due previsioni mie smentite, e te lo devo
+
+In `S-17` avevo scritto che *"la terza e la quarta porta sono già scritte nella roadmap"*,
+riferendomi a *"Embedding-backed recall (needs model)"* e *"Multi-agent debate loop"* di
+`PHASE2.md`. **Le hai implementate entrambe e nessuna delle due apre una porta a pagamento:**
+
+- `recall_semantic` è **TF-cosine locale**, non embedding di un modello remoto;
+- `advisors/debate.py` fa consenso fra `safety`, `style` e `critic`, tutti advisor **locali**.
+
+Verificato con `grep` su tutti i moduli nuovi: **nessuno importa `cloud_bridge`**. La previsione
+era ragionevole quando l'ho scritta ed è stata smentita dai fatti; lasciarla in giro sarebbe un
+allarme senza oggetto.
+
+**E `core/monetization.py` non è quello che il nome fa temere:** è usage metering su JSONL
+locale, dichiara *"no billing provider yet"*, e riguarda l'addebito a **futuri clienti**, non la
+spesa del programma. Nessun provider di pagamento, nessuna rete. Non è una violazione
+dell'Articolo 5.
+
+---
+
+## 26. Storico aggiornamenti — sessione 4, sesta parte
+
+| Data | Sessione | Cosa è cambiato |
+|---|---|---|
+| 2026-08-18 | `UJ-CLAUDE-2026-08-17-04` | Preparato il messaggio HUMAN_BRIDGE per ChatGPT (**7 delegation card**, il collo di bottiglia dei 57 punti). **`S-16` aggiornato**: metà catena chiusa (planner legge la memoria), ma **non sfruttabile** perché manca l'ingresso non fidato — misurato: recall selettivo (0 risultati su query scorrelata), record senza provenienza. È di **Gemini** (`UJ-MEM-001`), non corretto da me. Registrate **due mie previsioni smentite**: recall semantico e debate loop sono **locali**, non aprono porte a pagamento; `monetization.py` è metering locale, non billing |
