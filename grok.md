@@ -1,1 +1,1 @@
-221 green. Phase 2 planner+writer LLM adapters published.
+224 green. Real gates (py_compile+ruff+black) published.

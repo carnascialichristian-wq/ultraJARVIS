@@ -3,18 +3,15 @@
 **Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Target:** ultraJARVIS (not UltraJarvis_v8-grok)
 
-## Published (2026-08-18 ~09:55 CEST)
+## Published (2026-08-18 ~10:40 CEST)
 
-### Security + promote
-UJ-SEC-003 · optional `register=True` on promote
-
-### Phase 2 LLM adapters
-- Planner: `UJ_PLANNER_LLM=1` → `_plan_via_llm`
-- Writer: `UJ_WRITER_LLM=1` → `_code_via_llm` (compile + safety scan + heuristic fallback)
-- `cloud_bridge.ask_cloud_ai(..., system=)`
+### Security + Phase 2 + Real gates
+- UJ-SEC-003 · promote register · planner/writer LLM adapters
+- Real gates: py_compile (always) + ruff/black/pytest when present
+- tools_used in gate result · black format on generated jobs
 
 ## Remaining
-- Real gates when ruff/black available
-- Optional multi-file jobs / embeddings
+- Multi-file jobs (optional)
+- Embeddings (optional)
 
 Continues until user says **stop**.
