@@ -1,12 +1,5 @@
 # Publish status — ultraJARVIS
 
-**Repo:** https://github.com/carnascialichristian-wq/ultraJARVIS
+**239 tests green** (2026-08-18)
 
-## Published 2026-08-18 ~11:20 CEST
-- Multi-file jobs + deps.json
-- recall_semantic (TF-cosine)
-- advisors/style richer + advisors/debate
-- core/monetization usage metering
-- 231 tests green
-
-Continues until user says **stop**.
+Closed gap list: graph executor, tool backends, quotas, multi-round debate, CLI, embedding hook, skills on promote, continuity.

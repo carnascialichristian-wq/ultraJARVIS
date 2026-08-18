@@ -1,26 +1,22 @@
 # Grok Continuity — UltraJarvis_v8 / ultraJARVIS
 
 **Publish repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
-**Local:** `/home/workdir/artifacts/UltraJarvis_v8`  
-**Not the default publish target:** UltraJarvis_v8-grok
+**Local:** `/home/workdir/artifacts/UltraJarvis_v8`
 
-## Primary rules
-1. Update this file + taskgrok.md + grok.md at end of every session.
-2. Keep tests green. Prefer existing modules.
-3. Continue until user says **stop**.
-4. Publish to **ultraJARVIS** unless user says otherwise.
+## State 2026-08-18 ~11:40 CEST
+- **239 tests green**
+- Graph executor, multi-round debate, CLI (`uj_cli.py`)
+- Tools: DDG search, optional real browser/os/automation/email SMTP
+- Monetization quotas (UJ_ENFORCE_QUOTA), LLM budget metering
+- Embedding provider hook (UJ_EMBEDDING)
+- Skills auto-register on promote
 
-## State 2026-08-18 ~11:20 CEST
-- **231 tests green** · **135 tools**
-- Multi-file jobs + deps.json
-- Semantic recall (TF-cosine)
-- Richer style advisor
-- Multi-agent debate
-- Monetization prep (usage + tiers)
-- PHASE2 core items closed
+## Env flags
+- UJ_ENFORCE_QUOTA=1 — daily job/llm limits
+- UJ_TIER=free|pro|team
+- UJ_LLM_BUDGET_USD — soft spend cap
+- UJ_BROWSER_REAL / UJ_OS_REAL / UJ_AUTO_REAL=1 — real side effects
+- UJ_EMAIL_UNSAFE=1 + SMTP_* — real send
+- UJ_EMBEDDING=1 — external embed if cloud_bridge.embed exists
 
-## Remaining (optional later)
-- External embedding provider
-- Billing provider integration
-
-*Last updated: 2026-08-18 ~11:20 by Grok — PHASE2 close-out*
+*Last updated: 2026-08-18 ~11:40 by Grok*

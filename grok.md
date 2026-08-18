@@ -1,1 +1,1 @@
-231 green. PHASE2 multi-file/semantic/debate/monetization closed.
+239 green. Gaps closed: graph exec, tools, quotas, debate rounds, CLI, embed hook.
