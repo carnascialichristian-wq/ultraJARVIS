@@ -269,3 +269,9 @@ conflitto va registrato, non eliminato.
 - `main` contiene runtime/docs Claude, il codice Python/Grok già presente e i ledger; non contiene ancora l'intero Program OS (`AGENTS.md`, backlog, schemi Council e prompt canonico). Questa distinzione è obbligatoria per le prossime IA.
 - Nessun peso è stato accettato. UJ-CAP-001 e UJ-GGL-001 restano READY/HUMAN_BRIDGE per Gemini; la loro integrazione dovrà avvenire in branch dedicate e con ResponsePacket separati.
 - Prossimo resume point: ricevere l'output completo di Gemini, verificare fonti/hash/schema, aggiornare entrambi i ledger, pubblicare le branch UJ-CAP-001/UJ-GGL-001 e solo dopo riallineare PR #1/#3.
+
+### 2026-08-18 — ChatGPT/Codex — Grok RED handoff gate
+
+- Pubblicato il prompt HUMAN_BRIDGE per UJ-RED-001, owner Grok, reviewer ChatGPT, READY 0/13.
+- L’output richiesto è un solo ZERO_COST_FALSIFICATION_REPORT.md e un ResponsePacket separato; PR #3 resta snapshot non accettato.
+- Nessun report, review o peso Grok è stato simulato. Prossimo passo: intake e verifica completa.

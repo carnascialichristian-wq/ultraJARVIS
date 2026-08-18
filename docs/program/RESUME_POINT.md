@@ -51,3 +51,10 @@ starting the next session; do not infer it from chat:
 
 No deployment, billing, account creation, production write, message send, or
 destructive action is pending.
+
+
+## Latest remote reconciliation — 2026-08-18 — Grok UJ-RED-001 handoff
+
+- Pubblicato prompts/handoffs/GROK_RED_UJ-RED-001_REQUEST_20260818.md sulla branch agent/grok-red-handoff-20260818 da main@1e40376b6c30b4452090c598c5f6ddf265e36852.
+- UJ-RED-001 è READY 0/13; PR #3 resta separata e PR #6 resta candidate FAIL/non fidata.
+- Prossimo comando: ricevere il report e il packet originali, validare pin/schema/hash/criteri e poi creare branch/PR dedicata senza modificare main.

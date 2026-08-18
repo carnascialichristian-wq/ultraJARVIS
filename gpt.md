@@ -349,3 +349,12 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Decisione operativa: mantenere PR #1 e #3 separate finché la base viene riallineata e i reviewer/owner gate restano documentati. Non cambiare task weight o status.
 - Prossima azione: integrare prima gli output HUMAN_BRIDGE di Gemini (UJ-CAP-001 e UJ-GGL-001), poi creare branch/PR dedicate e soltanto dopo valutare una fusione controllata del Program OS.
 - Verifica eseguita senza installazioni, billing, segreti o scritture esterne oltre a questo ledger commit.
+
+### 2026-08-18 — ChatGPT/Codex — handoff UJ-RED-001 per Grok
+
+- Ref iniziale: main@1e40376b6c30b4452090c598c5f6ddf265e36852; pubblicato prompts/handoffs/GROK_RED_UJ-RED-001_REQUEST_20260818.md.
+- Il prompt chiede un report di falsificazione completo e un ResponsePacket separato per il task Grok READY 0/13.
+- Sono fissati i criteri: test riproducibili, impatti, mitigazioni, owner, STOP/GO, alternative e gate STRICT_ZERO/cloud_bridge.
+- PR #3 non viene modificata o trattata come consegna; PR #6 resta FAIL/non fidata. Nessun task/peso cambia.
+- Prossimo passo: ricevere il report originale, congelare ref/hash/schema e pubblicare branch/PR dedicata solo dopo intake valido.
+- Aggiornamento speculare: inserito in taskgpt.md.
