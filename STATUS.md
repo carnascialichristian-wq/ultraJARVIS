@@ -1,5 +1,7 @@
 # Status — ultraJARVIS
 
-**243 tests green** (2026-08-18)
+**natural_tasks full feature parity on GitHub** (2026-08-18)
 
-Closed: git targets + billing skeleton + embed + packaging + skills/debate polish.
+Modules: natural_tasks → nt_pipeline → nt_helpers + nt_runner + code_templates.
+
+243 tests green locally.
