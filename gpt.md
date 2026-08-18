@@ -358,3 +358,9 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Nessun output Claude è stato simulato o importato; nessuna task o peso cambia.
 - Prossimo passo: ricevere il resend originale, congelare bytes/ref e creare una PR dedicata solo dopo intake valido.
 - Aggiornamento speculare: inserito in taskgpt.md.
+### 2026-08-18 — ChatGPT/Codex — correzione formato Claude RUN handoff
+
+- Corretto il prompt UJ-RUN-001: il blocco FILE opzionale non è più rappresentato da un placeholder che poteva essere interpretato come artifact reale.
+- Il contratto ora richiede sempre un solo RUNTIME_BLUEPRINT.md e blocchi aggiuntivi soltanto per schema realmente prodotti.
+- PR #7 è stata osservata dietro alla main corrente e resta draft; nessun rebase/retarget/merge eseguito.
+- Nessun task, status o peso cambia; aggiornamento speculare inserito in taskgpt.md.

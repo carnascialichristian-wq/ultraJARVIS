@@ -45,9 +45,7 @@ Formato di consegna:
 <contenuto completo>
 === END FILE ===
 
-=== FILE: <eventuale schema aggiuntivo> ===
-<contenuto completo>
-=== END FILE ===
+Se aggiungi un draft schema TypeScript/JSON, ripeti lo stesso blocco FILE usando un path concreto, contenuto completo e SHA nel packet. Se non serve, non aggiungere un secondo blocco FILE.
 
 === RESPONSE PACKET: UJ-RUN-001 ===
 <un solo JSON valido, senza Markdown fence interno>

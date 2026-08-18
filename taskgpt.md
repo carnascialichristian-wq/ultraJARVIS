@@ -275,3 +275,8 @@ conflitto va registrato, non eliminato.
 - Pubblicato il prompt HUMAN_BRIDGE per UJ-RUN-001, owner Claude, reviewer Gemini, READY 0/13.
 - Output richiesto: RUNTIME_BLUEPRINT.md e un ResponsePacket separato valido; UJ-SEC-001/UJ-CLD-001 restano separati.
 - Nessun codice, packet, review o peso Claude è stato simulato. Prossimo passo: intake e verifica completa.
+### 2026-08-18 — ChatGPT/Codex — correzione Claude prompt
+
+- Eliminato il placeholder FILE ambiguo dal prompt UJ-RUN-001; gli schemi opzionali usano un blocco concreto solo se prodotti.
+- PR #7 richiede riallineamento futuro perché main è avanzata; non è stata modificata.
+- Nessun backlog delta o peso.
