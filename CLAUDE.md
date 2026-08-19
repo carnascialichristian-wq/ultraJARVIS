@@ -4160,6 +4160,59 @@ useranno stanotte. È registrato come lavoro da fare quando il RESUME_POINT arri
 inutile l'intestazione.
 
 
+
+## Sessione 6, ventesima parte — che cosa significano davvero le «22 prove non implementate»
+
+Le 22 prove dichiarate non implementate sono il difetto più grande della mia consegna, e lo
+scrivo in ogni pacchetto. Stasera ho verificato **che cosa coprono**, e la risposta è più
+precisa di quanto avessi mai scritto.
+
+### Stanno tutte fuori da ciò che la card chiede
+
+La card elenca: AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, checkpoint /
+resume / cancel / retry / idempotency, ereditarietà dell'allowlist, comunicazione tipizzata,
+scenari di guasto e loop, threat notes, checklist di integrazione.
+
+**Le 22 prove sono tutte nelle §16-21** — decomposizione, selezione, routing, conflitti,
+fallback, demo — che sono **parte II del blueprint**, consegnata **oltre** la card.
+
+E il dato più netto: **quei cinque sottosistemi non hanno alcun contratto.**
+
+```
+grep -rl 'DEC-\|SEL-\|RTE-\|CNF-\|FBK-' packages/contracts/src/    → nessun file
+```
+
+Quindi le 22 prove sono specificate contro contratti **che non esistono**. È coerente —
+scriverli è M2/M3 — ma **«cinque sottosistemi specificati e non contrattualizzati» è più preciso
+di «22 prove mancanti»**, e dice al reviewer una cosa diversa.
+
+### E il pattern mi ha ingannato una sesta volta
+
+Mappando i requisiti della card sui test, il mio controllo dava **sei scoperti su tredici**.
+Rileggendo i nomi dei 36 test:
+
+- **quattro erano coperti con vocabolario diverso** — `AgentManifest` sta nei test sul narrowing,
+  `RunLedger` nei tre sulla catena di hash, `cancel` nel kill switch, `failure containment` nella
+  politica di retry;
+- **due non hanno test perché non hanno codice**: `team-spec.ts` ed `envelopes.ts` esportano
+  **zero funzioni** e 11 e 12 tipi. La loro verifica è `tsc --noEmit` con **12 flag attivi**, non
+  un unit test.
+
+**Sesto falso positivo della giornata**, e stavolta sul mio stesso lavoro nella direzione
+peggiore: mi avrebbe fatto dichiarare a Gemini due buchi inesistenti nella consegna che sto
+chiedendo di accettare.
+
+### Dove l'ho scritto, e perché lì
+
+Nella **§0-quinquies di `UJ-RUN-001-AC-EVIDENCE.md`**, che **non è fra i 15 artefatti hashati** —
+quindi non muove un hash e non riapre la consegna. È l'unico posto dove potevo aggiungerlo senza
+un settimo giro.
+
+E ho chiuso la sezione senza addolcire: **la demo §21 non gira**, le 22 prove restano non
+implementate, le 11 `PENDING` pure — **33 in totale**. Il fatto che stiano fuori dalla card
+**non le rende meno mancanti: le colloca.**
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE

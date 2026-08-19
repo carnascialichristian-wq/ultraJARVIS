@@ -383,3 +383,66 @@ un packet che proponga la propria accettazione: un owner non puo' accettare il p
    *"unknown criterion"*. Vale per tutte e quattro le card del programma.
 4. Nessuno script del repository applica una transizione di stato proposta. **Non ho modificato
    il `BACKLOG.json` ne' il peso accettato.**
+
+
+---
+
+## §0-quinquies — Che cosa coprono davvero le 22 prove non implementate (aggiunto 2026-08-19)
+
+**Aggiunta dopo la consegna, in un documento che non è fra i 15 hashati** — quindi non muove
+nessun hash e non riapre la consegna. Serve al reviewer, perché *"22 prove non implementate"*
+letto da solo suggerisce una consegna incompleta rispetto a ciò che le è stato chiesto, e
+**non è così**.
+
+### Le 22 prove sono TUTTE nelle sezioni che la card non richiede
+
+La card `UJ-CARD-RUN-001-CLAUDE` chiede: *"AgentManifest, TeamSpec, Supervisor state machine,
+DepthGuard, RunLedger events, checkpoint/resume/cancel/retry/idempotency, tool allowlist
+inheritance, typed artifact communication, failure and loop scenarios, threat notes for
+UJ-SEC-001, and an integration review checklist."*
+
+Le 22 prove non implementate stanno **tutte** nelle §16-21 — decomposizione, selezione,
+routing, conflitti, fallback locale, demo end-to-end — che sono **specifica aggiuntiva**,
+consegnata come parte II del blueprint oltre ciò che la card elenca.
+
+E c'è un dato più netto: **i cinque sottosistemi delle §16-21 non hanno alcun contratto.**
+
+```bash
+grep -rl 'DEC-\|SEL-\|RTE-\|CNF-\|FBK-' packages/contracts/src/    # nessun file
+```
+
+Le 22 prove sono quindi specificate contro contratti **che non esistono**, ed è coerente:
+scriverli è lavoro M2/M3, non di questo task. Ma è più preciso dire **«cinque sottosistemi
+specificati e non contrattualizzati»** che «22 prove mancanti».
+
+### Ciò che la card chiede è coperto — ma da due meccanismi diversi
+
+| Requisito della card | Contratto | Come è verificato |
+|---|---|---|
+| AgentManifest | `agent-manifest.ts` | test 1, 9, 11, 12 — narrowing, tool non posseduto, data class, ceiling |
+| Supervisor | `supervisor.ts` | test 27, 28 — kill switch da ogni stato, deny-by-default |
+| DepthGuard | `depth-guard.ts` | test 2-8 — `T-DG-1..4` |
+| RunLedger | `run-ledger.ts` | test 29-31 — catena di hash, riscrittura rilevata |
+| checkpoint / retry / idempotency | `checkpoint.ts` | test 23-26, 32-34, 36 |
+| cancel | `supervisor.ts` | test 27 — kill switch → `HALTED` |
+| tool allowlist inheritance | `agent-manifest.ts` | test 9, 10 |
+| loop / failure containment | `depth-guard.ts`, `common.ts` | test 17-22 |
+| **TeamSpec** | `team-spec.ts` | **typechecker** — 0 funzioni, 11 tipi |
+| **typed artifact communication** | `envelopes.ts` | **typechecker** — 0 funzioni, 12 tipi |
+
+**Gli ultimi due non hanno unit test perché non hanno codice eseguibile:** esportano solo tipi e
+interfacce. La loro verifica è `npx tsc --noEmit` a exit 0 con **12 flag attivi**, fra cui
+`strict`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess` e `noUnusedLocals`. È una
+verifica reale, di natura diversa.
+
+Lo scrivo perché un reviewer che cercasse un test chiamato *"TeamSpec"* non lo troverebbe, e
+potrebbe concluderne un buco che non c'è. **Ci sono cascato io stesso stasera**, con un pattern
+che dava sei requisiti scoperti su tredici: quattro erano coperti con vocabolario diverso e due
+sono type-only.
+
+### Che cosa resta vero e non va addolcito
+
+- **La demo §21 non è stata eseguita.** È specificata in 9 passi osservabili e 4 casi negativi, e
+  non gira. Il blueprint stesso dice che *"se la demo non gira, il documento è teoria"*.
+- **Le 22 prove restano non implementate**, e le 11 `PENDING` di §13.3 pure: **33 in totale**.
+- Il fatto che stiano fuori dalla card **non le rende meno mancanti** — le colloca.
