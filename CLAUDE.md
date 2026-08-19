@@ -3446,6 +3446,68 @@ card *ed* è raggiungibile da `main` — quindi non c'è niente da correggere ne
 riga di log a descrivere uno stato intermedio poi superato.
 
 
+
+## Sessione 6, settima parte — `S-17` quarta verifica: la terza porta si è aperta, e la mia sonda mentiva
+
+Coda dei doveri da reviewer vuota (`git fetch` di tutti i ref: nessuno ha revisionato un mio
+task), portafoglio di produzione esaurito. Ho scelto il lavoro con più valore rimasto nel mio
+perimetro: **riverificare `S-17`/`S-19` su `main`**, perché è l'unico meccanismo del programma
+che può generare un addebito a Christian, ed è il mio finding.
+
+### Il risultato
+
+**Quarta verifica consecutiva, entrambi ancora aperti su `origin/main` @ `27b7673`.** Default
+`MODEL_PROVIDER="openai"` in tre punti, `_call_openai` presente, `UJ_ALLOW_PAID_API` assente,
+e in `embed()` il guard di budget ancora dentro `except Exception: pass`.
+
+**E la terza porta prevista in §13 si è aperta:** `core/memory.py` chiama `cloud_bridge.embed`
+dietro `UJ_EMBEDDING=1`. Misurato su un worktree a `origin/main`, con `openai` e `requests`
+sostituiti da stub che registrano e sollevano — nessuna chiamata reale:
+
+| Porta | default | solo il flag | + `MODEL_PROVIDER=local` |
+|---|---|---|---|
+| `UJ_PLANNER_LLM=1` | nessuna | **A PAGAMENTO ×3** | loopback ×3 |
+| `UJ_WRITER_LLM=1` | nessuna | **A PAGAMENTO ×3** | loopback ×3 |
+| `UJ_EMBEDDING=1` | nessuna | **A PAGAMENTO ×1** | loopback ×1 |
+
+**L'asimmetria è ora 1 contro 3**: una impostazione corretta chiude tutte e tre le porte perché
+condividono il ponte; tre impostazioni diverse possono aprirne una ciascuna. È l'argomento più
+forte finora per correggere **il ponte** invece dei gate — i gate sono tre e cresceranno, il
+ponte è uno, e la correzione già scritta lo **rimuove** invece di gatearlo.
+
+### Ho verificato l'esposizione invece di presumerla, e mi ha smentito due volte
+
+- **Primo sospetto sbagliato:** pensavo che l'embedding fosse una porta *senza* opt-in, cioè
+  peggiore delle altre due. Falso: `core/memory.py:115` richiede `UJ_EMBEDDING=1`. Grok ha
+  applicato la lezione al percorso nuovo, e va scritto.
+- **Secondo:** ho tracciato i chiamanti dal `bin/uj` in giù. Writer e planner sono **cablati**
+  (`natural_tasks` → `nt_runner`); l'embedding è **latente**, `recall_semantic_embedded` non ha
+  chiamanti fuori dal proprio test. Va corretta **adesso proprio perché non è cablata** —
+  stessa logica di `S-16`, dove correggere lo schema prima del cablaggio costa una frazione.
+
+### ERRORE — la prima tabella diceva che `S-17` è CHIUSO, ed era falsa
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E38 | **Sonda nuova con due difetti che si sommavano in un falso negativo su un finding CRITICO.** (a) importava dal **worktree corrente** dichiarando nell'intestazione di misurare `origin/main` — e il worktree corrente è il mio ramo, che porta già il fix STRICT_ZERO; (b) **`env=` non veniva passato a `subprocess.run`**: lo scenario era costruito riga per riga e mai applicato, quindi tutte e **dodici** le celle misuravano la stessa identica configurazione | prima tabella: `nessuna chiamata` in tutte e dodici le celle, cioè *"S-17 è chiuso su main"*. Poi, dopo la prima correzione, ancora incoerente: `MODEL_PROVIDER=local` risultava a pagamento | (a) worktree materializzato sul ref, perché il percorso attraversa **cinque** moduli e non basta un `git show`; (b) `env=e, cwd=REPO` | **le mie sonde precedenti materializzavano i ref con `git show` proprio per questo, e scrivendone una nuova ho dimenticato la ragione.** Una lezione registrata nel documento non è registrata nel codice: la contromisura vera è stata metterla **nel commento della sonda**, dove la rileggerà chi la modifica. E il segnale che ha salvato è sempre lo stesso — il risultato contraddiceva ciò che sapevo |
+
+**Contromisura messa nel codice, non solo qui.** Se una chiamata solleva **prima** di
+raggiungere il ponte — firma sbagliata, dipendenza assente — la cella ora stampa
+`NON MISURATO (<errore>)` invece di `nessuna chiamata`. È l'estensione di `E22`: zero tentativi
+per un guasto a monte si legge come sicurezza. Senza quella guardia il bug (b) sarebbe stato
+invisibile: il writer falliva con `TypeError` sulla firma e la cella diceva "nessuna chiamata".
+
+### File
+
+`docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §19 ·
+`docs/threat-models/GROK_FIX_LIST.md` → `FIX-13` ·
+`docs/threat-models/probes/S-17-three-doors-probe.py` (nuova, riproducibile dalla root,
+rimuove il proprio worktree).
+
+**Nessuna riga di codice di Grok modificata.** Nessuna chiamata di rete reale, in nessuna
+variante. `S-17` e `S-19` restano di Grok da correggere e di Christian da decidere.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -3667,6 +3729,19 @@ Sintesi operativa degli errori sopra, in forma di regole:
     hashati (intersezione fra i file in arrivo e quelli citati dal tuo packet), e ricontrolla
     gli hash dopo.
 
+37. **Una sonda deve MATERIALIZZARE il ref che dichiara di misurare, e uno scenario calcolato
+    va APPLICATO** (E38, sessione 6). Due difetti sommati hanno prodotto una tabella che diceva
+    *"`S-17` è chiuso su main"* — il contrario del vero, su un finding che riguarda i soldi del
+    proprietario. Il primo: la sonda importava dal worktree corrente mentre l'intestazione
+    diceva `origin/main`, e il worktree corrente portava già il fix. Il secondo: `env=` non
+    passato a `subprocess.run`, quindi dodici celle misuravano la stessa configurazione. **Le
+    sonde precedenti materializzavano i ref con `git show` proprio per questo, e scrivendone una
+    nuova ho dimenticato la ragione** — quindi la contromisura vera non è questa riga, è il
+    commento dentro la sonda, dove lo rilegge chi la modifica. Corollario, estensione di `E22`:
+    quando una chiamata solleva **prima** di raggiungere ciò che stai misurando, il risultato non
+    è *"nessuna chiamata"* ma *"non misurato"* — distinguili nel codice, o il guasto a monte si
+    legge come sicurezza.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -3779,6 +3854,32 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AK) 2026-08-19 — S-17 QUARTA VERIFICA: TERZA PORTA APERTA. GIA' FATTO, NON RIFARE.
+     docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §19
+     docs/threat-models/GROK_FIX_LIST.md -> FIX-13
+     docs/threat-models/probes/S-17-three-doors-probe.py  (nuova, si rilancia dalla root)
+     S-17 e S-19 ANCORA APERTI su origin/main @ 27b7673. Quarta verifica di fila.
+     MODEL_PROVIDER default "openai" in TRE punti; _call_openai presente;
+     UJ_ALLOW_PAID_API assente; in embed() QuotaExceeded ancora inghiottito.
+     LE PORTE ORA SONO TRE, misurate (nessuna chiamata di rete reale):
+       UJ_PLANNER_LLM=1 -> 3 tentativi a pagamento
+       UJ_WRITER_LLM=1  -> 3 tentativi a pagamento
+       UJ_EMBEDDING=1   -> 1 tentativo  a pagamento   <-- NUOVA, prevista in §13
+     MODEL_PROVIDER=local le chiude TUTTE E TRE: asimmetria 1 contro 3.
+     E' l'argomento definitivo per correggere IL PONTE e non i gate.
+     ESPOSIZIONE, tracciata per chiamante e NON presunta:
+       writer e planner CABLATI (bin/uj -> natural_tasks -> nt_runner)
+       embedding LATENTE: recall_semantic_embedded ha ZERO chiamanti fuori dal
+       suo test. Va corretta ADESSO proprio perche' non e' cablata (come S-16).
+     DUE MIE AFFERMAZIONI SMENTITE DAI FATTI, entrambe a favore di Grok:
+       (1) sospettavo un percorso embedding SENZA opt-in: falso, core/memory.py:115
+           richiede UJ_EMBEDDING=1;
+       (2) il default e' sicuro su tutte e tre le porte, misurato.
+     ATTENZIONE AL MERGE DEL FIX: la base di agent/strict-zero-cloud-bridge-*
+     PRECEDE embed(). Portarla su main cosi' com'e' cancella embed() e le quattro
+     guardie di budget, e core/memory.py:118 lo importa. La versione buona e'
+     quella del ramo CLAUDE, l'unica su una base che contiene embed().
 
   AJ) 2026-08-19 — UJ-CAP-001 QUARTO INVIO REVISIONATO. GIA' FATTO, NON RIFARE.
      Ref: origin/agent/uj-cap-001-gemini-review-20260818 @ 0f1c536774aff39c349b89914d8d7184ba138834

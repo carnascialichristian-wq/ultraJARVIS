@@ -712,3 +712,63 @@ correttamente marcato non sicuro: è meglio, ma non risolve il costo, che è il 
 non negoziabile. Stessa logica di `S-12` prima di `S-13`.
 
 Dettaglio e prove: `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §17.
+
+---
+
+## FIX-13 — la terza porta a pagamento è aperta, e conferma che va corretto il ponte · **CRITICA**
+
+**Misurato su `origin/main` @ `27b767309090`, 2026-08-19.** Riproduzione:
+
+```bash
+python3 docs/threat-models/probes/S-17-three-doors-probe.py
+```
+
+Nessuna chiamata di rete reale: `openai` e `requests` sono stub che registrano e sollevano.
+
+### Che cosa dice la misura
+
+| Porta | default | **solo il flag** | flag + `MODEL_PROVIDER=local` |
+|---|---|---|---|
+| `UJ_PLANNER_LLM=1` | nessuna chiamata | **A PAGAMENTO ×3** | loopback ×3 |
+| `UJ_WRITER_LLM=1` | nessuna chiamata | **A PAGAMENTO ×3** | loopback ×3 |
+| `UJ_EMBEDDING=1` | nessuna chiamata | **A PAGAMENTO ×1** | loopback ×1 |
+
+**I tuoi opt-in funzionano.** La colonna di default è a zero su tutte e tre le porte, e la
+terza porta ha un gate proprio (`core/memory.py:115`). Non è quello il difetto.
+
+### Il difetto
+
+Tutte e tre le porte attraversano **lo stesso ponte** e leggono **la stessa variabile**, il cui
+default è `"openai"`. Quindi:
+
+- **una** impostazione corretta (`MODEL_PROVIDER=local`) chiude tutte e tre;
+- **tre** impostazioni diverse possono aprirne una ciascuna, indipendentemente.
+
+I gate sono tre e cresceranno con il prodotto; il ponte è uno. **Correggere il ponte chiude
+anche la quarta porta, che non è ancora stata scritta.** È lo stesso argomento di `FIX-10`,
+ora con un terzo caso a sostegno invece che con una previsione.
+
+### Che cosa fare, e in che ordine
+
+1. **`FIX-10a` + `FIX-10b` nel ponte** — è già scritto e verificato su
+   `agent/strict-zero-cloud-bridge-20260818`, che **rimuove** l'adapter OpenAI invece di
+   gatearlo, e vincola `LMSTUDIO_BASE` al loopback. Verificato da me per esecuzione: 6 attacchi
+   di provider e 13 di endpoint, tutti bloccati; `pytest` da 215 a 239 passati, nessuna
+   regressione.
+   **Attenzione al merge:** quella base **precede `embed()`**. Portarla su `main` così com'è
+   cancellerebbe `embed()` e le quattro guardie di budget, e `core/memory.py:118` lo importa.
+   La versione da portare è quella del ramo CLAUDE, che è l'unica su una base che contiene
+   `embed()`.
+2. **`S-19` nello stesso passaggio**: in `embed()` il guard di budget sta dentro
+   `except Exception: pass`, quindi `QuotaExceeded` viene inghiottito e la chiamata a pagamento
+   procede. In `ask_cloud_ai` lo stesso guard è scritto **bene** — il difetto è solo in
+   `embed()`.
+3. **Solo dopo**, `FIX-12` (la promozione cabla `safe=True`).
+
+### Nota sull'esposizione, per non sovrastimare
+
+- **writer** e **planner** sono **cablati**: `bin/uj` → `natural_tasks` → `nt_runner` li
+  raggiunge entrambi.
+- **embedding** è **latente**: `recall_semantic_embedded` non ha chiamanti fuori dal suo test.
+  Va corretta adesso proprio perché non è ancora cablata — collegarla è una riga, e dopo
+  costerebbe di più. Stessa logica di `S-16`.

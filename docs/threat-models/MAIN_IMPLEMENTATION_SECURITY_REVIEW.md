@@ -1361,3 +1361,105 @@ codice del controllo e' corretto e leggerlo non rivela niente: quello che ingann
 il valore viene fissato.
 
 `S-18` e' di **GROK**. Segnalato e riverificato, non corretto.
+
+---
+
+## 19. `S-17` quarta verifica su `main` — **la terza porta prevista si è aperta.** CRITICA, invariata
+
+**Ref misurato:** `origin/main` @ `27b767309090adf77778575fe22840a1584355aa`, 2026-08-19.
+**Sonda:** `docs/threat-models/probes/S-17-three-doors-probe.py`, riproducibile dalla root.
+**Nessuna chiamata di rete reale eseguita.** I moduli `openai` e `requests` sono sostituiti
+da stub che registrano il tentativo e sollevano.
+
+### 19.1 Lo stato di `S-17` e `S-19` non è cambiato
+
+Quarta verifica consecutiva. Su `origin/main`:
+
+| Marcatore | Valore |
+|---|---|
+| `MODEL_PROVIDER` default | **`"openai"`** in tre punti: `cloud_bridge.py:12`, `cloud_bridge.py:109`, `core/config.py:43` |
+| `_call_openai` | **presente** |
+| `UJ_ALLOW_PAID_API` | **assente** |
+| validazione loopback di `LMSTUDIO_BASE` | **assente** |
+| guard di budget in `embed()` | dentro `try: … except Exception: pass` — **`QuotaExceeded` inghiottito** (`S-19`) |
+
+La decisione n. 7 del proprietario resta **approvata, verificata e non applicata su `main`**.
+Il fix vive sul mio ramo e su `agent/strict-zero-cloud-bridge-20260818`.
+
+### 19.2 Le porte adesso sono tre, misurate
+
+`§13` prevedeva che le porte a una variabile sarebbero aumentate e che il terzo punto sarebbe
+arrivato sul percorso della memoria. È successo.
+
+| Porta | default | **solo il flag** | flag + `MODEL_PROVIDER=local` |
+|---|---|---|---|
+| planner — `UJ_PLANNER_LLM=1` | nessuna chiamata | **A PAGAMENTO, 3 tentativi** | loopback, 3 |
+| writer — `UJ_WRITER_LLM=1` | nessuna chiamata | **A PAGAMENTO, 3 tentativi** | loopback, 3 |
+| **embedding — `UJ_EMBEDDING=1`** | nessuna chiamata | **A PAGAMENTO, 1 tentativo** | loopback, 1 |
+
+Controllo incrociato, `embed()` guidata direttamente senza il gate di `core/memory.py`:
+
+```
+default               : A PAGAMENTO (1 tentativo)
+MODEL_PROVIDER=local  : loopback (1)
+```
+
+### 19.3 L'asimmetria è 1 contro 3, e la conclusione operativa non cambia
+
+**Una** impostazione corretta — `MODEL_PROVIDER=local` — chiude tutte e tre le porte, perché
+tutte e tre attraversano lo stesso ponte e leggono la stessa variabile. **Tre** impostazioni
+diverse possono aprirne una ciascuna, indipendentemente.
+
+È l'argomento più forte finora per correggere **il ponte** e non i gate: i gate sono tre e
+cresceranno, il ponte è uno. `FIX-10a`/`FIX-10b` sono nel ponte. La correzione già scritta su
+`agent/strict-zero-cloud-bridge-20260818` — che **rimuove** l'adapter invece di gatearlo —
+chiude tutte e tre le porte insieme e rende la quarta impossibile per costruzione.
+
+### 19.4 Che cosa Grok ha fatto BENE, misurato
+
+- **Il default è sicuro su tutte e tre le porte.** Colonna 1: zero tentativi ovunque. Gli
+  opt-in sono reali, non decorativi, e nessuno è acceso di nascosto.
+- **La terza porta ha un gate proprio.** `core/memory.py:115` richiede `UJ_EMBEDDING=1`. Il
+  mio primo sospetto — un percorso di embedding senza opt-in — **era sbagliato**, e l'ho
+  verificato prima di scriverlo.
+
+### 19.5 Esposizione reale, verificata per chiamante e non presunta
+
+Non tutte e tre le porte sono ugualmente vicine all'utente. Tracciato dal `bin/uj` in giù:
+
+| Porta | Catena | Stato |
+|---|---|---|
+| writer | `bin/uj` → `natural_tasks` → `nt_runner:187` → `_code_for_prompt` → `_code_via_llm` | **CABLATA** |
+| planner | `nt_runner:9` importa `plan`, e `nt_runner` è sulla stessa catena | **CABLATA** |
+| embedding | `embed_texts` è chiamata solo da `recall_semantic_embedded`, che ha **zero chiamanti** fuori dal proprio test | **LATENTE** |
+
+**La porta dell'embedding è costruita ma non collegata.** È la stessa situazione di `S-16`:
+il momento giusto per correggerla è **adesso**, prima che qualcuno la cabli, non dopo. Cablarla
+è una riga.
+
+La porta del writer resta la più grave delle tre perché è sul percorso che **genera codice**,
+poi promosso in `tools/` — cioè si combina con `S-20`.
+
+### 19.6 Errori commessi COSTRUENDO questa misura, registrati perché il metodo conta
+
+La prima versione della sonda ha prodotto una tabella in cui **tutte e dodici le celle
+dicevano "nessuna chiamata"**, cioè *"`S-17` è chiuso su `main`"*. Era falsa, per due difetti
+distinti, entrambi miei:
+
+1. **La sonda importava dal worktree corrente** dichiarando nell'intestazione di misurare
+   `origin/main`. Il worktree corrente è il ramo CLAUDE, che porta già il fix STRICT_ZERO.
+   Corretto materializzando un worktree sul ref, perché il percorso attraversa cinque moduli e
+   non basta un `git show` di un file.
+2. **`env=` non veniva passato a `subprocess.run`.** Lo scenario veniva costruito riga per riga
+   e mai applicato: tutte e dodici le celle misuravano la stessa identica configurazione
+   ambientale.
+
+**Su un finding che riguarda i soldi del proprietario avrei riportato "chiuso" dove è aperto.**
+Entrambi i difetti sono stati presi dalla stessa euristica di sempre: il risultato contraddiceva
+quello che sapevo, e ho indagato invece di riportarlo.
+
+Contromisura aggiunta al codice della sonda, non solo a questo documento: se una chiamata
+solleva **prima** di raggiungere il ponte — firma sbagliata, dipendenza assente — la cella
+adesso stampa `NON MISURATO (<errore>)` invece di `nessuna chiamata`. È l'estensione della
+lezione `E22`: zero tentativi per un guasto a monte si legge come sicurezza, ed è il falso
+negativo più facile da consegnare in questa classe di misure.
