@@ -304,6 +304,12 @@ test("a hopeless tool reports every failure, not just the first", () => {
       auditEvents: ["tool.called"],
       incrementalCost: "PER_CALL",
       requiresLocalHeavyCompute: true,
+      // ADM-11: no version and no manifest hash means the grant cannot be pinned,
+      // so a later call can never prove it is invoking the tool that was admitted.
+      // This rule was implemented and never exercised until the coverage audit of
+      // 2026-08-19 counted 18 rules in the code against 17 in the tests.
+      version: "",
+      manifestHash: "",
       provenance: { ...goodTool.provenance, licenseVerified: false, reviewedBy: null },
     },
     { ...goodEvidence, approvedByOwner: false, alternativesConsidered: "" },
@@ -311,7 +317,7 @@ test("a hopeless tool reports every failure, not just the first", () => {
   assert.equal(d.admitted, false);
   const rules = new Set(failed(d));
   for (const expected of [
-    "ADM-01", "ADM-03", "ADM-04", "ADM-05", "ADM-10",
+    "ADM-01", "ADM-03", "ADM-04", "ADM-05", "ADM-10", "ADM-11",
     "ADM-12", "ADM-13", "ADM-14", "ADM-15", "ADM-16", "ADM-17",
   ]) {
     assert.ok(rules.has(expected), `expected ${expected} to be reported`);

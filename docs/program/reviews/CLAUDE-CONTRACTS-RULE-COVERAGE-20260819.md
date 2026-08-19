@@ -12,7 +12,8 @@
 
 ## 0. Il risultato
 
-**41 regole verificate su 4 famiglie. Una sola non ha un test: `ADM-11`.**
+**41 regole verificate su 4 famiglie. Una sola non aveva un test — `ADM-11` — e l'ho chiusa
+nella stessa sessione. Copertura finale: 41 su 41.**
 
 Non l'ha segnalata nessun reviewer: l'ho trovata contando, mentre preparavo il pacchetto di
 consegna di `UJ-MCP-001`.
@@ -24,7 +25,7 @@ consegna di `UJ-MCP-001`.
 | Famiglia | Che cosa | Documento | Codice | Test | Scoperte |
 |---|---|---:|---:|---:|---|
 | `OV-*` | regole di override della approval policy | 10 | 10 | 10 | nessuna |
-| `ADM-*` | regole di ammissione dei tool | 18 | 18 | **17** | **`ADM-11`** |
+| `ADM-*` | regole di ammissione dei tool | 18 | 18 | **18** | nessuna — `ADM-11` chiusa, §2 |
 | `SF-*` | le dieci proibizioni della Skill Forge | 10 | 10 | 10 | nessuna |
 | `SF-PIPE-*` | invarianti della pipeline della forge | 3 | 3 | 3 | nessuna |
 
@@ -34,27 +35,52 @@ python3 docs/threat-models/probes/contracts-rule-coverage.py
 
 ---
 
-## 2. `ADM-11` — l'unico buco vero
+## 2. `ADM-11` — l'unico buco, trovato e chiuso
 
-*Versione e hash pinnati.* Implementata a `packages/contracts/src/tools/tool-manifest.ts:277-279`,
-dichiarata in `docs/architecture/TOOL_PLANE.md` riga 195, **mai esercitata da un test**.
+*Versione e hash pinnati.* Era implementata a
+`packages/contracts/src/tools/tool-manifest.ts:277-279`, dichiarata in
+`docs/architecture/TOOL_PLANE.md` riga 195, **e mai esercitata da un test**.
 
 ```bash
 comm -23 <(grep -oE '"ADM-[0-9]+"' packages/contracts/src/tools/tool-manifest.ts | tr -d '"' | sort -u) \
          <(grep -oE 'ADM-[0-9]+' tests/contracts/tool-admission.test.mjs | sort -u)
-# ADM-11
+# prima: ADM-11        adesso: (vuoto)
 ```
 
 **Precisazione, perché il sospetto iniziale era peggiore e sbagliato.** La tabella di
 `TOOL_PLANE.md` marca `ADM-11` con *"sì"*, ma quella colonna si chiama **`Blocca?`** e significa
-*«blocca l'ammissione»*, non *«è testata»*. **Il documento non sopravvaluta la copertura.**
+*«blocca l'ammissione»*, non *«è testata»*. **Il documento non sopravvalutava la copertura.**
 
-**Perché non l'ho chiuso, ed è una decisione di sequenza.** Il file è
-`tests/contracts/tool-admission.test.mjs`, che **non** è fra i 15 artefatti hashati di
-`UJ-RUN-001` — quindi si potrebbe toccare. Ma la suite passerebbe da **140 a 141**, e `140`
-compare **9 volte nell'handoff e 5 nel blueprint**, entrambi congelati, hashati e **in review
-presso GEMINI**. Chiuderlo ora renderebbe false 14 affermazioni in due artefatti in revisione e
-costringerebbe a un settimo giro di consegna. **Si chiude subito dopo quella review.**
+### 2.1 Il vincolo che rendeva la correzione non banale
+
+`tests/contracts/tool-admission.test.mjs` **non** è fra i 15 artefatti hashati di `UJ-RUN-001`,
+quindi si poteva toccare. Ma un test **nuovo** avrebbe portato la suite da **140 a 141**, e `140`
+compare **9 volte nell'handoff e 5 nel blueprint** di `UJ-RUN-001` — entrambi congelati, hashati
+e **in review presso GEMINI**. Sarebbero diventate false 14 affermazioni in due artefatti in
+revisione, con un settimo giro di consegna su un task che ne ha già fatti sei.
+
+### 2.2 Come l'ho chiusa senza rompere niente
+
+**Ho esercitato `ADM-11` dentro un test che esiste già**: *"a hopeless tool reports every
+failure, not just the first"*, che costruisce il manifest più ostile possibile per verificare che
+l'admission riporti **tutte** le violazioni e non solo la prima. Gli ho tolto `version` e
+`manifestHash` e ho aggiunto `ADM-11` all'insieme atteso.
+
+È il posto naturale, non un espediente: quel test esiste proprio per dire *«queste sono tutte le
+regole che un manifest indifendibile viola»*, e finché `ADM-11` mancava dall'elenco, l'insieme
+non era completo.
+
+**Il conteggio resta 30 per il file e 140 per la suite.** Nessun artefatto congelato diventa
+falso, nessun hash dei 15 cambia — riverificato: **15 su 15**.
+
+### 2.3 Provato contro il codice vecchio prima di accettarlo
+
+Trappola 21: un test nuovo che passa anche senza la correzione non prova niente.
+
+```
+ADM-11 rimossa dal dist/  ->  29 pass, 1 fail   'expected ADM-11 to be reported'
+ripristinata              ->  30 pass, 0 fail
+```
 
 ---
 

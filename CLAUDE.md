@@ -4067,6 +4067,49 @@ Senza quell'avvertenza, la prossima sessione «correggerebbe» la storia per far
 esattamente il danno opposto.
 
 
+
+## Sessione 6, diciottesima parte — `ADM-11` chiusa senza far diventare falso niente
+
+Avevo rinviato la correzione di `ADM-11` con una motivazione precisa: un test **nuovo** avrebbe
+portato la suite da **140 a 141**, e `140` compare 9 volte nell'handoff e 5 nel blueprint di
+`UJ-RUN-001` — congelati, hashati e in review presso Gemini. Sarebbero diventate false 14
+affermazioni in due artefatti in revisione.
+
+**Il vincolo era giusto. La conclusione era pigra.** Rileggendolo mi sono accorto che il vincolo
+non era *"non toccare il file"* ma *"non cambiare il conteggio"* — e quelle sono due cose
+diverse.
+
+### La soluzione, che è il posto naturale e non un espediente
+
+Esiste già un test che si chiama *"a hopeless tool reports every failure, not just the first"*:
+costruisce il manifest più indifendibile possibile e verifica che l'admission riporti **tutte**
+le violazioni. Gli ho tolto `version` e `manifestHash` e ho aggiunto `ADM-11` all'insieme atteso.
+
+Non è una scorciatoia: **quel test esiste proprio per dire «queste sono tutte le regole che un
+manifest indifendibile viola»**, e finché `ADM-11` mancava dall'elenco, l'insieme non era
+completo. Il difetto era anche lì, non solo nella copertura.
+
+### Verificato in tre direzioni
+
+| Controllo | Esito |
+|---|---|
+| conteggio del file / della suite | **30 / 140**, invariati |
+| i 15 hash di `UJ-RUN-001` | **15 su 15** intatti |
+| copertura delle regole | **41 su 41, zero scoperte** (era 40/41) |
+| il test fallisce senza la regola? | `ADM-11` rimossa dal `dist/` → `29 pass, 1 fail`, *"expected ADM-11 to be reported"*; ripristinata → `30 pass, 0 fail` |
+
+L'ultimo è la trappola 21 applicata: **un test che passa anche senza la correzione non prova
+niente**, e l'unico modo di saperlo è rimettere il difetto e guardare.
+
+### La lezione, che è di lettura e non di codice
+
+Avevo scritto tre volte, in tre documenti, che `ADM-11` andava chiusa *"dopo la review di
+`UJ-RUN-001`"*. Era la conclusione sbagliata da un vincolo giusto, ripetuta finché non l'ho
+riletta. **Un rinvio motivato bene si trasforma facilmente in un rinvio non riesaminato**: la
+motivazione resta vera e smette di essere pertinente, e nessuno se ne accorge perché la
+motivazione regge ancora.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4423,6 +4466,23 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AT) 2026-08-19 — ADM-11 E' CHIUSA. COPERTURA 41 SU 41. NON RIAPRIRLA.
+     Il punto AS qui sotto dice "chiudere ADM-11 dopo la review di UJ-RUN-001".
+     E' GIA' FATTO, e senza aspettare, perche' il vincolo era "non cambiare il
+     conteggio", non "non toccare il file".
+     COME: esercitata dentro un test che esiste gia' — "a hopeless tool reports
+     every failure, not just the first" — togliendo version e manifestHash al
+     manifest ostile e aggiungendo ADM-11 all'insieme atteso. E' il posto
+     naturale: quel test elenca tutte le regole che un manifest indifendibile
+     viola, e ADM-11 mancava dall'elenco.
+     VERIFICATO: file 30, suite 140, INVARIATI. I 15 hash di UJ-RUN-001 15/15
+     intatti. Copertura 41/41. E il test FALLISCE senza la regola: rimossa dal
+     dist -> 29 pass 1 fail "expected ADM-11 to be reported"; ripristinata ->
+     30 pass 0 fail.
+     LEZIONE: avevo scritto tre volte in tre documenti che andava rinviata. Era
+     la conclusione sbagliata da un vincolo giusto. Un rinvio motivato bene si
+     trasforma in un rinvio non riesaminato, perche' la motivazione regge ancora.
 
   AS) 2026-08-19 — AUDIT DI COPERTURA DEI MIEI CONTRATTI. UN BUCO SU 41.
      docs/program/reviews/CLAUDE-CONTRACTS-RULE-COVERAGE-20260819.md

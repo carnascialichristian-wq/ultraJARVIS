@@ -31,7 +31,7 @@ impedisce di leggere e giudicare gli artefatti.**
 |---:|---|---:|---|
 | 1 | `docs/architecture/TOOL_PLANE.md` | 310 | `04d6730c922e94ce310d1dd616a949a79a9337c3cf150d5187907536ce623bd9` |
 | 2 | `packages/contracts/src/tools/tool-manifest.ts` | 373 | `7db6a90a3a2cffe0ce11e22dd2d652a92138aad0e0f7d4314d20873ac906ab2a` |
-| 3 | `tests/contracts/tool-admission.test.mjs` | 335 | `54d9b5815ab787c522c35ce630c7ee14add03c307e84436f3cfff7011f362019` |
+| 3 | `tests/contracts/tool-admission.test.mjs` | 335 | `af8fe881539bd3c309e76fd27473a70292e2ce21a272975236b70c8fd292e4ad` |
 | 4 | `docs/program/handoffs/HANDOFF-UJ-MCP-001.md` | 141 | `0bd72d4eb1104b099fd4ecf6d1688bd4069413e2dba7bf10c0e296efdd5b4ffb` |
 
 ---
@@ -79,34 +79,37 @@ Forma documentata per 41 criteri su 43 task.
 
 ## 4. Che cosa NON è dimostrato — incluso un difetto mio trovato oggi
 
-### 4.1 `ADM-11` è implementata e **non ha un test**
+### 4.1 `ADM-11` era scoperta — **trovata e chiusa nella stessa sessione**
 
 ```bash
 comm -23 <(grep -oE '"ADM-[0-9]+"' packages/contracts/src/tools/tool-manifest.ts | tr -d '"' | sort -u) \
          <(grep -oE 'ADM-[0-9]+' tests/contracts/tool-admission.test.mjs | sort -u)
-# ADM-11
+# (vuoto)  — era: ADM-11
 ```
 
-**18 regole nel codice, 17 coperte da un test.** La scoperta è `ADM-11` — *versione e hash
-pinnati* — implementata a `tool-manifest.ts:277-279` e mai esercitata.
+**Era 18 regole nel codice e 17 coperte.** `ADM-11` — *versione e hash pinnati* — implementata a
+`tool-manifest.ts:277-279` e mai esercitata. **Trovata da me contando, non segnalata da nessuno.**
 
-**Trovato da me riverificando il mio stesso artefatto oggi, non segnalato da nessuno.**
+Precisazione, perché il sospetto era un altro e sbagliato: la colonna `Blocca?` di
+`TOOL_PLANE.md` §195 dice *"sì"* per `ADM-11`, ma significa *«blocca l'ammissione»*, **non**
+*«è testata»*. Il documento non sopravvalutava la copertura.
 
-Precisazione, perché il sospetto era un altro: la colonna `Blocca?` della tabella in
-`TOOL_PLANE.md` §195 dice *"sì"* per `ADM-11`, ma quella colonna significa *«blocca
-l'ammissione»*, **non** *«è testata»*. Il documento non sopravvaluta la copertura. L'ho
-controllato prima di scriverlo.
+**Come l'ho chiusa senza toccare gli artefatti congelati.** Il vincolo era che la suite non
+passasse da **140 a 141**: `140` compare 9 volte nell'handoff e 5 nel blueprint di `UJ-RUN-001`,
+entrambi hashati e **in review presso GEMINI**. Un test nuovo avrebbe reso false 14 affermazioni
+in due artefatti in revisione.
 
-**Perché non l'ho chiuso in questa sessione, e non è pigrizia.** La correzione è un test in
-`tests/contracts/tool-admission.test.mjs`, che **non** è fra i 15 artefatti hashati di
-`UJ-RUN-001` — quindi il file si potrebbe toccare. Ma il conteggio della suite passerebbe da
-**140 a 141**, e `140` compare **9 volte nell'handoff e 5 nel blueprint** di `UJ-RUN-001`,
-entrambi **congelati, hashati e in review presso GEMINI**. Aggiungere il test renderebbe false
-14 affermazioni in due artefatti in revisione e costringerebbe a un settimo giro di consegna su
-un task che ne ha già fatti sei.
+Soluzione: **ho esercitato `ADM-11` dentro un test che esiste già** — *"a hopeless tool reports
+every failure, not just the first"* — togliendo `version` e `manifestHash` al manifest ostile e
+aggiungendo `ADM-11` all'insieme atteso. **Il conteggio resta 30 per il file e 140 per la suite**,
+e nessun artefatto congelato diventa falso.
 
-**Sequenza corretta:** chiudere `ADM-11` **dopo** che la review di `UJ-RUN-001` si è chiusa. È
-registrato qui perché non venga perso, non perché sia accettabile.
+**Provato contro il codice vecchio prima di accettarlo** (trappola 21): rimossa `ADM-11` dal
+`dist/`, la suite dà `29 pass, 1 fail` con `expected ADM-11 to be reported`; ripristinata,
+`30 pass, 0 fail`. Un test che non può fallire non è un test.
+
+**Copertura finale: 41 regole su 41, zero scoperte** — verificabile con
+`python3 docs/threat-models/probes/contracts-rule-coverage.py`.
 
 ### 4.2 Il resto
 
