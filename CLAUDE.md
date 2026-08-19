@@ -3707,6 +3707,59 @@ assegnarmi peso senza aver eseguito i comandi: un `PASS` basato sulla lettura sa
 applicata alla review del documento che descrive `TH-10`.
 
 
+
+## Sessione 6, undicesima parte — `UJ-CLD-001` consegnato con le fonti riaperte oggi
+
+Stesso schema di `UJ-SEC-001`: l'altro mio task `READY` senza blocker, 8 punti, reviewer GEMINI.
+Artefatti su `main` da giorni (507 righe), nessun pacchetto di consegna.
+
+### Non mi sono limitato a impacchettare: ho riaperto le fonti
+
+La §6 del mio stesso artefatto dice che *"le fonti si spostano in tempo reale"* — 3 URL ufficiali
+instabili su 20 in 24 ore. L'artefatto è datato **2026-08-17** e oggi è il **19**. Consegnare un
+`VERIFIED_FACT` di due giorni fa su un bersaglio che si muove, chiedendo a qualcuno di
+accettarlo, sarebbe stato il difetto che contesto agli altri.
+
+**Riaperte entrambe le citazioni decisive. Due su due confermate verbatim:**
+
+- Agent SDK, `code.claude.com/docs/en/agent-sdk/overview`: la frase su *"third party developers
+  … including agents built on the Claude Agent SDK. Use the API key authentication methods"* è
+  **identica** parola per parola;
+- termini consumer, `anthropic.com/legal/consumer-terms`: il divieto di accesso *"through
+  automated or non-human means"* è confermato, **più un dato che non avevo registrato**: la data
+  di efficacia, **October 8, 2025**. Rende la citazione databile e non solo verificabile.
+
+### Tre elementi comparsi alla fonte dopo la consegna, tutti a favore della conclusione
+
+1. **`Managed Agents`** è ora elencato come prodotto ospitato separato con API REST — una
+   **quinta superficie**, anch'essa a chiave API. **Lacuna che dichiaro io**: la mia matrice ne
+   copre quattro. Non l'ho aggiunta perché modificherebbe un artefatto in attesa di review; è
+   registrata come lavoro residuo, non nascosta.
+2. L'Agent SDK è governato dai **Commercial Terms of Service**, *"including when you use it to
+   power products … available to your own customers"*: conferma per via contrattuale ciò che
+   `CAP-CLD-002` conclude per via tecnica.
+3. **Linee guida di branding**: *"Claude Code"* e *"Claude Code Agent"* non sono nomi permessi
+   per un prodotto di terzi. Se ultraJARVIS diventasse un prodotto, non potrebbe chiamarsi così.
+
+### Che cosa ho scritto contro il mio stesso lavoro
+
+§4 dell'evidenza: la quinta superficie mancante; **18 URL su 20 non riverificate oggi**;
+`CAP-CLD-001` non verificato eseguendo un test di quota — perché raggiungere il limite propone
+di abilitare crediti API, ed è l'unico modo in cui questo programma può generare un addebito;
+`QuotaCounter.source` resta `OBSERVED_THRESHOLD`, che è una conferma di progetto e non una
+misura.
+
+E §5 dice al reviewer **cosa attaccare**: non i conteggi, ma la conclusione che per Claude
+`HUMAN_BRIDGE` è la modalità **definitiva** e non un ripiego. Se Gemini trova un percorso
+automatico a costo zero che non ho considerato, quella conclusione cade e con essa cambia il
+piano dell'intero programma.
+
+### File
+
+`docs/program/packets/UJ-CLD-001-AC-EVIDENCE.md`. Ogni comando di riproduzione **eseguito**:
+4 capability record, 10 domande, 10 `VERIFIED_FACT`, 2 `UNKNOWN`, 20 URL nel manifest.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4063,6 +4116,28 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AO) 2026-08-19 — UJ-CLD-001 CONSEGNATO CON LE FONTI RIAPERTE. NON RIFARE.
+     docs/program/packets/UJ-CLD-001-AC-EVIDENCE.md
+     READY, 8 punti, nessun blocker, reviewer GEMINI.
+     LE DUE CITAZIONI DECISIVE SONO STATE RIVERIFICATE IL 19, non citate a
+     memoria: entrambe CONFERMATE VERBATIM. La §6 del mio artefatto dice che le
+     fonti si spostano in tempo reale, e l'artefatto e' datato 17: consegnarlo
+     senza riaprirle sarebbe stato il difetto che contesto agli altri.
+     GUADAGNATO nella riverifica: la data di efficacia dei termini consumer,
+     October 8 2025 — l'artefatto non la registrava.
+     TRE COSE NUOVE ALLA FONTE, tutte a favore della conclusione:
+       1. Managed Agents e' una QUINTA superficie, a chiave API. LA MIA MATRICE
+          NE COPRE QUATTRO: lacuna che dichiaro io, lavoro residuo. NON l'ho
+          aggiunta perche' modificherebbe un artefatto in attesa di review.
+       2. l'Agent SDK e' governato dai Commercial ToS anche quando alimenta
+          prodotti per i propri clienti;
+       3. "Claude Code" e "Claude Code Agent" NON sono nomi permessi per un
+          prodotto di terzi.
+     COSA DEVE ATTACCARE GEMINI (§5): non i conteggi, ma la conclusione che per
+     Claude HUMAN_BRIDGE e' la modalita' DEFINITIVA. Se esiste un percorso
+     automatico a costo zero che non ho visto, cambia il piano del programma.
+     Nessun ResponsePacket: card_id obbligatorio, card assente (punto AM).
 
   AN) 2026-08-19 — UJ-SEC-001 E' ORA REVISIONABILE. GIA' FATTO, NON RIFARE.
      docs/program/packets/UJ-SEC-001-AC-EVIDENCE.md
