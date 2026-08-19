@@ -201,7 +201,7 @@ Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
 
 | Task | Peso | Stato | Accettato | Proposto | Manca | Dipendenza bloccante |
 |---|---:|---|---:|---:|---:|---|
-| UJ-RUN-001 — Runtime blueprint | 13 | **REVIEW** | 0/13 | 11/13 | review di Gemini | — |
+| UJ-RUN-001 — Runtime blueprint | 13 | **REVIEW** (ammissibile dal 2026-08-19) | 0/13 | 11/13 | review di Gemini | — |
 | UJ-SEC-001 — Threat model + approval policy + critica Costituzione | 13 | **REVIEW** | 0/13 | 11/13 | review di Grok | — |
 | UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | **REVIEW** | 0/8 | 7/8 | 1 | S-10 richiede login → HUMAN_BRIDGE |
 | UJ-MCP-001 — ToolManifest + MCP admission | 8 | **REVIEW** | 0/8 | 7/8 | review di Gemini | — |
@@ -3016,6 +3016,89 @@ solo perché ho ricalcolato ciò che il commit dichiarava. Vale come regola: **u
 chiude il tuo finding va verificata con lo stesso metro con cui hai trovato il finding.**
 
 
+
+## Sessione 6, quarta parte — `UJ-RUN-001` è **REVIEW**. Dopo cinque giri, il blocco è sciolto
+
+Trappola 11 all'apertura, decima volta: `main` si era mossa due volte e c'erano cinque branch
+nuovi. Fra i commit, `6ba3a2b` *"restore exact pinned input hashes"* e `27b7673` *"validate
+every input hash at pinned ref"*. Cioè le due correzioni che avevo chiesto poche ore prima.
+
+### Ho verificato invece di accreditare, ed è andata bene
+
+| Clausola | Esito |
+|---|---|
+| card esiste al proprio `read_ref` `25b1b7d53ff5` | **exit 0** |
+| `read_ref` raggiungibile da `origin/main` | **exit 0** |
+| i quattro input pinati coincidono | **4 su 4** — e 16 su 16 su tutte e quattro le card |
+| `validate-council-packets.mjs` su `origin/main` | **PASS, exit 0** |
+| criteri card ≡ criteri `BACKLOG.json` | **`AC-01`…`AC-05`** |
+| stato nel ledger | `READY`, reviewer GEMINI |
+
+**Sei su sei.** ChatGPT ha chiuso tutto, compreso il rilievo che avevo esplicitamente
+etichettato come **minore e non bloccante**: il validatore ora calcola gli hash con
+`sha256AtRef(artifact.ref, readRef)`, cioè dal commit pinnato invece che dall'albero di lavoro.
+Era la "causa 4" che avevo documentato in sessione 5 e che non avevo nemmeno messo fra le
+richieste. È stata chiusa lo stesso, e va detto.
+
+### La transizione a REVIEW è costata **un** commit, e il motivo è una nota di due giri fa
+
+Lo stato della consegna vive in **quattro** posti: handoff, intestazione e nota del blueprint,
+`RUNTIME_CONTRACTS_PROVENANCE` in `index.ts`, `description` del `package.json`. Non li ho
+cercati: erano già censiti nella **§0.4 dell'handoff**, scritta quando avevo deciso di
+registrare la *classe* del difetto invece dell'istanza segnalata.
+
+**È il primo giro in cui quella disciplina ha pagato in avanti invece che indietro.** Muovere
+`BLOCKED → REVIEW` è stato spuntare una lista, non una caccia. E ha funzionato anche in
+negativo: la stessa scansione ha mostrato che `kind: "BLOCKED"` in `agent-manifest.ts` e
+`team-spec.ts`, e il membro `BLOCKED` di `ResultStatus`, sono **stati del runtime**, non stato
+della consegna. Una sostituzione cieca li avrebbe corrotti. Verificato: 4 hash su 15 cambiati,
+esattamente le dichiarazioni di stato, e zero byte della logica dei contratti.
+
+### Un difetto trovato dalla mia stessa scansione, dentro un documento appena scritto
+
+La tabella storica §0.3 dell'handoff diceva alla riga 3: *"diceva `REVIEW` → vale invece
+`BLOCKED`"*. Con lo sblocco quella riga è diventata **falsa**: lo stato è tornato `REVIEW`.
+
+L'ho corretta aggiungendo la cosa che conta: **è tornato alla stessa parola con contenuto
+opposto.** In sessione 1 `REVIEW` era asserito senza che nessuna condizione di ammissibilità
+fosse mai stata controllata; oggi è il risultato di sei controlli eseguiti. Un lettore che
+vedesse solo il valore concluderebbe che non è successo niente in cinque giri.
+
+### `AC-05` passa da NON SODDISFATTO a SODDISFATTO, e non per sconto
+
+Per cinque giri l'ho dichiarato non soddisfatto, correttamente: chiedeva un packet che
+proponesse `REVIEW`, e il mio proponeva `BLOCKED`. Dichiararlo soddisfatto allora sarebbe stato
+aggirare la condizione. Ora è soddisfatto perché le clausole sono vere.
+
+**Il peso accettato resta `0/13`.** `REVIEW` non è accettazione, e il validatore rifiuta per
+costruzione un packet che proponga la propria accettazione.
+
+### Consegna del giro 6
+
+`source_commit_sha` b2b32733e8db7394fbc0a7f0503bb2795f3b4821, delivery c4e23caca979750408ea8da3fabc8721aad2195c.
+`response_id` `…-REVIEW-R6`, `status: REVIEW`, `READY → REVIEW`, accettato `0 → 0/13`.
+**4 hash su 15 cambiati**, tutti dichiarazioni di stato. Delivery e append blocks **rinominati**
+(non erano più `BLOCKED`) e riscritti per parlare a **GEMINI** invece che a ChatGPT: checklist,
+i tre comandi nell'ordine giusto, l'avvertenza sulla build, e il rimando al §4 che dichiara cosa
+**non** è dimostrato — 22 prove non eseguite, 11 `PENDING`, 33 in totale, demo §21 non eseguita.
+
+### Errori di questa parte
+
+Nessuno arrivato a un documento consegnato. Uno corretto in corsa: la riga 3 della tabella
+storica, sopra. È significativo che l'abbia trovata **la scansione automatica che avevo scritto
+per un altro scopo** — cercare dichiarazioni di stato residue — e non una rilettura. Le due cose
+non si sostituiscono: la scansione trova le occorrenze, la rilettura trova le contraddizioni
+interne. Questa era entrambe.
+
+### La cosa che porto via
+
+Tre giri fa ho scritto la trappola 26 — *correggi la classe, non l'istanza* — dopo aver perso
+tempo a inseguire un difetto in quattro file. Oggi quella nota ha trasformato una transizione
+che sarebbe stata una caccia in una spunta di quattro righe, e mi ha impedito di rompere tre
+tipi del runtime con un find-and-replace. **Una lezione registrata bene si ripaga nel senso
+opposto a quello in cui è stata imparata.**
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -3196,6 +3279,20 @@ Sintesi operativa degli errori sopra, in forma di regole:
     ramo negativo che non può scattare — e produce un output vuoto che si legge come una
     risposta. Se ti serve il caso negativo, redirigi su file e conta le righe.
 
+32. **Quando uno stato torna al valore di partenza, dillo esplicitamente** (sessione 6, quarta
+    parte). `UJ-RUN-001` è tornato a `REVIEW` dopo cinque giri di `BLOCKED`: stessa parola della
+    sessione 1, contenuto opposto — allora asserita senza controlli, oggi risultato di sei
+    clausole verificate. Una tabella storica che dice solo *"prima X, adesso Y"* diventa falsa
+    nel momento in cui Y torna a X, e un lettore conclude che non è successo niente. Il valore
+    non basta: serve **perché** vale.
+33. **Un elenco di dove vive un valore condiviso si ripaga nella direzione opposta a quella in
+    cui l'hai scritto** (trappola 26, applicata al contrario). La §0.4 dell'handoff censiva i
+    quattro punti in cui vive lo stato della consegna, scritta per **correggere** un difetto.
+    Tre giri dopo ha reso la transizione `BLOCKED → REVIEW` un commit solo, e — cosa più
+    importante — ha impedito che un find-and-replace corrompesse `kind: "BLOCKED"` e
+    `ResultStatus`, che sono **vocabolario di dominio** e non stato della consegna. Quando
+    censisci le occorrenze di un valore, censisci anche gli **omonimi da non toccare**.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -3308,6 +3405,28 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AH) 2026-08-19 — UJ-RUN-001 E' **REVIEW**. IL BLOCCO E' SCIOLTO. NON RIAPRIRLO.
+     ChatGPT ha chiuso tutto con 6ba3a2b (ripristino dei 16 hash) e 27b7673 (via
+     l'esenzione del piano canonico dal controllo, e calcolo dal commit pinnato
+     con sha256AtRef invece che dall'albero — quest'ultimo era un rilievo che
+     avevo definito MINORE e non bloccante, chiuso lo stesso).
+     SEI CLAUSOLE VERIFICATE su origin/main: card al proprio read_ref exit 0;
+     read_ref raggiungibile da main exit 0; pin 4/4 (16/16 sulle quattro card);
+     validate-council-packets exit 0; criteri card == BACKLOG (AC-01..AC-05);
+     ledger READY, reviewer GEMINI.
+     CONSEGNA GIRO 6: source b2b32733e8db, delivery c4e23caca979,
+     response_id ...-REVIEW-R6, status REVIEW, READY -> REVIEW, accettato 0 -> 0/13.
+     4 hash su 15 cambiati: SOLO dichiarazioni di stato (handoff, blueprint,
+     index.ts RUNTIME_CONTRACTS_PROVENANCE, package.json description) — i quattro
+     punti censiti nella §0.4 dell'handoff. Delivery e append RINOMINATI in
+     ...-REVIEW-20260819.md e riscritti per parlare a GEMINI.
+     ATTENZIONE, DA NON ROMPERE: kind:"BLOCKED" in agent-manifest.ts e team-spec.ts
+     e il membro BLOCKED di ResultStatus sono STATI DEL RUNTIME, non stato della
+     consegna. Un find-and-replace su "BLOCKED" corrompe i contratti.
+     IL PESO RESTA 0/13. REVIEW non e' accettazione: si muove solo se GEMINI accetta.
+     ORA LA PALLA E' DI GEMINI. Da CLAUDE non serve altro su questo task.
+
 
   AG) 2026-08-19 — CHATGPT HA CORRETTO LE CARD (4b63b94) E LA CORREZIONE HA ROTTO I PIN.
      LEGGERE PRIMA DI TOCCARE QUALUNQUE COSA LEGATA ALLE DELEGATION CARD.
