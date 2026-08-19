@@ -1,7 +1,7 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
   "response_id": "UJ-RESPONSE-RED-001-GROK-20260819",
-  "created_at": "2026-08-19T11:55:00Z",
+  "created_at": "2026-08-19T12:05:00Z",
   "card_id": "UJ-CARD-RED-001-GROK",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "GROK",
@@ -15,7 +15,7 @@
     },
     {
       "capability": "AUTHORIZED_GITHUB_BRANCH_WRITE",
-      "access_path": "create branch agent/uj-red-001-grok-review-20260819 + push_files",
+      "access_path": "branch agent/uj-red-001-grok-review-20260819 + push",
       "mode": "AUTO_VERIFIED"
     },
     {
@@ -26,10 +26,10 @@
   ],
   "task_id": "UJ-RED-001",
   "status": "REVIEW",
-  "executive_delta": "Re-delivery of UJ-RED-001 against mandated read_ref 25b1b7d53ff5bc4b05348453ebb704aba3a88630. Static analysis of paid paths, local fallbacks, DepthGuard contracts, memory, Skill Forge, supply-chain and progress-gaming complete. Validators PASS at this ref. 18 findings. accepted_weight remains 0. Old PR #13 / blocked deliveries abandoned.",
+  "executive_delta": "Corrected re-delivery of UJ-RED-001 against read_ref 25b1b7d53ff5bc4b05348453ebb704aba3a88630. Packet no longer self-hashes (avoids circular reference). Only the report is listed in artifacts with verified SHA-256. status=REVIEW, accepted_weight=0. Validators PASS at read_ref. Old PR #13 abandoned; previous packet hash mismatch on PR #16 is superseded by this file.",
   "facts": [
     {
-      "claim": "source_commit_sha 25b1b7d53ff5bc4b05348453ebb704aba3a88630 is a real 40-hex commit on the target and is the mandated read_ref",
+      "claim": "source_commit_sha 25b1b7d53ff5bc4b05348453ebb704aba3a88630 is a real 40-hex commit and is the mandated read_ref",
       "classification": "VERIFIED_FACT",
       "source_ref": "github get_commit + local checkout",
       "verified_at": "2026-08-19T11:40:00Z"
@@ -69,6 +69,12 @@
       "classification": "VERIFIED_FACT",
       "source_ref": "inspected modules at read_ref",
       "verified_at": "2026-08-19T11:50:00Z"
+    },
+    {
+      "claim": "Packet does not self-list with a content hash (circular-reference avoided); only the external report is content-addressed",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "this ResponsePacket artifacts array",
+      "verified_at": "2026-08-19T12:05:00Z"
     }
   ],
   "assumptions": [
@@ -79,16 +85,16 @@
     },
     {
       "statement": "GitHub write access remains available for agent/uj-red-001-* branches and draft PRs",
-      "validation": "create_branch + push succeeded previously",
+      "validation": "create_branch + push succeeded",
       "expiry": null
     }
   ],
   "decisions_proposed": [
     {
       "decision_id": "DEC-RED-001-01",
-      "proposal": "Accept this report + packet as the valid UJ-RED-001 delivery; keep accepted_weight 0 pending CHATGPT review",
+      "proposal": "Accept this corrected report + packet as the valid UJ-RED-001 delivery; keep accepted_weight 0 pending independent review",
       "owner": "CHATGPT",
-      "gate": "schema-valid packet + artifact hashes + branch/PR visible"
+      "gate": "schema-valid packet + report hash + branch/PR visible"
     },
     {
       "decision_id": "DEC-RED-001-02",
@@ -98,7 +104,7 @@
     },
     {
       "decision_id": "DEC-RED-001-03",
-      "proposal": "Abandon PR #13 (quarantine BLOCKED) as non-delivery",
+      "proposal": "Abandon PR #13 and the previous self-hash-mismatched packet on PR #16 as non-deliveries",
       "owner": "CHATGPT / Christian",
       "gate": "this packet supersedes"
     }
@@ -110,13 +116,6 @@
       "media_type": "text/markdown",
       "data_class": "C1",
       "summary": "18-finding falsification report at read_ref 25b1b7d covering paid paths, DepthGuard, memory, Skill Forge, supply-chain, progress gaming"
-    },
-    {
-      "ref": "docs/evaluations/UJ-RESPONSE-RED-001-GROK-20260819.json",
-      "sha256": "f622443214d030c689feec845fe191d76b904ef7f0e44a2c4ec8353efeeaa222",
-      "media_type": "application/json",
-      "data_class": "C1",
-      "summary": "This ResponsePacket"
     }
   ],
   "verification": {
@@ -124,7 +123,8 @@
       "source_commit_sha is 40-hex and equals mandated read_ref",
       "validate-program-os.mjs PASS",
       "validate-council-packets.mjs PASS",
-      "report SHA-256 computed",
+      "report SHA-256 recomputed and matches declared",
+      "packet does not contain a self-referential artifact hash",
       "no paid API / billing / cookie / browser automation / secret use",
       "18 findings with full structure"
     ],
@@ -132,23 +132,25 @@
       "source_commit_sha matches read_ref",
       "both validators PASS",
       "report hash",
+      "no circular self-hash",
       "no forbidden side effects",
       "findings complete"
     ],
     "failed": [],
     "not_run": [
-      "independent CHATGPT review of AC-01..AC-05",
+      "independent CHATGPT re-review of AC-01..AC-05 after this correction",
       "live OpenAI/Stripe smoke (forbidden)",
       "full Python test suite of target application paths"
-    ]
+    ],
+    "self_hash_policy": "ResponsePacket does NOT appear in artifacts[]. Only external artifacts (the report) carry content-addressed sha256. Packet identity = response_id + path + source_commit_sha. This avoids the circular reference that caused AC-05 FAIL on the previous delivery."
   },
   "side_effects": [
     {
       "classification": "INTERNAL_WRITE",
-      "description": "Branch agent/uj-red-001-grok-review-20260819 + draft PR with report and packet; no main/BACKLOG/weight changes",
+      "description": "Updated packet on branch agent/uj-red-001-grok-review-20260819 (or successor); no main/BACKLOG/weight changes",
       "approval_ref": "card write_branch_patterns agent/uj-red-001-*",
-      "idempotency_key": "UJ-IDEMP-RED-001-GROK-20260819-REVIEW",
-      "proof_ref": "branch + PR URL after push"
+      "idempotency_key": "UJ-IDEMP-RED-001-GROK-20260819-REVIEW-V2",
+      "proof_ref": "branch + PR after push"
     }
   ],
   "risks": [
@@ -203,14 +205,14 @@
   "remaining_work": {
     "weight": 13,
     "blockers": [
-      "Independent CHATGPT review of AC-01..AC-05",
+      "Independent CHATGPT re-review of AC-01..AC-05 after packet correction",
       "Possible follow-up: implement UJ_ZERO_COST profile (F-017)"
     ],
-    "next_action": "CHATGPT validates packet + hashes, evaluates findings, emits ReviewResult; accepted_weight stays 0 until PASS. After this delivery Grok also reviews UJ-GGL-001 when Gemini submits."
+    "next_action": "CHATGPT re-validates packet (no self-hash) + report hash, evaluates findings, emits updated ReviewResult; accepted_weight stays 0 until PASS."
   },
   "confidence": {
     "level": "HIGH",
-    "reason": "Exact mandated read_ref checked out; validators PASS; paid paths and DepthGuard/memory/skills surfaces directly observed; no invented SHAs"
+    "reason": "Exact mandated read_ref checked out; validators PASS; paid paths and DepthGuard/memory/skills surfaces directly observed; circular self-hash removed"
   },
   "policy_attestation": {
     "no_secret_values": true,
@@ -223,7 +225,7 @@
   },
   "handoff": {
     "target": "CHATGPT (reviewer for UJ-RED-001)",
-    "next_action": "Validate ResponsePacket against schema, re-hash report, confirm source_commit_sha=25b1b7d…, evaluate 18 findings vs AC-01..AC-05, emit ReviewResult. Do not award accepted_weight until independent review. After import, Grok will review UJ-GGL-001 when available.",
-    "resume_point": "Branch agent/uj-red-001-grok-review-20260819 contains report + packet at source_commit_sha 25b1b7d53ff5bc4b05348453ebb704aba3a88630; accepted_weight 0; old PR #13 abandoned."
+    "next_action": "Re-validate ResponsePacket: confirm artifacts contains only the report with matching sha256, no circular self-hash, source_commit_sha=25b1b7d…, then emit ReviewResult. Do not award accepted_weight until PASS.",
+    "resume_point": "Corrected packet on agent/uj-red-001-grok-review-20260819 (or fix branch); accepted_weight 0; previous AC-05 FAIL superseded."
   }
 }
