@@ -51,11 +51,3 @@ starting the next session; do not infer it from chat:
 
 No deployment, billing, account creation, production write, message send, or
 destructive action is pending.
-
-
-## Latest remote reconciliation — 2026-08-18 — cloud bridge STRICT_ZERO candidate
-
-- Main di partenza: 6af4a3721ab0d7f3272fd6e4e872b1331da99aa5. La branch agent/strict-zero-cloud-bridge-20260818 è una candidate PR separata e non modifica main.
-- Il finding è il percorso OpenAI/pay-per-use presente nel cloud_bridge originale; la candidate lo blocca e limita il fallback a endpoint loopback.
-- Test e review note sono pubblicati, ma l'esecuzione runtime resta da fare in un checkout con dipendenze. Nessun peso, status backlog o task acceptance cambia.
-- Prossimo comando: verificare la candidate con test reali, poi attendere review Claude/Grok; in parallelo resta aperto l'intake Gemini CAP/GGL.

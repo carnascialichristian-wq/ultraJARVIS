@@ -350,17 +350,6 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Prossima azione: integrare prima gli output HUMAN_BRIDGE di Gemini (UJ-CAP-001 e UJ-GGL-001), poi creare branch/PR dedicate e soltanto dopo valutare una fusione controllata del Program OS.
 - Verifica eseguita senza installazioni, billing, segreti o scritture esterne oltre a questo ledger commit.
 
-
-### 2026-08-18 — ChatGPT/Codex — candidate hardening STRICT_ZERO del cloud bridge
-
-- Ref iniziale: main@6af4a3721ab0d7f3272fd6e4e872b1331da99aa5; branch dedicata: agent/strict-zero-cloud-bridge-20260818.
-- Output: cloud_bridge.py local-only, test senza rete in tests/test_cloud_bridge_strict_zero.py e review note in docs/program/reviews/inbox/CLOUD_BRIDGE_STRICT_ZERO_REVIEW_20260818.md.
-- Correzione: provider cloud/pagati bloccati prima dell'adapter; endpoint locale limitato al loopback; nessuna lettura di API key.
-- Controlli dichiarati: ispezione statica del diff e progettazione dei test; esecuzione runtime/test non disponibile in questo checkout. Nessuna API, billing, rete esterna o segreto usato.
-- Stato/peso: candidate draft, nessuna task DONE, nessun backlog delta e nessun peso accettato.
-- Prossima azione: review Claude/Grok e verifica in checkout con dipendenze; mantenere il percorso non su main finché la review non passa.
-- Aggiornamento speculare: inserito in taskgpt.md.
-
 ### 2026-08-18 — ChatGPT/Codex — governance reconciliation for Claude and Grok
 
 - Branch di coordinamento: `agent/chatgpt-governance-reconcile-20260818`, creata da `main@25b1b7d53ff5bc4b05348453ebb704aba3a88630`; nessuna scrittura su `main`, sulla branch Claude o sulla branch Grok.

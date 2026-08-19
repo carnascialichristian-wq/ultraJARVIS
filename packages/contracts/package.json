@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Shared, provider-neutral contracts for ultraJARVIS. Runtime contracts are UJ-RUN-001 (CLAUDE); the delivery status is REVIEW, awaiting GEMINI. Accepted weight remains 0/13 until a reviewer rules.",
+  "description": "Shared, provider-neutral contracts for ultraJARVIS. Runtime contracts are UJ-RUN-001 (CLAUDE), status REVIEW.",
   "exports": {
     "./runtime": "./src/runtime/index.ts"
   },

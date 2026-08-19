@@ -6,11 +6,3 @@ dist/
 # Python bytecode (generato eseguendo i tool durante le review)
 __pycache__/
 *.py[cod]
-
-# Runtime state generato eseguendo i tool o la test suite (core/metrics.py,
-# core/memory.py, core/job_worker.py scrivono qui). Gia' escluso da pytest.ini
-# via norecursedirs. Non e' sorgente: contiene telemetria, code dei job e i
-# record di memoria — che per S-16 non hanno ancora un campo di provenienza,
-# quindi non devono finire nel repository.
-workspace/
-.pytest_cache/

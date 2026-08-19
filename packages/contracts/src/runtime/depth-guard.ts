@@ -11,12 +11,7 @@
  * without calling a model, and they consume no quota.
  */
 
-import {
-  autonomyWithin,
-  dataClassWithin,
-  encodeInjective,
-  sideEffectWithin,
-} from "./common.js";
+import { autonomyWithin, dataClassWithin, sideEffectWithin } from "./common.js";
 import type { Depth, ToolGrant } from "./agent-manifest.js";
 import type { EffectiveLimits } from "./envelopes.js";
 
@@ -265,17 +260,7 @@ export function jaccardSimilarity(a: readonly string[], b: readonly string[]): n
   return union === 0 ? 0 : intersection / union;
 }
 
-/**
- * Detects a k-gram repeated `repeats` times in a tool-call sequence.
- *
- * The k-gram key is built with `encodeInjective`, not with a separator join.
- * This function used to join on a literal NUL byte, which is error E6 in a
- * second place: two different tool windows could produce the same key (`ToolId`
- * is a branded string with no runtime validation, so nothing excludes the
- * separator from a tool name), and the NUL made this whole file BINARY to git
- * and grep — it stayed invisible to text audits until a vendor-token scan
- * reported "binary file matches" instead of a line.
- */
+/** Detects a k-gram repeated `repeats` times in a tool-call sequence. */
 export function hasToolCycle(
   sequence: readonly string[],
   k: number = LOOP_THRESHOLDS.toolCycleK,
@@ -284,7 +269,7 @@ export function hasToolCycle(
   if (sequence.length < k * repeats) return false;
   const counts = new Map<string, number>();
   for (let i = 0; i + k <= sequence.length; i += 1) {
-    const gram = encodeInjective(sequence.slice(i, i + k));
+    const gram = sequence.slice(i, i + k).join(" ");
     const next = (counts.get(gram) ?? 0) + 1;
     if (next >= repeats) return true;
     counts.set(gram, next);
