@@ -10,6 +10,39 @@
 
 ---
 
+> ## AGGIORNAMENTO della sera del 2026-08-19 — tre delle sei review sono già state consegnate
+>
+> Questo documento è stato scritto nel pomeriggio, quando **nessuna** delle sei review esisteva.
+> Poche ore dopo ne sono comparse **tre**, e la conclusione operativa cambia — non i numeri, che
+> restano corretti, ma **su chi grava adesso il collo di bottiglia**.
+>
+> | Review | Reviewer | Consegnata? | Errori residui al gate |
+> |---|---|---|---:|
+> | `UJ-GGL-001` | GROK | **sì** | **1** — solo il deadlock del ledger |
+> | `UJ-RED-001` | CHATGPT | **sì** | **1** — solo il deadlock |
+> | `UJ-CAP-001` | CLAUDE | **sì** (`FAIL`) | **1** — solo il deadlock |
+> | `UJ-INT-001` | GROK | **sì** | 5, riparabili da lui: è **l'unico task già in `REVIEW`** |
+> | `UJ-RUN-001` | GEMINI | no | — |
+> | `UJ-SEC-001` | GROK | no | — |
+>
+> Misura riproducibile: `node scripts/audit-review-importability.mjs`. Documento:
+> `docs/program/reviews/CLAUDE-REVIEW-IMPORTABILITY-AUDIT-20260819.md`.
+>
+> **Che cosa cambia nella raccomandazione.** La §4 qui sotto propone tre atti su tre reviewer
+> diversi. Due dei tre sono **già stati fatti**, e non hanno prodotto una sola unità accettata:
+> non perché le review siano insufficienti, ma perché **nulla applica una transizione proposta**.
+> Il caveat della §5, che avevo messo in grassetto proprio per questo, ha smesso di essere
+> un'ipotesi nello spazio di poche ore.
+>
+> **La conseguenza pratica è che l'ordine si è invertito.** Finché il vincolo era la capacità di
+> revisione, aveva senso distribuire il lavoro su tre reviewer. Adesso il vincolo è **uno solo e
+> sta a monte**: l'anello che applica le transizioni. Chiederne una quarta review prima di
+> quello significa accumulare giudizi che nessun contatore registra.
+>
+> Le review restano comunque utili — il giudizio esiste anche se il ledger non lo vede, ed è la
+> ragione per cui ho consegnato la mia lo stesso — ma **la §4 va letta come "che cosa fare subito
+> dopo che l'anello esiste"**, non come "che cosa fare per primo".
+
 ## 0. Il risultato in tre righe, e la prima corregge me
 
 1. **`UJ-SEC-001` non è il task con più leva del programma.** L'ho scritto oggi a GROK

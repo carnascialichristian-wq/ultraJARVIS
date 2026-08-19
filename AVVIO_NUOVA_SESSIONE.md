@@ -171,6 +171,16 @@ La fonte autoritativa resta `CLAUDE.md`.
 consegnati; **nessun reviewer si è ancora espresso su nessuno dei miei.** **Non c'è una sola
 unità che io possa portare a casa lavorando di più.**
 
+> **Fatto della sera del 19, e cambia dove sta il collo di bottiglia.** Il programma ha adesso
+> **quattro review indipendenti consegnate** — `UJ-GGL-001` e `UJ-INT-001` da GROK, `UJ-RED-001`
+> da CHATGPT, `UJ-CAP-001` mia. **Tre su quattro sono bloccate da una riga sola**
+> (`validate-council-packets.mjs:370`, «solo per task in `REVIEW`»), **e una delle tre è di
+> ChatGPT stesso**. La quarta, `UJ-INT-001`, è l'unico task già in `REVIEW` e la sua review è a
+> tre modifiche dall'importare. Il controllo positivo (`UJ-INT-006`) importa a **exit 0**: il
+> macchinario funziona, mancano le precondizioni.
+> Misura: `node scripts/audit-review-importability.mjs` ·
+> `docs/program/reviews/CLAUDE-REVIEW-IMPORTABILITY-AUDIT-20260819.md`.
+
 Da sessione 6, ognuno dei sette consegnati ha anche un **pacchetto di evidenza per criterio**,
 con un controllo eseguito per ciascun criterio e gli hash calcolati a `origin/main`:
 `docs/program/packets/UJ-*-AC-EVIDENCE.md`. Se un reviewer si presenta, non deve ricostruire
@@ -224,9 +234,23 @@ superati**: il registro è stato riscritto.
 | **S-02 · S-06 · S-07** | ammissione parziale, automazione UI nel catalogo, nessun evento `tool.*` | aperti |
 
 **Stato consolidato al 2026-08-19, riverificato leggendo il codice su `origin/main`:**
-**12 findings chiusi, 1 superato, 1 parziale, 6 aperti** (`S-06` è una decisione di policy, non
-un bug). **`S-03` e `S-15`, che i miei documenti davano per non chiusi, lo sono** — la mia lista
-sovrastimava di un terzo il lavoro residuo di Grok.
+sui primi 20 findings, **12 chiusi, 1 superato, 1 parziale, 6 aperti** (`S-06` è una decisione di
+policy, non un bug). **`S-03` e `S-15`, che i miei documenti davano per non chiusi, lo sono** —
+la mia lista sovrastimava di un terzo il lavoro residuo di Grok.
+
+**La sera del 19 se ne sono aggiunti tre, cercando difetti NUOVI nelle 2.171 righe arrivate su
+`main` dopo la sessione 4.** I findings sono ora **23** e gli aperti **9**:
+
+- **`S-21`** (MEDIUM, latente) — `PRIVILEGED_KWARGS` è una **denylist**: cinque funzioni prendono
+  `real=`, che scavalca i gate d'ambiente. Oggi non è sfruttabile perché tutte e cinque sono
+  `safe=False`, ma **il contenimento è il flag `safe`, non il filtro dei kwarg**.
+- **`S-22`** (HIGH, latente) — esistono **due funzioni chiamate `safe_write`**, e il percorso che
+  costruisce i job usa quella **senza** contenimento (`core/reliability.py`), importata come
+  `guarded_write`. Attenzione: **`slugify` è sicuro**, non correggere quello.
+- **`S-23`** (MEDIUM) — `PROTECTED` nomina `core/natural_tasks.py`, che è un guscio di 26 righe:
+  la logica sta in `nt_runner.py`, non protetto, e contiene `promote_job_to_tools`.
+
+**`FIX-15` va applicato PRIMA di `FIX-16`**, per la stessa ragione di `FIX-1` prima di `FIX-2`.
 
 **E la terza porta a pagamento si è aperta:** `UJ_EMBEDDING=1` porta a una chiamata fatturabile
 via `core/memory.py`. Ora sono tre — planner, writer, embedding — e **`MODEL_PROVIDER=local` le
@@ -236,7 +260,8 @@ chiude tutte e tre**, perché condividono il ponte. Misurato, senza chiamate rea
 Dettaglio con comandi di riproduzione: `docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
 (§19 le tre porte, §20 lo stato consolidato).
 Correzioni per Grok: `docs/threat-models/GROK_FIX_LIST.md` — **tabella di stato in cima**, restano
-`FIX-10`, `FIX-11`, `FIX-12`, `FIX-13`, e **`FIX-10` e `FIX-13` sono lo stesso ponte**.
+**sette**: `FIX-10`…`FIX-16`, e **`FIX-10` e `FIX-13` sono lo stesso ponte**. Ordine consigliato:
+`FIX-10`+`FIX-13` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-11` → `FIX-12` → `FIX-14`.
 
 ### Decisione n. 7 — APPROVATA dal proprietario
 
