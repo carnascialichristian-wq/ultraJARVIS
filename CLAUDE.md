@@ -3760,6 +3760,63 @@ piano dell'intero programma.
 4 capability record, 10 domande, 10 `VERIFIED_FACT`, 2 `UNKNOWN`, 20 URL nel manifest.
 
 
+
+## Sessione 6, dodicesima parte — gli ultimi tre pacchetti, e un difetto mio trovato facendoli
+
+Completato il lavoro: `UJ-MCP-001`, `UJ-RCV-001` e `UJ-SKL-001` hanno ora l'evidenza per
+criterio. **Tutti e otto i miei task hanno un pacchetto di consegna**, dove ieri ne aveva uno.
+
+I tre sono `BLOCKED` — `MCP` e `SKL` su `UJ-SEC-001`, `RCV` su `UJ-RUN-001` — quindi non possono
+avere una card né un packet. **Ma il blocco è sul ledger, non sull'artefatto**: quando la
+dipendenza si accetta, il reviewer parte da materiale pronto invece che da zero. Un giro
+risparmiato per ciascuno.
+
+### Il difetto trovato riverificando il mio stesso lavoro
+
+```
+regole ADM-* nel documento : 18
+regole ADM-* nel codice    : 18
+regole ADM-* nei test      : 17
+```
+
+**`ADM-11` — versione e hash pinnati — è implementata e non ha un test.** Implementata a
+`tool-manifest.ts:277-279`, mai esercitata. Nessuno me l'ha segnalata: l'ho trovata contando.
+
+Il sospetto immediato era peggiore e **era sbagliato**: la tabella di `TOOL_PLANE.md` marca
+`ADM-11` con *"sì"*, ma quella colonna si chiama **`Blocca?`** e significa *«blocca
+l'ammissione»*, non *«è testata»*. Il documento non sopravvaluta la copertura. Controllato prima
+di scriverlo.
+
+### Perché non l'ho chiuso, ed è una decisione di sequenza
+
+Il file da toccare è `tests/contracts/tool-admission.test.mjs`, che **non** è fra i 15 artefatti
+hashati di `UJ-RUN-001`. Ma il totale della suite passerebbe da **140 a 141**, e `140` compare
+**9 volte nell'handoff e 5 nel blueprint** — entrambi congelati, hashati e **in review presso
+Gemini**. Aggiungere un test renderebbe false 14 affermazioni in due artefatti in revisione e
+costringerebbe a un settimo giro di consegna.
+
+**Si chiude dopo la review di `UJ-RUN-001`.** Registrato nell'evidenza di `UJ-MCP-001` §4.1
+perché non si perda, non perché sia accettabile.
+
+### Che cosa ho scritto contro il mio lavoro nei tre documenti
+
+- **`UJ-RCV-001`**: il runbook di disaster recovery **non è mai stato eseguito** — nessuno ha
+  spento un runtime a metà e l'ha riportato su, perché il runtime non esiste. E `R-SEC-03` è
+  aperto e riguarda proprio questo task: `rollbackPlan` è obbligatorio e nessuno verifica che il
+  piano funzioni.
+- **`UJ-SKL-001`**: `TH-SF-06` — il sandbox prova il comportamento solo in condizioni di
+  sandbox, e **nessun sandbox migliore lo risolve**. `TH-SF-03` — la pipeline verifica *come* è
+  fatto il codice, non *perché* esiste: con un intent non fidato produce una skill pulita,
+  firmata e sbagliata, con tutti i gate verdi. La difesa **non è implementata**.
+- **`UJ-MCP-001`**: `TH-10` resta parzialmente aperta (copro l'attestazione, non il resoconto) e
+  `R-MCP-01` non è chiuso — un server MCP remoto gira a casa loro.
+
+### Verifica
+
+13 hash citati, **13 corretti**. Ogni comando scritto nei documenti **eseguito**: 18/18/17
+`ADM-*`, 10 `TH-SF-*`, 14 stadi, 3 classi di contatore, 30 · 9 · 37 test verdi.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4116,6 +4173,26 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AP) 2026-08-19 — TUTTI E OTTO I MIEI TASK HANNO UN PACCHETTO. NON RIFARE.
+     docs/program/packets/UJ-MCP-001-AC-EVIDENCE.md
+     docs/program/packets/UJ-RCV-001-AC-EVIDENCE.md
+     docs/program/packets/UJ-SKL-001-AC-EVIDENCE.md
+     I tre sono BLOCKED (MCP e SKL su UJ-SEC-001, RCV su UJ-RUN-001) quindi non
+     possono avere card ne' packet. Il blocco e' sul LEDGER, non sull'artefatto:
+     quando la dipendenza si accetta, il reviewer parte da materiale pronto.
+     DIFETTO MIO TROVATO CONTANDO, non segnalato da nessuno:
+       ADM-* nel documento 18, nel codice 18, NEI TEST 17.
+       ADM-11 (versione e hash pinnati) e' implementata a tool-manifest.ts:277
+       e NON HA UN TEST.
+     ATTENZIONE: la colonna "Blocca?" di TOOL_PLANE.md dice "si'" per ADM-11 ma
+     significa "blocca l'ammissione", NON "e' testata". Il documento non
+     sopravvaluta. Controllato prima di scriverlo.
+     NON L'HO CHIUSO, ED E' UNA DECISIONE DI SEQUENZA: tool-admission.test.mjs
+     non e' fra i 15 artefatti hashati, ma la suite passerebbe da 140 a 141 e
+     "140" compare 9 volte nell'handoff e 5 nel blueprint di UJ-RUN-001, en-
+     trambi congelati e IN REVIEW presso Gemini. Costringerebbe a un settimo
+     giro. >>> CHIUDERE ADM-11 DOPO la review di UJ-RUN-001.
 
   AO) 2026-08-19 — UJ-CLD-001 CONSEGNATO CON LE FONTI RIAPERTE. NON RIFARE.
      docs/program/packets/UJ-CLD-001-AC-EVIDENCE.md
