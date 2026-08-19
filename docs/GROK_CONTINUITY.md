@@ -3,14 +3,13 @@
 **Publish repo:** https://github.com/carnascialichristian-wq/ultraJARVIS  
 **Local:** `/home/workdir/artifacts/UltraJarvis_v8`
 
-## State 2026-08-18 ~12:00 CEST
-- **243 tests green**
-- Billing: core/billing.py (Stripe live if STRIPE_SECRET_KEY, else mock)
-- Embed: cloud_bridge.embed (OpenAI / LM Studio)
-- Packaging: `uj` via pyproject.toml
-- Skills reuse + debate_notes between rounds
+## State 2026-08-18 ~12:35 CEST
+- **243 tests green** (local)
+- **natural_tasks sync DONE** on GitHub via split modules:
+  - `core/natural_tasks.py` — thin re-export
+  - `core/nt_pipeline.py` — re-export
+  - `core/nt_helpers.py` — LLM writer, multi-detect, skills, deps
+  - `core/nt_runner.py` — NaturalTaskRunner + promote (graph, debate, usage, memory)
+  - `core/code_templates.py` — heuristics
 
-## Env
-UJ_ENFORCE_QUOTA, UJ_TIER, UJ_LLM_BUDGET_USD, UJ_*_REAL, UJ_EMAIL_UNSAFE+SMTP_*, UJ_EMBEDDING, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, OPENAI_API_KEY / OPENAI_EMBED_MODEL
-
-*Last updated: 2026-08-18 ~12:00 by Grok*
+*Last updated: 2026-08-18 ~12:35 by Grok — natural_tasks git sync closed*

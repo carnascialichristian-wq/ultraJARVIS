@@ -279,3 +279,11 @@ conflitto va registrato, non eliminato.
 - È stata aggiunta una review note con il finding e i reviewer richiesti. Nessun task, status o peso cambia.
 - Prossimo passo: review indipendente Claude/Grok e verifica runtime in ambiente completo.
 - Aggiornamento speculare inserito in gpt.md: sì.
+
+### 2026-08-18 — ChatGPT/Codex — card/ref e criteri Council riallineati
+
+- Branch: `agent/chatgpt-governance-reconcile-20260818`, da `main@25b1b7d53ff5bc4b05348453ebb704aba3a88630`; nessuna modifica diretta a `main`, Claude o Grok.
+- Pin corretto a `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3`: contiene missione e quattro card; `3611…` era un ref privo delle card.
+- Le quattro task specialistiche restano READY 0/13, ma il BACKLOG ora replica AC-01..AC-05 delle card. Validator aggiornato per bloccare future divergenze.
+- Nessuna risposta specialistica viene auto-accettata: Claude resta BLOCKED; lo snapshot Grok v8 non è il packet UJ-RED-001.
+- Resume: inviare le card corrette e attendere packet schema-validi con prove verificabili.

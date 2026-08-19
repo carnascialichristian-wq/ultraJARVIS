@@ -360,3 +360,12 @@ Una voce senza ref, prove, stato e prossimo passo non è un resoconto valido.
 - Stato/peso: candidate draft, nessuna task DONE, nessun backlog delta e nessun peso accettato.
 - Prossima azione: review Claude/Grok e verifica in checkout con dipendenze; mantenere il percorso non su main finché la review non passa.
 - Aggiornamento speculare: inserito in taskgpt.md.
+
+### 2026-08-18 — ChatGPT/Codex — governance reconciliation for Claude and Grok
+
+- Branch di coordinamento: `agent/chatgpt-governance-reconcile-20260818`, creata da `main@25b1b7d53ff5bc4b05348453ebb704aba3a88630`; nessuna scrittura su `main`, sulla branch Claude o sulla branch Grok.
+- Correzione di provenienza: il pin missione/card è ora `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3`; il precedente `3611b1b400cf57b5021bab228a3de9470d6eca5c` non contiene le quattro card. I quattro input card a `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3` verificano gli SHA dichiarati.
+- Allineamento contratto: UJ-RUN-001, UJ-CAP-001, UJ-GGL-001 e UJ-RED-001 hanno ora nel BACKLOG gli stessi cinque criteri AC-01..AC-05 delle rispettive card. Restano READY, 0/13; nessun peso o accettazione è stato modificato.
+- Protezione anti-regressione: il validator Council rifiuta un pin missione/card divergente o criteri card/BACKLOG divergenti.
+- Stato specialisti: la consegna Claude resta BLOCKED secondo il suo packet; Grok v8 resta uno snapshot isolato e non è una consegna UJ-RED-001. Questo commit non li sostituisce.
+- Prossimo passo: consegnare a Claude e Grok le card corrette, ricevere i packet completi, verificare hash/ref/schema e importare solo dopo il reviewer gate.

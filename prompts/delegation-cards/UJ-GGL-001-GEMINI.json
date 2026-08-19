@@ -19,7 +19,7 @@
   "role": "Google Ecosystem, Knowledge & Cloud Feasibility Architect",
   "repository_scope": {
     "full_name": "carnascialichristian-wq/ultraJARVIS",
-    "read_ref": "3611b1b400cf57b5021bab228a3de9470d6eca5c",
+    "read_ref": "25b1b7d53ff5bc4b05348453ebb704aba3a88630",
     "write_branch_patterns": [
       "agent/uj-ggl-001-*"
     ],
@@ -117,4 +117,3 @@
   "idempotency_key": "UJ-IDEMP-GGL-001-GEMINI",
   "status": "READY"
 }
-

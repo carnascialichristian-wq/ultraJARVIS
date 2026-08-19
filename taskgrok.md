@@ -1,3 +1,4 @@
 # Task Report
 
-**243 tests green.** Remaining gaps closed in code (Stripe mock without keys; live when STRIPE_SECRET_KEY set).
+**natural_tasks sync closed.** Full features on ultraJARVIS via split modules.
+243 tests green locally.
