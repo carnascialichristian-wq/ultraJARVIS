@@ -1538,3 +1538,92 @@ non i verdetti.** Ogni riga marcata aperta o parziale qui sopra è stata riletta
 
 Le due euristiche sbagliate sono state corrette nello script con il motivo scritto accanto,
 perché la prossima esecuzione non le ripeta.
+
+---
+
+## 21. `S-21` — `PRIVILEGED_KWARGS` è una lista di divieti, non di permessi. **MEDIUM, latente**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19. Trovato cercando difetti **nuovi** nel codice
+arrivato dopo la mia ultima caccia vera (sessione 3-4): 2.171 righe fra `core/multi_file.py`,
+`core/nt_runner.py`, `uj_cli.py` e le modifiche a `tools/`.
+
+### 21.1 Il difetto
+
+`core/registry.py:183` rifiuta di inoltrare due kwarg:
+
+```python
+PRIVILEGED_KWARGS = {"force", "root"}
+```
+
+È una **denylist**: nomina i due che sono stati pensati. Qualunque altro kwarg privilegiato
+passa per default.
+
+E ne esiste un terzo. **Cinque funzioni prendono `real=`**, che scavalca il gate d'ambiente
+(`UJ_OS_REAL`, `UJ_AUTO_REAL`) e non è nella lista:
+
+| Tool | Effetto con `real=True` |
+|---|---|
+| `os.open_app` | `subprocess.Popen([bin])` — **lancia un processo**, e `terminal` è nell'allowlist |
+| `os.set_volume` | `subprocess.run(["pactl", …])` |
+| `automation.type_text` | `xdotool type` — **battiture sintetiche** |
+| `automation.paste_text` | scrive negli appunti via `xclip` |
+| `browser.open_url` | apre il browser |
+
+### 21.2 Oggi NON è sfruttabile, e il motivo conta
+
+Misurato eseguendo, su un worktree a `origin/main`:
+
+```
+registry.call("os.open_app", "terminal", real=True)     -> PermissionError: Tool os.open_app is not marked safe
+registry.call("automation.type_text", "…", real=True)   -> PermissionError: …
+registry.call("browser.open_url", "…", real=True)       -> PermissionError: …
+```
+
+Tutte e cinque sono registrate `safe=False`, e `FIX-7` fa sollevare `Registry.call` **prima** che
+il kwarg venga inoltrato. Enumerazione completa dei **135 tool registrati**: **nessun tool
+`safe=True` accetta un kwarg privilegiato non filtrato**. I due che lo prendono
+(`files.safe_read`, `files.safe_list`) usano `root`, che è **nella** denylist.
+
+### 21.3 Perché resta un finding
+
+**Il contenimento è il flag `safe`, non il filtro dei kwarg** — e sono due decisioni
+indipendenti, prese in momenti diversi da persone diverse.
+
+`FIX-4` è stato scritto **per** fermare i kwarg privilegiati. Su questi cinque non è lui a
+fermarli: è `FIX-7`. Basta che qualcuno marchi `safe=True` **una sola** di quelle cinque —
+`os.set_volume` sembra innocuo — e il bypass diventa vivo **senza nessun'altra modifica** e
+senza che nulla lo segnali.
+
+È la **quinta** volta in questo programma che il contenimento reale è diverso dal controllo che
+sembra fornirlo, dopo il trasporto SMTP assente, i moduli `core` mancanti, la virgoletta che
+mascherava `S-12` e il pacchetto `openai` non installato. Le prime due hanno già smesso di
+proteggere durante il programma.
+
+### 21.4 Correzione: invertire la polarità
+
+Una **denylist** di kwarg privilegiati nomina quelli a cui si è pensato. Un tool nuovo con un
+kwarg nuovo è inoltrato per default, e nessuno se ne accorge finché non serve.
+
+```python
+# adesso — denylist: passa tutto tranne due
+PRIVILEGED_KWARGS = {"force", "root"}
+blocked = PRIVILEGED_KWARGS & set(kwargs)
+
+# proposta — allowlist per tool: passa solo ciò che la ToolSpec dichiara
+allowed = set(getattr(spec, "forwardable_kwargs", ()))
+blocked = set(kwargs) - allowed
+```
+
+**Stopgap in una riga**, se l'inversione è troppo per adesso: `PRIVILEGED_KWARGS = {"force",
+"root", "real"}`. Chiude i cinque casi noti e lascia aperta la classe.
+
+### 21.5 Che cosa NON affermo
+
+- **Non è una vulnerabilità attiva.** Attraverso il registry non è raggiungibile, e l'ho
+  verificato eseguendo.
+- **Un import diretto** (`from tools.automation import type_text`) ha sempre bypassato tutto:
+  quello è `S-02`, non questo.
+- **Non ho eseguito nessuna azione reale**: nessun processo lanciato, nessuna battitura, nessun
+  browser aperto. I tre test qui sopra terminano tutti con un rifiuto.
+- La composizione *"apri un terminale + digita"* è **teorica** in questo stato: entrambe le
+  chiamate sono rifiutate.

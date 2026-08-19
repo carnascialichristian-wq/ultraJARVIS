@@ -802,3 +802,66 @@ ora con un terzo caso a sostegno invece che con una previsione.
 - **embedding** è **latente**: `recall_semantic_embedded` non ha chiamanti fuori dal suo test.
   Va corretta adesso proprio perché non è ancora cablata — collegarla è una riga, e dopo
   costerebbe di più. Stessa logica di `S-16`.
+
+---
+
+## FIX-14 — `PRIVILEGED_KWARGS` è una denylist: inverti la polarità · **MEDIUM, latente**
+
+**Non è urgente e non è sfruttabile oggi.** Lo scrivo perché il contenimento attuale non è
+quello che sembra, e una modifica innocua lo toglie.
+
+### Il fatto, misurato su `origin/main` @ `27b767309090`
+
+`core/registry.py:183` blocca `{"force", "root"}`. **Cinque funzioni prendono `real=`**, che
+scavalca `UJ_OS_REAL` / `UJ_AUTO_REAL` e **non è nella lista**: `os.open_app`, `os.set_volume`,
+`automation.type_text`, `automation.paste_text`, `browser.open_url`.
+
+**Oggi tutte e cinque sono `safe=False`, quindi `FIX-7` le rifiuta prima del kwarg.** Verificato
+eseguendo: tre chiamate con `real=True`, tre `PermissionError`. Ed enumerando i **135 tool
+registrati**, nessun tool `safe=True` accetta un kwarg privilegiato non filtrato.
+
+### Perché vale la pena correggerlo comunque
+
+**Il contenimento è `safe`, non il filtro dei kwarg**, e sono due decisioni indipendenti.
+`FIX-4` è stato scritto per fermare i kwarg privilegiati; su questi cinque non è lui a fermarli.
+Basta marcare `safe=True` **una sola** delle cinque — `os.set_volume` sembra innocuo — e il
+bypass diventa vivo senza nessun'altra modifica e senza che nulla lo segnali.
+
+### La correzione
+
+```python
+# adesso — denylist: nomina i due a cui abbiamo pensato
+PRIVILEGED_KWARGS = {"force", "root"}
+blocked = PRIVILEGED_KWARGS & set(kwargs)
+
+# proposta — allowlist per tool: passa solo cio' che la ToolSpec dichiara inoltrabile
+allowed = set(getattr(spec, "forwardable_kwargs", ()))
+blocked = set(kwargs) - allowed
+if blocked:
+    raise PermissionError(f"Refusing to forward non-declared kwargs {sorted(blocked)} to {name}")
+```
+
+**Se preferisci lo stopgap**, è una riga: `PRIVILEGED_KWARGS = {"force", "root", "real"}`.
+Chiude i cinque casi noti, lascia aperta la classe.
+
+### Verifica
+
+```bash
+python3 - <<'PY'
+import sys, inspect, importlib; sys.path.insert(0, '.')
+from core.registry import get_registry
+r = get_registry()
+for s in r._tools.values():
+    try:
+        fn = getattr(importlib.import_module(s.module), s.callable_name)
+        kw = [p.name for p in inspect.signature(fn).parameters.values()
+              if p.kind == p.KEYWORD_ONLY and p.name in {'real','force','root','unsafe','override'}]
+    except Exception:
+        continue
+    if kw and getattr(s, 'safe', True) and not set(kw) <= {'force','root'}:
+        print("VIVO:", s.name, kw)
+PY
+```
+
+Oggi non stampa nulla. **Dopo aver marcato `safe=True` una delle cinque, stampa quella riga** —
+ed è il modo per accorgersene prima che serva.

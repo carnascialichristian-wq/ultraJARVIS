@@ -4332,6 +4332,74 @@ quattro su cinque, e gli errori che ne escono sembrano difetti della card e non 
 Ci sono passato io stamattina provando ad aggiungerne sei.
 
 
+
+## Sessione 6, ventitreesima parte — `S-21`: la prima caccia vera dopo sessione 4, e trova un difetto latente
+
+L'audit di stamattina ha **ricontrollato i findings noti**, non ne ha cercati di nuovi. Ma da
+sessione 4 su `main` sono arrivate **2.171 righe** che non ho mai revisionato: `multi_file.py`,
+`nt_runner.py`, `uj_cli.py`, `monetization.py`, più modifiche a `os_control`, `automation`,
+`websearch`, `email`. Ho guardato lì.
+
+### Il difetto
+
+`core/registry.py:183` — `PRIVILEGED_KWARGS = {"force", "root"}` — è una **denylist**: nomina i
+due kwarg a cui si è pensato, e inoltra tutti gli altri per default.
+
+E ne esiste un terzo. **Cinque funzioni prendono `real=`**, che scavalca i gate d'ambiente
+`UJ_OS_REAL` / `UJ_AUTO_REAL`: `os.open_app` (lancia un processo, e `terminal` è nell'allowlist),
+`os.set_volume`, `automation.type_text` (battiture via `xdotool`), `automation.paste_text`,
+`browser.open_url`.
+
+### Oggi NON è sfruttabile, e ho verificato eseguendo
+
+Tutte e cinque sono `safe=False`, e `FIX-7` rifiuta **prima** che il kwarg arrivi:
+
+```
+registry.call("os.open_app", "terminal", real=True)   -> PermissionError: not marked safe
+```
+
+Enumerati i **135 tool registrati**: nessun `safe=True` accetta un kwarg privilegiato non
+filtrato. I due che prendono `root` (`files.safe_read`, `files.safe_list`) sono coperti dalla
+denylist.
+
+### Perché resta un finding, e non è pedanteria
+
+**Il contenimento è il flag `safe`, non il filtro dei kwarg**, e sono due decisioni indipendenti.
+`FIX-4` è stato scritto **per** fermare i kwarg privilegiati; su questi cinque non è lui a
+fermarli. Basta marcare `safe=True` **una sola** delle cinque — `os.set_volume` sembra innocuo —
+e il bypass diventa vivo **senza nessun'altra modifica**.
+
+È la **quinta** volta in questo programma che il contenimento reale è diverso dal controllo che
+sembra fornirlo. Due delle prime quattro hanno già smesso di proteggere.
+
+### Il settimo falso negativo della giornata, e stavolta l'ho preso dal formato
+
+La prima esecuzione della sonda ha stampato l'intestazione della tabella e **zero righe**, poi
+`tool safe=True con kwarg privilegiato: NESSUNO`. Sembrava una risposta. Non lo era: la mia
+introspezione cercava `r.names()` o `reg.TOOLS`, che non esistono — il registry espone
+`_tools`. **La sonda non aveva enumerato niente**, e «nessun tool a rischio» su zero tool
+esaminati è vuoto, non rassicurante.
+
+Contromisura applicata: la sonda ora **stampa quanti tool ha enumerato** (`135`) prima di
+qualunque conclusione. Se quel numero è zero, il verdetto non vale.
+
+### Correzione proposta: invertire la polarità
+
+Una denylist nomina i kwarg a cui si è pensato. Serve una **allowlist per tool**: passa solo ciò
+che la `ToolSpec` dichiara inoltrabile. Stopgap in una riga: aggiungere `"real"` alla denylist.
+
+**E ho verificato che il comando di rilevamento funzioni in entrambe le direzioni**: silenzioso
+oggi, e marcando `safe=True` una delle cinque stampa `VIVO: os.set_volume ['real']`. Un
+controllo che non scatta mai non è un controllo.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §21 · `GROK_FIX_LIST.md` → `FIX-14`.
+
+**Nessuna azione reale eseguita**: nessun processo lanciato, nessuna battitura, nessun browser
+aperto. Le tre prove terminano tutte con un rifiuto.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4737,6 +4805,28 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AU) 2026-08-19 — S-21 (NUOVO, MEDIUM latente): PRIVILEGED_KWARGS e' una denylist.
+     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §21 · GROK_FIX_LIST.md -> FIX-14
+     Trovato cercando difetti NUOVI nelle 2.171 righe arrivate su main dopo la
+     sessione 4 (multi_file, nt_runner, uj_cli, monetization, tools/).
+     core/registry.py:183 blocca solo {"force","root"}. CINQUE funzioni prendono
+     real=, che scavalca UJ_OS_REAL/UJ_AUTO_REAL: os.open_app (lancia processi,
+     "terminal" e' nell'allowlist), os.set_volume, automation.type_text (xdotool),
+     automation.paste_text, browser.open_url.
+     OGGI NON E' SFRUTTABILE, verificato eseguendo: tutte e cinque sono
+     safe=False e FIX-7 rifiuta prima del kwarg. Enumerati 135 tool: nessun
+     safe=True accetta un kwarg privilegiato non filtrato.
+     MA IL CONTENIMENTO E' 'safe', NON IL FILTRO. Marcare safe=True UNA sola
+     delle cinque rende il bypass vivo senza altre modifiche. Quinta volta che
+     il contenimento reale differisce dal controllo che sembra fornirlo.
+     CORREZIONE: allowlist per tool (forwardable_kwargs nella ToolSpec).
+     Stopgap in una riga: aggiungere "real" alla denylist.
+     ATTENZIONE, settimo falso negativo della giornata: la prima sonda ha
+     stampato zero righe e "NESSUNO" perche' cercava r.names()/reg.TOOLS, che
+     non esistono — il registry espone _tools. Zero tool esaminati non e'
+     "nessun tool a rischio". La sonda ora stampa QUANTI ne ha enumerati prima
+     di qualunque conclusione.
 
   AT) 2026-08-19 — ADM-11 E' CHIUSA. COPERTURA 41 SU 41. NON RIAPRIRLA.
      Il punto AS qui sotto dice "chiudere ADM-11 dopo la review di UJ-RUN-001".

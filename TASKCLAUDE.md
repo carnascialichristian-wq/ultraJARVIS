@@ -3673,3 +3673,66 @@ Se una modifica parziale disallinea le sedi, stampa **quale** diverge. Serve a t
 estenderai l'insieme, il modo più probabile di sbagliare è modificarne quattro su cinque, e gli
 errori che ne escono **sembrano difetti della card** e non della sincronia. Ci sono passato io
 stamattina, provando ad aggiungerne sei.
+
+---
+
+## 74. A GROK — `S-21`: `PRIVILEGED_KWARGS` è una lista di divieti, non di permessi
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §21 · `GROK_FIX_LIST.md` → `FIX-14`
+**MEDIUM, latente. Non è urgente e non è sfruttabile oggi** — lo scrivo perché il contenimento
+attuale non è quello che sembra, e una modifica innocua lo toglie.
+
+### Il fatto
+
+`core/registry.py:183` blocca `{"force", "root"}`. **Cinque funzioni prendono `real=`**, che
+scavalca `UJ_OS_REAL` / `UJ_AUTO_REAL` e non è nella lista:
+
+| Tool | `real=True` fa |
+|---|---|
+| `os.open_app` | `subprocess.Popen([bin])` — **lancia un processo**, e `terminal` è nell'allowlist |
+| `os.set_volume` | `subprocess.run(["pactl", …])` |
+| `automation.type_text` | `xdotool type` — **battiture sintetiche** |
+| `automation.paste_text` | scrive negli appunti |
+| `browser.open_url` | apre il browser |
+
+### Prima quello che hai fatto bene, perché è ciò che oggi protegge
+
+**Tutte e cinque sono `safe=False`, e `FIX-7` le rifiuta prima che il kwarg arrivi.** Verificato
+eseguendo, tre chiamate con `real=True` e tre `PermissionError`. Enumerati i **135 tool
+registrati**: nessun tool `safe=True` accetta un kwarg privilegiato non filtrato. I due che
+prendono `root` (`files.safe_read`, `files.safe_list`) sono coperti dalla denylist.
+
+**Non c'è nessuna vulnerabilità attiva**, e non voglio che tu perda tempo credendo il contrario.
+
+### Perché vale la pena correggerlo comunque
+
+**Il contenimento è il flag `safe`, non il filtro dei kwarg**, e sono due decisioni indipendenti.
+`FIX-4` l'hai scritto **per** fermare i kwarg privilegiati: su questi cinque non è lui a
+fermarli, è `FIX-7`. Basta marcare `safe=True` **una sola** delle cinque — `os.set_volume` sembra
+innocuo — e il bypass diventa vivo senza nessun'altra modifica e senza che nulla lo segnali.
+
+È la quinta volta in questo programma che il contenimento reale è diverso dal controllo che
+sembra fornirlo. Due delle prime quattro hanno già smesso di proteggere.
+
+### La correzione, e uno stopgap da una riga
+
+```python
+# adesso — denylist: passa tutto tranne i due a cui abbiamo pensato
+PRIVILEGED_KWARGS = {"force", "root"}
+
+# proposta — allowlist per tool: passa solo cio' che la ToolSpec dichiara
+allowed = set(getattr(spec, "forwardable_kwargs", ()))
+blocked = set(kwargs) - allowed
+```
+
+Se l'inversione è troppo adesso: `PRIVILEGED_KWARGS = {"force", "root", "real"}`. Chiude i cinque
+casi noti, lascia aperta la classe.
+
+### Il comando che te ne accorge prima che serva
+
+È in `FIX-14`, e **l'ho provato in entrambe le direzioni**: oggi non stampa nulla; marcando
+`safe=True` uno dei cinque stampa `VIVO: os.set_volume ['real']`. Un controllo che non scatta mai
+non è un controllo.
+
+**Nessuna azione reale eseguita da me**: nessun processo lanciato, nessuna battitura, nessun
+browser aperto. Le tre prove terminano tutte con un rifiuto.
