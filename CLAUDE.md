@@ -3286,6 +3286,116 @@ Entrambi trovati da me, entrambi prima che producessero lavoro sbagliato — ma 
 uscito in un messaggio, quindi va corretto pubblicamente e non solo qui.
 
 
+
+## Sessione 6, sesta parte — `UJ-CAP-001` quarto invio: FAIL 3/5, ma la metà dei blocchi non è di Gemini
+
+Preso il primo task del `RESUME_POINT` (punto AA azione 2): il quarto invio di `UJ-CAP-001`
+da Gemini, `agent/uj-cap-001-gemini-review-20260818` @ `0f1c536`. Sono il reviewer designato,
+riverificato nella card e nel `BACKLOG`, non assunto.
+
+**Consegnato:**
+`docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260819.md` (11 sezioni) e
+`docs/program/reviews/UJ-CAP-001-CLAUDE-REVIEWRESULT-CANDIDATE-20260819.json`.
+**Esito `FAIL`, 3 criteri su 5.** `UJ-CAP-001` resta **0/13**, prima e dopo.
+
+### Il test dichiarato in anticipo ha funzionato di nuovo
+
+I due `grep` erano scritti nel `RESUME_POINT` **prima** di aprire i file, e hanno distinto una
+verifica da un reimballaggio: `UNKNOWN` 79 nel JSON, date ISO 28, **zero capability `ACTIVE`**,
+confidenza massima `0.5` su 19 record. Quattro dei sei findings che avevo aperto sono chiusi, e
+`G-002` è chiuso bene: `CAP-GGL-001` — l'unica capability che abiliterebbe lavoro automatico a
+costo zero — è passata da numeri di quota inventati con confidenza `HIGH` a `status: UNKNOWN`,
+più la clausola EEA/Svizzera/UK che si applica **anche all'accesso gratuito**. Quest'ultima non
+l'avevo chiesta, riguarda direttamente Christian che è in Italia, e l'ha vista lei.
+
+Ho anche controllato che il commit *"remove unverified capability claims"* non chiudesse una
+lacuna cancellandola — era il difetto di `F-004` del giro precedente. **Non lo fa**: 19 ID
+prima, 19 dopo, nessuno rimosso. Il sospetto era fondato e si è rivelato infondato, e va detto.
+
+### L'esperimento a variabile singola su `AC-05`
+
+Il packet, **come consegnato**, fallisce il mio validatore: exit 1, due errori, perché
+`source_commit_sha` `3611b1b4` non contiene i suoi stessi artefatti. Ho cambiato **quel solo
+campo** e lasciato ogni altro byte identico: **PASS, exit 0**.
+
+**E la causa non è di Gemini.** La sua card, sul suo ramo, dichiara `read_ref` `3611b1b4`, e il
+vecchio header del suo Markdown portava `Governing Commit: 3611b1b4`. Ha riportato il commit che
+le era stato ordinato di leggere. ChatGPT ha corretto le card alle `00:30` del 19; il suo packet
+è delle `16:13` del 18 — **otto ore prima**. È la seconda vittima misurata dello stesso
+`read_ref` stantio, dopo la mia `UJ-RUN-001`.
+
+Ho tenuto `AC-05` a `FAIL` lo stesso: il validatore esce 1, e *"basterebbe un campo"* è la
+dimensione della correzione, non lo stato dell'artefatto. È lo stesso metro con cui ho tenuto il
+**mio** `AC-05` a non soddisfatto per cinque giri.
+
+### Il finding migliore: `F-102`, il campo che contraddice il record che lo contiene
+
+`verified_at_utc` vale `2026-08-18T13:35:00Z` su **19 record su 19**, identico al secondo. Era
+già il mio `F-002` del giro precedente. La forma nuova, che lo rende indiscutibile: **sullo
+stesso record**, il campo `freshness` dice il contrario.
+
+| Gruppo | `freshness` | `verified_at_utc` |
+|---|---|---|
+| 8 Google | *"Official documentation checked on 2026-08-18"* | guadagnato |
+| **11 non-Google** | *"**not independently reverified** in this correction"* | **presente lo stesso** |
+
+Undici record dichiarano una data di verifica che il campo accanto nega. La correzione è
+`null` su quegli undici: rende il registro **più onesto senza togliere copertura**.
+
+### `F-104` — il registro non contiene le superfici su cui il programma gira
+
+Zero occorrenze di `Claude Code`, `Agent SDK`, `code.claude.com` in entrambi gli artefatti.
+Anthropic ha quattro capability — Web UI, Messages API, Projects, MCP — e **nessuna è la
+superficie su cui questo programma si esegue**. Il registro cataloga ciò che i provider
+vendono, non ciò che il programma usa. E `UJ-CLD-001` — mio, già consegnato — contiene il
+`VERIFIED_FACT` sull'Agent SDK citato alla fonte: **c'è da importarlo, non da ricercarlo**.
+
+### ERRORI COMMESSI IN QUESTA PARTE
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E35 | **Ho affermato la portata di una correzione altrui senza verificarla sul percorso in questione.** Avevo scritto in §9 che il problema *"gli artefatti vivono sul ramo dell'owner"* era risolto da `sha256AtRef` di ChatGPT | la config B del mio esperimento ha continuato a dare *"artifact ref is missing"*, contraddicendo quello che avevo appena scritto | letto il codice: `sha256AtRef` è usato **solo** ai pin delle card (riga 89); gli artefatti di un `ReviewResult` passano da `verifyReviewedArtifact`, che fa `readFileSync` **dall'albero di lavoro** | **una correzione chiude il percorso che tocca, non la classe che descrive.** Avevo verificato quel fix su `UJ-RUN-001` — dove riguarda le card — e ne ho esteso la portata a un percorso diverso senza rileggerlo. È la trappola 30 col segno opposto: là non accreditare un fix senza ricalcolare, qui non accreditarlo **oltre** ciò che copre |
+| E36 | **Ho verificato i dati su `origin/main` e ho eseguito il gate dal mio albero stantio.** Avevo appena letto che card e `BACKLOG` concordano su 5 criteri — vero su `origin/main` — e ho concluso che restava **un solo** blocco | il validatore ne ha dati **otto**, fra cui `unknown criterion AC-03/AC-04/AC-05` | isolato a tre configurazioni: **8 → 4 → 1**. Il mio ramo portava ancora il `BACKLOG` a due criteri. Mergiato `origin/main` **dopo** aver verificato che non tocca nessuno dei miei 15 artefatti (intersezione vuota), riverificato dopo: 15/15 hash invariati | **è la trappola 17 in forma nuova, e più insidiosa: ref giusto per i DATI, ref sbagliato per il GATE.** Non basta leggere il file corretto — va eseguito lo strumento corretto. Un gate che gira su regole superate produce errori inventati con la stessa autorità di quelli veri. Contromisura: prima di credere all'output di un validatore, confrontare l'hash del file di regole che sta usando con quello di `origin/main` |
+
+Nessuno dei due è arrivato a un documento consegnato: entrambi fermati perché **l'output
+contraddiceva ciò che avevo appena scritto**. È la stessa euristica delle trappole 15 e 24 —
+l'incoerenza fra output e verdetto è il segnale, non il codice di uscita.
+
+### Perché la mia review non è importabile, misurato invece che asserito
+
+| Config | Setup | Errori |
+|---|---|---:|
+| A | mio worktree, `BACKLOG` stantio, artefatti assenti | **8** |
+| B | worktree pulito su `origin/main`, artefatti assenti | **4** |
+| C | `origin/main` + i tre artefatti di Gemini, cioè dopo il merge | **1** |
+
+L'unico irriducibile: *"may only be imported for a task currently in REVIEW; UJ-CAP-001 is
+READY"*. **Il packet di Gemini propone `READY → REVIEW` e nulla, nel repository, applica una
+transizione proposta.** Terza conferma della causa 3 del mio addendum di sessione 5, ora su due
+task insieme — il suo e il mio, entrambi `READY` con un packet valido che propone `REVIEW`.
+
+**Quindi il blocco sulla mia review non è più un difetto della consegna di Gemini.** Sull'asse
+del ledger lei ha fatto tutto ciò che le compete.
+
+### Integrazione fatta, non solo annotata
+
+Mergiato `origin/main` nel ramo di consegna. Conflitto su `gpt.md` e `taskgpt.md`, **entrambi di
+ChatGPT**: due voci di log diverse, nessuna delle due superset dell'altra. **Tenute entrambe** in
+ordine cronologico, come per `README.md` in sessione 3 — `COUNCIL_IMPORT_AND_MERGE.md` vieta di
+risolvere per media silenziosa. Verificato in **entrambe le direzioni** che non si sia persa una
+riga: 0 righe del mio ramo assenti dal risultato, 0 righe di `origin/main` assenti.
+
+Dopo il merge: typecheck 0, build 0, **140/140 test**, i due validatori di ChatGPT exit 0, il mio
+packet `UJ-RUN-001` **PASS con 15/15 hash a `b2b32733`**.
+
+### Rilievo minore per ChatGPT, non un finding
+
+Il suo log su `gpt.md` dice che il pin è ora `d48e1e85`. Le card e la mission consegnate su
+`main` dichiarano invece `25b1b7d5`. **Il valore consegnato è il migliore dei due** — contiene le
+card *ed* è raggiungibile da `main` — quindi non c'è niente da correggere negli artefatti: è la
+riga di log a descrivere uno stato intermedio poi superato.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -3487,6 +3597,26 @@ Sintesi operativa degli errori sopra, in forma di regole:
     criterio, è una stima travestita**. Contromisura: attraversa il grafo con uno script e
     stampa la chiusura, prima di scrivere il numero.
 
+35. **Una correzione altrui chiude il percorso che tocca, non la classe che descrive** (E35,
+    sessione 6). Avevo verificato che `sha256AtRef` di ChatGPT risolvesse gli hash dal commit
+    pinnato — vero, **per i pin delle delegation card**. Ne ho esteso la portata agli artefatti
+    di un `ReviewResult`, che passano invece da `verifyReviewedArtifact` e vengono letti con
+    `readFileSync` **dall'albero di lavoro**. È la trappola 30 col segno opposto: là *non
+    accreditare un fix senza ricalcolare*, qui *non accreditarlo oltre ciò che copre*. Prima di
+    dire *"quel problema è risolto"*, apri il codice del percorso di cui stai parlando, non di
+    quello su cui hai visto il fix funzionare.
+36. **Ref giusto per i dati, ref sbagliato per il gate** (E36, sessione 6). Avevo letto card e
+    `BACKLOG` su `origin/main` — corretti, cinque criteri concordi — e ho **eseguito il
+    validatore dal mio albero**, che portava ancora il `BACKLOG` a due criteri. Risultato: tre
+    `unknown criterion` inventati, più un quarto errore derivato, indistinguibili dai difetti
+    veri. **Un gate che gira su regole superate produce errori falsi con la stessa autorità di
+    quelli veri**, ed è più pericoloso di un gate assente. È la trappola 17 applicata agli
+    *strumenti* invece che ai *file*. Contromisura: prima di credere all'output di un
+    validatore, confronta l'hash del file di regole che sta usando con quello su `origin/main`;
+    se divergono, mergia **dopo** aver verificato che il merge non tocchi i tuoi artefatti
+    hashati (intersezione fra i file in arrivo e quelli citati dal tuo packet), e ricontrolla
+    gli hash dopo.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -3599,6 +3729,49 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AJ) 2026-08-19 — UJ-CAP-001 QUARTO INVIO REVISIONATO. GIA' FATTO, NON RIFARE.
+     Ref: origin/agent/uj-cap-001-gemini-review-20260818 @ 0f1c536774aff39c349b89914d8d7184ba138834
+       docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260819.md
+       docs/program/reviews/UJ-CAP-001-CLAUDE-REVIEWRESULT-CANDIDATE-20260819.json
+     ESITO: FAIL, 3 criteri su 5 (AC-01/02/03 PASS, AC-04/AC-05 FAIL). 0/13 -> 0/13.
+     I VERDETTI PRECEDENTI SONO SUPERATI: il registro e' stato RISCRITTO fra 27b3717
+     e 0f1c536 (719 righe JSON, 500 MD). Non ripartire dal verdetto del 18.
+     CHIUSI, con merito a Gemini: G-001, G-002, G-003, G-004 e F-001. Zero capability
+     ACTIVE, confidenza max 0.5 su 19, UNKNOWN 79 nel JSON, 18 URL distinte.
+     Controllato che "remove unverified capability claims" NON chiudesse una lacuna
+     cancellandola: 19 ID prima, 19 dopo, nessuno rimosso.
+     LE DUE COSE DA SAPERE PRIMA DI RIAPRIRLO:
+      1. AC-05 fallisce per UN CAMPO, e NON E' COLPA DI GEMINI. Il packet dichiara
+         source_commit_sha 3611b1b4, dove i suoi artefatti NON esistono. Ma quel
+         valore e' il read_ref che la SUA CARD le ordinava di usare, e ChatGPT ha
+         corretto le card OTTO ORE DOPO il suo packet. Dimostrato cambiando SOLO
+         quel campo: da FAIL(2) a PASS exit 0. Seconda vittima misurata dello stesso
+         read_ref stantio dopo la mia UJ-RUN-001. I DUE HASH SONO AUTENTICI.
+      2. AC-04 fallisce per la classe local-compute: nessun campo, nessuna
+         capability, nessuno stato — mentre policy_enforcement nomina "zero heavy
+         local inference". Tre classi su quattro sono governate 19/19.
+         CORREZIONE A UNA MIA FORMULAZIONE: avevo scritto "local ha zero occorrenze".
+         NON E' ESATTO — compare 8 volte, sempre come DESTINAZIONE DI FALLBACK. Il
+         difetto e' che non e' mai un percorso governato.
+     F-102 (HIGH): verified_at_utc e' UNA COSTANTE su 19/19 e su 11 record
+       CONTRADDICE il campo freshness dello STESSO record ("not independently
+       reverified"). Correzione: null su quegli 11, invariato sugli 8 Google.
+     F-104 (MEDIUM): il registro NON contiene le superfici su cui il programma gira.
+       Claude Code, Agent SDK, code.claude.com: ZERO occorrenze. UJ-CLD-001 (mio)
+       ha gia' il VERIFIED_FACT sull'Agent SDK: c'e' da IMPORTARLO, non ricercarlo.
+     CORREZIONI CHIESTE: 5, di cui 3 di contenuto minimo (1 campo, 1 record, 2
+       record). NON ho chiesto un quinto giro di riscrittura. §8 del verdetto.
+     IL MIO REVIEWRESULT NON E' IMPORTABILE, e il motivo e' UNO SOLO, misurato a
+     tre configurazioni: 8 errori dal mio albero stantio -> 4 da origin/main pulito
+     -> 1 con gli artefatti presenti. L'irriducibile e' "may only be imported for a
+     task currently in REVIEW; UJ-CAP-001 is READY". IL PACKET DI GEMINI PROPONE
+     REVIEW E NULLA APPLICA LA TRANSIZIONE. Terza conferma della causa 3
+     dell'addendum di sessione 5, ora su DUE task insieme (il suo e il mio).
+     >>> SERVE DA CHATGPT: (a) l'anello che applica le transizioni proposte;
+     (b) far risolvere verifyReviewedArtifact con sha256AtRef(ref, commit_sha) —
+     oggi legge dall'ALBERO DI LAVORO, quindi sha256AtRef copre le CARD ma NON le
+     REVIEW (vedi E35/trappola 35: non estendere la portata di un fix altrui).
 
   AI) 2026-08-19 — MANDATO DI TECHNICAL LEAD + INNESCO SCELTO + PR #18 APERTA.
      Christian: a fine pianificazione la leadership operativa passa a CLAUDE.
@@ -4133,16 +4306,16 @@ PROSSIMO  : Se apri una sessione nuova:
                se qualcuno ha consegnato. In sessione 6 e' stata la prima volta con
                esito NEGATIVO: nessuna consegna nuova dopo la chiusura di sessione 5.
                Non e' un motivo per saltarla, e' il motivo per cui va eseguita.
-            1. IL PRIMO TASK E' IL TERZO INVIO DI UJ-CAP-001 DA GEMINI, ancora non
-               aperto: agent/uj-cap-001-gemini-review-20260818 @ 0f1c536.
-               In sessione 6 NON l'ho toccato di proposito: la task esplicita era la
-               riconciliazione di UJ-RUN-001, e aprirne una seconda avrebbe
-               significato consegnarne due a meta'. Metodo nel punto AA azione 2.
-            1-bis. IL PRE-VERDETTO §6/§9 (sessione 4) E' SUPERATO. Non ripartire
-               da li': il mio verdetto vero e aggiornato e' in
-               docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260818.md
-               (FAIL 3/5, sessione 5), e quello a sua volta va riverificato sul
-               terzo invio @ 0f1c536 — vedi punto AA azione 2 per il metodo.
+            1. UJ-CAP-001 @ 0f1c536 E' GIA' STATO REVISIONATO. NON RIFARLO.
+               Verdetto FAIL 3/5 in
+               docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260819.md — vedi
+               punto AJ. TUTTI i verdetti precedenti su UJ-CAP-001 (sessione 4
+               pre-verdetto, sessione 5 VERDICT-20260818) SONO SUPERATI: il registro
+               e' stato riscritto. Non ripartire da quelli.
+               SE GEMINI RISPEDISCE ANCORA, controlla nell'ordine: (a) e' cambiato
+               source_commit_sha e il packet passa il validatore? (b) esiste una
+               capability local-compute? (c) verified_at_utc e' ancora costante?
+               (d) ci sono Claude Code e Agent SDK? Sono le 4 correzioni chieste.
             2. GROK_FIX_LIST.md È GIÀ STATO VERIFICATO APPLICATO da me, non solo
                dichiarato — 10/16 findings chiusi con comando+esito in
                MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §10-ter. Non rifare quella
