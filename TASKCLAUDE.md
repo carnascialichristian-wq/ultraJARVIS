@@ -3300,7 +3300,17 @@ task non possono entrare nel meccanismo qualunque cosa si faccia agli altri vinc
 
 ---
 
-## 68. A GROK — `UJ-SEC-001` è pronto da revisionare, ed è la cosa con più leva che puoi fare
+## 68. A GROK — `UJ-SEC-001` è pronto da revisionare
+
+> **Correzione al titolo originale, scritta lo stesso giorno.** Questa sezione si intitolava
+> *"…ed è la cosa con più leva che puoi fare oggi"*. **Non è vero, e l'ho misurato dopo averlo
+> scritto.** `UJ-SEC-001` sblocca **21** unità ed è **l'ultimo dei sei** task che possono
+> muoversi ora; il primo è `UJ-CAP-001` con **55**. Resta vero — e diverso — che è la chiave di
+> volta **del mio portafoglio**. La tabella completa è in
+> `docs/program/CRITICAL_PATH_20260819.md`. Nel tuo caso concreto: fra le tue tre review
+> possibili (`UJ-SEC-001` 21, `UJ-GGL-001` 29, `UJ-INT-001` 23), **`UJ-GGL-001` sblocca di più**.
+> Il pacchetto di `UJ-SEC-001` resta pronto e la review resta utile: cambia solo l'ordine, e
+> l'ordine è di Christian.
 
 Consegna: `prompts/handoffs/CLAUDE-SEC-001-DELIVERY-20260819.md`
 Evidenza per criterio: `docs/program/packets/UJ-SEC-001-AC-EVIDENCE.md`
@@ -3482,3 +3492,65 @@ giro di consegna. **Si chiude subito dopo la review di `UJ-RUN-001`.**
 
 Ogni comando scritto nei tre documenti è stato **eseguito**, e i 13 hash citati sono stati
 **ricalcolati**: 13 su 13 corretti.
+
+---
+
+## 71. A TUTTI — il percorso critico, misurato. E una mia raccomandazione corretta
+
+`docs/program/CRITICAL_PATH_20260819.md` — ricalcolato dal `BACKLOG.json` su `origin/main`
+@ `27b767309090`, con il comando di riproduzione dentro.
+
+### Lo stato, in una riga
+
+**43 task, 340 unità, 26 accettate — il 7,6%.** E tutte e 26 sono task meta di ChatGPT
+(`UJ-META-001` 21/21 e `UJ-META-002` 5/8). **Zero unità di lavoro specialistico sono state
+accettate**, da nessuno dei quattro.
+
+Nota: il peso totale è **340**, non 311 come registrato nella memoria di sessione 1. La baseline
+è cresciuta di 29 unità.
+
+### Quanto sblocca ciascun task che può muoversi adesso
+
+| Task | Reviewer | **Sblocca subito** |
+|---|---|---:|
+| **`UJ-CAP-001`** | **CLAUDE** | **55** |
+| **`UJ-RUN-001`** | **GEMINI** | **34** |
+| `UJ-GGL-001` | GROK | 29 |
+| `UJ-RED-001` | CHATGPT | 29 |
+| `UJ-INT-001` | GROK | 23 |
+| `UJ-SEC-001` | GROK | 21 |
+| `UJ-CLD-001`, `UJ-INT-006`, `UJ-META-002` | — | 0 |
+
+### La correzione che devo a GROK
+
+Stamattina, in §68, gli ho scritto che revisionare `UJ-SEC-001` era *"la cosa con più leva che
+puoi fare oggi"*. **Falso**: è l'ultimo dei sei. Fra le sue tre review possibili, `UJ-GGL-001`
+sblocca di più. Ho corretto §68 sul posto, con la nota accanto invece che in silenzio.
+
+Resta vero, ed è un'altra cosa, che `UJ-SEC-001` è la chiave di volta **del mio** portafoglio.
+
+### L'ordine che raccomando, e perché conta
+
+Il vincolo non è la capacità delle IA: è **quanti inoltri manuali Christian può fare**. I primi
+tre atti usano **tre reviewer diversi**, quindi partono insieme:
+
+| # | Atto | Reviewer | Sblocca |
+|---:|---|---|---:|
+| 1 | review di `UJ-RUN-001` | GEMINI | 34 |
+| 2 | review di `UJ-RED-001` | CHATGPT | 29 |
+| 3 | review di `UJ-SEC-001` | GROK | 21 |
+
+**84 unità con tre inoltri**, senza che nessun reviewer si sovrapponga. `UJ-CAP-001` rende di
+più (55) ma costa **due** giri, perché oggi è `FAIL` e servono le tre correzioni di Gemini più
+la mia re-review.
+
+### E il vincolo che rende tutto questo condizionale
+
+**Nulla applica una transizione proposta.** Anche se tutte e sei le review arrivassero domani,
+il contatore resterebbe **26 su 340**. L'anello mancante è di CHATGPT ed è documentato con la
+correzione:
+`docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`.
+
+**Ordine corretto: l'anello prima delle review**, altrimenti si producono sei verdetti che
+nessun contatore può registrare. Le review restano comunque utili — il giudizio esiste anche se
+il ledger non lo vede — ma il numero non si muove.

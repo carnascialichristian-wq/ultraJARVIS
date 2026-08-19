@@ -3861,6 +3861,70 @@ non dipendono solo da lui. Avevo appena sbagliato un conteggio, quindi qui scriv
 precisa e non quella d'effetto.
 
 
+
+## Sessione 6, quattordicesima parte — il percorso critico, e la seconda raccomandazione mia che si rivela sbagliata
+
+Esaurito il lavoro di consegna, la cosa più utile non era produrre altro: era capire **in che
+ordine** il programma deve muoversi. Il vincolo vero non è la capacità delle IA — è **quanti
+inoltri manuali Christian può fare**, perché ogni giro passa da un copia-incolla.
+
+### Lo stato, ricalcolato
+
+**43 task, 340 unità, 26 accettate — il 7,6%.** E tutte e 26 sono task meta di ChatGPT:
+`UJ-META-001` (21/21) e `UJ-META-002` (5/8, il peso parziale che il gate del programma non sa
+produrre). **Zero unità di lavoro specialistico accettate, da nessuno dei quattro.**
+
+Correzione: il peso totale è **340**, non **311** come dice la mia memoria di sessione 1. La
+baseline è cresciuta di 29 unità e non me n'ero accorto.
+
+### La correzione che conta, ed è la seconda in due ore
+
+Stamattina ho scritto a Grok, in `TASKCLAUDE.md` §68, che revisionare `UJ-SEC-001` era *"la cosa
+con più leva che puoi fare oggi"*. Misurato attraversando il grafo:
+
+| Task | Reviewer | Sblocca |
+|---|---|---:|
+| `UJ-CAP-001` | **CLAUDE** | **55** |
+| `UJ-RUN-001` | GEMINI | 34 |
+| `UJ-GGL-001` | GROK | 29 |
+| `UJ-RED-001` | CHATGPT | 29 |
+| `UJ-INT-001` | GROK | 23 |
+| **`UJ-SEC-001`** | GROK | **21 — l'ULTIMO dei sei** |
+
+**Era falso.** Resta vero, ed è un'altra affermazione, che `UJ-SEC-001` è la chiave di volta
+**del mio portafoglio**. Ho corretto §68 sul posto, con la nota accanto invece che in silenzio, e
+ho indicato a Grok che fra le sue tre review `UJ-GGL-001` rende di più.
+
+**Due affermazioni mie smentite dai fatti nella stessa sessione** — prima «tutti e otto i
+pacchetti», ora «la cosa con più leva». Entrambe trovate da me, entrambe già pubblicate quando le
+ho trovate. Il difetto comune non è il calcolo: è che **una frase d'effetto esce prima della
+misura che la sostiene**. La contromisura non è scrivere meno: è misurare *prima* di
+qualificare, non dopo.
+
+### La metrica che ho aggiunto perché il numero grezzo inganna
+
+`UJ-CAP-001` sblocca di più (55) ma oggi è `FAIL` nella mia review: servono due giri. La metrica
+utile è **leva per giro**, e lì vince `UJ-RUN-001` con 34 in un solo giro.
+
+E la raccomandazione operativa che ne esce è distribuita, non sequenziale: **i primi tre atti
+usano tre reviewer diversi** (`RUN-001`→Gemini, `RED-001`→ChatGPT, `SEC-001`→Grok) e valgono
+**84 unità con tre inoltri**.
+
+### Il caveat che ho messo in grassetto e non in nota
+
+**Nulla applica una transizione proposta.** Anche con tutte e sei le review consegnate domani,
+il contatore resterebbe 26 su 340. Quindi l'ordine corretto è **l'anello mancante prima delle
+review** — altrimenti si producono sei verdetti che nessun contatore registra. Le review restano
+utili lo stesso, perché il giudizio esiste anche se il ledger non lo vede, e l'ho scritto invece
+di usare il blocco come scusa per non consegnare.
+
+### File
+
+`docs/program/CRITICAL_PATH_20260819.md` — 7 sezioni, comando di riproduzione dentro ed
+**eseguito**, e §7 dichiara i limiti del metodo: tratta ogni review come un giro, il che
+favorisce i task grandi.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4217,6 +4281,30 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AR) 2026-08-19 — PERCORSO CRITICO MISURATO. E UJ-SEC-001 NON E' IL PRIMO.
+     docs/program/CRITICAL_PATH_20260819.md
+     STATO: 43 task, 340 unita', 26 ACCETTATE (7,6%). Tutte e 26 sono task meta
+     di ChatGPT (META-001 21/21, META-002 5/8). ZERO unita' di lavoro
+     specialistico accettate, da nessuno dei quattro. Il mio resta 0/76.
+     CORREZIONE: il peso totale e' 340, NON 311 come dice la memoria di
+     sessione 1. La baseline e' cresciuta di 29 unita'.
+     QUANTO SBLOCCA CIASCUNO (dipendenti diretti oggi BLOCKED):
+       UJ-CAP-001  rev CLAUDE   -> 55   <-- il piu' redditizio, ma oggi e' FAIL
+       UJ-RUN-001  rev GEMINI   -> 34   <-- miglior LEVA PER GIRO
+       UJ-GGL-001  rev GROK     -> 29
+       UJ-RED-001  rev CHATGPT  -> 29
+       UJ-INT-001  rev GROK     -> 23
+       UJ-SEC-001  rev GROK     -> 21   <-- l'ULTIMO dei sei
+     ERRORE MIO CORRETTO: stamattina avevo scritto a Grok in TASKCLAUDE §68 che
+     UJ-SEC-001 era "la cosa con piu' leva che puoi fare oggi". FALSO. Resta
+     vero che e' la chiave di volta DEL MIO PORTAFOGLIO. §68 corretta sul posto.
+     RACCOMANDAZIONE: i primi TRE atti usano tre reviewer DIVERSI e partono
+     insieme — RUN-001 a Gemini, RED-001 a ChatGPT, SEC-001 a Grok = 84 unita'
+     con tre inoltri.
+     CAVEAT IN GRASSETTO: nulla applica una transizione proposta. Con tutte e sei
+     le review consegnate domani il contatore resterebbe 26/340. L'anello va
+     PRIMA delle review.
 
   AQ) 2026-08-19 — CORREZIONE: SONO SETTE SU OTTO, NON OTTO. E DUE FATTI NUOVI.
      Il punto AP qui sotto e il commit fbe9bf9 dicono "tutti e otto". ERA FALSO:
