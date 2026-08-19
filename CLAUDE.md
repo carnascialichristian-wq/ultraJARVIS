@@ -248,17 +248,30 @@ Christian**, e finché non la prende il mandato resta sospeso.
 più le specifiche che il build richiede sono `ACCEPTED`.
 Misura al 2026-08-19: **185 unità su 311, accettate 0.**
 
-**Definizione B — minimo per iniziare a costruire** *(raccomandata)*. Sono `ACCEPTED` i
-**quattro** task senza i quali il primo codice sarebbe lavoro sprecato:
+**Definizione B — minimo per iniziare a costruire.** ⚠️ **La prima stesura di questa
+definizione era sbagliata e va letta come storia.** Elencava quattro task per 42 unità
+includendo `UJ-INT-004`; calcolando la **chiusura transitiva** delle dipendenze, quei quattro
+diventano **8 task e 94 unità**, perché `UJ-INT-004` dipende da `UJ-INT-002` che dipende dai
+quattro deliverable degli specialisti. Un innesco che si porta dietro quasi tutto M0+M1 non è
+un minimo.
 
-| Task | Owner | Peso | Perché è indispensabile |
-|---|---|---:|---|
-| `UJ-RUN-001` | CLAUDE | 13 | contiene la demo end-to-end da costruire |
-| `UJ-SEC-001` | CLAUDE | 13 | approval policy: senza, il build può violare la Costituzione |
-| `UJ-RCV-001` | CLAUDE | 8 | la demo esercita checkpoint, kill e resume |
-| `UJ-INT-004` | CHATGPT | 8 | dove va materialmente il codice (monorepo) |
+**Definizione B′ — ADOTTATA il 2026-08-19 su delega di Christian** (*"scegli te"*). Sono
+`ACCEPTED` i **tre** task senza i quali il primo codice sarebbe lavoro sprecato:
 
-**42 unità, 4 task.** Tre su quattro sono già consegnati e attendono solo la review.
+| Task | Owner | Peso | Reviewer | Perché è indispensabile |
+|---|---|---:|---|---|
+| `UJ-RUN-001` | CLAUDE | 13 | **GEMINI** | contiene la demo end-to-end da costruire |
+| `UJ-SEC-001` | CLAUDE | 13 | **GROK** | approval policy: senza, il build può violare la Costituzione |
+| `UJ-RCV-001` | CLAUDE | 8 | **CHATGPT** | la demo esercita checkpoint, kill e resume |
+
+**34 unità, 3 task, chiusura transitiva verificata: nessuna dipendenza esterna oltre a
+`UJ-RUN-001 → UJ-RCV-001`.** Tutti e tre sono già consegnati: serve **una review per ciascuna
+delle altre tre IA**, il che rende l'innesco simmetrico e non concentrato su nessuno.
+
+**Perché `UJ-INT-004` è stato tolto.** È la *specifica* del monorepo, non il monorepo. La
+struttura per costruire esiste già e funziona: `packages/contracts` compila, ha 140 test verdi e
+un `tsconfig` strict. La demo può viverci accanto con lo stesso schema; quando `UJ-INT-004`
+arriverà, adattare una directory costa poco. Aspettarlo costa una catena di otto task.
 
 **Perché raccomando B.** Le altre 126 unità di pianificazione (M5–M17: dashboard, diritti
 media, NotebookLM, sintesi trimestrale) sono a valle di un sistema che non ha mai eseguito una
@@ -3199,6 +3212,80 @@ tipi del runtime con un find-and-replace. **Una lezione registrata bene si ripag
 opposto a quello in cui è stata imparata.**
 
 
+
+## Sessione 6, quinta parte — mandato di Technical Lead, innesco scelto, PR #18 aperta
+
+Christian ha deciso che a fine pianificazione la leadership operativa passa a me, e mi ha
+delegato la scelta dell'innesco (*"scegli te"*). Ho fatto tre cose: verificato i fatti che mi
+aveva dato, registrato il mandato in memoria, e scelto — correggendo una mia proposta sbagliata.
+
+### Tre correzioni ai fatti del briefing, verificate
+
+| Affermazione | Realtà misurata |
+|---|---|
+| *"Grok deve abbandonare la vecchia PR #13"* | **PR #13 è di CHATGPT**, branch `agent/chatgpt-uj-red-001-grok-intake-*`: è la sua PR di quarantena. Grok non può abbandonarla |
+| *"Grok deve rifare UJ-RED-001"* | **Già fatto**: PR #16, branch nuovo, basata sul `main` attuale |
+| — | **Il mio `UJ-RUN-001` non aveva alcuna PR**, pur essendo in `REVIEW` da stamattina |
+
+`main` a `27b7673`, Council PASS, packet R6 `REVIEW` a `0/13`, 15 hash: tutto confermato.
+
+### L'errore che ho trovato nella mia stessa proposta
+
+Avevo proposto come innesco quattro task per 42 unità, includendo `UJ-INT-004`. Calcolando la
+**chiusura transitiva** delle dipendenze — cosa che non avevo fatto prima di proporlo — quei
+quattro diventano **8 task e 94 unità**: `UJ-INT-004` dipende da `UJ-INT-002`, che dipende da
+tutti e quattro i deliverable degli specialisti.
+
+Un "minimo" che si trascina dietro quasi tutta la milestone M0+M1 non è un minimo. **È la stessa
+classe di errore che contesto agli altri: un numero dedotto invece che calcolato.** Adottata la
+**Definizione B′**: tre task, 34 unità, `UJ-INT-004` escluso perché è la *specifica* del
+monorepo e la struttura per costruire esiste già e funziona.
+
+### La proprietà di B′ che l'ha fatta scegliere
+
+| Task | Peso | Reviewer |
+|---|---:|---|
+| `UJ-RUN-001` | 13 | **GEMINI** |
+| `UJ-SEC-001` | 13 | **GROK** |
+| `UJ-RCV-001` | 8 | **CHATGPT** |
+
+**Una review per ciascuna delle altre tre IA.** L'innesco è simmetrico: nessuno regge da solo il
+passaggio di consegne, e nessuno può bloccarlo se non per la propria parte. Non l'avevo cercata,
+è emersa dai dati — e ho anche dovuto correggere un'affermazione dell'ultimo messaggio in cui
+avevo detto che Gemini teneva tre review su quattro. Ne tiene **una**.
+
+### L'atto concreto: PR #18
+
+`UJ-RUN-001` era ammissibile da stamattina e **non aveva una PR**. Il reviewer non aveva una
+sede. Aperta come **draft**, compilata sul template del repository, con la tabella delle sei
+clausole di ammissibilità verificate, i comandi di riproduzione nell'ordine giusto, e la sezione
+*"che cosa NON è dimostrato"* in evidenza invece che sepolta.
+
+È il primo dei cinque atti che avevo scritto nel mandato, ed è quello che costa meno e sblocca di
+più. Il fatto che sia rimasto scoperto per un giorno intero è un difetto di coordinamento mio,
+non di Gemini.
+
+### Un blocker stantio nel `BACKLOG.json`, segnalato non corretto
+
+`UJ-INT-002` dichiara come causa *"specialist ResponsePackets do not exist yet"*. Misurato: **i
+quattro packet esistono tutti**, uno per branch. La causa dichiarata è superata. Se la condizione
+vera è *"non sono ancora accettati"*, il testo va corretto — perché *"non esistono"* e *"esistono
+e non sono accettati"* nominano **resolver diversi**: nel primo caso tocca produrre, nel secondo
+pronunciarsi. È la causa a dire chi deve muoversi, ed è la stessa lezione di `UJ-INT-007`.
+
+Non l'ho corretto: `BACKLOG.json` è di ChatGPT.
+
+### Errori di questa parte
+
+| # | Errore | Correzione |
+|---|---|---|
+| E33 | **Ho proposto una definizione di innesco senza calcolarne la chiusura transitiva.** 42 unità dichiarate, 94 reali | Calcolata con un attraversamento del grafo delle dipendenze e adottata `B′`. La lezione: **una soglia proposta va chiusa transitivamente prima di proporla**, altrimenti è una stima travestita da criterio |
+| E34 | **Ho scritto che Gemini teneva "tre delle quattro review che servono".** Ne tiene una | Verificato nel `BACKLOG.json`: una per IA. Detto in un messaggio al proprietario senza controllare, ed è esattamente la fretta che produce i numeri sbagliati che passo il tempo a trovare negli altri |
+
+Entrambi trovati da me, entrambi prima che producessero lavoro sbagliato — ma il secondo era già
+uscito in un messaggio, quindi va corretto pubblicamente e non solo qui.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -3393,6 +3480,13 @@ Sintesi operativa degli errori sopra, in forma di regole:
     `ResultStatus`, che sono **vocabolario di dominio** e non stato della consegna. Quando
     censisci le occorrenze di un valore, censisci anche gli **omonimi da non toccare**.
 
+34. **Una soglia che proponi va chiusa transitivamente prima di proporla** (E33, sessione 6).
+    Avevo proposto come innesco quattro task per 42 unità; il grafo delle dipendenze ne
+    richiedeva otto per 94, perché uno dei quattro dipendeva da una catena che non avevo
+    seguito. Un criterio di completamento che non è stato chiuso sulle sue dipendenze **non è un
+    criterio, è una stima travestita**. Contromisura: attraversa il grafo con uno script e
+    stampa la chiusura, prima di scrivere il numero.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -3505,6 +3599,29 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AI) 2026-08-19 — MANDATO DI TECHNICAL LEAD + INNESCO SCELTO + PR #18 APERTA.
+     Christian: a fine pianificazione la leadership operativa passa a CLAUDE.
+     Mandato completo, vincoli, primi cinque atti e rischio: CLAUDE.md PARTE 3-bis.
+     ChatGPT resta SUPERVISORE ESTERNO con potere di rifiuto. NON e' una deroga:
+     accepted_weight non si muove senza review indipendente, MAI reviewer di un
+     mio task.
+     INNESCO ADOTTATO (delega "scegli te"): DEFINIZIONE B' — tre task ACCEPTED:
+       UJ-RUN-001 (13) reviewer GEMINI   -> PR #18 aperta, draft
+       UJ-SEC-001 (13) reviewer GROK     -> READY, nessun blocker, puo' partire
+       UJ-RCV-001 (8)  reviewer CHATGPT  -> BLOCKED su UJ-RUN-001
+     34 unita', UNA REVIEW PER CIASCUNA DELLE ALTRE TRE IA. Finche' non sono
+     accettati il mandato e' SOSPESO e si lavora da specialista.
+     ATTENZIONE, ERRORE MIO DA NON RIPETERE (E33): la prima versione dell'innesco
+     includeva UJ-INT-004 e dichiarava 42 unita'; la chiusura transitiva e' 8 task
+     e 94 unita' perche' UJ-INT-004 -> UJ-INT-002 -> i quattro specialisti.
+     UJ-INT-004 e' stato TOLTO: e' la specifica del monorepo, e packages/contracts
+     esiste gia', compila e ha 140 test verdi.
+     PR #18: era la cosa piu' importante e mancava. UJ-RUN-001 era ammissibile da
+     ore e il reviewer non aveva una sede dove lavorare.
+     SEGNALATO A CHATGPT, non corretto: il blocker di UJ-INT-002 dice "specialist
+     ResponsePackets do not exist yet" e i quattro packet ESISTONO tutti.
+
 
   AH) 2026-08-19 — UJ-RUN-001 E' **REVIEW**. IL BLOCCO E' SCIOLTO. NON RIAPRIRLO.
      ChatGPT ha chiuso tutto con 6ba3a2b (ripristino dei 16 hash) e 27b7673 (via
