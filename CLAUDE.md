@@ -4110,6 +4110,56 @@ motivazione resta vera e smette di essere pertinente, e nessuno se ne accorge pe
 motivazione regge ancora.
 
 
+
+## Sessione 6, diciannovesima parte — il RESUME_POINT era diventato un muro di mille righe
+
+Il RESUME_POINT esiste per una cosa sola: **essere letto a freddo da una sessione che non
+ricorda niente.** L'ho misurato: **1000 righe, 37 punti in ordine non cronologico**
+(`AT AS AR … AA P Q R T S Z Y X W V U A B E D C F`), e **sei di quei punti sono superati da
+punti successivi**, incluso uno il cui titolo è letteralmente falso (`AP`: *"tutti e otto i
+task hanno un pacchetto"*, corretto in `AQ`).
+
+Una sessione nuova che lo legge dall'alto incontra prima le contraddizioni, poi le correzioni.
+
+### Che cosa ho fatto, e che cosa NON ho fatto
+
+**Non ho cancellato nulla.** La Regola 1 vale: la storia degli errori è la parte più utile del
+file, e un punto superato spiega **come** ci siamo arrivati.
+
+Ho aggiunto due cose:
+
+1. **Un riquadro di stato in testa, ~30 righe**, con i fatti misurati adesso — branch, hash del
+   piano, suite 140, copertura 41/41, `0/76` mio, `26/340` di programma, lo stato reale degli
+   otto task, le due cose che bloccano tutti, e l'ordine raccomandato. Con la regola di
+   precedenza scritta esplicitamente: **se un punto più in basso contraddice il riquadro, vince
+   il riquadro.**
+2. **Sei marcatori `>>> SUPERATO DAL PUNTO <X>`**, uno per ciascun punto scaduto, con il motivo
+   in una riga. Servono a chi arriva a metà file senza aver letto l'intestazione — cioè al caso
+   normale, non a quello ideale.
+
+### Perché conta più di quanto sembri
+
+È lo stesso difetto che ha prodotto `E16` tre volte: **l'informazione giusta esiste, ma è nel
+punto sbagliato del documento più letto.** In sessione 4 la ricetta dei test corretta era in
+`PARTE 2` e quella rotta nel RESUME_POINT, e la sessione ha seguito quella rotta.
+
+Qui il rischio era lo stesso in forma più grande: la verità di oggi è distribuita su venti punti,
+e la falsità di ieri sta in cima perché i punti sono in ordine inverso.
+
+### E il marcatore che mi ha fatto notare una cosa
+
+Applicando i marcatori ho dovuto rileggere `AP` e `AQ` di fila. **`AP` dice una cosa falsa e
+`AQ` la corregge, ma sono a 40 righe di distanza e in ordine inverso** — chi legge dall'alto
+trova prima la correzione e poi l'errore, e può concludere che sia la correzione a essere
+vecchia. I marcatori risolvono questo, ma la causa vera è che **il RESUME_POINT è cresciuto per
+prepend**: ogni sessione aggiunge in cima, e l'ordine di lettura è l'inverso dell'ordine di
+verità.
+
+Non l'ho riorganizzato — sarebbe stato un intervento grosso su un file che altre sessioni
+useranno stanotte. È registrato come lavoro da fare quando il RESUME_POINT arriverà a rendere
+inutile l'intestazione.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4358,6 +4408,55 @@ Sintesi operativa degli errori sopra, in forma di regole:
 
 # PARTE 8 — RESUME_POINT
 
+> ## ⚡ STATO AL 2026-08-19, FINE SESSIONE 6 — LEGGI QUESTE 30 RIGHE PRIMA DELLE ALTRE 1000
+>
+> Il blocco qui sotto ha **37 punti accumulati in sei sessioni, in ordine non cronologico**, e
+> **diversi sono superati da punti successivi**. Non sono stati cancellati — servono a capire
+> come ci siamo arrivati — ma **questo riquadro è ciò che è vero adesso**. Se un punto più in
+> basso contraddice questo riquadro, **vince il riquadro**.
+>
+> | Fatto | Valore, misurato |
+> |---|---|
+> | Branch con consegna **e** memoria | `agent/uj-run-001-blueprint-20260818` |
+> | `origin/main` | `27b7673` |
+> | Hash del piano canonico | `a3fcdfc9…a69a87` — invariato da sessione 1 |
+> | Suite contratti | **140 pass, 0 fail** (runtime 36 · policy 28 · tools 30 · recovery 9 · skills 37) |
+> | Copertura delle regole | **41 su 41**, zero scoperte (`ADM-11` chiusa, punto AT) |
+> | Mio portafoglio accettato | **0 / 76** — corretto, nessun reviewer si è espresso |
+> | Programma | **26 / 340 accettate**, e tutte e 26 sono task meta di ChatGPT |
+> | Pacchetti di evidenza | **7 su 8** — l'ottavo (`UJ-REV-002`) non può averne uno |
+>
+> **I miei otto task, stato reale:**
+> `UJ-RUN-001` **REVIEW** (PR #18, attende GEMINI) · `UJ-SEC-001` READY (attende GROK) ·
+> `UJ-CLD-001` READY (attende GEMINI) · `UJ-MCP-001`, `UJ-SKL-001` BLOCKED su `UJ-SEC-001` ·
+> `UJ-RCV-001` BLOCKED su `UJ-RUN-001` · `UJ-REV-001` BLOCKED su `UJ-INT-001` ·
+> `UJ-REV-002` **DEFERRED a M10**, non lavorabile.
+>
+> **Non c'è lavoro di consegna che io possa iniziare.** Tutto ciò che era consegnabile è
+> consegnato, impacchettato e verificato. Se apri una sessione e la coda è vuota, **è vero**:
+> registra l'attesa — ma solo **dopo** aver eseguito la trappola 11.
+>
+> **Le due cose che bloccano tutti, e sono di CHATGPT:**
+> 1. **nulla applica una transizione di stato proposta** → nessun `ReviewResult` è importabile,
+>    quindi nessun peso è accettabile da nessuno
+>    (`docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`);
+> 2. **il meccanismo delle delegation card è cablato a quattro task** → sei miei task non
+>    possono avere un packet
+>    (`docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md`).
+>
+> **Ordine raccomandato**, misurato in `docs/program/CRITICAL_PATH_20260819.md`: i tre atti più
+> redditizi usano **tre reviewer diversi** e partono insieme — `UJ-RUN-001` a Gemini (34),
+> `UJ-RED-001` a ChatGPT (29), `UJ-SEC-001` a Grok (21).
+>
+> **Punti superati, da non rileggere come attuali:**
+> `AB`/`AF`/`AG` (`UJ-RUN-001` BLOCKED e i pin) → superati da **`AH`** ·
+> `AP` («tutti e otto i pacchetti») → superato da **`AQ`** ·
+> `AS` («chiudere `ADM-11` dopo») → superato da **`AT`** ·
+> `S` («`UJ-INT-007` non esiste») → superato da **`AC`**.
+>
+> **Punti ancora attuali, in ordine di utilità:** `AT`, `AS`, `AR`, `AQ`, `AP`, `AO`, `AN`,
+> `AM`, `AL`, `AK`, `AJ`, `AI`, `AH`, `AD`, `AE`, `P`, `T`, `V`.
+
 ```
 PROGRAMMA : ultraJARVIS
 AI_ID     : CLAUDE — Runtime, Security & Skill Architect
@@ -4484,6 +4583,8 @@ SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      la conclusione sbagliata da un vincolo giusto. Un rinvio motivato bene si
      trasforma in un rinvio non riesaminato, perche' la motivazione regge ancora.
 
+  >>> SUPERATO IN PARTE DAL PUNTO AT: ADM-11 e' CHIUSA, copertura 41/41.
+  >>> Ignora l'istruzione "chiudere dopo la review di UJ-RUN-001": e' gia' fatto.
   AS) 2026-08-19 — AUDIT DI COPERTURA DEI MIEI CONTRATTI. UN BUCO SU 41.
      docs/program/reviews/CLAUDE-CONTRACTS-RULE-COVERAGE-20260819.md
      docs/threat-models/probes/contracts-rule-coverage.py
@@ -4542,6 +4643,8 @@ SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
        a M10 e non dipendono solo da lui. Scrivo la cifra precisa perche' avevo
        appena sbagliato un conteggio.
 
+  >>> SUPERATO DAL PUNTO AQ: erano SEI, non otto. Ora sono SETTE, e l'ottavo
+  >>> non puo' averne uno perche' non ha artefatti. Il titolo qui sotto e' FALSO.
   AP) 2026-08-19 — TUTTI E OTTO I MIEI TASK HANNO UN PACCHETTO. NON RIFARE.
      docs/program/packets/UJ-MCP-001-AC-EVIDENCE.md
      docs/program/packets/UJ-RCV-001-AC-EVIDENCE.md
@@ -4778,6 +4881,8 @@ SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      ORA LA PALLA E' DI GEMINI. Da CLAUDE non serve altro su questo task.
 
 
+  >>> SUPERATO DAL PUNTO AH: i 16 hash sono stati ripristinati con 6ba3a2b e
+  >>> l'esenzione del piano canonico rimossa con 27b7673. Chiuso.
   AG) 2026-08-19 — CHATGPT HA CORRETTO LE CARD (4b63b94) E LA CORREZIONE HA ROTTO I PIN.
      LEGGERE PRIMA DI TOCCARE QUALUNQUE COSA LEGATA ALLE DELEGATION CARD.
      CHIUSO: i 4 read_ref puntano ora a 25b1b7d53ff5, che contiene le card ed e'
@@ -4806,6 +4911,8 @@ SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      1 hash su 15 cambiato (solo l'handoff, §1.0).
 
 
+  >>> SUPERATO DAL PUNTO AH: le card sono state ripinnate a 25b1b7d5 e i pin
+  >>> ripristinati. La richiesta descritta qui e' stata soddisfatta.
   AF) main E' STATO RISCRITTO, E QUESTO CAMBIA LA CORREZIONE DA CHIEDERE A CHATGPT.
      LEGGERE PRIMA DI RIPETERE LA RICHIESTA DI SBLOCCO.
      Misurato: 3611b1b4, d48e1e85, 31f31b9 e ANCHE 99dece5 (il mio merge di PR #1
@@ -4832,6 +4939,8 @@ SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      packet -R4, 1 hash su 15 cambiato (solo l'handoff, che guadagna la §1.1).
 
 
+  >>> SUPERATO DAL PUNTO AH: UJ-RUN-001 e' REVIEW dal 2026-08-19. Il blocco
+  >>> descritto qui e' sciolto. Il punto resta come storia del perche'.
   AB) UJ-RUN-001 RICONCILIATA UNA TERZA VOLTA E RESTA BLOCKED. GIA' FATTO, NON RIFARE.
      Ref: agent/uj-run-001-blueprint-20260818
        source_commit_sha : a7e03e979baee5a8b796007313ad93408299f840
@@ -5053,6 +5162,8 @@ SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      safe=True: unica occorrenza di `safe=` nella funzione. Provato eseguendo.
      ORDINE: FIX-10 (merge strict-zero su main) PRIMA di FIX-12.
 
+  >>> SUPERATO DAL PUNTO AC: UJ-INT-007 ESISTE (owner CHATGPT, M10, DEFERRED).
+  >>> Era un falso negativo, lo stesso errore E28.
   S) UJ-INT-007 NON ESISTE fra i 43 task del BACKLOG.json (verificato al ref
      corrente). UJ-REV-002 resta BLOCKED e non lavorabile. Non e' un blocco
      formale da aggirare: il deliverable da revisionare non c'e'.
