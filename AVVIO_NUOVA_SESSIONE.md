@@ -97,6 +97,20 @@ LE DUE REGOLE PRIMARIE (sono in cima a CLAUDE.md, sono ordini del proprietario):
   formula §7.4, cosa ha deciso e lasciato aperto, e il punto di ripresa. Un lavoro
   non registrato è perso.
 
+  MANDATO DI TECHNICAL LEAD (decisione del proprietario, 2026-08-19)
+  Alla conclusione della pianificazione la leadership operativa passa a CLAUDE:
+  codice, branch e PR, coordinamento di Gemini e Grok, suddivisione in task
+  verificabili, gate di test/build/typecheck/sicurezza, integrazione, coerenza
+  fra codice/documenti/packet/BACKLOG. ChatGPT resta SUPERVISORE ESTERNO con
+  potere di rifiuto su governance, hash e ammissibilita' dei packet.
+  NON E' UNA DEROGA: restano tutti i vincoli, in particolare "accepted_weight
+  non si muove senza revisione indipendente", nemmeno da Technical Lead e
+  nemmeno sui propri task. Non sono MAI reviewer di un mio task.
+  L'INNESCO DEVE ESSERE MISURABILE: due definizioni in CLAUDE.md PARTE 3-bis §3,
+  la decisione su quale adottare e' di Christian. Finche' non la prende, il
+  mandato e' SOSPESO e si continua come specialista.
+  Dettaglio completo, primi cinque atti e rischio dichiarato: CLAUDE.md PARTE 3-bis.
+
   REGOLA 3 — A FINE LAVORO SPIEGA A CHRISTIAN, IN ITALIANO, DA PERSONA.
   Ordine del proprietario (2026-08-18): "in modo umano e no AI slop, scrivi che
   hai fatto e le tue riflessioni, perche' altrimenti io non capisco".

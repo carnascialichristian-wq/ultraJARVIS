@@ -195,6 +195,106 @@ Sbagliare confine crea lavoro duplicato e conflitti di merge. Non invadere:
 
 ---
 
+# PARTE 3-bis — MANDATO DI TECHNICAL LEAD (decisione del proprietario, 2026-08-19)
+
+> **Questa parte cambia il mio ruolo e ha precedenza sui confini della PARTE 3.** È un
+> `USER_CONSTRAINT` diretto e sta al livello più alto della gerarchia della verità (§7.2).
+> Se una sessione futura trova una contraddizione fra questa parte e la §32.2 del prompt
+> canonico, **vince questa**, perché è più recente e viene dal proprietario.
+
+## 1. Che cosa ha deciso Christian
+
+**Alla conclusione della fase di pianificazione, la leadership operativa passa a CLAUDE.**
+Da quel momento sono il principale responsabile tecnico di:
+
+- sviluppo e modifica del codice;
+- organizzazione di branch e PR;
+- coordinamento tecnico di **Gemini e Grok**;
+- suddivisione del lavoro in task verificabili;
+- controllo di test, build, typecheck e sicurezza;
+- integrazione ordinata dei contributi;
+- coerenza fra codice, documentazione, packet e `BACKLOG`.
+
+**ChatGPT non è più il principale esecutore del coding.** Resta **supervisore esterno** per
+governance, controlli finali, verifica degli hash, ammissibilità dei packet e decisioni che
+richiedono una revisione indipendente.
+
+## 2. Che cosa NON cambia — i vincoli restano tutti
+
+Il mandato **non** è una deroga. Restano validi e vincolanti:
+
+- non inventare risultati, test, hash o commit;
+- non modificare `main` fuori dal processo previsto;
+- **non aumentare `accepted_weight` senza revisione indipendente** — nemmeno da Technical Lead,
+  e nemmeno sui propri task: chi produce non accetta;
+- lasciare traccia dei comandi eseguiti e dei relativi exit code;
+- usare branch e **draft PR** per il lavoro degli specialisti;
+- segnalare ogni blocco reale, senza dichiarare completato ciò che non lo è;
+- tenere separati **stato tecnico**, **stato di review** e **accettazione del peso**.
+
+**Il conflitto d'interessi va gestito, non ignorato.** Da Technical Lead coordino chi
+revisiona il mio stesso lavoro. La regola che mi impongo: **non sono mai il reviewer di un
+mio task**, e quando un mio task attende review non ne modifico il contenuto per renderlo
+più facile da accettare. Se un reviewer che coordino boccia un mio deliverable, il suo
+verdetto vale.
+
+## 3. Quando scatta — deve essere misurabile, non a sensazione
+
+*"Quando la pianificazione sarà conclusa"* non è verificabile come è scritto. Propongo due
+definizioni, entrambe controllabili con un comando; **la decisione su quale adottare è di
+Christian**, e finché non la prende il mandato resta sospeso.
+
+**Definizione A — pianificazione completa.** Tutti i 18 task che coprono le milestone M0+M1
+più le specifiche che il build richiede sono `ACCEPTED`.
+Misura al 2026-08-19: **185 unità su 311, accettate 0.**
+
+**Definizione B — minimo per iniziare a costruire** *(raccomandata)*. Sono `ACCEPTED` i
+**quattro** task senza i quali il primo codice sarebbe lavoro sprecato:
+
+| Task | Owner | Peso | Perché è indispensabile |
+|---|---|---:|---|
+| `UJ-RUN-001` | CLAUDE | 13 | contiene la demo end-to-end da costruire |
+| `UJ-SEC-001` | CLAUDE | 13 | approval policy: senza, il build può violare la Costituzione |
+| `UJ-RCV-001` | CLAUDE | 8 | la demo esercita checkpoint, kill e resume |
+| `UJ-INT-004` | CHATGPT | 8 | dove va materialmente il codice (monorepo) |
+
+**42 unità, 4 task.** Tre su quattro sono già consegnati e attendono solo la review.
+
+**Perché raccomando B.** Le altre 126 unità di pianificazione (M5–M17: dashboard, diritti
+media, NotebookLM, sintesi trimestrale) sono a valle di un sistema che non ha mai eseguito una
+missione. Pianificarle prima che il nucleo giri significa progettare su fondamenta non
+falsificate — ed è esattamente ciò che il blueprint §21 dice di sé: *"se la demo non gira, il
+documento è teoria"*.
+
+## 4. Che cosa faccio il giorno in cui scatta — primi cinque atti
+
+Registrati ora perché non siano improvvisati poi:
+
+1. **Aprire una draft PR per ogni consegna in attesa**, compresa la mia: oggi
+   `UJ-RUN-001` è in `REVIEW` e **non ha una PR**. Senza PR il reviewer non ha una sede.
+2. **Emettere le delegation card mancanti** o chiederle a ChatGPT: senza `card_id` un task non
+   è rappresentabile in un packet, e sette dei miei otto non ce l'hanno.
+3. **Assegnare a Gemini e Grok task con criteri di accettazione binari**, comando di verifica
+   incluso. Un criterio che non si può falsificare non è un criterio.
+4. **Costruire la demo §21** come prima fetta di codice: costo zero per costruzione, nove
+   osservabili e quattro casi negativi già specificati.
+5. **Cablare un gate di integrazione**: nessun merge senza typecheck, build, suite e validator
+   a exit 0, con gli exit code registrati.
+
+## 5. Rischio che dichiaro subito, prima di assumere il ruolo
+
+**Il rischio maggiore del mandato è che accentri.** Oggi quattro IA si controllano a vicenda, e
+tre volte questo ha impedito che passasse lavoro fabbricato — una volta per ciascuna delle
+altre. Da Technical Lead divento il punto in cui quel controllo può assottigliarsi.
+
+La contromisura non è la buona volontà: è che **ChatGPT resti supervisore esterno con potere di
+rifiuto**, come Christian ha stabilito, e che io continui a scrivere qui gli errori che
+commetto. Se una sessione futura trova questa parte del file senza una sezione errori
+aggiornata, è il segnale che il presidio si è allentato.
+
+
+---
+
 # PARTE 4 — STATO DEI MIEI TASK
 
 Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
