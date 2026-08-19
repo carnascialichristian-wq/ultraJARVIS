@@ -6,7 +6,7 @@
 | Milestone | M0 / M2 |
 | Owner | CLAUDE (Runtime, Security & Skill Architect) |
 | Reviewer | GEMINI |
-| Stato | **BLOCKED** — vedi nota di stato qui sotto |
+| Stato | **REVIEW** — attende la review di GEMINI. Vedi nota di stato |
 | Peso | 13 |
 | Data class | C1 INTERNAL |
 | Side effect | INTERNAL_WRITE (solo file su branch dedicato) |
@@ -16,17 +16,26 @@
 | Contratti collegati | `packages/contracts/src/runtime/*.ts` |
 | Threat notes | `docs/threat-models/RUNTIME_THREAT_NOTES.md` |
 
-> **Nota di stato — perche' BLOCKED e non REVIEW.** Questo documento ha dichiarato `REVIEW`
-> dalla sessione 1 alla sessione 5. Non e' piu' vero. La delegation card
-> `UJ-CARD-RUN-001-CLAUDE` **non esiste** al commit che il suo stesso
-> `repository_scope.read_ref` nomina, `3611b1b400cf57b5021bab228a3de9470d6eca5c`; entra nella
-> storia con `d48e1e8519a8d7af90ea44e770f0db7fd3938fb3`, dodici minuti dopo. Per decisione del
-> proprietario, una card non disponibile al `read_ref` produce `BLOCKED` invece di procedere.
+> **Nota di stato — 2026-08-19, il blocco e' stato sciolto.** Questo documento ha dichiarato
+> `BLOCKED` dalla sessione 5 fino a oggi, e prima ancora `REVIEW` per un motivo sbagliato. Ora
+> dichiara `REVIEW` perche' **tutte le condizioni di ammissibilita' sono verificate**, non
+> perche' si sia smesso di controllarle.
 >
-> Gli artefatti tecnici sono completi e verificati: **non e' questo a essere in dubbio**. Il
-> blocco e' sull'ammissibilita' della consegna, non sulla sua qualita', e si scioglie
-> correggendo il `read_ref` della card — dopodiche' questi stessi byte diventano una consegna
-> `REVIEW` senza altre modifiche.
+> **Storico del blocco, per chi ha visto le versioni precedenti.** La delegation card
+> `UJ-CARD-RUN-001-CLAUDE` non esisteva al commit che il suo stesso `read_ref` nominava
+> (`3611b1b4`); entrava nella storia dodici minuti dopo, con `d48e1e85`. CHATGPT ha corretto il
+> `read_ref` a `25b1b7d53ff5` con `4b63b94`, e ha poi ripristinato i sedici hash degli input
+> pinati con `6ba3a2b` dopo che un giro intermedio li aveva sostituiti con valori che non
+> corrispondevano a nulla.
+>
+> **Le sei condizioni, tutte verificate per esecuzione il 2026-08-19:** la card esiste al
+> proprio `read_ref`; il `read_ref` e' raggiungibile da `origin/main`; i quattro input pinati
+> coincidono, 4 su 4; `validate-council-packets.mjs` passa a exit 0 su `origin/main`; i criteri
+> della card coincidono con quelli del `BACKLOG.json` (`AC-01`…`AC-05`); il task e' `READY` nel
+> ledger, reviewer GEMINI.
+>
+> **`REVIEW` non significa accettato.** Il peso accettato resta **0/13** e ci resta finche'
+> GEMINI non si esprime: e' la disciplina del §7.3, non una formalita'.
 
 > **Nota di provenienza — aggiornata, la versione precedente era scaduta.**
 > Questo blueprint è stato scritto in sessione 1 contro il commit `b8a7697` del branch

@@ -1,10 +1,10 @@
-# HANDOFF — UJ-RUN-001 (CLAUDE) — consegna **BLOCKED**
+# HANDOFF — UJ-RUN-001 (CLAUDE) — consegna **REVIEW**
 
 | Metadato | Valore |
 |---|---|
 | Task | `UJ-RUN-001` — owner **CLAUDE**, reviewer **GEMINI**, peso **13** |
 | Card | `UJ-CARD-RUN-001-CLAUDE` |
-| **Stato proposto** | **`BLOCKED`** — non `REVIEW`, non `DONE` |
+| **Stato proposto** | **`REVIEW`** — non `DONE`. Il peso accettato resta **0/13** |
 | **Peso accettato** | **0 / 13, invariato** |
 | Branch di consegna | `agent/uj-run-001-blueprint-20260818` |
 | `source_commit_sha` | **registrato nel `ResponsePacket`**, non qui — vedi §0.2 |
@@ -50,13 +50,19 @@ consegna** (`3611b1b4`, `d48e1e85`): entrambe le categorie sono stabili.
 
 > **Le sei righe di questa tabella sono STORIA, non stato attuale.** Sono qui perché un
 > lettore che avesse già visto la versione precedente sappia esattamente che cosa non vale
-> più. Nessun valore della colonna "diceva" è oggi corretto.
+> più.
+>
+> **Attenzione alla riga 3**, che è l'unica ad aver fatto un giro completo: lo stato è tornato
+> a `REVIEW`, cioè al valore che la versione di sessione 1 dichiarava. **Non è un ritorno al
+> punto di partenza.** Allora `REVIEW` era asserito senza che le condizioni di ammissibilità
+> fossero mai state controllate; oggi è il risultato di sei controlli eseguiti (§1.-1). Stessa
+> parola, contenuto opposto — ed è esattamente il motivo per cui questa tabella esiste.
 
 | # | Diceva (versione precedente, **non più valida**) | Vale invece |
 |---:|---|---|
 | 1 | Branch `claude/ultrajarvis-repo-analysis-li6vvj` | `agent/uj-run-001-blueprint-20260818` |
 | 2 | Base `main@9d2a93d`; prompt letto da `agent/ultrajarvis-master-prompt-v1@b8a7697` | il prompt canonico è su `main`; l'hash è invariato e riverificato |
-| 3 | Stato `REVIEW`, «manca l'accettazione di GEMINI» | **`BLOCKED`**: GEMINI non deve nemmeno iniziare (§1) |
+| 3 | Stato `REVIEW`, «manca l'accettazione di GEMINI» | fu corretto in **`BLOCKED`** (card non disponibile al `read_ref`), e dal 2026-08-19 è di nuovo **`REVIEW`** — ma per condizioni **verificate**, non per inerzia. Vedi §1.-1 |
 | 4 | «33 test, 33 pass» per `runtime-invariants` | **36** per quel file, **140** per la suite (§3) |
 | 5 | Tabella task con transizioni dichiarate come avvenute (`UJ-RCV-001` BLOCKED→READY, `UJ-CLD-001` IN_PROGRESS…) | nessuna transizione è mai stata applicata al ledger: §5 distingue **stato misurato** e **stato proposto** |
 | 6 | `R-RUN-01`, `R-RUN-03`, `R-RUN-04` come aperti e senza mitigazione | due chiusi, uno chiuso parzialmente (§7) |
@@ -146,7 +152,50 @@ esisterebbe.
 **Il blocker non è mio e non è risolvibile dal mio portafoglio.** La card appartiene a
 CHATGPT.
 
-### 1.0 AGGIORNAMENTO 2026-08-19 — il blocco è cambiato di natura, non è sciolto
+### 1.-1 AGGIORNAMENTO 2026-08-19, secondo — **IL BLOCCO È SCIOLTO**
+
+CHATGPT ha completato la correzione con `6ba3a2b` e `27b7673` su `main`. **Tutte le condizioni
+di ammissibilità sono ora verificate**, e questa consegna passa da `BLOCKED` a `REVIEW`.
+
+Verificato per esecuzione, non per lettura, il 2026-08-19:
+
+| # | Condizione | Esito |
+|---:|---|---|
+| 1 | la card esiste al proprio `read_ref` `25b1b7d53ff5` | **sì**, exit 0 |
+| 2 | il `read_ref` è raggiungibile da `origin/main` | **sì**, exit 0 |
+| 3 | i quattro input pinati coincidono al `read_ref` | **4 su 4** |
+| 4 | `validate-council-packets.mjs` su `origin/main` | **PASS**, exit 0 |
+| 5 | criteri della card ≡ criteri del `BACKLOG.json` | **sì**, `AC-01`…`AC-05` |
+| 6 | stato nel ledger | `READY`, reviewer GEMINI, accettato 0/13 |
+
+**Che cosa ha fatto CHATGPT, in tre passi.** `4b63b94` ha portato il `read_ref` delle quattro
+card a un commit che le contiene ed è raggiungibile da `main`. Lo stesso commit aveva però
+sostituito i sedici hash degli input pinati con valori che non corrispondevano a nulla, e
+l'avevo segnalato: `6ba3a2b` li ha **ripristinati**, verificati da me 16 su 16. Infine
+`27b7673` ha chiuso **entrambi** i rilievi che avevo fatto sul validatore — ha rimosso
+l'esenzione del piano canonico dal controllo di integrità, e ha spostato il calcolo
+dall'albero di lavoro al commit pinnato (`sha256AtRef(artifact.ref, readRef)`). Quest'ultima
+non l'avevo nemmeno chiesta come bloccante: l'avevo definita "rilievo minore". È stata chiusa
+lo stesso.
+
+**`REVIEW` non è accettazione.** Il peso accettato resta **0/13** e ci resta finché GEMINI non
+si esprime. §7.3: `completed_weight` non si muove per cambio di stato. Il packet propone
+`0 → 0`, e il validatore rifiuta per costruzione un packet che proponga la propria accettazione.
+
+**Che cosa NON è cambiato nel merito**: nessun byte del blueprint, dei contratti, dei test o
+delle threat notes. Le uniche modifiche di questo giro sono le **dichiarazioni di stato** nei
+quattro punti in cui vivono (§0.4), più i documenti di consegna. Il lavoro tecnico consegnato è
+lo stesso di cinque giri fa, come promesso: *questi stessi byte diventano `REVIEW` cambiando
+solo lo stato*.
+
+**Per GEMINI, che ora può cominciare:** la checklist è §13, i tre comandi di verifica sono al
+§3, e il bilancio onesto di ciò che **non** è dimostrato è al §4 — 22 prove specificate e non
+eseguite, 11 `PENDING`, 33 in totale, e la demo end-to-end della §21 non eseguita. Non
+scoprirlo dalla review: è dichiarato.
+
+---
+
+### 1.0 STORICO — il blocco intermedio, quando cambiò natura (chiuso da `6ba3a2b`)
 
 CHATGPT ha corretto le card con il commit `4b63b94` su `main`. **Il difetto descritto nella
 §1.1 qui sotto è chiuso**, e la §1.1 va letta come storia: tutte e quattro le card dichiarano

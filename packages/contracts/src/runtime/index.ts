@@ -4,7 +4,7 @@
  * Task: UJ-RUN-001 (CLAUDE).
  *
  * Contract maturity: PROPOSAL — these types have not been through the §9.3 gate.
- * Delivery status:   BLOCKED — see RUNTIME_CONTRACTS_PROVENANCE below.
+ * Delivery status:   REVIEW — see RUNTIME_CONTRACTS_PROVENANCE below.
  * The two are different axes and used to be conflated in this header: a contract can be
  * mature and its delivery inadmissible, or the reverse.
  * Design rationale: docs/architecture/RUNTIME_BLUEPRINT.md
@@ -30,19 +30,21 @@ export const RUNTIME_CONTRACTS_VERSION = "0.1.0" as const;
 /**
  * Provenance of this contract set, for the Program OS ledger.
  *
- * `status` is the DELIVERY status proposed by the ResponsePacket, and it is BLOCKED:
- * the delegation card UJ-CARD-RUN-001-CLAUDE does not exist at the commit its own
- * repository_scope.read_ref names (3611b1b4); it enters the history twelve minutes
- * later, at d48e1e85. This constant said "REVIEW" until session 6, which made the one
- * machine-readable copy of the status contradict the packet that hashes this file.
- * It is not a claim about the quality of the contracts, which typecheck and are covered
- * by 36 executable invariants.
+ * `status` is the DELIVERY status proposed by the ResponsePacket. It is REVIEW as of
+ * 2026-08-19, after CHATGPT corrected the delegation card: the card now exists at its own
+ * read_ref, that ref is reachable from origin/main, the four pinned inputs match 4 of 4,
+ * and validate-council-packets.mjs passes at exit 0. It read BLOCKED while those
+ * conditions failed, and REVIEW before that for the wrong reason.
+ *
+ * REVIEW is not acceptance: accepted weight stays 0/13 until GEMINI rules. This constant
+ * is the only machine-readable copy of the delivery status, so it must be moved in the
+ * same commit as the packet, never afterwards.
  */
 export const RUNTIME_CONTRACTS_PROVENANCE = {
   taskId: "UJ-RUN-001",
   owner: "CLAUDE",
   reviewer: "GEMINI",
-  status: "BLOCKED",
+  status: "REVIEW",
   canonicalPromptSha256:
     "a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87",
 } as const;
