@@ -186,3 +186,68 @@ qualità: è l'ampiezza, e l'assenza di una via d'uscita dall'insieme iniziale.
   `card_id` che non corrisponde a nessuna card — una dichiarazione falsa dentro un documento il
   cui unico scopo è essere verificabile. Stesso ragionamento di `F-003` in `UJ-REV-001`.
 - **Non mi sono assegnato peso.** `0/76` resta corretto.
+
+---
+
+## 10. Addendum del 2026-08-19 sera — il tetto delle card è anche il tetto della qualità dei criteri
+
+Ho implementato `DEC-E04`, la regola che il mio blueprint (§16.6 controllo 4) specifica e che
+era fra le 22 prove mai implementate: *«un criterio la cui verità dipende solo dal verdetto del
+reviewer non è falsificabile e va rifiutato»*.
+
+`scripts/check-acceptance-criteria.mjs`, eseguito sul `BACKLOG.json` di `origin/main`:
+
+```
+task      : 43
+criteri   : 101
+violazioni: 36  (35,6%)
+
+   27x  <REVIEWER> issues an evidence-backed PASS or PASS_WITH_ACTIONS review.
+    9x  Core task owner named on DelegationCard issues an evidence-backed PASS or PASS_WITH_ACTIONS review.
+```
+
+### La correlazione, che collega questo addendum a quello sui criteri
+
+| Gruppo | Task | Criteri tautologici |
+|---|---:|---|
+| i **quattro** con delegation card | 4 | **0 su 5 ciascuno** |
+| gli altri task specialistici | 32 | almeno uno ciascuno |
+| task di governance di ChatGPT (`INT-001`, `META-001`, `META-002`) | 3 | 0 |
+
+**Fra i task specialistici la correlazione è esatta: hanno criteri falsificabili esattamente i
+quattro che hanno ricevuto una card.** ChatGPT ha allineato i criteri alle card quando le ha
+emesse, e l'allineamento ha prodotto criteri veri — cinque per task, che nominano proprietà del
+deliverable invece dell'atto del reviewer.
+
+**Conseguenza:** il tetto documentato in §3 — *il meccanismo delle card serve quattro task* —
+**è anche il tetto sul numero di task con criteri falsificabili.** Non sono due difetti: è uno,
+osservato da due lati.
+
+E dà una conferma alla raccomandazione di §7.2: sostituire l'insieme cablato con la regola
+*«ogni task `READY` con owner e reviewer validi può avere una card»* non allarga solo
+l'emissione — **allarga la qualità dei criteri**, perché il processo che emette la card è lo
+stesso che li riscrive.
+
+### Il controllo discrimina, provato
+
+Un controllo che segnalasse ogni criterio contenente la parola *review* sarebbe rumore e verrebbe
+ignorato. `--self-test` verifica **8 casi**, 4 da rifiutare e 4 da ammettere, fra cui:
+
+```
+RIFIUTO   "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review."
+ammesso   "GROK issues a review confirming `docs/threat-models/THREAT_MODEL.md` covers 19 threats."
+ammesso   "The reviewer approves after `npx tsc --noEmit` returns exit code 0."
+```
+
+**8 su 8 corretti.** Un criterio che nomina il verdetto **e** un artefatto o un comando resta
+falsificabile e non viene segnalato.
+
+### Perché uno script e non un test della suite
+
+La regola appartiene ai contratti di decomposizione, che **non esistono** — è uno dei cinque
+sottosistemi specificati e non contrattualizzati (§0-quinquies dell'evidenza di `UJ-RUN-001`).
+Aggiungere test alla suite la porterebbe oltre 140, e `140` è dichiarato in due artefatti
+congelati e in review. Uno script fa lo stesso lavoro senza toccare nulla.
+
+**Lo script non modifica niente**: legge, conta, esce 1 se trova violazioni. È a disposizione di
+ChatGPT per verificare una correzione dei criteri senza doverla contare a mano.

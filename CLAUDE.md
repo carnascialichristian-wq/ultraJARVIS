@@ -4213,6 +4213,67 @@ implementate, le 11 `PENDING` pure — **33 in totale**. Il fatto che stiano fuo
 **non le rende meno mancanti: le colloca.**
 
 
+
+## Sessione 6, ventunesima parte — ho implementato una delle 22 prove, e collega due scoperte
+
+Avendo appena stabilito che le §16-21 specificano cinque sottosistemi senza contratto, ho
+guardato **quali** delle 22 prove valga la pena implementare adesso. Una spicca: `T-DEC-4`,
+cioè `DEC-E04` — *«un criterio la cui verità dipende solo dal verdetto del reviewer non è
+falsificabile e va rifiutato»*.
+
+**È la difesa meccanica contro il difetto che oggi blocca il programma**, e il blueprint la
+specifica citando l'osservazione: *"41 criteri su 43 task hanno la forma «`<REVIEWER>` issues an
+evidence-backed PASS or PASS_WITH_ACTIONS review»"*.
+
+### Implementata come script, non come test, e il motivo è la suite congelata
+
+`scripts/check-acceptance-criteria.mjs`. La regola appartiene ai contratti di decomposizione, che
+non esistono; e aggiungere test porterebbe la suite oltre **140**, dichiarato in due artefatti
+congelati e in review. Uno script fa lo stesso lavoro senza toccare niente, e resta usabile da
+ChatGPT per verificare una correzione senza contarla a mano.
+
+### Misurato su `origin/main`
+
+```
+task 43 · criteri 101 · violazioni 36 (35,6%)
+   27x  <REVIEWER> issues an evidence-backed PASS or PASS_WITH_ACTIONS review.
+    9x  Core task owner named on DelegationCard issues an evidence-backed ...
+```
+
+**Il blueprint diceva 41, oggi sono 36.** Non è un errore del blueprint: il difetto **sta
+calando** mentre ChatGPT allinea i criteri alle card.
+
+### La correlazione, che è il risultato vero
+
+| Gruppo | Task | Criteri tautologici |
+|---|---:|---|
+| i **quattro** con delegation card | 4 | **0 su 5 ciascuno** |
+| gli altri task specialistici | 32 | almeno uno ciascuno |
+| task di governance di ChatGPT | 3 | 0 |
+
+**Fra i task specialistici la correlazione è esatta.** Hanno criteri falsificabili esattamente i
+quattro che hanno ricevuto una card, perché il processo che emette la card è lo stesso che
+riscrive i criteri.
+
+**Quindi il tetto delle card è anche il tetto sulla qualità dei criteri.** Non sono due difetti
+che ho trovato separatamente oggi: è **uno solo, osservato da due lati**. E rafforza la
+raccomandazione: sostituire l'insieme cablato con una regola non allarga solo l'emissione,
+allarga la falsificabilità.
+
+### Il controllo discrimina, e l'ho provato prima di crederci
+
+Un controllo che segnalasse ogni criterio contenente *review* sarebbe rumore, e un gate ignorato
+non è un gate. Il `--self-test` verifica **8 casi**, 4 da rifiutare e 4 da ammettere:
+
+```
+RIFIUTO   "GROK issues an evidence-backed PASS or PASS_WITH_ACTIONS review."
+ammesso   "GROK issues a review confirming `…/THREAT_MODEL.md` covers 19 threats."
+ammesso   "The reviewer approves after `npx tsc --noEmit` returns exit code 0."
+```
+
+**8 su 8.** Un criterio che nomina il verdetto **e** un artefatto resta falsificabile.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
