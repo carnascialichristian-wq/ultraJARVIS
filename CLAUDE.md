@@ -3645,6 +3645,68 @@ l'innesco **non ha una via d'uscita** — nessuno script estende l'insieme.
 invece di spostarsi da quattro a sei.
 
 
+
+## Sessione 6, decima parte — `UJ-SEC-001` è ora revisionabile, ed è la chiave di volta
+
+Chiuso il lavoro sulle card, ho cercato la cosa con più leva rimasta. È `UJ-SEC-001`: `READY`,
+**nessuna dipendenza, nessun blocker**, reviewer GROK, e `UJ-MCP-001` (8) più `UJ-SKL-001` (13)
+sono `BLOCKED` proprio su di lui. Accettarlo sblocca **21 unità già consegnate** oltre alle sue
+13. Ed è uno dei tre task dell'innesco `B′`.
+
+**Il difetto era che nessuno poteva revisionarlo.** I sei artefatti sono su `main` da giorni —
+1.709 righe — e **non è mai esistito un pacchetto di consegna**: nessuna evidenza per criterio,
+nessun elenco di hash, nessun documento che dica al reviewer cosa guardare e contro cosa.
+`UJ-RUN-001` ci ha messo cinque giri ad avere quel materiale; qui la ricetta era nota.
+
+### Che cosa ho consegnato
+
+`docs/program/packets/UJ-SEC-001-AC-EVIDENCE.md` e
+`prompts/handoffs/CLAUDE-SEC-001-DELIVERY-20260819.md`. Hash calcolati a `origin/main`, cioè
+**dal punto di vista di chi legge** e non dal mio albero — trappola 29 applicata in positivo.
+
+Numeri, tutti ricalcolati e con il comando che li riproduce **eseguito**, non solo scritto:
+
+| Misura | Valore |
+|---|---|
+| minacce con `S/P/R`, Vettore, Impatto, Controlli, Residuo, Owner | **19/19 su tutti e sei i campi** |
+| distribuzione severità | 6 `CRITICA` · 8 `ALTA` · 5 `MEDIA` |
+| regole di override: documento / codice / test | **10 / 10 / 10** |
+| suite approval policy | **28 pass, 0 fail** |
+| difese §17 | **9 progettate · 3 parziali · 3 assenti** |
+| critica: lacune / articoli / proposte | **3 / 12 / 12** |
+
+### Due correzioni a dati miei, trovate rimisurando
+
+- **Le difese di §17 sono 9/3/3, non 8/3/4** come dice `CLAUDE.md` sessione 2. Prevale la
+  misura, ed è scritta nell'evidenza perché nessuno ricopi la cifra vecchia.
+- **Quarto falso positivo di un mio grep in una giornata.** Contando le minacce con la riga di
+  severità ottenevo **1 su 19**, e per un momento ho creduto che il mio stesso threat model
+  fosse quasi vuoto. Causa: `TH-01` usa l'etichetta estesa
+  `**Severità / Probabilità / Rilevabilità**`, le altre 18 l'abbreviazione `**S/P/R**`. Tutte e
+  19 la portano. **Ho messo l'avvertenza nel blocco per Grok**, perché è esattamente il controllo
+  che rifarà lui.
+
+### Che cosa NON ho fatto, e perché non è una dimenticanza
+
+**Nessun `ResponsePacket`.** `card_id` è obbligatorio e `UJ-SEC-001` non ha una card — è il
+tetto documentato nella nona parte. Inventare un `card_id` sarebbe una dichiarazione falsa in un
+documento il cui unico scopo è essere verificabile (`F-003`). **Ma questo non impedisce la
+review**: il packet muove il ledger, il materiale per giudicare è consegnato. Se ChatGPT emette
+la card, il packet si genera dagli stessi byte in pochi minuti.
+
+**`AC-02` l'ho dichiarato non soddisfacibile da me** — nomina l'atto del reviewer, non una
+proprietà dell'artefatto — invece di lasciarlo sembrare una mia omissione.
+
+### La sezione che ho scritto contro me stesso
+
+§5 dell'evidenza e §7 della consegna. I test citati nel threat model sono **pendenti, non
+eseguiti**: i 28 verdi coprono la approval policy, non le 19 minacce, e chi leggesse "28 test"
+come copertura del threat model leggerebbe male. `TH-10` resta parzialmente aperta. `OV-7`
+impone un rollback plan che nessuno verifica. E ho chiesto esplicitamente a Grok di **non**
+assegnarmi peso senza aver eseguito i comandi: un `PASS` basato sulla lettura sarebbe `TH-10`
+applicata alla review del documento che descrive `TH-10`.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4001,6 +4063,33 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AN) 2026-08-19 — UJ-SEC-001 E' ORA REVISIONABILE. GIA' FATTO, NON RIFARE.
+     docs/program/packets/UJ-SEC-001-AC-EVIDENCE.md
+     prompts/handoffs/CLAUDE-SEC-001-DELIVERY-20260819.md
+     E' LA CHIAVE DI VOLTA: READY, nessuna dipendenza, nessun blocker, reviewer
+     GROK. UJ-MCP-001 (8) e UJ-SKL-001 (13) sono BLOCKED su di lui: accettarlo
+     sblocca 21 unita' gia' consegnate oltre alle sue 13. E' anche uno dei tre
+     task dell'innesco B'.
+     Il difetto era che NESSUNO POTEVA REVISIONARLO: sei artefatti su main da
+     giorni, 1709 righe, e nessun pacchetto di consegna.
+     NUMERI, ogni comando ESEGUITO e non solo scritto:
+       19/19 minacce con S/P/R, Vettore, Impatto, Controlli, Residuo, Owner
+       severita': 6 CRITICA, 8 ALTA, 5 MEDIA
+       regole OV-*: 10 nel documento, 10 nel codice, 10 nei test
+       approval-policy.test.mjs: 28 pass, 0 fail
+       difese §17: 9 progettate, 3 parziali, 3 assenti
+       critica: 3 lacune, 12 articoli, 12 proposte
+     DUE CORREZIONI A DATI MIEI:
+       - le difese sono 9/3/3, NON 8/3/4 come dice CLAUDE.md sessione 2;
+       - contando le minacce con la riga di severita' ottenevo 1 SU 19 e ho
+         creduto per un attimo che il mio threat model fosse vuoto. TH-01 usa
+         "**Severità / Probabilità / Rilevabilità**", le altre 18 "**S/P/R**".
+         Tutte e 19 ce l'hanno. L'avvertenza e' NEL BLOCCO PER GROK: e'
+         esattamente il controllo che rifara' lui. Usare 'Residuo', uniforme.
+     NESSUN ResponsePacket, e non e' una dimenticanza: card_id e' obbligatorio e
+     UJ-SEC-001 non ha una card (vedi punto AM). NON impedisce la review.
+     AC-02 dichiarato NON soddisfacibile da me: nomina l'atto del reviewer.
 
   AM) 2026-08-19 — PERCHE' 6 MIEI TASK NON HANNO UNA CARD. CORREGGE LA SESSIONE 4.
      docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md
