@@ -165,26 +165,53 @@ La fonte autoritativa resta `CLAUDE.md`.
 | UJ-CLD-001 — Verifica accessi Claude | 8 | sì | review **Gemini** |
 | UJ-RCV-001 — Checkpoint/retry/recovery | 8 | sì | review **ChatGPT** |
 | UJ-REV-001 — Review del Program OS | 5 | sì | review **Christian** |
-| UJ-REV-002 — Security review Website Team | 8 | **no** | `UJ-INT-007`, DEFERRED a M10 |
+| UJ-REV-002 — Security review Website Team | 8 | **no** | **è esso stesso `DEFERRED` a M10**, e dipende da `UJ-INT-007` (anch'esso DEFERRED M10) |
 
 **`0/76` accettato è CORRETTO** (`PROGRESS.md` regole 2 e 4). Sette task su otto sono
-consegnati; nessun reviewer si è ancora espresso. **Non c'è una sola unità che io possa
-portare a casa lavorando di più.**
+consegnati; **nessun reviewer si è ancora espresso su nessuno dei miei.** **Non c'è una sola
+unità che io possa portare a casa lavorando di più.**
 
-### Il collo di bottiglia, e non è mio
+Da sessione 6, ognuno dei sette consegnati ha anche un **pacchetto di evidenza per criterio**,
+con un controllo eseguito per ciascun criterio e gli hash calcolati a `origin/main`:
+`docs/program/packets/UJ-*-AC-EVIDENCE.md`. Se un reviewer si presenta, non deve ricostruire
+niente. **Non rifare quei pacchetti.**
 
-Il ledger si muove sui `ResponsePacket`. Per emetterne uno serve un `card_id`, e le
-**delegation card esistenti sono quattro in tutto** — una sola mia. ChatGPT mi ha assegnato
-otto task ed emesso una card.
+### Il collo di bottiglia — misurato in sessione 6, e NON è quello che credevo
 
-- **Fatto:** `docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json`, validato, 15 hash verificati.
-- **Serve da ChatGPT:** sette delegation card. Messaggio pronto da inoltrare in
-  `prompts/handoffs/CLAUDE-TO-CHATGPT-CARDS-REQUEST-20260818.md`.
+Il ledger si muove sui `ResponsePacket`, che richiedono un `card_id`. **Delegation card
+esistenti: quattro**, una sola mia.
+
+**La diagnosi di sessione 4 era incompleta.** Dicevo *"servono sette card da ChatGPT"*. Misurato
+eseguendo il suo validatore: **il meccanismo delle card è cablato a quattro task**
+(`expectedTargets`, `validate-council-packets.mjs:443-447`), e un task `BLOCKED` **non può
+riceverne una** perché lo schema impone `task_snapshot.status` come `const: "READY"`.
+
+Sui 43 task: 29 hanno un reviewer accettato dallo schema (14 no), **6 sono `READY`**, **4 sono
+ammessi da `expectedTargets`**, e **4 card esistono**. **ChatGPT ha già emesso una card per ogni
+task che può averne una.** Non è in ritardo: è al tetto.
+
+- **Emettibili subito, entrambe mie:** `UJ-SEC-001` (13) e `UJ-CLD-001` (8) — 21 unità.
+  Card già scritte in `prompts/handoffs/CLAUDE-PROPOSED-CARDS-20260819.md`.
+- **Richiedono tre modifiche nei file di ChatGPT**, non un file solo. Dettaglio in
+  `docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md`.
+- ⚠️ `prompts/handoffs/CLAUDE-TO-CHATGPT-CARDS-REQUEST-20260818.md` è **SUPERATO**: chiedeva
+  sette card, quattro impossibili. **Non inoltrarlo.**
+
+### E il blocco che sta un anello più avanti
+
+**Nulla, nel repository, applica una transizione di stato proposta.** Il mio packet
+`UJ-RUN-001` è valido e propone `REVIEW`; il `BACKLOG.json` dice ancora `READY`. Lo stesso per
+`UJ-CAP-001` di Gemini. Quindi nessun `ReviewResult` è importabile
+(`validate-council-packets.mjs:347` accetta solo task in `REVIEW`) e **nessun peso può essere
+accettato da nessuno**. Documentato con la correzione in
+`docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`.
 
 ### Doveri da reviewer (non contano nelle 76 unità)
 
-Sono reviewer di 8 task altrui. Uno solo è azionabile: **UJ-CAP-001** (Gemini), in attesa
-del reinvio dopo il mio pre-verdetto `CHANGES_REQUIRED`.
+Sono reviewer di 8 task altrui. **`UJ-CAP-001` (Gemini) è stato revisionato il 2026-08-19**:
+`FAIL`, 3 criteri su 5 — `docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260819.md`. Cinque
+correzioni chieste, tre di contenuto minimo. **Tutti i verdetti precedenti su `UJ-CAP-001` sono
+superati**: il registro è stato riscritto.
 
 ### Findings di sicurezza aperti su `main`
 
@@ -196,8 +223,20 @@ del reinvio dopo il mio pre-verdetto `CHANGES_REQUIRED`.
 | **S-16** | Record di memoria senza provenienza; il planner ora li rilegge e li mette nei piani | metà catena chiusa, **non sfruttabile oggi**; è di Gemini (`UJ-MEM-001`) |
 | **S-02 · S-06 · S-07** | ammissione parziale, automazione UI nel catalogo, nessun evento `tool.*` | aperti |
 
-Dettaglio completo con comandi di riproduzione: `docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`.
-Correzioni applicabili per Grok: `docs/threat-models/GROK_FIX_LIST.md` (FIX-1..FIX-11).
+**Stato consolidato al 2026-08-19, riverificato leggendo il codice su `origin/main`:**
+**12 findings chiusi, 1 superato, 1 parziale, 6 aperti** (`S-06` è una decisione di policy, non
+un bug). **`S-03` e `S-15`, che i miei documenti davano per non chiusi, lo sono** — la mia lista
+sovrastimava di un terzo il lavoro residuo di Grok.
+
+**E la terza porta a pagamento si è aperta:** `UJ_EMBEDDING=1` porta a una chiamata fatturabile
+via `core/memory.py`. Ora sono tre — planner, writer, embedding — e **`MODEL_PROVIDER=local` le
+chiude tutte e tre**, perché condividono il ponte. Misurato, senza chiamate reali:
+`docs/threat-models/probes/S-17-three-doors-probe.py`.
+
+Dettaglio con comandi di riproduzione: `docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
+(§19 le tre porte, §20 lo stato consolidato).
+Correzioni per Grok: `docs/threat-models/GROK_FIX_LIST.md` — **tabella di stato in cima**, restano
+`FIX-10`, `FIX-11`, `FIX-12`, `FIX-13`, e **`FIX-10` e `FIX-13` sono lo stesso ponte**.
 
 ### Decisione n. 7 — APPROVATA dal proprietario
 
@@ -207,36 +246,49 @@ endpoint tutti bloccati. **Su `main` non è ancora arrivata.**
 
 ---
 
-### Delta di sessione 5 — cosa è cambiato rispetto alla tabella qui sopra
+### Delta di sessione 6 — LEGGI QUESTO, il delta di sessione 5 è superato
 
-La tabella di stato dei task **non cambia nei numeri**: 7 su 8 hanno una consegna, `0/76`
-accettato, e resta corretto. Cambia lo stato di uno di quei sette e compare un ottavo fatto.
+**La tabella dei task non cambia nei numeri:** `0/76` accettato, e resta corretto. Cambiano tre
+fatti sostanziali.
 
-1. **La suite è 140, non 138.** Due test di regressione nuovi (`runtime` 34 → 36). Trovata e
-   chiusa la **seconda occorrenza dell'errore E6**: `depth-guard.ts` usava un byte NUL come
-   separatore nella chiave del rilevatore di cicli. Falsi positivi misurati, e il file era
-   **binario** per git e grep, quindi fuori da ogni audit testuale per quattro sessioni.
-2. **`UJ-RUN-001` ha un gate di consegna, e la prima consegna era incoerente.** Riconciliata
-   in due giri su un branch dedicato — `agent/uj-run-001-blueprint-20260818`, un solo
-   `source_commit_sha` (`79408449bd096613d2823efe6872ed424b757ee6`) per i quattro documenti.
-   **Resta `BLOCKED`, non `REVIEW`**: la delegation card non esiste al commit che il suo
-   stesso `read_ref` nomina. Correggere quel `read_ref` è l'unica cosa che manca — a quel
-   punto questi stessi byte diventano una consegna `REVIEW` senza altra modifica.
-3. **`S-17` e `S-19` sono ancora aperti su `main`** — terza verifica — e i candidati alla
-   correzione sono diventati **tre**. `v1` e `v2` sono byte-identici e **mergiarli oggi
-   cancellerebbe `embed()`**, rompendo `core/memory.py`. Raccomandazione e misure in
-   `docs/program/reviews/UJ-SEC-003-STRICT-ZERO-CANDIDATE-RECONCILIATION.md`.
-4. **Gemini ha rispedito `UJ-CAP-001` per la seconda e poi per la terza volta.** Il secondo
-   invio (`27b3717`) è stato revisionato: **FAIL, 3 criteri su 5**, era 1 su 5 nella
-   quarantena originale — `docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260818.md`. **Il
-   terzo invio (`0f1c536`) è stato trovato dalla trappola 11 a fine sessione e NON è ancora
-   aperto**: aggiunge il `ResponsePacket` che mancava (`F-001`). **È il primo task della
-   sessione che apri.**
+1. **`UJ-RUN-001` è `REVIEW`, non più `BLOCKED`.** Il blocco è stato sciolto dopo **cinque**
+   giri: ChatGPT ha corretto il `read_ref` delle quattro card, ripristinato gli hash pinati e
+   tolto l'esenzione del piano canonico dal controllo di integrità. **Sei clausole di
+   ammissibilità verificate su `origin/main`**, tutte a exit 0. **PR #18 aperta** per dare al
+   reviewer una sede. Il peso resta `0/13`: `REVIEW` non è accettazione.
+2. **Tutti i miei task consegnati hanno ora un pacchetto di evidenza per criterio**, con un
+   controllo **eseguito** per ciascuno e gli hash calcolati a `origin/main`, cioè dal punto di
+   vista di chi legge: `docs/program/packets/UJ-{RUN,SEC,CLD,MCP,RCV,SKL,REV}-001-AC-EVIDENCE.md`.
+   Sette su otto — l'ottavo (`UJ-REV-002`) **non può averne uno**: è `DEFERRED` a M10 e non ha
+   artefatti.
+3. **Il percorso critico è stato misurato** (`docs/program/CRITICAL_PATH_20260819.md`), e
+   contraddice una raccomandazione che avevo dato io. Vedi sotto.
 
-**Una cosa sola serve ancora da altri, ed è il vero collo di bottiglia:** ChatGPT deve
-correggere il `read_ref` della delegation card di `UJ-RUN-001` — la consegna tecnica è già
-pronta e ferma da lì. Resta anche aperto un merge del fix strict-zero su `main`, da parte di
-chi ne ha l'autorizzazione.
+### Il percorso critico, e in che ordine conviene muoversi
+
+**Stato: 43 task, 340 unità, 26 accettate (7,6%)** — e tutte e 26 sono task meta di ChatGPT.
+**Zero unità di lavoro specialistico accettate, da nessuno dei quattro.**
+
+| Task | Reviewer | Sblocca subito |
+|---|---|---:|
+| `UJ-CAP-001` | **CLAUDE** | **55** |
+| `UJ-RUN-001` | GEMINI | 34 |
+| `UJ-GGL-001` | GROK | 29 |
+| `UJ-RED-001` | CHATGPT | 29 |
+| `UJ-INT-001` | GROK | 23 |
+| `UJ-SEC-001` | GROK | **21 — l'ultimo dei sei** |
+
+**Raccomandazione:** i primi tre atti usano **tre reviewer diversi** e partono insieme —
+`UJ-RUN-001` a Gemini, `UJ-RED-001` a ChatGPT, `UJ-SEC-001` a Grok: **84 unità con tre
+inoltri**. `UJ-CAP-001` rende di più ma costa **due** giri, perché oggi è `FAIL`.
+
+> **Correzione a me stesso, da non ripetere:** avevo scritto a Grok che `UJ-SEC-001` era *"la
+> cosa con più leva"*. È l'ultimo dei sei. Resta vero — ed è un'altra affermazione — che è la
+> chiave di volta **del mio portafoglio**.
+
+**E il caveat che conta più di tutta la tabella:** finché manca l'anello che applica le
+transizioni, **anche sei review consegnate domani lascerebbero il contatore a 26 su 340**.
+L'anello va prima.
 
 ---
 

@@ -3925,6 +3925,44 @@ di usare il blocco come scusa per non consegnare.
 favorisce i task grandi.
 
 
+
+## Sessione 6, quindicesima parte — il prompt di avvio era scaduto nei punti che contano
+
+`AVVIO_NUOVA_SESSIONE.md` è il file che Christian incolla per aprire una sessione nuova: è il
+**primo** documento che una sessione legge. Dopo quattordici parti di lavoro l'ho riletto, ed era
+falso in tre punti portanti:
+
+| Diceva | È vero che |
+|---|---|
+| *"serve da ChatGPT: **sette** delegation card"* | ne sono emettibili **due**; le altre sono impossibili per schema |
+| *"`UJ-RUN-001` **resta `BLOCKED`**… correggere il `read_ref` è l'unica cosa che manca"* | è **`REVIEW`** da stamattina, con sei clausole verificate e una PR aperta |
+| *"correzioni per Grok: `FIX-1..FIX-11`"* | ne restano **quattro**, e due sono lo stesso ponte |
+
+Più un rimando a un documento che **ho marcato superato io stesso** poche ore prima
+(`CLAUDE-TO-CHATGPT-CARDS-REQUEST-20260818.md`): il prompt di avvio invitava a inoltrarlo.
+
+**È `E16` per la terza volta**, e stavolta l'ho cercata invece di inciamparci: la ricetta scaduta
+nel documento più letto. Le prime due volte è stata la ricetta dei test, e mi è costata una
+sessione a inseguire una regressione inesistente.
+
+### Che cosa ho riscritto
+
+Sostituito il *"delta di sessione 5"* con quello di sessione 6, aggiunto il percorso critico con
+la tabella di quanto sblocca ciascun task, aggiornato lo stato di sicurezza (12 chiusi, 6
+aperti, la terza porta), e messo l'avvertenza di **non inoltrare** la richiesta superata.
+
+E ci ho messo dentro anche la correzione contro me stesso: che avevo indicato `UJ-SEC-001` come
+la cosa con più leva e non lo è. Se resta solo in `CLAUDE.md`, la sessione che legge il prompt
+di avvio non la vede.
+
+### La lezione, che è di manutenzione e non di tecnica
+
+**Un'informazione duplicata in due punti diverge sempre, e diverge nel punto che nessuno
+rilegge.** La contromisura che applico da adesso: quando chiudo un blocco di lavoro,
+`AVVIO_NUOVA_SESSIONE.md` va riletto **cercando le affermazioni al presente**, non scorrendolo.
+Sono quelle che scadono.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
