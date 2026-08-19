@@ -3388,6 +3388,56 @@ riga: 0 righe del mio ramo assenti dal risultato, 0 righe di `origin/main` assen
 Dopo il merge: typecheck 0, build 0, **140/140 test**, i due validatori di ChatGPT exit 0, il mio
 packet `UJ-RUN-001` **PASS con 15/15 hash a `b2b32733`**.
 
+### La correzione che vale più del verdetto: il validatore ora dice la CAUSA
+
+`AC-05` di Gemini è fallito per un campo, e il mio validatore le avrebbe detto soltanto
+*"does not exist at 3611b1b4"*. Quel messaggio manda l'autore a guardare **l'artefatto**,
+mentre il difetto è nel **commit**. È la stessa cosa che è successa a me su `UJ-RUN-001`:
+due delle quattro IA hanno sbattuto sullo stesso muro, e il muro non spiegava sé stesso.
+
+Esteso `scripts/validate-response-packet.mjs` — script mio, scritto in sessione 4 — con due
+diagnosi. Dal checkout di Gemini adesso stampa:
+
+```
+- diagnosis: all 2 unresolved artifact(s) exist at HEAD but not at 3611b1b400cf: the source
+  commit predates the artifacts it cites. ... Do not copy it from your delegation card's
+  read_ref — the card pins what you must READ, not the commit you are DELIVERING.
+```
+
+**La seconda diagnosi è nata da un mio test mal costruito**, ed è la più utile delle due.
+Avevo scritto un caso avversariale per esercitare il ramo *"commit stantio"* puntando a un
+commit vecchio ma **raggiungibile**: a quel commit i 15 artefatti **esistono tutti**, quindi
+niente era irrisolto e il ramo che volevo provare non è mai stato eseguito. Il test non ha
+dato un risultato falso — ha scoperto un caso **scoperto**, e peggiore: un commit stantio che
+*risolve* tutto produce 8 `hash mismatch` e si legge come *"otto file manomessi"*.
+
+**È letteralmente quello che è successo tre giorni fa** con il repin di ChatGPT: sedici hash
+che non corrispondevano a nulla, e mi è costato provare sei convenzioni di hashing per
+escludere una spiegazione innocente. Ora il validatore lo dice da solo:
+
+```
+- diagnosis: all 8 declared hash(es) match the bytes at HEAD, so the artifacts are not
+  tampered with — source_commit_sha d8a3fffe80d5 is simply not the commit these hashes were
+  computed from. Repoint it before touching any artifact.
+```
+
+**Controllo negativo, che è la parte che rende la diagnosi sicura:** con un hash **davvero**
+falsificato e il commit corretto, la diagnosi **non scatta** — resta il solo `hash mismatch`.
+Una diagnosi che scusasse una manomissione vera sarebbe peggio di nessuna diagnosi. Provato:
+
+| Caso | Esito |
+|---|---|
+| packet di Gemini, dal suo checkout | 2 errori + **la diagnosi giusta** |
+| packet di Gemini, dal mio albero | 2 errori + diagnosi di raggiungibilità |
+| commit stantio che risolve tutto | 8 mismatch + **"non sono manomessi"** |
+| **hash falsificato, commit giusto** | 1 mismatch, **nessuna diagnosi** |
+| commit inesistente come oggetto | **"non è un oggetto in questo repository"** |
+| il mio packet valido | **PASS**, nessuna diagnosi |
+
+| # | Errore | Correzione |
+|---|---|---|
+| E37 | **Caso avversariale che non esercita il ramo che credevo.** Volevo provare *"commit stantio"* e ho scelto un commit dove gli artefatti esistono ancora: la diagnosi non è scattata e per un attimo l'ho letta come un difetto del codice nuovo | è la trappola 12 dal lato di chi scrive il test, terza occorrenza in questo programma. **Prima di concludere che un check non funziona, verifica di aver eseguito il ramo che volevi.** In questo caso il test mal costruito è stato utile — ha scoperto un caso scoperto — ma è stata fortuna, non metodo |
+
 ### Rilievo minore per ChatGPT, non un finding
 
 Il suo log su `gpt.md` dice che il pin è ora `d48e1e85`. Le card e la mission consegnate su
