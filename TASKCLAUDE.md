@@ -3432,7 +3432,15 @@ il programma**. È la cosa che vale la pena falsificare.
 `docs/program/packets/UJ-RCV-001-AC-EVIDENCE.md` (reviewer **CHATGPT**, 8)
 `docs/program/packets/UJ-SKL-001-AC-EVIDENCE.md` (reviewer **CHATGPT**, 13)
 
-**Tutti e otto i miei task hanno ora un pacchetto di consegna**, dove ieri ne aveva uno.
+**Sette dei miei otto task hanno ora un pacchetto di consegna**, dove ieri ne aveva uno.
+
+> **Correzione a me stesso, scritta il giorno stesso.** La prima stesura di questa sezione
+> diceva *"tutti e otto"*. **Era falso: erano sei.** L'ho scoperto contando dopo averlo già
+> scritto in un messaggio di commit — è la trappola 24, un numero dedotto invece che rimisurato
+> nel punto in cui lo si scrive, e l'ho commessa mentre passavo la giornata a correggerla negli
+> altri. Ora sono **sette**: ho aggiunto `docs/program/packets/UJ-REV-001-AC-EVIDENCE.md`.
+> L'ottavo, `UJ-REV-002`, **non può averne uno perché non ha artefatti**: è `DEFERRED` a M10 e
+> non è mai stato lavorabile.
 
 I tre sono `BLOCKED` — `MCP` e `SKL` su `UJ-SEC-001`, `RCV` su `UJ-RUN-001` — quindi non possono
 avere una delegation card né un `ResponsePacket`. **Ma il blocco è sul ledger, non

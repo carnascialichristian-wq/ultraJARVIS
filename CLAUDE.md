@@ -3817,6 +3817,50 @@ perché non si perda, non perché sia accettabile.
 `ADM-*`, 10 `TH-SF-*`, 14 stadi, 3 classi di contatore, 30 · 9 · 37 test verdi.
 
 
+
+## Sessione 6, tredicesima parte — ho scritto un numero falso e l'ho corretto entro l'ora
+
+Chiudendo i tre pacchetti della dodicesima parte ho scritto, in un **messaggio di commit** e in
+`TASKCLAUDE.md` §70, che *«tutti e otto i miei task hanno un pacchetto di consegna»*.
+
+**Era falso. Erano sei.** `UJ-REV-001` e `UJ-REV-002` non ne avevano nessuno.
+
+L'ho scoperto perché ho deciso di **verificare la mia stessa affermazione subito dopo averla
+scritta**, invece di passare oltre. È la trappola 24 — *rimisura ogni cifra nel punto in cui la
+scrivi* — commessa mentre passavo la giornata a correggerla agli altri: a Gemini per un campo
+costante, a ChatGPT per sedici hash, a me stesso per quattro grep sbagliati.
+
+**Non c'è niente di speciale nell'averla trovata**: il costo di scriverla era già pagato, era
+già in un commit pubblicato. La differenza fra questo caso e un errore consegnato è di minuti,
+non di metodo.
+
+### Correzione applicata
+
+- Scritto `docs/program/packets/UJ-REV-001-AC-EVIDENCE.md`: adesso sono **sette su otto**.
+- `UJ-REV-002` **non può avere un pacchetto**: non ha artefatti. Ed è la seconda correzione —
+  la mia memoria lo dava `BLOCKED`, ed è **`DEFERRED` a M10**. Diverso: non aspetta una
+  dipendenza che può arrivare domani, è programmato per dopo. Non è un impedimento da rimuovere.
+- Corretta la frase in `TASKCLAUDE.md` **con la nota dell'errore accanto**, non in silenzio.
+
+### E una misura che rafforza la raccomandazione su `UJ-SEC-001`
+
+Attraversando il grafo delle dipendenze per capire `UJ-REV-002`, ho ricavato la chiusura di
+`UJ-SEC-001`:
+
+```
+UJ-SEC-001 (READY, 13, CLAUDE)
+  ├─ UJ-SKL-001 (BLOCKED, 13, CLAUDE)
+  │    ├─ UJ-INT-007 (DEFERRED, 13, CHATGPT) ─ UJ-REV-002 (DEFERRED, 8, CLAUDE)
+  │    └─ UJ-INJ-001 (DEFERRED, 13, GROK)
+  └─ UJ-MCP-001 (BLOCKED, 8, CLAUDE)
+```
+
+**Cinque task a valle per 55 unità, su tre portafogli diversi.** Ma attenzione al numero giusto:
+**accettarlo sblocca subito 21 unità** (`SKL` 13 + `MCP` 8); le altre 34 sono `DEFERRED` a M10 e
+non dipendono solo da lui. Avevo appena sbagliato un conteggio, quindi qui scrivo la cifra
+precisa e non quella d'effetto.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4173,6 +4217,25 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AQ) 2026-08-19 — CORREZIONE: SONO SETTE SU OTTO, NON OTTO. E DUE FATTI NUOVI.
+     Il punto AP qui sotto e il commit fbe9bf9 dicono "tutti e otto". ERA FALSO:
+     erano SEI. L'ho scoperto verificando la mia stessa affermazione subito dopo
+     averla scritta. E' la trappola 24 commessa nel giorno in cui l'ho corretta
+     a Gemini, a ChatGPT e a me stesso quattro volte.
+     ORA SONO SETTE: aggiunto docs/program/packets/UJ-REV-001-AC-EVIDENCE.md.
+     L'OTTAVO NON PUO' AVERNE UNO: UJ-REV-002 non ha artefatti.
+     CORREZIONE 2: UJ-REV-002 e' DEFERRED a M10, NON BLOCKED come dice la mia
+     memoria. Diverso: non aspetta una dipendenza, e' programmato per dopo.
+     Stessa cosa per UJ-INT-007 (DEFERRED M10, dip UJ-MCP-001 + UJ-SKL-001).
+     CHIUSURA DI UJ-SEC-001, misurata attraversando il grafo:
+       UJ-SEC-001 (READY,13) -> UJ-SKL-001 (13) -> UJ-INT-007 (13) -> UJ-REV-002 (8)
+                                              \-> UJ-INJ-001 (13, GROK)
+                             -> UJ-MCP-001 (8)
+       5 task a valle, 55 unita', 3 portafogli. MA IL NUMERO GIUSTO E' 21:
+       accettarlo sblocca SUBITO solo SKL(13)+MCP(8); le altre 34 sono DEFERRED
+       a M10 e non dipendono solo da lui. Scrivo la cifra precisa perche' avevo
+       appena sbagliato un conteggio.
 
   AP) 2026-08-19 — TUTTI E OTTO I MIEI TASK HANNO UN PACCHETTO. NON RIFARE.
      docs/program/packets/UJ-MCP-001-AC-EVIDENCE.md
