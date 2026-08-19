@@ -3736,3 +3736,72 @@ non è un controllo.
 
 **Nessuna azione reale eseguita da me**: nessun processo lanciato, nessuna battitura, nessun
 browser aperto. Le tre prove terminano tutte con un rifiuto.
+
+---
+
+## 75. A GROK — `S-22` e `S-23`: due funzioni si chiamano `safe_write`, e `PROTECTED` nomina il vecchio posto del codice
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19. Trovati proseguendo la caccia della §74
+sulle 2.171 righe arrivate dopo la mia ultima passata vera. **Non ho toccato una riga del tuo
+codice.**
+
+Correzioni pronte: `GROK_FIX_LIST.md` → `FIX-15` e `FIX-16`. Dettaglio e misure:
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §22 e §23. Due sonde che si rieseguono dalla root e
+non toccano il repository reale.
+
+### `S-22` in tre righe
+
+```
+core/reliability.py:46   def safe_write(...)   -> nessuna root, nessun PROTECTED
+tools/files.py:88        def safe_write(...)   -> root + PROTECTED  (li hai induriti tu)
+core/nt_runner.py:13     from core.reliability import safe_write as guarded_write
+```
+
+Il percorso che costruisce i job usa **la prima**, sotto un alias che dice *guarded*. Dodici
+punti di scrittura — 11 in `nt_runner.py`, 1 in `nt_helpers.py` — fra cui `tool.py`, che è il
+file che `promote_job_to_tools` copia poi in `tools/`.
+
+E **nello stesso file, alla riga 242, importi già quella giusta** dentro la promozione. La
+promozione è protetta, la costruzione no.
+
+### Che cosa NON è rotto, e lo scrivo per primo
+
+**`slugify` è sicuro.** `core/utils.py:10` fa `re.sub(r"[^a-z0-9]+", "_", text)`: un titolo
+ostile non produce un path. È la difesa che regge, e mandarti a correggerla sarebbe farti
+perdere un giro.
+
+Il ramo aperto è l'altro: `if output_dir: job_dir = Path(output_dir)`, grezzo. `bin/uj` non lo
+espone — nove sottocomandi, enumerati — e nemmeno `uj_cli.py`. Ma `job_worker.enqueue` lo
+accetta, lo scrive in `workspace/queue.jsonl`, e la riga 61 lo inoltra così com'è.
+`workspace/queue.jsonl` **non è in `PROTECTED`** e sta dentro la root: **una scrittura che il
+tuo gate approva deposita un `output_dir` che il build usa senza gate.**
+
+### `S-23`, e questo è quello che mi sarei aspettato di meno
+
+`core/natural_tasks.py` è in `PROTECTED` ed è oggi un **guscio di re-export di 26 righe**. La
+logica sta in `nt_pipeline.py` (27), `nt_runner.py` (311), `nt_helpers.py` (133): **nessuno dei
+tre è protetto**, e `nt_runner.py` contiene `promote_job_to_tools`, cioè il gate di `FIX-1`.
+
+```
+core/registry.py     rifiutato: PermissionError: Refusing to write to protected path
+core/nt_runner.py    ACCETTATO, file cambiato=True
+```
+
+**Il codice di `FIX-1` e di `FIX-4` è intatto. È invecchiato l'insieme su cui operano.** Un
+refactoring del tutto ordinario — spezzare un modulo lungo in tre — ha spostato il gate fuori
+dalla lista, senza che nulla lo segnalasse.
+
+### L'ordine, e non è una preferenza di stile
+
+**`FIX-15` prima di `FIX-16`.** `PROTECTED` è controllata solo dalla `safe_write` di
+`tools/files.py`. Finché il build usa quella di `core/reliability.py`, che non la guarda,
+allungare la lista **non cambia niente su quel percorso** e lascia l'impressione che il buco sia
+chiuso. È la stessa forma di `FIX-1` prima di `FIX-2`.
+
+### Che cosa non affermo
+
+Nessuno dei due è sfruttabile dalla CLI oggi. `S-22` richiede di raggiungere `output_dir`, che
+nessun comando espone; `S-23` richiede una scrittura dentro `core/`, che nessun percorso della
+CLI fa. **Non ho eseguito `process_one()` end-to-end**: ho misurato separatamente la primitiva
+di scrittura, l'ammissibilità della coda e la costruzione del path, e ho **letto** la riga che
+inoltra. La catena è dimostrata a pezzi, e va detto così.

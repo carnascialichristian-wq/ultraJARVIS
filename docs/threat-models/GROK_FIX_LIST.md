@@ -17,9 +17,11 @@
 
 > ## STATO DELLE CORREZIONI — riverificato su `origin/main` @ `27b767309090`, 2026-08-19
 >
-> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su tredici sono già
-> applicate e verificate da me eseguendo, non leggendo. Lavorare su una di quelle è tempo
-> perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §20.
+> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su sedici sono chiuse
+> — otto applicate e una superata — verificate da me eseguendo, non leggendo. Lavorare su una
+> di quelle è tempo perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §20.
+> Le tre più recenti (`FIX-14`, `FIX-15`, `FIX-16`) sono di oggi e non sono ancora state viste
+> da nessuno: §21, §22, §23 della stessa review.
 >
 > | FIX | Finding | Stato al ref corrente |
 > |---|---|---|
@@ -36,9 +38,19 @@
 > | **`FIX-11`** | **`S-18` la suite sovrascrive `grok.md`** | **DA APPLICARE** |
 > | **`FIX-12`** | **`S-20` promozione cabla `safe=True`** | **DA APPLICARE** |
 > | **`FIX-13`** | **terza porta a pagamento** | **DA APPLICARE — CRITICA, stesso ponte di `FIX-10`** |
+> | **`FIX-14`** | **`S-21` `PRIVILEGED_KWARGS` è una denylist** | **DA APPLICARE — latente** |
+> | **`FIX-15`** | **`S-22` due `safe_write`, quella di build non contiene** | **DA APPLICARE** |
+> | **`FIX-16`** | **`S-23` `PROTECTED` nomina il vecchio posto del codice** | **DA APPLICARE** |
 >
-> **Restano quattro, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
-> intervento solo. Ordine: `FIX-10`+`FIX-13` → `FIX-11` → `FIX-12`.
+> **Restano sette, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
+> intervento solo. Ordine consigliato:
+> `FIX-10`+`FIX-13` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-11` → `FIX-12` → `FIX-14`.
+>
+> **`FIX-15` prima di `FIX-16`**, e il motivo è lo stesso di `FIX-1` prima di `FIX-2`: `FIX-16`
+> aggiunge tre file a `PROTECTED`, ma `PROTECTED` è controllata solo dalla `safe_write` di
+> `tools/files.py`. Finché il percorso di build usa quella di `core/reliability.py`, che non la
+> guarda, allungare la lista **non cambia niente su quel percorso** — e lascia l'impressione che
+> il buco sia chiuso.
 >
 > Due correzioni che avevo documentato come non applicate lo sono (`FIX-8`, `FIX-9`): l'ho
 > scoperto rileggendo il codice invece di fidarmi dei miei stessi appunti, e vale la pena
@@ -865,3 +877,155 @@ PY
 
 Oggi non stampa nulla. **Dopo aver marcato `safe=True` una delle cinque, stampa quella riga** —
 ed è il modo per accorgersene prima che serva.
+
+---
+
+## FIX-15 — due funzioni si chiamano `safe_write`, e quella del percorso di build non contiene nulla · **HIGH**
+
+**Finding:** `S-22`, §22 della review. **Ref:** `origin/main` @ `27b767309090`.
+**Riproduzione:** `python3 docs/threat-models/probes/S-22-uncontained-write-probe.py`
+
+### Il fatto in tre righe
+
+```
+core/reliability.py:46   def safe_write(...)   -> nessun controllo di root, nessun PROTECTED
+tools/files.py           def safe_write(...)   -> root + PROTECTED (li hai induriti tu con FIX-3/FIX-4)
+core/nt_runner.py:13     from core.reliability import safe_write as guarded_write
+```
+
+Il percorso che costruisce i job usa **la prima**, con un alias che dice *guarded*. Dodici punti
+di scrittura: 11 in `core/nt_runner.py`, 1 in `core/nt_helpers.py`. Scrivono `plan.md`,
+`gates.txt`, i `.json` degli advisor, i moduli generati, `tool.py` e `test_tool.py`.
+
+**Nello stesso file, alla riga 242, importi già quella giusta** dentro `promote_job_to_tools`.
+La promozione è protetta, la costruzione no.
+
+### Che cosa NON è rotto — leggilo prima di correggere la cosa sbagliata
+
+`slugify` **è sicuro**. `core/utils.py:10` fa `re.sub(r"[^a-z0-9]+", "_", text)`, che distrugge
+`/`, `\`, `.` e `..`: un titolo ostile non produce mai un path. Non toccarlo.
+
+Il percorso aperto è l'**altro** ramo di `core/nt_runner.py:49-51`:
+
+```python
+job_dir = self.jobs_root / job_id
+if output_dir:
+    job_dir = Path(output_dir)      # grezzo
+```
+
+`bin/uj` non espone `output_dir` (nove sottocomandi, controllati) e nemmeno `uj_cli.py`. Ma
+`core/job_worker.py:20` lo accetta, lo scrive in `workspace/queue.jsonl`, e la riga 61 lo
+inoltra così com'è. `workspace/queue.jsonl` **non è in `PROTECTED`** e sta dentro la root:
+una scrittura che il tuo gate **approva** deposita un `output_dir` che il build usa **senza
+gate**. Misurato, non dedotto.
+
+### FIX-15a — un solo `safe_write`
+
+Le due funzioni che servono esistono già in `tools/files.py`, riga 36 e riga 46 — le ho aperte,
+non le sto inventando: `_resolve(path, root)` e `_is_protected(path, root)`.
+
+```python
+# core/reliability.py — dopo
+def safe_write(path, content, encoding="utf-8", backup=True, *, root=None) -> None:
+    from tools.files import _resolve, _is_protected, PROJECT_ROOT
+    root = Path(root) if root else PROJECT_ROOT
+    path = _resolve(path, root)                 # solleva se il path esce dalla root
+    if _is_protected(path, root):
+        raise PermissionError(f"Refusing to write to protected path: {path}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    ...                                         # il resto (atomicità + backup) invariato
+```
+
+**Attenzione a un import circolare:** `tools/files.py` non importa `core/`, quindi
+l'import dentro la funzione va bene com'è scritto; spostarlo in cima al modulo va verificato,
+non dato per scontato.
+
+L'atomicità e il backup sono il valore vero di questa funzione e vanno tenuti. Manca solo il
+controllo del path, e le funzioni che lo fanno esistono già nel repository.
+
+### FIX-15b — validare `output_dir` all'ingresso, non al punto di scrittura
+
+```python
+# core/nt_runner.py:50 — dopo
+if output_dir:
+    cand = Path(output_dir).resolve()
+    if not str(cand).startswith(str(self.jobs_root.resolve())):
+        raise PermissionError(f"output_dir escapes jobs root: {cand}")
+    job_dir = cand
+```
+
+### FIX-15c — rinominare l'alias
+
+`guarded_write` afferma una guardia che non c'è. Finché `15a` non è applicato, `atomic_write`
+descrive la funzione senza mentire. Due righe, in `core/nt_runner.py:13` e
+`core/nt_helpers.py:7`.
+
+### Come verificare che la correzione funzioni
+
+```bash
+python3 docs/threat-models/probes/S-22-uncontained-write-probe.py
+```
+
+**Oggi** stampa `!! SCRITTO fuori da qualunque root` nel blocco A e `!! job_dir creata e
+plan.md scritto FUORI dalla root` nel blocco C. **Dopo la correzione** entrambi devono
+diventare un rifiuto esplicito, e il blocco B deve restare com'è.
+
+---
+
+## FIX-16 — `PROTECTED` nomina il posto in cui il codice stava · **MEDIUM** *(applicare DOPO FIX-15)*
+
+**Finding:** `S-23`, §23 della review.
+**Riproduzione:** `python3 docs/threat-models/probes/S-23-protected-staleness-probe.py`
+
+### Il fatto
+
+`core/natural_tasks.py` è in `PROTECTED` ed è oggi un **guscio di re-export di 26 righe**. La
+logica sta in `core/nt_pipeline.py` (27), `core/nt_runner.py` (311), `core/nt_helpers.py` (133):
+**nessuno dei tre è protetto**, e `nt_runner.py` contiene `promote_job_to_tools`, cioè il gate
+che hai costruito con `FIX-1`.
+
+```
+core/registry.py     rifiutato: PermissionError: Refusing to write to protected path
+core/nt_runner.py    ACCETTATO, file cambiato=True
+```
+
+Copertura misurata: **23 moduli in `core/`, 2483 righe; protetti 4, 418 righe.**
+
+**Non sto dicendo che `PROTECTED` debba coprire tutto `core/`.** Il rilievo è sui file che
+contengono un gate. Il difetto non è la lunghezza della lista: è che la lista descrive
+un'organizzazione del codice che non esiste più, e un refactoring del tutto ordinario l'ha
+resa stantia senza toccare né `FIX-1` né `FIX-4`.
+
+### FIX-16a — tre righe
+
+```python
+PROTECTED = {
+    ...
+    "core/natural_tasks.py",
+    "core/nt_pipeline.py",     # +
+    "core/nt_runner.py",       # +  contiene promote_job_to_tools
+    "core/nt_helpers.py",      # +
+}
+```
+
+### FIX-16b — il test che impedisce la terza volta
+
+```python
+GATE_MARKERS = ("def promote_job_to_tools", "PRIVILEGED_KWARGS", "def _safe_mode")
+
+def test_gate_modules_are_protected():
+    for p in (ROOT / "core").glob("*.py"):
+        if any(m in p.read_text(encoding="utf-8") for m in GATE_MARKERS):
+            assert f"core/{p.name}" in PROTECTED, f"{p.name} contiene un gate e non e' PROTECTED"
+```
+
+**Provalo prima di applicare `FIX-16a`: oggi deve fallire su `core/nt_runner.py`.** Un test che
+passa anche senza la correzione non prova niente — è la stessa disciplina con cui ho verificato
+i tuoi fix invece di accreditarli.
+
+### Perché DOPO `FIX-15`
+
+`PROTECTED` è controllata solo dalla `safe_write` di `tools/files.py`. Finché il percorso di
+build usa quella di `core/reliability.py`, che non la guarda, allungare la lista **non cambia
+niente su quel percorso** — e lascia l'impressione che il buco sia chiuso. È la stessa forma di
+`FIX-1` prima di `FIX-2`.

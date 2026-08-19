@@ -1627,3 +1627,242 @@ blocked = set(kwargs) - allowed
   browser aperto. I tre test qui sopra terminano tutti con un rifiuto.
 - La composizione *"apri un terminale + digita"* è **teorica** in questo stato: entrambe le
   chiamate sono rifiutate.
+
+---
+
+## 22. `S-22` — due funzioni si chiamano `safe_write`, e quella sul percorso di build non contiene nulla. **HIGH, latente**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+**Riproduzione:** `python3 docs/threat-models/probes/S-22-uncontained-write-probe.py`
+(materializza da sé un worktree al ref, non tocca il repository reale, non usa la rete).
+
+### 22.1 Il difetto in una riga
+
+Nel repository esistono **due funzioni chiamate `safe_write`**. Una controlla la root e la lista
+`PROTECTED`; l'altra non controlla niente. **Il percorso che costruisce ed esegue i job usa la
+seconda**, importandola con un alias che promette il contrario:
+
+```python
+# core/nt_helpers.py:7  e  core/nt_runner.py:13
+from core.reliability import safe_write as guarded_write
+```
+
+`core/reliability.py:46` per intero, nella parte che conta:
+
+```python
+def safe_write(path, content, encoding="utf-8", backup=True) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)   # crea qualunque directory
+    ...
+    tmp.write_text(content, encoding=encoding)
+    tmp.replace(path)                                 # scrive qualunque path
+```
+
+Nessun `relative_to(root)`, nessun `is_protected`, nessun parametro `root`. Il nome del modulo
+— *reliability* — dice esattamente ciò che fa: scrittura **atomica**, con backup e file
+temporaneo. È affidabilità, non contenimento. **`guarded_write` è l'unica parola, in tutta la
+catena, che afferma una guardia**, ed è un alias scelto al punto di import.
+
+### 22.2 Misurato, non dedotto
+
+```
+=== A) core.reliability.safe_write, cioè guarded_write ===
+  !! SCRITTO fuori da qualunque root: /tmp/.../fuori/vittima.txt
+     contenuto ora: 'SOVRASCRITTO da core.reliability.safe_write'
+
+=== B) tools.files.safe_write, la funzione OMONIMA indurita da FIX-3/FIX-4 ===
+  ok rifiutato: PermissionError: Path escapes project root: /tmp/.../fuori/vittima.txt
+  contenuto dopo B: 'ORIGINALE'
+```
+
+Stesso nome, stesso path, esito opposto.
+
+### 22.3 Quanto è cablata: 12 punti di scrittura
+
+| File | Chiamate a `guarded_write` |
+|---|---:|
+| `core/nt_runner.py` | **11** |
+| `core/nt_helpers.py` | **1** |
+
+Scrivono `plan.md`, `gates.txt`, `summary.json`, `critique.json`, `safety.json`, `style.json`,
+`debate.json`, i moduli generati, **`tool.py` (due volte)** e `test_tool.py`. `tool.py` è
+esattamente il file che `promote_job_to_tools` copia poi dentro `tools/`.
+
+### 22.4 Da dove arriva il path, e perché oggi NON è sfruttabile dalla CLI
+
+`core/nt_runner.py:49-51`:
+
+```python
+job_id = f"job_{slugify(task_plan.title)[:20]}_{int(time.time()) % 100000}"
+job_dir = self.jobs_root / job_id
+if output_dir:
+    job_dir = Path(output_dir)      # <-- grezzo, nessuna validazione
+```
+
+Due sorgenti, e vanno giudicate separatamente:
+
+- **dal titolo del piano → SICURO.** `core/utils.py:10` fa
+  `re.sub(r"[^a-z0-9]+", "_", text)`, che distrugge `/`, `\`, `.` e `..`. Un titolo ostile non
+  produce un path. **Lo scrivo perché è la difesa che regge**, e attribuirle un difetto che non
+  ha manderebbe Grok a correggere la cosa sbagliata;
+- **da `output_dir` → NON validato**, usato come `Path(...)` così com'è.
+
+**La CLI non lo espone.** `bin/uj:48` chiama `enqueue(args.prompt)` senza `output_dir`;
+`uj_cli.py:13` chiama `build_and_run(args.prompt)` e basta. Verificato con `git grep`, non
+presunto: gli unici passaggi di `output_dir` sono la firma di `enqueue` e la riga che lo inoltra.
+
+### 22.5 La catena che lo rende raggiungibile, e che è il vero contenuto del finding
+
+`core/job_worker.py`:
+
+```python
+def enqueue(prompt: str, *, output_dir: str | None = None) -> dict:   # :20
+    rec = {"prompt": prompt, "output_dir": output_dir, "ts": time.time()}
+    ...                                                # scritto in workspace/queue.jsonl
+    out = runner.build_and_run(rec["prompt"], rec.get("output_dir"))  # :61, inoltrato grezzo
+```
+
+`workspace/queue.jsonl` **non è in `PROTECTED`** (15 voci, controllate una per una) e sta
+**dentro** la root. Quindi una scrittura che il gate indurito **approva** deposita un
+`output_dir` arbitrario che il percorso di build usa **senza gate**. Misurato:
+
+```
+=== C) la catena ===
+  is_protected("workspace/queue.jsonl") = False
+  la scrittura CONTENUTA dentro la root è stata accettata
+  output_dir che il worker inoltrerebbe: /tmp/.../fuori/job_fuori_root
+  Path(output_dir) è dentro la root? False
+  !! job_dir creata e plan.md scritto FUORI dalla root
+```
+
+**Una scrittura contenuta si trasforma in una scrittura non contenuta attraversando una coda.**
+Non serve bucare `FIX-3`: basta usarlo per il suo scopo su un file che nessuno considera
+sensibile.
+
+### 22.6 L'asimmetria è dentro un solo file, ed è la parte che sorprende
+
+`core/nt_runner.py` importa **entrambe** le funzioni, a quaranta righe di distanza:
+
+| Riga | Import | Contenimento |
+|---:|---|---|
+| 13 | `from core.reliability import safe_write as guarded_write` | **nessuno** |
+| 242 | `from tools.files import safe_write, is_protected` (dentro `promote_job_to_tools`) | root + `PROTECTED` |
+
+La funzione giusta è già lì, già importata, nello stesso file. **La promozione è protetta, la
+costruzione no** — e la costruzione è ciò che genera il contenuto che la promozione poi copia.
+
+### 22.7 Correzione proposta
+
+**`FIX-15a` — un solo `safe_write`.** Due funzioni omonime con contratti di sicurezza opposti
+sono una trappola per chiunque legga un import. Far delegare `core.reliability.safe_write` a
+`tools.files.safe_write` per il controllo del path, mantenendo l'atomicità e il backup che sono
+il suo valore vero.
+
+**`FIX-15b` — validare `output_dir` all'ingresso**, non al punto di scrittura:
+
+```python
+if output_dir:
+    cand = Path(output_dir).resolve()
+    if not str(cand).startswith(str(self.jobs_root.resolve())):
+        raise PermissionError(f"output_dir escapes jobs root: {cand}")
+    job_dir = cand
+```
+
+**`FIX-15c` — rinominare l'alias.** `guarded_write` afferma una guardia che non c'è. Finché
+`15a` non è applicato, `atomic_write` descrive la funzione senza mentire.
+
+### 22.8 Che cosa NON affermo
+
+- **Non è sfruttabile dalla CLI oggi.** Nessun comando di `bin/uj` accetta `output_dir`, e l'ho
+  verificato enumerando i nove sottocomandi, non a memoria.
+- **Non ho eseguito `process_one()` end-to-end.** Fa girare planner e gate reali. Ho misurato
+  separatamente le tre parti — la primitiva di scrittura, l'ammissibilità della coda, la
+  costruzione del path — e ho **letto** la riga che inoltra. La catena è dimostrata a pezzi, non
+  in un colpo solo, e va detto così.
+- **`slugify` non è il problema.** È l'unica delle due sorgenti che è sicura.
+- **Non ho toccato una riga** di `core/`. È codice di Grok.
+
+---
+
+## 23. `S-23` — `PROTECTED` nomina il posto in cui il codice **stava**. **MEDIUM**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+**Riproduzione:** `python3 docs/threat-models/probes/S-23-protected-staleness-probe.py`
+
+### 23.1 Il difetto
+
+`core/natural_tasks.py` è nella lista `PROTECTED`. Oggi è un **guscio di re-export di 26
+righe**: la logica è stata spostata in `core/nt_pipeline.py` (27), `core/nt_runner.py` (311) e
+`core/nt_helpers.py` (133). **Nessuno dei tre è protetto.**
+
+Fra questi c'è `promote_job_to_tools`, cioè il gate di safety che `FIX-1` ha introdotto sulla
+promozione di codice generato.
+
+```
+=== B) chi contiene promote_job_to_tools, ed è protetto? ===
+  definita in core/nt_runner.py  ->  protetto=False
+```
+
+### 23.2 Misurato per esecuzione, contro i due file
+
+```
+=== C) scrittura reale contro i due file, in una root finta ===
+  core/registry.py     rifiutato: PermissionError: Refusing to write to protected path: core/registry.py
+  core/nt_runner.py    ACCETTATO, file cambiato=True
+```
+
+`FIX-4` protegge il registry — e il registry è la porta d'ingresso, quindi la scelta è giusta.
+Ma **il file che decide se un tool generato è promuovibile è scrivibile**, e sovrascriverlo non
+richiede né `force=True` né un bypass: basta chiedere.
+
+### 23.3 La copertura in numeri
+
+| | File | Righe |
+|---|---:|---:|
+| moduli in `core/` | **23** | **2483** |
+| protetti | **4** | **418** |
+| non protetti | **19** | **2065** |
+
+**Il 16,8% delle righe di `core/` è coperto**, e il modulo più lungo della directory
+(`nt_runner.py`, 311 righe) è fuori. Non sostengo che debbano esserlo tutti: `PROTECTED` è una
+lista di file che il sistema non deve riscrivere da solo, non un permesso di filesystem. Il
+difetto non è la dimensione della lista, è che **la lista descrive un'organizzazione del codice
+che non esiste più**.
+
+### 23.4 Perché è la stessa forma già vista nove volte
+
+`FIX-1` ha reso la promozione un gate vero. `FIX-4` ha reso `PROTECTED` non aggirabile da un
+kwarg. Un refactoring del tutto ordinario — spezzare un modulo lungo in tre — ha spostato il
+gate **fuori** dall'insieme protetto, senza toccare né `FIX-1` né `FIX-4` e senza che nulla lo
+segnalasse. È la decima occorrenza in questo programma di un controllo che continua a sembrare
+un controllo: qui il codice del controllo è intatto e **l'insieme su cui opera è invecchiato**.
+
+### 23.5 Correzione proposta
+
+**`FIX-16a` — aggiungere i tre moduli**: `core/nt_pipeline.py`, `core/nt_runner.py`,
+`core/nt_helpers.py`. È la correzione minima ed è di tre righe.
+
+**`FIX-16b` — impedire che si ripresenti.** Un test che fallisce quando un file contenente un
+gate non è protetto vale più della lista corretta una volta:
+
+```python
+GATE_MARKERS = ("def promote_job_to_tools", "PRIVILEGED_KWARGS", "def _safe_mode")
+def test_gate_modules_are_protected():
+    for p in (ROOT / "core").glob("*.py"):
+        if any(m in p.read_text() for m in GATE_MARKERS):
+            assert f"core/{p.name}" in PROTECTED, f"{p.name} contiene un gate e non è PROTECTED"
+```
+
+Oggi fallisce su `core/nt_runner.py`. Dopo `FIX-16a` passa, e **fallisce di nuovo** il giorno in
+cui un gate viene spostato in un file nuovo. È lo stesso principio del test di regressione
+`ADM-11`: la lezione va messa dove la rilegge la macchina, non in un commento.
+
+### 23.6 Che cosa NON affermo
+
+- **Non è una vulnerabilità attiva.** Nessun percorso raggiungibile dalla CLI scrive dentro
+  `core/`: `promote_job_to_tools` scrive in `tools/` e rifiuta i path protetti. Diventa
+  raggiungibile in combinazione con `S-22` o con un import diretto (`S-02`).
+- **Non sostengo che `PROTECTED` debba coprire tutto `core/`.** Il rilievo è sui file che
+  contengono gate, non sul conteggio.
+- **`core/reliability.py` è protetto**, e resta corretto: è lo stesso file di `S-22`, dove il
+  difetto è cosa la funzione fa, non chi può riscriverla.

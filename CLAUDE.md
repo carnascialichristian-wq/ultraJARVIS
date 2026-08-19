@@ -4400,6 +4400,98 @@ controllo che non scatta mai non è un controllo.
 aperto. Le tre prove terminano tutte con un rifiuto.
 
 
+
+## Sessione 6, ventiquattresima parte — `S-22` e `S-23`: la stessa parola, due contratti opposti
+
+Proseguendo la caccia della parte precedente sulle 2.171 righe nuove, ho tracciato
+`core/multi_file.py` — che prende `write_fn` come callable iniettato — fino ai suoi chiamanti.
+Ne sono usciti due difetti distinti.
+
+### `S-22` — due funzioni si chiamano `safe_write`, e quella sul percorso di build non contiene nulla
+
+```
+core/reliability.py:46   safe_write   -> nessuna root, nessun PROTECTED
+tools/files.py:88        safe_write   -> root + PROTECTED, indurita da FIX-3/FIX-4
+core/nt_runner.py:13     from core.reliability import safe_write as guarded_write
+```
+
+**`guarded_write` è l'unica parola in tutta la catena che afferma una guardia, ed è un alias
+scelto al punto di import.** Il nome del modulo — *reliability* — dice invece esattamente ciò
+che la funzione fa: scrittura atomica, con backup e file temporaneo. È affidabilità, non
+contenimento, e non c'è niente di sbagliato nella funzione: è sbagliato **dove viene usata**.
+
+Dodici punti di scrittura, 11 in `nt_runner.py` e 1 in `nt_helpers.py`, fra cui `tool.py` — il
+file che `promote_job_to_tools` copia poi in `tools/`.
+
+**L'asimmetria sta dentro un solo file.** `core/nt_runner.py` importa la funzione senza
+contenimento alla riga 13 e quella con contenimento alla riga 242, dentro la promozione. La
+promozione è protetta; la costruzione, che genera il contenuto che la promozione copia, no.
+
+### Ho scritto per primo che cosa NON è rotto
+
+`slugify` **è sicuro**: `re.sub(r"[^a-z0-9]+", "_", text)` distrugge `/`, `\`, `.` e `..`, quindi
+un titolo ostile non produce mai un path. È la difesa che regge, e attribuirle un difetto che
+non ha manderebbe Grok a correggere la cosa sbagliata. Il ramo aperto è l'altro:
+`if output_dir: job_dir = Path(output_dir)`, grezzo.
+
+### La catena, che è il contenuto vero del finding
+
+`bin/uj` non espone `output_dir` — nove sottocomandi, enumerati, non ricordati — e nemmeno
+`uj_cli.py`. Ma `job_worker.enqueue` lo accetta, lo scrive in `workspace/queue.jsonl`, e la
+riga 61 lo inoltra così com'è. **`workspace/queue.jsonl` non è in `PROTECTED` e sta dentro la
+root:** una scrittura che il gate indurito **approva** deposita un `output_dir` che il percorso
+di build usa **senza gate**.
+
+Non serve bucare `FIX-3`. Basta usarlo per il suo scopo su un file che nessuno considera
+sensibile. **Una scrittura contenuta si trasforma in una non contenuta attraversando una coda.**
+
+### `S-23` — `PROTECTED` nomina il posto in cui il codice stava
+
+`core/natural_tasks.py` è protetto ed è oggi un **guscio di re-export di 26 righe**. La logica
+sta in `nt_pipeline.py` (27), `nt_runner.py` (311), `nt_helpers.py` (133): **nessuno dei tre è
+protetto**, e `nt_runner.py` contiene `promote_job_to_tools`, cioè il gate di `FIX-1`.
+
+Misurato per esecuzione, in una root finta: `core/registry.py` **rifiutato**,
+`core/nt_runner.py` **accettato e riscritto**. Copertura: 23 moduli in `core/`, 2483 righe;
+protetti 4, 418 righe.
+
+**Il codice di `FIX-1` e `FIX-4` è intatto: è invecchiato l'insieme su cui operano.** Uno
+spezzettamento di modulo del tutto ordinario ha spostato il gate fuori dalla lista, senza
+toccare nessuna delle due correzioni e senza che nulla lo segnalasse. È la decima occorrenza in
+questo programma di un controllo che continua a sembrare un controllo — e la prima in cui a
+invecchiare non è il controllo ma il suo **insieme di applicazione**.
+
+### L'ordine di correzione, detto invece che lasciato intuire
+
+**`FIX-15` prima di `FIX-16`.** `PROTECTED` è controllata solo dalla `safe_write` di
+`tools/files.py`: finché il build usa l'altra, allungare la lista non cambia niente su quel
+percorso e lascia l'impressione che il buco sia chiuso. È la terza volta che questo programma
+produce una coppia in cui la correzione più facile, applicata per prima, nasconde l'altra
+(`S-12` prima di `S-13`, `FIX-10` prima del writer adapter, ora questa).
+
+### Un errore mio, corretto prima del commit
+
+Nella prima stesura di `FIX-15a` avevo scritto la correzione chiamando una funzione
+`_resolve_within_root` **che non esiste**. L'avevo dedotta dal comportamento invece di aprire
+il file. I nomi veri sono `_resolve` (riga 36) e `_is_protected` (riga 46). Corretto, e
+verificato anche che `tools/files.py` non importi nulla da `core/`, quindi l'import suggerito
+non crea un ciclo — perché suggerire una correzione che non compila costa a Grok un giro
+esattamente come un finding sbagliato.
+
+È la trappola 14 applicata a me stesso: **si cita solo ciò che si è aperto**, e vale anche per
+una funzione di cui si sta proponendo l'uso.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §22 e §23 · `GROK_FIX_LIST.md` → `FIX-15`, `FIX-16`
+(più la tabella di stato in cima, che era ferma a tredici correzioni e ora ne elenca sedici) ·
+`docs/threat-models/probes/S-22-uncontained-write-probe.py` ·
+`docs/threat-models/probes/S-23-protected-staleness-probe.py`.
+
+**Nessuna riga di codice di Grok modificata. Nessuna scrittura fuori dalle directory
+temporanee: entrambe le sonde lavorano in una root finta e rimuovono worktree e temp con
+`atexit`.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4806,6 +4898,53 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
 
+  AV) 2026-08-19 — S-22 e S-23 (NUOVI): la stessa parola, due contratti opposti.
+     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §22 e §23
+     GROK_FIX_LIST.md -> FIX-15 (HIGH) e FIX-16 (MEDIUM)
+     docs/threat-models/probes/S-22-uncontained-write-probe.py
+     docs/threat-models/probes/S-23-protected-staleness-probe.py
+
+     S-22 — DUE funzioni si chiamano safe_write:
+       core/reliability.py:46  -> NESSUNA root, NESSUN PROTECTED
+       tools/files.py:88       -> root + PROTECTED (indurita da FIX-3/FIX-4)
+     Il percorso di build usa la PRIMA, importata come `guarded_write` in
+     core/nt_runner.py:13 e core/nt_helpers.py:7. 12 punti di scrittura (11+1),
+     fra cui tool.py, il file che promote_job_to_tools copia poi in tools/.
+     E nello STESSO file, riga 242, e' gia' importata quella giusta dentro la
+     promozione: la promozione e' protetta, la costruzione no.
+     ATTENZIONE, NON CORREGGERE LA COSA SBAGLIATA: slugify E' SICURO
+     (core/utils.py:10, re.sub(r"[^a-z0-9]+","_") distrugge / \ . e ..).
+     Il ramo aperto e' l'altro: `if output_dir: job_dir = Path(output_dir)`.
+     CATENA MISURATA: bin/uj (9 sottocomandi) e uj_cli.py NON espongono
+     output_dir, ma job_worker.enqueue lo accetta, lo scrive in
+     workspace/queue.jsonl, e la riga 61 lo inoltra grezzo. queue.jsonl NON e'
+     in PROTECTED ed e' dentro la root -> una scrittura che il gate APPROVA
+     deposita un output_dir che il build usa SENZA gate.
+     NON sfruttabile dalla CLI oggi. NON ho eseguito process_one() end-to-end:
+     ho misurato le tre parti separatamente e LETTO la riga che inoltra.
+
+     S-23 — PROTECTED nomina il posto in cui il codice STAVA.
+     core/natural_tasks.py e' PROTETTO ed e' un guscio di re-export di 26 righe.
+     La logica sta in nt_pipeline.py (27), nt_runner.py (311), nt_helpers.py
+     (133): NESSUNO dei tre e' protetto, e nt_runner.py contiene
+     promote_job_to_tools, cioe' il gate di FIX-1.
+     Misurato: core/registry.py RIFIUTATO, core/nt_runner.py ACCETTATO e
+     riscritto. Copertura: 23 moduli core/, 2483 righe; protetti 4, 418 righe.
+     Il codice di FIX-1 e FIX-4 e' INTATTO: e' invecchiato l'INSIEME su cui
+     operano. Decima occorrenza della forma "un controllo che sembra un
+     controllo", la prima in cui a invecchiare e' l'insieme e non il controllo.
+
+     ORDINE: FIX-15 PRIMA di FIX-16. PROTECTED e' controllata solo dalla
+     safe_write di tools/files.py: finche' il build usa l'altra, allungare la
+     lista NON cambia niente su quel percorso e sembra che il buco sia chiuso.
+     Terza coppia di questo tipo dopo S-12/S-13 e FIX-10/writer adapter.
+
+     ERRORE MIO CORRETTO PRIMA DEL COMMIT: avevo scritto la correzione FIX-15a
+     chiamando `_resolve_within_root`, funzione CHE NON ESISTE — dedotta dal
+     comportamento invece di aprire il file. I nomi veri sono _resolve (riga 36)
+     e _is_protected (riga 46). Verificato anche che tools/files.py non importi
+     nulla da core/, quindi l'import suggerito non crea un ciclo.
+
   AU) 2026-08-19 — S-21 (NUOVO, MEDIUM latente): PRIVILEGED_KWARGS e' una denylist.
      MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §21 · GROK_FIX_LIST.md -> FIX-14
      Trovato cercando difetti NUOVI nelle 2.171 righe arrivate su main dopo la
@@ -5009,6 +5148,9 @@ SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      delegation_card_count=4 mentre nella directory c'erano 10 card. Il validatore
      NON scandisce la directory. Il segnale era il CONTEGGIO, non l'exit code.
 
+  >>> AGGIORNATO DAI PUNTI AU e AV: i findings ora sono 23, non 20. Il bilancio
+  >>> qui sotto resta corretto per i primi 20; gli aperti sono 9, non 6, perche'
+  >>> S-21, S-22 e S-23 sono nuovi e nessuno li ha ancora visti.
   AL) 2026-08-19 — STATO CONSOLIDATO DEI 20 FINDINGS SU main. GIA' FATTO, NON RIFARE.
      docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §20
      docs/threat-models/GROK_FIX_LIST.md (tabella di stato IN CIMA)
