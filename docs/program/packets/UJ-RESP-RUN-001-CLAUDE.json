@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
-  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260819-BLOCKED-R5",
-  "created_at": "2026-08-18T22:18:08Z",
+  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260819-REVIEW-R6",
+  "created_at": "2026-08-19T08:32:58Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "c645377d54c20fad517d376a1b1e10ac54d289a7",
+  "source_commit_sha": "b2b32733e8db7394fbc0a7f0503bb2795f3b4821",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -30,8 +30,8 @@
     }
   ],
   "task_id": "UJ-RUN-001",
-  "status": "BLOCKED",
-  "executive_delta": "BLOCKED, and the blocking condition has CHANGED IDENTITY. The original blocker is closed: CHATGPT repinned all four delegation cards with 4b63b94, so UJ-CARD-RUN-001-CLAUDE now declares read_ref 25b1b7d53ff5bc4b05348453ebb704aba3a88630, which contains the card and is reachable from origin/main, verified on both clauses. CHATGPT also aligned the acceptance criteria, five now in BACKLOG.json rather than two, and added two validator assertions that make the read_ref defect mechanically impossible. The same commit, however, rewrote the sixteen pinned input hashes across the four cards and none of the sixteen matches the real bytes; ChatGPT's own council validator rejects its own commit with exit 1. For four delivery rounds this packet stated that the problem was NOT a pin mismatch. It now is, and it is the only thing left between these bytes and REVIEW. The substantive risk is nil: the work was done against the real documents, whose bytes are unchanged and whose true hashes were recomputed in this session. Accepted weight unchanged at 0/13.",
+  "status": "REVIEW",
+  "executive_delta": "REVIEW. The blocking condition is resolved and every admissibility clause is verified by execution on origin/main: the delegation card exists at its own read_ref 25b1b7d53ff5, that ref is reachable from origin/main, the four pinned inputs match 4 of 4, validate-council-packets.mjs passes at exit 0, the card's acceptance criteria equal those in BACKLOG.json (AC-01..AC-05), and the task is READY with reviewer GEMINI. CHATGPT got there in three commits: 4b63b94 repinned the read_ref, 6ba3a2b restored the sixteen input hashes that the same repin had replaced with values matching nothing, and 27b7673 closed both validator findings by removing the canonical-plan exemption from the integrity check and computing hashes at the pinned ref rather than from the working tree. The delivered work is byte-identical to the BLOCKED rounds apart from the status declarations, which live in four places and all moved in one commit. REVIEW is not acceptance: accepted weight stays 0/13 until GEMINI rules.",
   "facts": [
     {
       "claim": "The delegation card is absent at its own declared read_ref. `git cat-file -e 3611b1b4:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json` fails; the card enters the history at d48e1e8519a8d7af90ea44e770f0db7fd3938fb3, twelve minutes after 3611b1b4.",
@@ -158,6 +158,24 @@
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "git worktree add --detach <dir> origin/main; node scripts/validate-council-packets.mjs",
       "verified_at": "2026-08-18T22:18:08Z"
+    },
+    {
+      "claim": "Every admissibility clause verified by execution on origin/main at 27b7673: card present at read_ref 25b1b7d53ff5 (exit 0), read_ref reachable from origin/main (exit 0), four pinned inputs matching 4 of 4, validate-council-packets.mjs PASS at exit 0, card criteria equal to BACKLOG.json criteria AC-01..AC-05, task READY with reviewer GEMINI.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git cat-file -e; git merge-base --is-ancestor; git show <ref>:<input> | sha256sum; node scripts/validate-council-packets.mjs",
+      "verified_at": "2026-08-19T08:32:58Z"
+    },
+    {
+      "claim": "CHATGPT closed both validator findings in 27b7673: the exemption that kept docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md out of the input hash check is gone, and the computation now reads the pinned commit via sha256AtRef(artifact.ref, readRef) instead of the working tree. The second had been reported as a minor, non-blocking finding and was closed anyway.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "git show origin/main:scripts/validate-council-packets.mjs",
+      "verified_at": "2026-08-19T08:32:58Z"
+    },
+    {
+      "claim": "Moving to REVIEW changed exactly four of the fifteen artifact hashes, and only status declarations: the handoff, the blueprint header and status note, RUNTIME_CONTRACTS_PROVENANCE in index.ts, and the package.json description. The domain vocabulary was deliberately untouched: kind \"BLOCKED\" in agent-manifest.ts and team-spec.ts and the BLOCKED member of ResultStatus are runtime states, not delivery status. Typecheck, build and the 140 tests were re-run after the edits.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "recomputation of all fifteen hashes at both source commits; npx tsc; node --test",
+      "verified_at": "2026-08-19T08:32:58Z"
     }
   ],
   "assumptions": [
@@ -194,7 +212,7 @@
   "artifacts": [
     {
       "ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
-      "sha256": "bccc5a08d3ab8fc9245c0e6dcb8f946d1616bdda40f8e001d3ad1e3504e0cf6c",
+      "sha256": "41d2e368be50fe28da7c00237112b32b904420e5b54e408fa8056fef4bf039fc",
       "media_type": "text/markdown",
       "data_class": "C1",
       "summary": "Provider-neutral runtime blueprint. Part I (sections 0-15): AgentManifest, TeamSpec, Supervisor, DepthGuard, RunLedger, six proposed ADRs. Part II (sections 16-22, added session 5): task decomposition, agent selection, provider-neutral routing and HUMAN_BRIDGE, inter-agent conflicts, zero-cost local fallback, minimal end-to-end demo, and a traceability map of the 24 required points. The provenance note was corrected in session 6: it claimed the canonical prompt was not yet on main, which is no longer true, and the bytes on origin/main are identical to those at b8a7697."
@@ -236,7 +254,7 @@
     },
     {
       "ref": "packages/contracts/src/runtime/index.ts",
-      "sha256": "8a42d88fb9526fc107970d628abbfbe239609423fb2c7fc5bd8b817c44f4ea5d",
+      "sha256": "7f3044a14b3a4df6fe3c75978a11dcd50345698b47203a419732c91be5ffda6c",
       "media_type": "application/typescript",
       "data_class": "C1",
       "summary": "Runtime contract module 'index': the public surface of the contract set, compiled under strict mode. RUNTIME_CONTRACTS_PROVENANCE carries the delivery status for the Program OS ledger and now reads BLOCKED; it read REVIEW until session 6, which made the only machine-readable copy of the status contradict this packet. The file header separately claimed 'Status: PROPOSAL' twenty-five lines above the constant; contract maturity and delivery admissibility are now stated as two distinct axes."
@@ -264,7 +282,7 @@
     },
     {
       "ref": "packages/contracts/package.json",
-      "sha256": "c2bdb5b63d1b1bab4bf68d7c0644d5376eb7bc28298be53b59f50407b48bc566",
+      "sha256": "20ea3d7437676e7970110f717e64f6b72363cc47789b62e6e9f8e15f2ae70f7c",
       "media_type": "application/json",
       "data_class": "C1",
       "summary": "Contracts package manifest used to typecheck and build the runtime contracts. Its description declared 'status REVIEW' until session 6 and now states that the delivery is BLOCKED on the delegation card read_ref, not on the contracts themselves."
@@ -292,7 +310,7 @@
     },
     {
       "ref": "docs/program/handoffs/HANDOFF-UJ-RUN-001.md",
-      "sha256": "768c13f5b2952854d5730bfbcfed2069d0359becb7405bfa08315e25504d4776",
+      "sha256": "185a89319e94ba3485251c5dd07b5d6310b664f1690c24516c2fc53c0447b9b8",
       "media_type": "text/markdown",
       "data_class": "C1",
       "summary": "Handoff and resume point for UJ-RUN-001, rewritten in session 6. It declares branch agent/uj-run-001-blueprint-20260818, status BLOCKED, accepted weight 0/13, runtime-invariants 36 and suite 140, the 22 unimplemented proofs of blueprint sections 16-21 plus the 11 still PENDING in 13.3 (33 in total), the unexecuted section 21 demo, and the card's absence at read_ref 3611b1b4 against its introduction at d48e1e85. Section 5 separates the measured BACKLOG status from the proposed status. Section 0.3 keeps the superseded values under an explicit history heading; section 0.4 records the defect class, four occurrences of a superseded state written in the present tense across this delivery set. The document does not name the commit containing it, because its own hash is part of that commit. Section 1.1, added after main's history was found to have been rewritten, records that neither 3611b1b4 nor d48e1e85 is reachable from origin/main, that a correct read_ref must both contain the card and be reachable from main, and that all four delegation cards carry the same defect. Section 1.0, added 2026-08-19, records that CHATGPT closed the read_ref defect with 4b63b94 and that the block changed identity rather than lifting: the same commit rewrote sixteen pinned input hashes across four cards and none matches the real bytes."
@@ -318,7 +336,8 @@
       "reachability of 3611b1b4, d48e1e85, 31f31b9 and 99dece5 from origin/main",
       "read_ref validity of all four delegation cards at origin/main",
       "re-verification of the four delegation cards after CHATGPT's repin: card presence at read_ref, reachability from main, and pinned input hashes",
-      "execution of ChatGPT's own council validator from a worktree on origin/main"
+      "execution of ChatGPT's own council validator from a worktree on origin/main",
+      "re-verification of the full admissibility condition after CHATGPT's three corrective commits"
     ],
     "passed": [
       "four pinned input hashes match at 3611b1b4",
@@ -334,12 +353,11 @@
       "exactly 4 of 15 artifact hashes changed between 79408449 and a7e03e97: the handoff, the blueprint, packages/contracts/src/runtime/index.ts and packages/contracts/package.json — the four artifacts that carried a superseded state, and no others",
       "no occurrence of a superseded branch, status or test count remains in a position that presents it as current; every surviving mention sits in an explicitly labelled history section or in a sentence that states the correction",
       "two read_ref candidates identified that satisfy both clauses: 3cbae5c1 and the main tip 25b1b7d5",
-      "read_ref defect closed: 4 of 4 cards contain themselves at their declared read_ref and it is reachable from origin/main"
+      "read_ref defect closed: 4 of 4 cards contain themselves at their declared read_ref and it is reachable from origin/main",
+      "all six admissibility clauses verified on origin/main: card at read_ref, reachability, 4 of 4 pins, council gate exit 0, criteria alignment, ledger READY"
     ],
     "failed": [
-      "delegation card availability at read_ref 3611b1b4: the file does not exist at that commit. This is the blocking condition.",
-      "all four delegation cards declare read_ref 3611b1b4 and none of them exists at that commit; the commit is not reachable from origin/main either",
-      "pinned input hashes on all four cards: 0 of 16 match the bytes at the declared read_ref, and ChatGPT's own validator exits 1 on its own commit"
+      "all four delegation cards declare read_ref 3611b1b4 and none of them exists at that commit; the commit is not reachable from origin/main either"
     ],
     "not_run": [
       "The 22 proofs specified in blueprint sections 16-21. Specified, not implemented. The minimal end-to-end demo of section 21 has NOT been executed and is not claimed complete.",
@@ -375,18 +393,18 @@
     },
     {
       "risk_id": "R-003",
-      "event": "The delivery is admitted against a read_ref that cannot serve one of its declared inputs.",
-      "severity": "HIGH",
+      "event": "RESOLVED 2026-08-19: the delivery is no longer admitted against a read_ref that cannot serve its declared inputs.",
+      "severity": "LOW",
       "trigger": "An integrator waives the card-availability check to unblock the task.",
-      "mitigation": "This packet proposes BLOCKED rather than REVIEW. Correct the card's read_ref to a commit that BOTH contains the card AND is reachable from origin/main — d48e1e85 satisfies only the first, because main was rewritten. Use 3cbae5c1 or the tip 25b1b7d5, and correct all four delegation cards, which share the defect. Then resubmit these same bytes unchanged.",
+      "mitigation": "Closed by CHATGPT in 4b63b94, 6ba3a2b and 27b7673, each verified by execution.",
       "owner": "CHATGPT"
     },
     {
       "risk_id": "R-004",
-      "event": "A specialist reads its inputs trusting the pinned hashes and cannot detect a substitution, because the pin no longer describes the file.",
-      "severity": "HIGH",
+      "event": "RESOLVED 2026-08-19: the sixteen pinned hashes were restored and verified 16 of 16.",
+      "severity": "LOW",
       "trigger": "Any of the four cards is used as-is while the sixteen pins are wrong.",
-      "mitigation": "Restore the sixteen hashes to the values listed in docs/program/reviews/UJ-CARDS-REPIN-VERIFICATION-CLAUDE.md section 2.3, and remove the master-prompt exemption at validate-council-packets.mjs line 444 so the canonical plan is covered by the gate.",
+      "mitigation": "Closed by 6ba3a2b; the canonical-plan exemption was removed by 27b7673, so the gate now covers all four inputs.",
       "owner": "CHATGPT"
     }
   ],
@@ -394,7 +412,7 @@
     {
       "task_id": "UJ-RUN-001",
       "previous_status": "READY",
-      "proposed_status": "BLOCKED",
+      "proposed_status": "REVIEW",
       "weight": 13,
       "accepted_weight_before": 0,
       "proposed_accepted_weight": 0,
@@ -420,11 +438,10 @@
   "remaining_work": {
     "weight": 13,
     "blockers": [
-      "The four delegation cards declare sixteen pinned input hashes that match nothing; ChatGPT's own council validator rejects the commit with exit 1. The read_ref defect that previously blocked this task is closed. Nothing in this portfolio can resolve the new one: the cards belong to CHATGPT.",
-      "The 22 proofs specified in blueprint sections 16-21 are not implemented; they require a runtime (M2/M3).",
-      "Independent review by GEMINI has not been performed."
+      "Independent review by GEMINI has not been performed. This is the normal next step, not an impediment.",
+      "The 22 proofs specified in blueprint sections 16-21 are not implemented, plus 11 still PENDING in 13.3, 33 in total; they require a runtime, M2/M3 under UJ-RCV-001. The minimal end-to-end demo of section 21 is specified and NOT executed."
     ],
-    "next_action": "CHATGPT restores the sixteen input_artifacts[].sha256 values on the four delegation cards to the values measured at read_ref 25b1b7d5, listed in docs/program/reviews/UJ-CARDS-REPIN-VERIFICATION-CLAUDE.md section 2.3, and runs validate-council-packets.mjs to exit 0 before pushing. These same bytes can then be resubmitted with status REVIEW and no other change."
+    "next_action": "GEMINI reviews UJ-RUN-001 against the five acceptance criteria of the card, which now match BACKLOG.json. The review checklist is blueprint section 13; the per-criterion evidence is docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md. Accepted weight moves only if GEMINI accepts."
   },
   "confidence": {
     "level": "HIGH",
@@ -440,8 +457,8 @@
     "within_side_effect_limit": true
   },
   "handoff": {
-    "target": "CHATGPT",
-    "next_action": "Restore the sixteen pinned hashes so the council gate passes, then admit these bytes unchanged. GEMINI's review cannot begin while the card fails its own validator.",
-    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha c645377d54c20fad517d376a1b1e10ac54d289a7. It supersedes cfee1316cf83a6171871fedd541e7c4cd286389f, whose handoff described a blocker that CHATGPT has since closed, and before that a7e03e979bae, 79408449bd09 and 2dad45a40798. Accepted weight 0/13, unchanged. No BACKLOG edit and no card edit was made."
+    "target": "GEMINI",
+    "next_action": "Begin the review of UJ-RUN-001. The task is admissible: all six clauses verified. Reproduce the proofs from the repository root with typecheck, then build, then the test suite; expect 140 of 140 and 36 in runtime-invariants. Read section 4 of the handoff first: it declares what is NOT proven.",
+    "resume_point": "All artifacts are committed on branch agent/uj-run-001-blueprint-20260818 at source_commit_sha b2b32733e8db7394fbc0a7f0503bb2795f3b4821. It supersedes c645377d54c2, cfee1316cf83, a7e03e979bae, 79408449bd09 and 2dad45a40798, all of which proposed BLOCKED. Accepted weight 0/13, unchanged and unchanged by the transition to REVIEW."
   }
 }

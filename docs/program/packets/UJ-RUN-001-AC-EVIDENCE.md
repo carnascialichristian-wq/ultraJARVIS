@@ -1,15 +1,15 @@
-# UJ-RUN-001 — evidenza per criterio · consegna **BLOCKED**
+# UJ-RUN-001 — evidenza per criterio · consegna **REVIEW**
 
 | | |
 |---|---|
 | Task | `UJ-RUN-001` — owner CLAUDE, reviewer GEMINI, peso 13 |
 | Card | `UJ-CARD-RUN-001-CLAUDE` |
 | Branch | `agent/uj-run-001-blueprint-20260818` — **verificato con `git branch -a --contains`**, non presunto |
-| **`source_commit_sha` unico** | `c645377d54c20fad517d376a1b1e10ac54d289a7` |
-| Supersede | `a7e03e979baee5a8b796007313ad93408299f840` — il cui handoff chiedeva una correzione del `read_ref` che `main` non avrebbe potuto risolvere (§0-ter). A sua volta superava `79408449bd096613d2823efe6872ed424b757ee6`, i cui byte dell'handoff erano ancora il documento della sessione 1 (§0-bis), e prima ancora `2dad45a40798a8059b5e2b7db077b76e77fcc88b` |
-| Stato proposto | **`BLOCKED`** |
+| **`source_commit_sha` unico** | `b2b32733e8db7394fbc0a7f0503bb2795f3b4821` |
+| Supersede | `c645377d54c20fad517d376a1b1e10ac54d289a7` (ultimo `BLOCKED`), e prima `a7e03e979baee5a8b796007313ad93408299f840` — il cui handoff chiedeva una correzione del `read_ref` che `main` non avrebbe potuto risolvere (§0-ter). A sua volta superava `79408449bd096613d2823efe6872ed424b757ee6`, i cui byte dell'handoff erano ancora il documento della sessione 1 (§0-bis), e prima ancora `2dad45a40798a8059b5e2b7db077b76e77fcc88b` |
+| Stato proposto | **`REVIEW`** |
 | Peso accettato | **0 / 13, invariato** |
-| Generato | 2026-08-18T22:18:42Z |
+| Generato | 2026-08-19T08:33:53Z |
 
 ## 0. Perche' BLOCKED, e perche' resta BLOCKED
 
@@ -179,6 +179,39 @@ lavoro e' stato svolto contro i documenti reali, i cui byte non sono cambiati.
 Analisi completa e sedici valori corretti:
 `docs/program/reviews/UJ-CARDS-REPIN-VERIFICATION-CLAUDE.md`.
 
+## 0-quinquies. 2026-08-19 — IL BLOCCO E' SCIOLTO
+
+CHATGPT ha completato la correzione. **Le sei clausole di ammissibilita' sono verificate per
+esecuzione su `origin/main`**, e questa consegna passa da `BLOCKED` a `REVIEW`.
+
+| # | Clausola | Esito |
+|---:|---|---|
+| 1 | la card esiste al proprio `read_ref` `25b1b7d53ff5` | **exit 0** |
+| 2 | il `read_ref` e' raggiungibile da `origin/main` | **exit 0** |
+| 3 | i quattro input pinati coincidono al `read_ref` | **4 su 4** |
+| 4 | `validate-council-packets.mjs` su `origin/main` | **PASS, exit 0** |
+| 5 | criteri della card ≡ criteri del `BACKLOG.json` | **`AC-01`…`AC-05`** |
+| 6 | stato nel ledger | `READY`, reviewer GEMINI |
+
+**Tre commit di CHATGPT, e vanno accreditati per quello che sono.** `4b63b94` ha corretto il
+`read_ref`; `6ba3a2b` ha **ripristinato** i sedici hash che lo stesso repin aveva sostituito con
+valori che non corrispondevano a nulla — segnalati da me e riverificati qui, 16 su 16;
+`27b7673` ha chiuso **entrambi** i rilievi sul validatore: via l'esenzione del piano canonico
+dal controllo di integrita', e calcolo spostato dall'albero di lavoro al commit pinnato
+(`sha256AtRef`). Il secondo l'avevo definito *"rilievo minore"* e non bloccante: e' stato
+chiuso lo stesso.
+
+**Cosa e' cambiato nei byte consegnati: solo le dichiarazioni di stato.** Quattro hash su
+quindici, e sono i quattro punti in cui lo stato vive (§0.4 dell'handoff): handoff, intestazione
+e nota del blueprint, `RUNTIME_CONTRACTS_PROVENANCE` in `index.ts`, `description` del
+`package.json`. Il **vocabolario di dominio** e' stato lasciato intatto di proposito —
+`kind: "BLOCKED"` in `agent-manifest.ts` e `team-spec.ts`, e il membro `BLOCKED` di
+`ResultStatus`, sono stati del runtime, non stato della consegna: una sostituzione cieca li
+avrebbe corrotti. Nessun byte della logica dei contratti, dei test o delle threat notes e'
+cambiato.
+
+**Il peso accettato resta `0/13`** e ci resta finche' GEMINI non si esprime.
+
 ## 1. Il conteggio dei test, risolto definitivamente
 
 Circolavano quattro numeri diversi. Ecco cosa era ciascuno e qual e' quello vero.
@@ -225,7 +258,7 @@ Suite completa, riseguita in questa sessione, file per file:
 ## 2. Il branch, verificato e non supposto
 
 ```
-$ git branch -a --contains c645377d54c2
+$ git branch -a --contains b2b32733e8db
 * agent/uj-run-001-blueprint-20260818
   remotes/origin/agent/uj-run-001-blueprint-20260818
 ```
@@ -237,9 +270,9 @@ stato scrivere un output non misurato.
 Verificato anche in negativo, che e' la meta' che di solito si omette:
 
 ```
-git merge-base --is-ancestor c645377d54c2 origin/main                              -> non contiene
-git merge-base --is-ancestor c645377d54c2 origin/claude/claude-md-resume-point-tvej1u -> non contiene
-git merge-base --is-ancestor c645377d54c2 origin/claude/ultrajarvis-program-setup-2noca9 -> non contiene
+git merge-base --is-ancestor b2b32733e8db origin/main                              -> non contiene
+git merge-base --is-ancestor b2b32733e8db origin/claude/claude-md-resume-point-tvej1u -> non contiene
+git merge-base --is-ancestor b2b32733e8db origin/claude/ultrajarvis-program-setup-2noca9 -> non contiene
 ```
 
 Nessun `UNVERIFIED` e' necessario: la domanda ha una risposta dimostrabile.
@@ -255,9 +288,9 @@ la mappatura sta qui, e il packet la cita da `handoff.resume_point`.
 
 ### AC-01 — contratti provider-neutral
 
-| Artefatto | SHA-256 a `c645377d54c2` |
+| Artefatto | SHA-256 a `b2b32733e8db` |
 |---|---|
-| `docs/architecture/RUNTIME_BLUEPRINT.md` | `bccc5a08d3ab8fc9245c0e6dcb8f946d1616bdda40f8e001d3ad1e3504e0cf6c` |
+| `docs/architecture/RUNTIME_BLUEPRINT.md` | `41d2e368be50fe28da7c00237112b32b904420e5b54e408fa8056fef4bf039fc` |
 | `packages/contracts/src/runtime/agent-manifest.ts` | `0401bf8c364cad5e6f8d430c84a4dc1b66e3b5420e7e2834e88e2a891ebb5b26` |
 | `packages/contracts/src/runtime/team-spec.ts` | `d5a6e5adb50d0cdff3d920ce7dd20dacbef8d8012659f129723d64411653f9ff` |
 | `packages/contracts/src/runtime/supervisor.ts` | `d9d4078c69fd1dfede055571c546d0b3ca092bd14a1807eab6eb16d99dd72779` |
@@ -270,7 +303,7 @@ paternita'. **Esito `0`** occorrenze in posizione normativa. Falsificabile: intr
 
 ### AC-02 — semantiche binary-testable
 
-| Artefatto | SHA-256 a `c645377d54c2` |
+| Artefatto | SHA-256 a `b2b32733e8db` |
 |---|---|
 | `packages/contracts/src/runtime/checkpoint.ts` | `21df12f40d2ffe93e672ed95a13d3ca1125fcd0dad05abfd967b41b2d9612fce` |
 | `tests/contracts/runtime-invariants.test.mjs` | `0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0` |
@@ -282,7 +315,7 @@ cancellation `T-KS-1` · replay e integrita' del ledger `T-LG-1` ×3 · failure 
 
 ### AC-03 — tool access default-deny, mai ereditato implicitamente
 
-| Artefatto | SHA-256 a `c645377d54c2` |
+| Artefatto | SHA-256 a `b2b32733e8db` |
 |---|---|
 | `packages/contracts/src/runtime/depth-guard.ts` | `515b8a9f36fa3fae9594552d30a58bc33bf52d155d6b29fe45e7f01bdcca19b7` |
 | `packages/contracts/src/runtime/supervisor.ts` | `d9d4078c69fd1dfede055571c546d0b3ca092bd14a1807eab6eb16d99dd72779` |
@@ -293,35 +326,41 @@ provider, e *the state machine denies by default*.
 
 ### AC-04 — schemi e checklist completi per la review
 
-| Artefatto | SHA-256 a `c645377d54c2` |
+| Artefatto | SHA-256 a `b2b32733e8db` |
 |---|---|
 | `docs/threat-models/RUNTIME_THREAT_NOTES.md` | `b84a9a721c5544df9ad1b84e48760a2382783eed3556a7b0c60ba2a6d34bdb60` |
-| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | `768c13f5b2952854d5730bfbcfed2069d0359becb7405bfa08315e25504d4776` |
-| `packages/contracts/src/runtime/index.ts` | `8a42d88fb9526fc107970d628abbfbe239609423fb2c7fc5bd8b817c44f4ea5d` |
+| `docs/program/handoffs/HANDOFF-UJ-RUN-001.md` | `185a89319e94ba3485251c5dd07b5d6310b664f1690c24516c2fc53c0447b9b8` |
+| `packages/contracts/src/runtime/index.ts` | `7f3044a14b3a4df6fe3c75978a11dcd50345698b47203a419732c91be5ffda6c` |
 | `packages/contracts/src/runtime/common.ts` | `86baa7e4050a252f5d4650be35753585ae4f1bd3733691a8b4ba31ef70919c51` |
 | `packages/contracts/src/runtime/envelopes.ts` | `1e3f94558b69abd2852f2c8d5af3691db4d31a9ca947ae7d093581ec4a483b79` |
-| `packages/contracts/package.json` | `c2bdb5b63d1b1bab4bf68d7c0644d5376eb7bc28298be53b59f50407b48bc566` |
+| `packages/contracts/package.json` | `20ea3d7437676e7970110f717e64f6b72363cc47789b62e6e9f8e15f2ae70f7c` |
 | `packages/contracts/tsconfig.json` | `d438c3e078c5acc567c703f7d1c119d17d9b135810acd22cd0b5c8013415a5fe` |
 
 **Controllo eseguito:** copertura contro i 24 punti richiesti, **contata**. Cinque avevano zero
 occorrenze e due erano deboli; le sezioni **16-22** le chiudono e la §22 mappa tutti e 24 i
 punti a una sezione.
 
-### AC-05 — ResponsePacket · **NON SODDISFATTO**
+### AC-05 — ResponsePacket · **SODDISFATTO**
 
-`AC-05` richiede un packet valido che **proponga `REVIEW`**. Questo packet e' valido e ogni
-artefatto e' hashato, ma propone **`BLOCKED`**: `AC-05` **non e' soddisfatto**.
+`AC-05` richiede un packet valido che citi ogni hash di artefatto, **proponga `REVIEW`** e
+mantenga il peso accettato a `0/13`. Tutte e tre le condizioni sono ora vere.
 
 ```
 $ node scripts/validate-response-packet.mjs docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json
-exit 0
-- status proposed : READY -> BLOCKED
+ResponsePacket validation: PASS
+- status proposed : READY -> REVIEW
 - accepted weight : 0 -> 0 / 13 (unchanged)
-- artifacts       : 15 cited, all hashes verified at c645377d54c2
+- artifacts       : 15 cited, all hashes verified at b2b32733e8db
+exit 0
 ```
 
-Dichiararlo soddisfatto proponendo `REVIEW` significherebbe aggirare la condizione di blocco
-invece di segnalarla.
+**Per cinque giri questo criterio e' stato dichiarato NON soddisfatto**, e a ragione: il packet
+proponeva `BLOCKED`, e dichiararlo soddisfatto proponendo `BLOCKED` sarebbe stato aggirare la
+condizione invece di segnalarla. Ora propone `REVIEW` perche' le sei clausole di ammissibilita'
+sono verificate, non perche' si sia smesso di controllarle.
+
+**`REVIEW` non e' accettazione.** Il peso resta `0/13`, e il validatore rifiuta per costruzione
+un packet che proponga la propria accettazione: un owner non puo' accettare il proprio task.
 
 ## 4. Cio' che NON e' dimostrato, dichiarato
 
