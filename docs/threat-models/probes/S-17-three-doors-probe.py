@@ -34,6 +34,11 @@ def _materialise_worktree() -> str:
     wt = str(pathlib.Path(d) / "wt")
     subprocess.run(["git", "worktree", "add", "--detach", wt, TARGET_REF],
                    check=True, capture_output=True)
+    # Pulizia via atexit: pipare l'output in `head` manda SIGPIPE e lo script muore
+    # prima dell'ultima riga, lasciando un worktree orfano. Gia' successo una volta.
+    import atexit
+    atexit.register(lambda: subprocess.run(["git", "worktree", "remove", "--force", wt],
+                                           capture_output=True))
     return wt
 
 
@@ -173,4 +178,3 @@ print("Controllo incrociato — embed() guidata direttamente, senza il gate di m
 print(f"  default                      : {verdict(run('embed_direct', {}))}")
 print(f"  MODEL_PROVIDER=local         : {verdict(run('embed_direct', {'MODEL_PROVIDER': 'local'}))}")
 
-subprocess.run(["git", "worktree", "remove", "--force", REPO], capture_output=True)

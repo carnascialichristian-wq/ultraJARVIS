@@ -3508,6 +3508,57 @@ rimuove il proprio worktree).
 variante. `S-17` e `S-19` restano di Grok da correggere e di Christian da decidere.
 
 
+
+## Sessione 6, ottava parte — stato consolidato dei 20 findings, e tre falsi positivi miei
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` è cresciuto per accumulo in quattro sessioni: venti
+findings chiusi a ref diversi in momenti diversi, e **nessuno — me compreso — aveva una vista
+di cosa fosse aperto adesso**. L'ho costruita rieseguendo contro `origin/main` @ `27b7673`.
+
+### Il risultato: 12 chiusi, 1 superato, 1 parziale, 6 aperti
+
+Aperti: `S-06` (che è una decisione di policy, non un difetto), `S-07`, `S-16`, `S-17`, `S-18`,
+`S-19`, `S-20`. Parziale: `S-02` — il gate c'è, tetto ed evento no.
+
+**E due findings che la mia stessa documentazione dava per non chiusi lo sono:**
+
+- **`S-03`**: lo davo parziale perché `SAFE_MODE` era una globale di modulo riscrivibile. Non
+  conta più: `send()` chiama `_safe_mode()` **live a ogni invocazione**, quindi
+  `email.SAFE_MODE = False` non funziona. La globale sopravvive come binding legacy inutilizzato.
+- **`S-15`**: lo davo aperto perché `run_gates(use_real=False)` *"stampa che i gate sono
+  passati"*. Adesso ritorna `ok: None`, stampa `STUB (not executed)` e porta un commento che
+  dice al chiamante di non trattarlo come successo.
+
+Lasciarli segnati aperti avrebbe **sovrastimato di un terzo** la superficie aperta e fatto
+lavorare Grok su cose già fatte. Ho messo una tabella di stato in cima a `GROK_FIX_LIST.md`,
+perché è il documento che lui apre per primo.
+
+### La parte che conta: la mia sonda ha sbagliato tre volte, sempre nella direzione peggiore
+
+Ho scritto uno script che riverifica i venti findings contro un worktree al ref. Ha dato tre
+verdetti falsi, tutti *aperto* dove è *chiuso*:
+
+| Finding | Perché l'euristica ha sbagliato |
+|---|---|
+| `S-11` | cercavo `allowed_kwargs`/`_filter`; `FIX-4` lo implementa come `PRIVILEGED_KWARGS & set(kwargs)` |
+| `S-14` | il pattern pescava `assert "ok" in result.lower()` in `nt_runner.py:206`, che è una stringa di **template** — codice generato, non un verdetto di gate |
+| `S-03` | vedevo `SAFE_MODE =` a livello di modulo e non che `send()` non lo usa |
+
+**Un audit statico di findings di sicurezza sbaglia con la stessa sicurezza con cui azzecca.**
+È letteralmente la forma che questi findings denunciano: un controllo che sembra un controllo.
+Se avessi pubblicato la prima tabella avrei accusato Grok di tre regressioni inesistenti, dopo
+avergli chiesto per sessioni di non fidarsi dei nomi.
+
+**La regola, e l'ho messa NELLO script e non solo qui:** lo script produce **candidati**, non
+verdetti. Ogni riga marcata aperta o parziale è stata riletta nel codice prima di finire nel
+documento. Le due euristiche sbagliate sono corrette con il motivo scritto accanto.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §20 · `GROK_FIX_LIST.md` (tabella di stato in cima) ·
+`docs/threat-models/probes/findings-status-audit.py` (nuovo, con l'avvertenza in testa).
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -3742,6 +3793,16 @@ Sintesi operativa degli errori sopra, in forma di regole:
     è *"nessuna chiamata"* ma *"non misurato"* — distinguili nel codice, o il guasto a monte si
     legge come sicurezza.
 
+38. **Un audit statico produce CANDIDATI, non verdetti** (sessione 6, ottava parte). Uno script
+    che riverifica venti findings di sicurezza con delle regex ne ha sbagliati **tre**, tutti
+    nella direzione peggiore — *aperto* dove è *chiuso* — perché cercava una forma di codice e
+    ne esisteva un'altra equivalente (`PRIVILEGED_KWARGS & set(kwargs)` invece di
+    `allowed_kwargs`), perché pescava una stringa di **template** scambiandola per logica, e
+    perché vedeva una globale senza controllare se il percorso la usa. Pubblicarlo avrebbe
+    accusato un altro autore di tre regressioni inesistenti. **Ogni riga marcata aperta va
+    riletta nel codice prima di uscire dal tuo albero**, e l'avvertenza va messa **dentro lo
+    script**, dove la legge chi lo riesegue, non solo nel documento che lo cita.
+
 ---
 
 # PARTE 8 — RESUME_POINT
@@ -3854,6 +3915,26 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AL) 2026-08-19 — STATO CONSOLIDATO DEI 20 FINDINGS SU main. GIA' FATTO, NON RIFARE.
+     docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §20
+     docs/threat-models/GROK_FIX_LIST.md (tabella di stato IN CIMA)
+     docs/threat-models/probes/findings-status-audit.py  (nuovo)
+     Ref: origin/main @ 27b7673. BILANCIO: 12 CHIUSI, 1 superato, 1 parziale, 6 aperti.
+     APERTI: S-06 (policy, non un bug), S-07, S-16, S-17, S-18, S-19, S-20.
+     PARZIALE: S-02 (gate si', tetto e evento no).
+     DUE CHE LA MIA STESSA MEMORIA DAVA PER NON CHIUSI LO SONO:
+       S-03  send() chiama _safe_mode() LIVE a ogni invocazione: la globale
+             riscrivibile non e' sul percorso. email.SAFE_MODE=False non funziona.
+       S-15  run_gates(use_real=False) ritorna ok:None e stampa "STUB (not
+             executed)", con il commento che vieta di trattarlo come successo.
+     Non aggiornarli avrebbe SOVRASTIMATO DI UN TERZO il lavoro residuo di Grok.
+     RESTANO QUATTRO FIX, E DUE SONO LO STESSO PONTE: FIX-10 e FIX-13 si chiudono
+     insieme. Ordine: FIX-10+FIX-13 -> FIX-11 -> FIX-12.
+     ATTENZIONE, ERRORE MIO (E38/trappola 38): la sonda di audit ha dato TRE
+     verdetti falsi, tutti "aperto" dove era "chiuso" (S-11, S-14, S-03).
+     LO SCRIPT PRODUCE CANDIDATI, NON VERDETTI. Ogni riga aperta va RILETTA nel
+     codice prima di pubblicarla. L'avvertenza e' dentro lo script, in testa.
 
   AK) 2026-08-19 — S-17 QUARTA VERIFICA: TERZA PORTA APERTA. GIA' FATTO, NON RIFARE.
      docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §19

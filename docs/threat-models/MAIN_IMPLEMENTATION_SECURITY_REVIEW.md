@@ -1463,3 +1463,78 @@ solleva **prima** di raggiungere il ponte — firma sbagliata, dipendenza assent
 adesso stampa `NON MISURATO (<errore>)` invece di `nessuna chiamata`. È l'estensione della
 lezione `E22`: zero tentativi per un guasto a monte si legge come sicurezza, ed è il falso
 negativo più facile da consegnare in questa classe di misure.
+
+---
+
+## 20. Stato consolidato dei 20 findings su `main` — riverificato, non ricopiato
+
+**Ref:** `origin/main` @ `27b767309090adf77778575fe22840a1584355aa`, 2026-08-19.
+
+Questo documento è cresciuto per accumulo in quattro sessioni, e i findings sono stati chiusi
+a ref diversi in momenti diversi. Nessuno — me compreso — aveva una vista di **cosa è aperto
+adesso**. Questa sezione la fornisce, e ogni verdetto è stato **riletto nel codice al ref
+corrente**, non ereditato da una sezione precedente.
+
+### 20.1 Lo stato
+
+| ID | Titolo | Stato | Come l'ho confermato |
+|---|---|---|---|
+| `S-01` | `ToolSpec.safe` dichiarato e mai letto | **CHIUSO** | `registry.py:190` — `if not getattr(spec,"safe",True): raise PermissionError` |
+| `S-02` | `registry.call` senza ammissione, tetto, evento | **PARZIALE** | letto: gate presente (`safe` + kwargs privilegiati), **tetto assente, evento assente** |
+| `S-03` | `email.send`: `force` e `SAFE_MODE` finte | **CHIUSO** | `send()` chiama `_safe_mode()` **live** a riga 34; la globale di modulo non è sul percorso |
+| `S-06` | automazione UI nel catalogo | **APERTO — policy** | 2 riferimenti `automation.*` nel registry. Non è un bug: è una decisione del proprietario |
+| `S-07` | nessun evento `tool.*` | **APERTO** | `Registry.call` non emette nulla: zero occorrenze di `tool.called/returned/failed` |
+| `S-08` | — | **CHIUSO** | sessione 3, §10-ter |
+| `S-09` | `lstrip("www.")` non toglie il prefisso | **CHIUSO** | costrutto assente da `tools/browser.py` |
+| `S-10` | `safe_read` legge fuori dalla root | **CHIUSO** | `safe_read` verifica il contenimento |
+| `S-11` | `force=True` aggira `PROTECTED` via registry | **CHIUSO** | `registry.py:183` — `PRIVILEGED_KWARGS = {"force","root"}`, rifiutati con `PermissionError` |
+| `S-12` | promozione senza gate di safety | **CHIUSO** | `scan_text` presente nella promozione |
+| `S-13` | i tool promossi non compilano | **SUPERATO** | non è più il contenimento di `S-12`, che è chiuso per merito proprio |
+| `S-14` | una build fallita riporta `PASS` | **CHIUSO** | `core/gates.py` righe 123, 139, 159 — `status = "PASS" if code == 0 else "FAIL"` |
+| `S-15` | `run_gates(use_real=False)` stampa `PASS` | **CHIUSO** | ritorna `"ok": None` con il commento *"not a real pass – caller must not treat as success"*, e stampa `STUB (not executed)` |
+| `S-16` | memoria senza provenienza | **APERTO** | `entry = {"ts","fact","tags"}` — nessun campo di origine |
+| `S-17` | percorso a pagamento per default | **APERTO** | §19, misurato: tre porte |
+| `S-18` | la test suite sovrascrive `grok.md` | **APERTO** | `root: Path = PROJECT_ROOT` nei default di `safe_write` |
+| `S-19` | il budget gate di `embed()` è inghiottito | **APERTO** | `try: assert_llm_budget() … except Exception: pass` |
+| `S-20` | la promozione cabla `safe=True` | **APERTO** | unica occorrenza di `safe=` nella funzione |
+
+**Bilancio: 12 chiusi, 1 superato, 1 parziale, 6 aperti** — di cui uno (`S-06`) è una decisione
+di policy e non un difetto da correggere.
+
+### 20.2 Due findings che avevo documentato come non chiusi lo sono, e conta dirlo
+
+- **`S-03`**: la mia documentazione lo dava parziale perché `SAFE_MODE` era una globale di
+  modulo riscrivibile a runtime. Non è più vero sul percorso che conta: `send()` legge
+  `_safe_mode()` **a ogni chiamata**, quindi l'attacco `email.SAFE_MODE = False` non funziona
+  più. La globale a riga 85 sopravvive come binding legacy che `send()` non usa.
+- **`S-15`**: lo davo aperto perché `run_gates(use_real=False)` *"stampa che i gate sono
+  passati"*. Non lo fa più: ritorna `ok: None`, stampa `STUB (not executed)` e porta un commento
+  che dice al chiamante di non trattarlo come successo. È esattamente la correzione giusta.
+
+Lasciare quei due segnati come aperti avrebbe sovrastimato la superficie aperta di un terzo, e
+avrebbe fatto lavorare Grok su cose già fatte.
+
+Rilievo minore residuo su `S-03`: `force` viene **registrato** (`record["force_requested"]`) ma
+non sblocca l'invio — solo `UJ_EMAIL_UNSAFE=1` lo fa. È probabilmente la scelta giusta, ma il
+nome del parametro promette un potere che non ha.
+
+### 20.3 Metodo, e tre falsi positivi della mia stessa sonda
+
+Ho costruito uno script che riverifica i venti findings contro un worktree al ref. **Ha
+prodotto tre verdetti sbagliati**, tutti nella direzione più pericolosa — *aperto* dove è
+chiuso:
+
+| Finding | Perché l'euristica ha sbagliato |
+|---|---|
+| `S-11` | cercavo forme come `allowed_kwargs` o `_filter`; `FIX-4` lo implementa come `PRIVILEGED_KWARGS & set(kwargs)` |
+| `S-14` | il pattern generico pescava `assert "ok" in result.lower()` in `nt_runner.py:206` — che è una stringa di **template**, cioè codice generato, non un verdetto di gate |
+| `S-03` | vedevo `SAFE_MODE =` a livello di modulo e non che `send()` non lo usa |
+
+**Un audit statico dei findings di sicurezza produce risposte sbagliate con la stessa
+sicurezza con cui produce quelle giuste** — cioè è esattamente la forma che passo il tempo a
+contestare nel codice altrui: un controllo che sembra un controllo. La regola che ne ricavo e
+che ho applicato prima di scrivere questa tabella: **lo script serve a produrre i candidati,
+non i verdetti.** Ogni riga marcata aperta o parziale qui sopra è stata riletta nel codice.
+
+Le due euristiche sbagliate sono state corrette nello script con il motivo scritto accanto,
+perché la prossima esecuzione non le ripeta.

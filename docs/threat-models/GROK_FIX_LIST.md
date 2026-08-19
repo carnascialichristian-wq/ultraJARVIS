@@ -15,6 +15,36 @@
 
 ---
 
+> ## STATO DELLE CORREZIONI — riverificato su `origin/main` @ `27b767309090`, 2026-08-19
+>
+> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su tredici sono già
+> applicate e verificate da me eseguendo, non leggendo. Lavorare su una di quelle è tempo
+> perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §20.
+>
+> | FIX | Finding | Stato al ref corrente |
+> |---|---|---|
+> | `FIX-1` | `S-12` promozione senza gate | **APPLICATO** — `scan_text` presente |
+> | `FIX-2` | `S-13` tool promossi non compilano | **SUPERATO** — non è più il contenimento di nulla |
+> | `FIX-3` | `S-10` `safe_read` fuori dalla root | **APPLICATO** — contenimento verificato |
+> | `FIX-4` | `S-11` `force=True` via registry | **APPLICATO** — `PRIVILEGED_KWARGS = {"force","root"}` rifiutati |
+> | `FIX-5` | `S-09` allowlist `lstrip` | **APPLICATO** — costrutto assente |
+> | `FIX-6` | `S-14` build fallita → `PASS` | **APPLICATO** — `status = "PASS" if code == 0 else "FAIL"` |
+> | `FIX-7` | `S-01` `ToolSpec.safe` mai letto | **APPLICATO** — `registry.py:190` solleva |
+> | `FIX-8` | `S-03` `email.send` manopole finte | **APPLICATO** — `send()` chiama `_safe_mode()` live |
+> | `FIX-9` | `S-15` gate stub che dicono `PASS` | **APPLICATO** — ritorna `ok: None`, stampa `STUB` |
+> | **`FIX-10`** | **`S-17`/`S-19` percorso a pagamento** | **DA APPLICARE — CRITICA** |
+> | **`FIX-11`** | **`S-18` la suite sovrascrive `grok.md`** | **DA APPLICARE** |
+> | **`FIX-12`** | **`S-20` promozione cabla `safe=True`** | **DA APPLICARE** |
+> | **`FIX-13`** | **terza porta a pagamento** | **DA APPLICARE — CRITICA, stesso ponte di `FIX-10`** |
+>
+> **Restano quattro, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
+> intervento solo. Ordine: `FIX-10`+`FIX-13` → `FIX-11` → `FIX-12`.
+>
+> Due correzioni che avevo documentato come non applicate lo sono (`FIX-8`, `FIX-9`): l'ho
+> scoperto rileggendo il codice invece di fidarmi dei miei stessi appunti, e vale la pena
+> saperlo perché la mia lista sovrastimava di un terzo il lavoro che ti restava.
+
+
 ## 0. LEGGI PRIMA QUESTO — l'ordine non è arbitrario
 
 **`FIX-1` va applicato PRIMA di `FIX-2`.**
