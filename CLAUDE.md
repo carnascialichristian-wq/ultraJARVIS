@@ -244,9 +244,24 @@ verdetto vale.
 definizioni, entrambe controllabili con un comando; **la decisione su quale adottare è di
 Christian**, e finché non la prende il mandato resta sospeso.
 
-**Definizione A — pianificazione completa.** Tutti i 18 task che coprono le milestone M0+M1
-più le specifiche che il build richiede sono `ACCEPTED`.
-Misura al 2026-08-19: **185 unità su 311, accettate 0.**
+**Definizione A — pianificazione completa.** Tutti i task che coprono le milestone M0+M1 più le
+specifiche che il build richiede sono `ACCEPTED`.
+
+**Misura rifatta il 2026-08-19 sera, e la prima era su una baseline superata.** La prima stesura
+diceva *"185 unità su 311, accettate 0"*. Ricalcolato su `origin/main` @ `27b7673`:
+
+| Misura | Valore |
+|---|---:|
+| task in M0+M1 | **17** |
+| peso M0+M1 | **177** |
+| accettato in M0+M1 | **26** |
+
+**Le 26 unità accettate sono `UJ-META-001` (21/21, `DONE`) e `UJ-META-002` (5/8), entrambe di
+governance.** Di lavoro specialistico, in M0+M1, è accettato **zero**. Il totale di programma è
+oggi **340** e non 311: la baseline è cresciuta di 29 unità dopo la sessione 1.
+
+⚠️ **`311` resta corretto dove compare come `baseline §38`** — è la cifra fissa del piano
+canonico, un dato storico, non il totale corrente. Non correggerla lì.
 
 **Definizione B — minimo per iniziare a costruire.** ⚠️ **La prima stesura di questa
 definizione era sbagliata e va letta come storia.** Elencava quattro task per 42 unità
@@ -4006,6 +4021,50 @@ accanto alla mappa delle famiglie, non solo nel documento.
 §5 dichiara cosa l'audit **non** copre: gli invarianti del runtime non hanno ID e la sonda non
 può dire quale manchi — ma quel file è fra i 15 hashati e in review, quindi il naming non l'ho
 cambiato. E copertura non è correttezza: conto la tracciabilità, non la qualità dell'asserzione.
+
+
+
+## Sessione 6, diciassettesima parte — controllo incrociato di tutto ciò che ho scritto oggi
+
+Con il portafoglio esaurito, la cosa più utile non era produrre altro: era **verificare che i
+35 documenti toccati oggi non si contraddicessero**. È la classe di difetto che è costata
+**sei giri** su `UJ-RUN-001` — lo stesso fatto scritto in più posti e aggiornato in uno solo.
+
+### Esito: sette fatti controllati, **uno solo davvero scaduto**
+
+| Fatto | Valori trovati | Verdetto |
+|---|---|---|
+| conteggio della suite | `138` e `140` | **legittimo**: i `138` sono tutti dentro voci di Session Log delle sessioni 2-4, cioè storia |
+| peso accettato mio | `0/76` ovunque | coerente in 10 documenti |
+| totale di programma | `311` e `340` | **legittimo**: `311` compare solo come *"baseline §38"*, la cifra fissa del piano canonico, non come totale corrente |
+| card esistenti | `4` | coerente |
+| `UJ-SEC-001` sblocca | `21` | coerente |
+
+**L'unico scaduto**: la §3 del mandato di Technical Lead diceva *"Misura al 2026-08-19: 185
+unità su 311, accettate 0"* — al **presente**, con la baseline vecchia. Ricalcolato:
+**17 task in M0+M1, 177 unità, 26 accettate.** E le 26 sono entrambe di governance
+(`UJ-META-001` 21/21 e `UJ-META-002` 5/8): **di lavoro specialistico, in M0+M1, è accettato
+zero.**
+
+Conta perché è la sezione che una sessione futura legge per decidere **se il mandato è
+scattato**. Con la cifra vecchia avrebbe misurato contro un denominatore che non esiste più.
+
+### Due falsi positivi del controllo, entrambi miei
+
+- `0 / 76` contro `0/76` — **spaziatura**, non divergenza. Corretto normalizzando gli spazi nella
+  sonda: *un controllo che grida al lupo per la formattazione viene ignorato, e allora tanto vale
+  non averlo.*
+- `#### TH-SF-` a zero occorrenze perché le minacce stanno in **righe di tabella** — già
+  registrato nella sedicesima parte.
+
+### La sonda resta, con l'avvertenza dentro
+
+`docs/threat-models/probes/cross-document-consistency.py`. In testa c'è scritto perché esiste —
+i sei giri di `UJ-RUN-001` — e soprattutto **che produce candidati e non verdetti**, con i due
+casi concreti in cui una divergenza è legittima: le voci di Session Log e la baseline §38.
+
+Senza quell'avvertenza, la prossima sessione «correggerebbe» la storia per farla tornare, che è
+esattamente il danno opposto.
 
 
 ---
