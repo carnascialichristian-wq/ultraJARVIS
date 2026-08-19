@@ -35,6 +35,39 @@ CHECKS = {
     "card esistenti":     r'(\d+)\s+card\s+esist',
 }
 
+def council_task_set_check():
+    """L'insieme dei task serviti dal Council e' scritto in CINQUE posti.
+
+    Due nel validatore di ChatGPT (cardPaths, expectedTargets), due campi nella
+    mission (assigned_task_ids, delegation_card_ids), piu' il file di ogni card.
+    Aggiungerne uno richiede di modificarli tutti, e una modifica parziale
+    produce errori che sembrano difetti della card e non della sincronia.
+    Misurato il 2026-08-19: i quattro insiemi coincidevano.
+    """
+    import json
+    try:
+        val = pathlib.Path("scripts/validate-council-packets.mjs").read_text(encoding="utf-8")
+        mis = json.loads(pathlib.Path(
+            "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json").read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        print("  --          insieme task del Council: file non presenti in questo albero")
+        return
+    sets = {
+        "cardPaths (validatore)":       set(re.findall(r"prompts/delegation-cards/(UJ-[A-Z]+-\d+)-", val)),
+        "expectedTargets (validatore)": set(re.findall(r'\["(UJ-[A-Z]+-\d+)",\s*"[A-Z]+"\]', val)),
+        "assigned_task_ids (mission)":  set(mis.get("assigned_task_ids", [])),
+        "delegation_card_ids (mission)": {re.sub(r"UJ-CARD-(.+)-[A-Z]+$", r"UJ-\1", x)
+                                          for x in mis.get("delegation_card_ids", [])},
+    }
+    ref = next(iter(sets.values()))
+    if all(s == ref for s in sets.values()):
+        print(f"  ok          insieme task del Council: {len(ref)} task, coerente in 4 sedi")
+    else:
+        print("  DA LEGGERE  insieme task del Council: le quattro sedi NON coincidono")
+        for name, s in sets.items():
+            print(f"      {name:<32} {sorted(s)}")
+
+
 print(f"documenti confrontati: {len(docs)}  (base {BASE})\n")
 for name, pat in CHECKS.items():
     hits = collections.defaultdict(set)
@@ -53,3 +86,5 @@ for name, pat in CHECKS.items():
         print(f"  ok          {name}: '{v}' coerente in {len(hits[v])} documenti")
     else:
         print(f"  --          {name}: nessuna occorrenza")
+
+council_task_set_check()

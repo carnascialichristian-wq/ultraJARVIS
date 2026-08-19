@@ -4274,6 +4274,64 @@ ammesso   "The reviewer approves after `npx tsc --noEmit` returns exit code 0."
 **8 su 8.** Un criterio che nomina il verdetto **e** un artefatto resta falsificabile.
 
 
+
+## Sessione 6, ventiduesima parte — la mia ipotesi era sbagliata, e cercandola ho trovato di meglio
+
+Alla fine del blocco precedente avevo scritto: *«mi fa sospettare che anche il blocco del
+contatore e il tetto delle schede abbiano una radice comune — entrambi vivono in liste cablate
+nel validatore»*. **L'ho verificata invece di lasciarla come impressione, ed è falsa.**
+
+### La correzione
+
+**Nulla scrive `BACKLOG.json`.** Cercato in tutto il repository: l'unica `writeFileSync` in
+`scripts/` sta in `test-review-result-intake.mjs` e scrive un file di review in una directory
+temporanea. Quattro script **leggono** il backlog, **zero** lo scrivono.
+
+Quindi il blocco del contatore **non è una lista cablata: è un'assenza.** Non condivide radice
+con il tetto delle card. **Sono due correzioni, non una**, e avevo appena scritto il contrario.
+
+Resta vera una cosa più debole e non banale: entrambi hanno la stessa **forma** — un meccanismo
+che fa la cosa giusta per i casi che conosce e **non ha modo di imparare un caso nuovo**. Ma la
+forma condivisa non è una radice condivisa, e confonderle avrebbe mandato ChatGPT a cercare una
+correzione sola dove ne servono due.
+
+### Che cosa ho trovato cercando
+
+**Lo stesso fatto — «quali quattro task il Council serve» — è scritto in cinque posti:**
+
+| # | Dove |
+|---:|---|
+| 1 | `validate-council-packets.mjs` righe 33-38, `cardPaths` |
+| 2 | `validate-council-packets.mjs` righe 443-447, `expectedTargets` |
+| 3 | mission, campo `assigned_task_ids` |
+| 4 | mission, campo `delegation_card_ids` |
+| 5 | il file di ciascuna card |
+
+Più l'assert di riga 471 che impone *"exactly the first four specialist tasks"*.
+
+**Oggi i quattro insiemi coincidono** — verificato, ed è merito della disciplina di ChatGPT. Ma
+cinque copie di un fatto sono la struttura che produce divergenza, ed è esattamente il difetto
+che questo programma continua a pagare.
+
+**E spiega la frizione:** aggiungere una sola card significa modificare cinque posti e rilassare
+un assert. Non è che il meccanismo sia rimasto a quattro per dimenticanza — **costa sei
+modifiche coordinate per arrivare a cinque.**
+
+### Il controllo, aggiunto dove serve
+
+Non ho scritto una sonda nuova: l'ho aggiunto a `cross-document-consistency.py`, che è già la
+sonda dei «fatti scritti in più posti». Ora stampa:
+
+```
+ok          insieme task del Council: 4 task, coerente in 4 sedi
+```
+
+e se un giorno una modifica parziale li disallinea, stampa quale sede diverge. Serve **a
+ChatGPT**, non a me: quando estenderà l'insieme, il modo più probabile di sbagliare è modificarne
+quattro su cinque, e gli errori che ne escono sembrano difetti della card e non della sincronia.
+Ci sono passato io stamattina provando ad aggiungerne sei.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
