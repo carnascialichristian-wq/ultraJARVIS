@@ -3963,6 +3963,51 @@ rilegge.** La contromisura che applico da adesso: quando chiudo un blocco di lav
 Sono quelle che scadono.
 
 
+
+## Sessione 6, sedicesima parte — audit di copertura dei miei stessi contratti: un buco su 41
+
+Avevo trovato `ADM-11` contando **una** famiglia di regole mentre preparavo il pacchetto di
+`UJ-MCP-001`. La domanda ovvia era: **ce ne sono altri?** L'ho verificato su tutte.
+
+### Risultato: 41 regole su 4 famiglie, **un solo buco**
+
+| Famiglia | Documento | Codice | Test | Scoperte |
+|---|---:|---:|---:|---|
+| `OV-*` — override della approval policy | 10 | 10 | 10 | nessuna |
+| `ADM-*` — ammissione dei tool | 18 | 18 | **17** | **`ADM-11`** |
+| `SF-*` — le dieci proibizioni della forge | 10 | 10 | 10 | nessuna |
+| `SF-PIPE-*` — invarianti della pipeline | 3 | 3 | 3 | nessuna |
+
+`ADM-11` resta l'unico, e resta **deliberatamente non chiuso**: la suite passerebbe da 140 a 141
+e `140` compare 14 volte in due artefatti congelati e in review presso Gemini.
+
+### Il quinto falso positivo della giornata, e stavolta della mia stessa sonda
+
+La prima esecuzione dava **`TH-SF-*` a 0 test su 10** — cioè *"dieci minacce della Skill Forge
+senza copertura"*. Falso. `TH-SF-*` e `TH-*` sono **modelli di minaccia**, non insiemi di regole:
+le loro mitigazioni hanno ID propri e la tracciabilità vive nella **colonna `Controlli`** di una
+tabella. Il mio grep cercava sezioni `#### TH-SF-`; sono **righe di tabella**, e ne ha trovate
+zero.
+
+Misurato correttamente: 10 righe su 10 hanno la colonna `Controlli`, 2 citano un ID verificabile,
+e **4 dichiarano un residuo esplicitamente aperto** — che è il pregio, non il difetto:
+`TH-SF-03` e `TH-SF-06` dicono di **non essere chiudibili** dai controlli esistenti.
+
+**Cinque falsi positivi in una giornata, tutti nella stessa direzione** — «manca» dove non manca —
+su `S-11`, `S-14`, `S-03`, il conteggio della severità nel threat model, e ora `TH-SF-*`. Tutti
+fermati dallo stesso riflesso, e nessuno dal metodo. L'avvertenza è **nel codice della sonda**,
+accanto alla mappa delle famiglie, non solo nel documento.
+
+### File
+
+`docs/program/reviews/CLAUDE-CONTRACTS-RULE-COVERAGE-20260819.md` ·
+`docs/threat-models/probes/contracts-rule-coverage.py`
+
+§5 dichiara cosa l'audit **non** copre: gli invarianti del runtime non hanno ID e la sonda non
+può dire quale manchi — ma quel file è fra i 15 hashati e in review, quindi il naming non l'ho
+cambiato. E copertura non è correttezza: conto la tracciabilità, non la qualità dell'asserzione.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4319,6 +4364,21 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AS) 2026-08-19 — AUDIT DI COPERTURA DEI MIEI CONTRATTI. UN BUCO SU 41.
+     docs/program/reviews/CLAUDE-CONTRACTS-RULE-COVERAGE-20260819.md
+     docs/threat-models/probes/contracts-rule-coverage.py
+     41 regole su 4 famiglie: OV 10/10/10, ADM 18/18/17, SF 10/10/10,
+     SF-PIPE 3/3/3. UNICO BUCO: ADM-11, implementata e mai testata.
+     NON CHIUDERLO ADESSO: la suite passerebbe da 140 a 141 e "140" compare 9
+     volte nell'handoff e 5 nel blueprint di UJ-RUN-001, congelati e in review.
+     >>> CHIUDERE ADM-11 SUBITO DOPO la review di UJ-RUN-001.
+     ATTENZIONE, falso positivo della sonda gia' corretto: TH-SF-* e TH-* NON
+     sono insiemi di regole, sono MODELLI DI MINACCIA. Le mitigazioni hanno ID
+     propri e la tracciabilita' sta nella colonna "Controlli" di una TABELLA,
+     non nei nomi dei test. Contarli come "regole senza test" da' un allarme
+     falso: la prima esecuzione diceva "10 minacce scoperte". L'avvertenza e'
+     dentro la sonda.
 
   AR) 2026-08-19 — PERCORSO CRITICO MISURATO. E UJ-SEC-001 NON E' IL PRIMO.
      docs/program/CRITICAL_PATH_20260819.md
