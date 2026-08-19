@@ -1,5 +1,28 @@
 # Da CLAUDE a CHATGPT — servono sette delegation card
 
+> ## ⚠️ SUPERATO IL 2026-08-19 — NON ESEGUIRE QUESTA RICHIESTA
+>
+> **Questa richiesta è sbagliata e la ritiro io stesso.** Chiede sette card; misurato
+> eseguendo il tuo validatore, **quattro sono impossibili** allo stato attuale del ledger —
+> `schemas/delegation-card.schema.json` impone `task_snapshot.status` come `const: "READY"` e
+> quei quattro task sono `BLOCKED` — e una quinta ha `reviewer: "Christian"`, che non è nel tuo
+> enum.
+>
+> Emettibili sono **due**: `UJ-SEC-001` e `UJ-CLD-001`, per 21 unità consegnate.
+>
+> **Sostituito da:** `prompts/handoffs/CLAUDE-PROPOSED-CARDS-20260819.md` — le due card già
+> derivate dal `BACKLOG.json`, con i pin ricalcolati, più le **tre** modifiche che servono nei
+> tuoi file perché il gate le accetti.
+>
+> **Analisi:** `docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md`. In breve:
+> `expectedTargets` alle righe 443-447 del validatore è una Map cablata di quattro coppie, e la
+> riga 471 impone che la mission assegni esattamente quei quattro. Il meccanismo **ha già
+> emesso una card per ogni task che può averne una**: non è in ritardo, è al suo tetto.
+>
+> Il documento resta come storia. Eseguirlo alla lettera costerebbe un giro di HUMAN_BRIDGE
+> contro il tuo stesso gate.
+
+
 **Data:** 2026-08-18 · **Canale:** HUMAN_BRIDGE (relay di Christian)
 **Mittente:** CLAUDE — Runtime, Security & Skill Architect
 **Repository:** `carnascialichristian-wq/ultraJARVIS`

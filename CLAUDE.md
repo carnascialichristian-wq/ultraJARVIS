@@ -3559,6 +3559,92 @@ documento. Le due euristiche sbagliate sono corrette con il motivo scritto accan
 `docs/threat-models/probes/findings-status-audit.py` (nuovo, con l'avvertenza in testa).
 
 
+
+## Sessione 6, nona parte — perché sei miei task non hanno una card: il meccanismo è cablato a quattro
+
+Sei dei miei otto task sono consegnati e non hanno una delegation card. `card_id` è obbligatorio
+nel `ResponsePacket`, quindi **55 unità di lavoro consegnato non sono rappresentabili**. In
+sessione 4 avevo concluso: *"servono sette card da ChatGPT, il collo di bottiglia è quello e non
+è mio"*. Invece di ripetere la richiesta una terza volta ho fatto la cosa più utile: **preparare
+io le card come proposte già conformi**, così che a lui restasse solo verificarle.
+
+### La diagnosi di sessione 4 era incompleta, e la correggo
+
+Ho generato sei card derivandole **meccanicamente** dal `BACKLOG.json` — criteri copiati alla
+lettera perché un assert di ChatGPT impone che coincidano, pin ricalcolati al `read_ref` della
+mission (4 su 4) — e le ho sottoposte al suo validatore in un worktree.
+
+**Primo esito: un falso PASS, riconosciuto dal conteggio e non dall'exit code.**
+
+```
+Council packet validation: PASS
+- delegation_card_count=4
+```
+
+Dieci file nella directory, quattro controllati. Il validatore **non scandisce la directory**:
+legge una lista **cablata** alle righe 34-37. Le mie sei non erano state guardate affatto.
+
+Cablandole nella lista e nella mission, il gate ha finalmente risposto, e le cause di rifiuto
+sono **quattro, strutturali, nessuna aggirabile scrivendo meglio la card**:
+
+| # | Vincolo | Dove |
+|---:|---|---|
+| 1 | `task_snapshot.status` è un `const: "READY"`; `status` esclude `BLOCKED` dall'enum | schema della card |
+| 2 | `reviewer` deve stare in `{CHATGPT, CLAUDE, GEMINI, GROK, CHRISTIAN}` | stesso schema |
+| 3 | **`expectedTargets` è una Map cablata di quattro coppie task→AI** | `validate-council-packets.mjs:443-447` |
+| 4 | *"Mission assigned tasks must be exactly the first four specialist tasks"* | stesso file, riga 471 |
+
+### Il numero che chiude la questione
+
+Ricalcolato dal `BACKLOG.json`, non stimato:
+
+| Filtro | Task |
+|---|---:|
+| totale | **43** |
+| con reviewer accettato dallo schema | **29** — 14 esclusi: 9 con `"Core task owner named on DelegationCard"`, 5 con `"Christian"` |
+| in stato `READY` | **6** |
+| ammessi da `expectedTargets` | **4** |
+| card esistenti | **4** |
+
+**Il meccanismo ha già emesso una card per ogni task che può averne una. Non è in ritardo: è al
+suo tetto.** I due che sarebbero pronti e restano fuori sono `UJ-SEC-001` (13, GROK) e
+`UJ-CLD-001` (8, GEMINI), entrambi miei, entrambi `READY`.
+
+### Il secondo deadlock del programma, e si chiude su sé stesso
+
+Gli altri quattro miei sono `BLOCKED`, e un task `BLOCKED` non può ricevere una card:
+
+```
+BLOCKED -> niente card -> niente packet -> mai REVIEW -> nessun ReviewResult importabile
+        -> nessuna accettazione della dipendenza -> il task resta BLOCKED
+```
+
+Dipendenze verificate: `UJ-MCP-001`→`UJ-SEC-001`, `UJ-SKL-001`→`UJ-SEC-001`,
+`UJ-RCV-001`→`UJ-RUN-001`, `UJ-REV-001`→`UJ-INT-001`. Stessa forma del primo deadlock
+(l'import path): ogni anello è ragionevole da solo, insieme non lasciano un ingresso.
+
+### Ho corretto la mia stessa richiesta invece di lasciarla in giro
+
+`CLAUDE-TO-CHATGPT-CARDS-REQUEST-20260818.md` chiede sette card. **Quattro sono impossibili e
+una ha un reviewer fuori enum.** Eseguirla alla lettera avrebbe fatto perdere a ChatGPT un giro
+contro il suo stesso gate — esattamente il costo che quel documento voleva evitare. L'ho marcata
+`SUPERATO` in testa, con il motivo, e l'ho sostituita con due proposte reali.
+
+**E non è un difetto di condotta di ChatGPT.** L'insieme dei quattro è coerente con una mission
+che si chiama *"first four specialist tasks"*: era un innesco deliberato. Il difetto è che
+l'innesco **non ha una via d'uscita** — nessuno script estende l'insieme.
+
+### File
+
+`docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md` (nuovo, 9 sezioni) ·
+`prompts/handoffs/CLAUDE-PROPOSED-CARDS-20260819.md` (due card pronte, round-trip verificato) ·
+`CLAUDE-TO-CHATGPT-CARDS-REQUEST-20260818.md` marcato superato.
+
+**Raccomandazione che vale più delle due card:** sostituire l'insieme cablato con la regola
+*«ogni task `READY` con owner e reviewer validi può avere una card»*. Così il tetto sparisce
+invece di spostarsi da quattro a sei.
+
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -3915,6 +4001,39 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AM) 2026-08-19 — PERCHE' 6 MIEI TASK NON HANNO UNA CARD. CORREGGE LA SESSIONE 4.
+     docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md
+     prompts/handoffs/CLAUDE-PROPOSED-CARDS-20260819.md  (due card pronte)
+     CLAUDE-TO-CHATGPT-CARDS-REQUEST-20260818.md -> MARCATO SUPERATO, non eseguirlo.
+     LA DIAGNOSI DI SESSIONE 4 ("servono sette card, il collo di bottiglia e' di
+     ChatGPT") E' INCOMPLETA. Misurato eseguendo il SUO validatore:
+       il meccanismo delle card e' CABLATO A QUATTRO TASK. expectedTargets e' una
+       Map di quattro coppie a validate-council-packets.mjs:443-447, e la riga 471
+       impone che la mission assegni esattamente quei quattro.
+     NUMERI, ricalcolati dal BACKLOG (43 task):
+       reviewer accettato dallo schema : 29   (14 esclusi: 9 "Core task owner named
+                                               on DelegationCard", 5 "Christian")
+       in stato READY                  :  6   (un task BLOCKED non puo' avere card:
+                                               task_snapshot.status e' const READY)
+       ammessi da expectedTargets      :  4
+       card esistenti                  :  4
+     IL MECCANISMO HA GIA' EMESSO UNA CARD PER OGNI TASK CHE PUO' AVERNE UNA.
+     Non e' in ritardo, e' al suo tetto. Non e' un difetto di condotta di ChatGPT.
+     EMETTIBILI SUBITO, entrambi miei e READY: UJ-SEC-001 (13, GROK) e
+     UJ-CLD-001 (8, GEMINI) = 21 unita' consegnate. Le card sono gia' scritte.
+     SERVONO TRE MODIFICHE NEI FILE DI CHATGPT, non un file: lista cablata righe
+     34-37, expectedTargets 443-447, mission assigned_task_ids + delegation_card_ids.
+     RACCOMANDATO invece: sostituire l'insieme cablato con la regola "ogni task
+     READY con owner e reviewer validi puo' avere una card" — il tetto sparisce
+     invece di spostarsi da 4 a 6.
+     SECONDO DEADLOCK: gli altri 4 miei sono BLOCKED -> niente card -> niente
+     packet -> mai REVIEW -> nessun ReviewResult -> nessuna accettazione della
+     dipendenza -> restano BLOCKED. Dipendenze verificate: MCP/SKL -> SEC-001,
+     RCV -> RUN-001, REV-001 -> INT-001.
+     TRAPPOLA INCONTRATA: il primo run del validatore ha dato PASS con
+     delegation_card_count=4 mentre nella directory c'erano 10 card. Il validatore
+     NON scandisce la directory. Il segnale era il CONTEGGIO, non l'exit code.
 
   AL) 2026-08-19 — STATO CONSOLIDATO DEI 20 FINDINGS SU main. GIA' FATTO, NON RIFARE.
      docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §20
