@@ -4597,6 +4597,36 @@ contaminazione scritta in testa) · `TASKCLAUDE.md` §76 e §77.
 **Nessuna review modificata, nemmeno la mia. Nessun file di ChatGPT o di Grok toccato. Nessun
 peso proposto, nessuno stato modificato.**
 
+### E39 — il commit ha inghiottito 34 file che non c'entravano, ed era mio
+
+Il commit `11166bb` doveva toccare **quattro** file. Ne ha toccati **trentotto**: ha riportato
+indietro `cloud_bridge.py`, `core/config.py`, quattro sorgenti dei contratti, le quattro
+delegation card, `validate-council-packets.mjs`, il `BACKLOG.json` e altri, e ha aggiunto otto
+file di Gemini e di Grok. **Ed è stato pushato prima che me ne accorgessi.**
+
+**Causa, misurata:** `git --work-tree="$W" checkout <ref> -- <path>` **scrive nell'indice del
+repository principale**, non solo nel worktree indicato. L'ho usato quattro volte per portare
+gli artefatti dentro i worktree di misura, e ogni volta ha messo in stage la versione di un
+altro ref nel repository vero. Il mio `git add` successivo non ha aggiunto nulla di sbagliato:
+lo stage era **già** sporco, e `git commit` prende tutto l'indice.
+
+**Come me ne sono accorto:** l'output di `git status --short` che avevo messo *prima* del commit
+nello stesso comando. Trentotto righe dove ne aspettavo quattro. **Se non avessi stampato lo
+stato, avrei pushato una regressione silenziosa sui contratti e sul validatore di ChatGPT** — e
+la suite sarebbe rimasta verde, perché i file dei test erano stati riportati indietro insieme
+al resto, coerenti fra loro.
+
+**Correzione, senza riscrivere la storia:** ripristinati i 26 file modificati a `79c617d` e
+rimossi gli 8 aggiunti, con verifica per esecuzione che i 26 siano **byte-identici** (0
+divergenze su 26) e che gli 8 non esistano più (0 su 8). Poi typecheck, build, 140 test e i tre
+validatori, di nuovo verdi, e un commit di correzione. Nessun `force-push`, nessun `reset` della
+storia già pubblicata: l'errore resta visibile nel log, che è dove deve stare.
+
+**È la seconda volta che un `commit` inghiotte roba non voluta** — la prima fu `E15`, i
+`__pycache__` generati eseguendo il codice di Grok. La lezione allora era *"eseguire codice
+altrui sporca l'albero"*; questa la estende: **anche misurare lo sporca, e lo sporca
+nell'indice, che è il posto in cui non si guarda.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4830,6 +4860,20 @@ Sintesi operativa degli errori sopra, in forma di regole:
     quando una chiamata solleva **prima** di raggiungere ciò che stai misurando, il risultato non
     è *"nessuna chiamata"* ma *"non misurato"* — distinguili nel codice, o il guasto a monte si
     legge come sicurezza.
+
+39. **`git --work-tree=<dir> checkout <ref> -- <path>` scrive nell'INDICE del repository
+    principale** (E39, sessione 6). Non è un'operazione confinata al worktree indicato: mette in
+    stage la versione di un altro ref nel repository vero. Usato quattro volte per portare
+    artefatti dentro worktree di misura, ha prodotto un commit di **38 file invece di 4**, che
+    riportava indietro contratti, card e il validatore di ChatGPT — e la suite sarebbe rimasta
+    **verde**, perché anche i test erano stati riportati indietro insieme al resto. Contromisure,
+    entrambe necessarie, e la prima è **verificata per esperimento**, non dedotta:
+    `git -C <worktree> checkout <ref> -- <path>` porta il file nel worktree e **non tocca**
+    l'indice principale, mentre `git --work-tree=<worktree> checkout …` lo tocca — provate
+    entrambe di fila confrontando l'hash di `git status --porcelain` prima e dopo. E **stampare
+    `git status --short` nello stesso comando del commit**, non prima e non dopo. È l'estensione di `E15`:
+    eseguire codice altrui sporca l'albero, **misurare lo sporca nell'indice** — cioè nel posto
+    in cui non si guarda.
 
 38. **Un audit statico produce CANDIDATI, non verdetti** (sessione 6, ottava parte). Uno script
     che riverifica venti findings di sicurezza con delle regex ne ha sbagliati **tre**, tutti

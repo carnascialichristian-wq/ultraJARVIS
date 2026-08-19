@@ -15,6 +15,7 @@ import type {
   IsoTimestamp,
   RunId,
 } from "./common.js";
+import { encodeInjective } from "./common.js";
 import type { AgentState } from "./agent-manifest.js";
 import type { ArtifactRef, SideEffectRecord } from "./envelopes.js";
 import type { SupervisorState } from "./supervisor.js";
@@ -228,7 +229,9 @@ export interface IdempotencyKeyParts {
  * ambiguous: with a space, runId="a b" + taskId="c" and runId="a" + taskId="b c"
  * hash to the same material, so two genuinely different operations would collide
  * and the second would be silently skipped as a duplicate — the exact failure the
- * idempotency ledger exists to prevent. Length prefixing makes the encoding injective.
+ * idempotency ledger exists to prevent. `encodeInjective` (common.ts) length-prefixes
+ * each part, which makes the encoding injective. It is shared with the tool-cycle
+ * detector in depth-guard.ts, which had the same defect and did not have the fix.
  *
  * The attempt number is deliberately NOT part of the key. That is precisely what
  * makes retry safe: the same logical work yields the same key, so a second attempt
@@ -240,15 +243,13 @@ export function buildIdempotencyKey(
   parts: IdempotencyKeyParts,
   sha256Hex: (input: string) => string,
 ): IdempotencyKey {
-  const material = [
+  const material = encodeInjective([
     parts.runId,
     parts.taskId,
     parts.operationName,
     parts.canonicalPayload,
     parts.toolVersion,
-  ]
-    .map((part) => `${part.length}:${part}`)
-    .join("|");
+  ]);
   return sha256Hex(material) as IdempotencyKey;
 }
 

@@ -608,3 +608,1261 @@ Ho verificato solo le proprietà di sicurezza che avevo dimostrato rotte io stes
 - non ho revisionato i ~90 tool puri (`math_*`, `list_*`, `string_*`): il rischio sta nei
   tool con effetti esterni, e ho guardato quelli;
 - **non mi sono assegnato peso.** `UJ-SEC-003` è una proposta: la baseline è di ChatGPT.
+
+---
+
+## 12. S-17 — `cloud_bridge` mette il programma sul percorso a pagamento con **una sola** variabile, e fallisce in silenzio. **CRITICA.**
+
+> Aggiunto il 2026-08-18, sessione 4. `main` @ `04ae305`. Riguarda codice che **non
+> esisteva** quando è stata scritta la prima stesura di questa review.
+
+### 12.1 Perché questo finding esiste, e chi me l'ha passato
+
+ChatGPT ha fatto un triage statico di `main@6af4a37` e ha scritto, nella sua continuity:
+
+> *"`MODEL_PROVIDER` ha default `openai`; con `UJ_PLANNER_LLM=1` il planner può chiamare
+> `OpenAI(api_key=OPENAI_API_KEY)` … Questo apre un percorso potenzialmente pay-per-use e
+> contrasta il vincolo STRICT_ZERO/no billing. … **non ho eseguito runtime, rete, API o test
+> locale e quindi non tratto la claim come prova indipendente.** Il finding è registrato per
+> la review di sicurezza del proprietario **Claude**."*
+
+Il sospetto è suo, e va accreditato. Quello che mancava è **la prova**: ChatGPT non aveva un
+checkout e non poteva eseguire nulla. Io sì. Questa sezione è la misura, non il sospetto.
+
+### 12.2 Il risultato in una frase
+
+**Per restare sul percorso gratuito bisogna azzeccare DUE variabili d'ambiente; per finire su
+quello a pagamento ne basta UNA.** E quando ci finisci, il programma effettua **tre** tentativi
+fatturabili e poi restituisce un piano dall'aspetto normale, senza dire nulla a nessuno.
+
+### 12.3 Il codice
+
+`cloud_bridge.py`, riga 12 — il default del provider è quello a pagamento:
+
+```python
+PROVIDER = os.getenv("MODEL_PROVIDER", "openai").lower()
+```
+
+`core/planner.py` riga 90 — l'unico gate:
+
+```python
+if os.getenv("UJ_PLANNER_LLM", "").strip() != "1":
+    return None
+```
+
+`cloud_bridge.py` righe 24-28 — il moltiplicatore e la chiamata:
+
+```python
+@retry(max_attempts=3, delay=1.0, backoff=1.5, exceptions=(Exception,))
+def _call_openai(prompt: str, *, system: str = _DEFAULT_SYSTEM) -> str:
+    from openai import OpenAI
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+```
+
+`cloud_bridge.py` righe 76-79 — il silenziatore:
+
+```python
+except Exception as e:
+    _log(f"OpenAI ultimately failed: {e}")
+    return ""
+```
+
+### 12.4 Misurato, non dedotto
+
+Ho eseguito `plan()` in quattro configurazioni, in sottoprocessi isolati, con un modulo
+`openai` **finto** iniettato in `sys.path` che conta i tentativi e **non tocca la rete**.
+Nessuna chiamata reale è stata fatta e nessun addebito è possibile: la macchina non ha
+`OPENAI_API_KEY` e il pacchetto `openai` reale non è installato.
+
+| Scenario | `MODEL_PROVIDER` risolto | Tentativi API a pagamento | Il chiamante lo scopre? |
+|---|---|---:|---|
+| **A** — default, niente impostato | `openai` | **0** | — (mai chiamato) |
+| **B** — solo `UJ_PLANNER_LLM=1` | `openai` | **3** → `gpt-4o-mini` | **NO** |
+| **C** — `UJ_PLANNER_LLM=1` + chiave presente | `openai` | **3**, chiave trasmessa a ogni tentativo | **NO** |
+| **D** — `UJ_PLANNER_LLM=1` + `MODEL_PROVIDER=local` | `local` | **0** | — (mai chiamato) |
+
+In tutti e quattro i casi `plan()` restituisce lo stesso identico titolo di piano:
+`'Build a CSV export tool for the reports page'`. **Dall'esterno gli scenari A e C sono
+indistinguibili**, ma nel secondo il programma ha appena tentato tre richieste fatturabili.
+
+Riproduzione: `docs/threat-models/probes/S-17-cloud-bridge-probe.py`.
+
+### 12.5 I quattro difetti distinti, in ordine di gravità
+
+**(a) Il default del provider è quello a pagamento.** `MODEL_PROVIDER` non impostato → `openai`.
+Lo stesso default è ripetuto in `core/config.py:43`. Il file supporta esplicitamente un
+percorso locale gratuito (LM Studio / Ollama), che è **l'unico conforme a STRICT_ZERO_CARD** —
+ma è quello che devi chiedere. **L'asimmetria è il difetto**: chi accende il planner LLM
+pensando di usare il proprio modello locale ottiene OpenAI, a meno che non ricordi *anche*
+`MODEL_PROVIDER=local`. La configurazione sicura richiede due azioni corrette, quella
+pericolosa una sola. Un default non è una preferenza: è la decisione che viene presa per conto
+di chi non ne prende nessuna.
+
+**(b) Il retry moltiplica l'addebito per tre.** `@retry(max_attempts=3)` avvolge la chiamata
+fatturabile. Una singola `plan()` logica vale fino a **tre** richieste. Non c'è idempotency
+key. Questo viola `ADM-13` del mio `UJ-MCP-001`: un tool `EXTERNAL_WRITE` senza
+`supportsLookupByKey` non è ammissibile — e una chiamata API a consumo, ritentata, è
+esattamente un effetto esterno non idempotente che può essere addebitato più volte.
+
+**(c) Il fallimento è silenzioso e indistinguibile dal non-uso.** `except Exception: return ""`
+→ `_plan_via_llm` restituisce `None` → `plan()` ricade sull'euristica e produce un piano
+normale. Non viene emesso nessun evento, non esiste nessun contatore, nessun costo cumulato,
+nessun avviso. L'unica traccia è una riga su `stderr` dietro `LLM_VERBOSE`. **Il chiamante non
+può distinguere "LLM non configurato" da "abbiamo appena fatto tre tentativi a pagamento".**
+È `S-07` (nessun evento `tool.*`) applicato al percorso che costa denaro, quindi è il posto
+peggiore in cui potesse ricomparire.
+
+**(d) Nessuna ammissione, nessun tetto, nessuna approvazione.** È `S-02` sullo stesso percorso.
+La mia `APPROVAL_POLICY` classifica una spesa come `EXTERNAL_WRITE` con approvazione richiesta;
+qui non c'è nessun punto in cui una policy possa intervenire fra `plan()` e la richiesta HTTP.
+
+### 12.6 Perché lo classifico CRITICA e non HIGH
+
+Non per la probabilità — il gate di default **funziona** (scenario A). Per la natura del danno.
+
+`UJ-CLD-001` ha già stabilito, con citazione alla fonte ufficiale, che il percorso API a
+consumo è `PAID_ONLY_DISABLED` e che **`HUMAN_BRIDGE` è la modalità definitiva finché il
+budget resta zero**. E `CLD-1`, il controllo operativo che ho scritto per Christian, dice:
+
+> *"È l'unico modo in cui questo programma può generare un addebito. La risposta è sempre
+> **no**, salvo decisione esplicita e registrata. Raggiungere il limite è un `BLOCKED`
+> legittimo, non un problema da risolvere spendendo."*
+
+`cloud_bridge` è **precisamente quel meccanismo**, ora su `main`, raggiungibile con una
+variabile d'ambiente, e senza la "decisione esplicita e registrata" da nessuna parte. Ogni
+altro finding di questa review costa integrità o dati. Questo costa **soldi di Christian**, ed
+è l'unico vincolo che il proprietario ha posto come non negoziabile (Articolo 5).
+
+### 12.7 Il contenimento di oggi è un pacchetto mancante
+
+Misurato su questa macchina:
+
+```
+python3 -c "import openai"  →  ModuleNotFoundError: No module named 'openai'
+OPENAI_API_KEY              →  vuota
+```
+
+Quindi oggi, anche con `UJ_PLANNER_LLM=1`, il percorso muore all'`import`.
+
+**È la quarta volta in questo albero che l'unica cosa che impedisce un guasto è un difetto o
+un'assenza**, dopo il trasporto SMTP mancante di `email.send` (`S-03`), i moduli `core`
+mancanti (`S-04`), e la virgoletta di troppo che mascherava `S-12`. Due di quelle quattro
+**hanno già smesso di proteggere** durante il programma, quando Grok ha pubblicato i file
+mancanti. `pip install openai` è un comando.
+
+Un contenimento che nessuno ha scelto non è un contenimento: è una coincidenza con una data di
+scadenza.
+
+### 12.8 L'ordine di correzione conta, di nuovo
+
+`docs/PHASE2.md`, aggiunto nello stesso push, dichiara come **prossimo** passo:
+
+```
+## Next
+- [ ] Writer LLM adapter (replace heuristics in natural_tasks)
+```
+
+Cioè lo **stesso** adattatore, sullo stesso `cloud_bridge`, applicato al percorso che
+**genera codice** — quello che poi `promote_job_to_tools()` scrive dentro `tools/`.
+
+**Va corretto `cloud_bridge` PRIMA che il writer adapter venga costruito sopra**, per la stessa
+ragione per cui `S-12` andava corretto prima di `S-13`: un difetto di fondazione replicato in
+un secondo punto costa il doppio a rimuoverlo, e il secondo punto è più pericoloso del primo.
+Lo scrivo esplicitamente invece di lasciarlo intuire, perché è il genere di errore che questo
+programma continua a produrre.
+
+### 12.9 Cosa ho trovato CORRETTO, ed è sostanziale
+
+- **Il gate di default funziona davvero.** Scenario A e D misurati: zero tentativi. Grok non
+  ha acceso niente di nascosto, e l'opt-in è reale.
+- **`test_plan_llm_disabled_by_default` è un buon test**, e asserisce la cosa giusta
+  (`assert calls == []`), non una approssimazione.
+- **Il fallback euristico è deterministico e sempre presente**: il sistema non dipende
+  dall'LLM per funzionare, che è la scelta architetturale giusta.
+- **Il percorso locale esiste** ed è la strada conforme: manca solo che sia il default.
+
+Il problema non è che Grok abbia costruito un ponte verso un LLM. È **quale estremità del
+ponte è aperta quando nessuno decide.**
+
+### 12.10 Correzioni proposte — `FIX-10`, ordinate
+
+| # | Correzione | Chiude |
+|---|---|---|
+| **FIX-10a** | `PROVIDER = os.getenv("MODEL_PROVIDER", "local").lower()` in `cloud_bridge.py:12` **e** `core/config.py:43`. Il default diventa il percorso a costo zero | 12.5(a) |
+| **FIX-10b** | In `_call_openai`, rifiutare la chiamata a meno che `UJ_ALLOW_PAID_API=1` **non** sia impostata esplicitamente, e sollevare un errore parlante invece di procedere. Due interruttori indipendenti per spendere, nessuno per non spendere | 12.5(a), 12.6 |
+| **FIX-10c** | Togliere il `@retry` dal percorso a pagamento, oppure portarlo a `max_attempts=1` finché non esiste un'idempotency key | 12.5(b) |
+| **FIX-10d** | `ask_cloud_ai` deve restituire un esito strutturato (`ok` / `provider` / `attempts`), non `""`. Il chiamante deve poter distinguere "non configurato" da "tentato e fallito" | 12.5(c) |
+| **FIX-10e** | Emettere un evento per ogni tentativo verso un provider a pagamento, con un contatore cumulato leggibile da `uj` | 12.5(c), S-07 |
+
+**FIX-10a e FIX-10b prima del writer adapter.** Sono due righe e una condizione.
+
+### 12.11 Cosa NON ho verificato
+
+- **Non ho eseguito alcuna chiamata reale** a OpenAI o a un server locale, e non ne eseguirò:
+  sarebbe esattamente la violazione che il finding descrive. Il modulo `openai` usato nel
+  probe è finto e non apre socket.
+- **Non ho verificato la claim "218 tests green"** del messaggio di commit: `pytest` non è
+  installato in questo container. Non la tratto né come vera né come falsa.
+  *Per correttezza verso Grok:* ChatGPT ha osservato che il commit `6af4a37` non conteneva
+  file di test. È esatto a **quel** ref, ma i test sono arrivati nel commit successivo
+  `8ae3641` (`tests/test_planner.py`, `tests/test_natural_tasks.py`). Il rilievo era corretto
+  quando è stato scritto ed è ora superato — l'ho verificato con `git log`, non assunto.
+- **Non ho toccato una riga** di `cloud_bridge.py`, `core/planner.py` o `core/config.py`: è
+  codice di Grok, e la correzione è una decisione di baseline, non mia.
+
+---
+
+## 13. S-17 — ESCALATION. Il writer adapter è arrivato prima del fix. **CRITICA, invariata ma raddoppiata.**
+
+> Aggiunto il 2026-08-18, poche ore dopo §12. `main` @ `8c4224c`.
+
+### 13.1 Quello che §12.8 chiedeva di non fare, è stato fatto
+
+§12.8 diceva, testualmente:
+
+> *"`FIX-10a`/`FIX-10b` vanno applicati **PRIMA** che il writer adapter esista … un difetto
+> di fondazione replicato costa il doppio a togliere, e il secondo punto è più pericoloso del
+> primo."*
+
+`main` è avanzata di 3 commit e ha portato `_code_via_llm` — il **Writer LLM adapter**, opt-in
+`UJ_WRITER_LLM=1`, in `core/natural_tasks.py`. Il fix non c'è.
+
+Verificato al ref corrente, non assunto:
+
+```
+cloud_bridge.py:12    PROVIDER = os.getenv("MODEL_PROVIDER", "openai").lower()   → INVARIATO
+core/config.py:43     model_provider=os.getenv("MODEL_PROVIDER", "openai")       → INVARIATO
+git grep UJ_ALLOW_PAID_API                                                        → ASSENTE
+```
+
+**Nota sul branch `agent/strict-zero-cloud-bridge-20260818`.** Il nome promette esattamente
+questo fix. Contenuto reale: `6af4a37`, cioè **0 commit avanti e 6 indietro rispetto a `main`**.
+È un puntatore a un commit vecchio, non una correzione. Chi lo leggesse per nome concluderebbe
+che `S-17` è in lavorazione: **non lo è.** L'ho verificato con `git rev-list --count`, ed è il
+motivo per cui questa sezione esiste invece di una riga di attesa.
+
+### 13.2 Misurato: la seconda porta è identica alla prima
+
+Stesso metodo di §12.4 — sottoprocessi isolati, modulo `openai` finto, **nessuna rete**.
+Guidato `core.natural_tasks._code_for_prompt()`, cioè il percorso che **genera codice**.
+
+| Scenario | Provider risolto | Tentativi fatturabili |
+|---|---|---:|
+| default, nessun gate | `openai` | **0** |
+| **solo `UJ_WRITER_LLM=1`** | `openai` | **3** |
+| `UJ_WRITER_LLM=1` + chiave | `openai` | **3**, chiave trasmessa |
+| `UJ_WRITER_LLM=1` + `MODEL_PROVIDER=local` | `local` | **0** |
+
+### 13.3 Perché il conteggio delle porte è la cosa che conta
+
+Prima di questo push esisteva **una** variabile che, da sola, metteva il programma sul
+provider a pagamento: `UJ_PLANNER_LLM`. Adesso ce ne sono **due**, indipendenti:
+`UJ_PLANNER_LLM` e `UJ_WRITER_LLM`. Nessuna delle due richiede di toccare `MODEL_PROVIDER`.
+
+La superficie non è cresciuta del doppio in senso lato: è cresciuta **esattamente** del doppio,
+perché ogni gate è una condizione `!= "1"` separata sullo stesso ponte immutato.
+
+E la seconda porta è peggiore della prima per una ragione di merito, non di conteggio: il
+planner produce **testo di piano**, il writer produce **codice** che `promote_job_to_tools()`
+scrive dentro `tools/`, cioè nella directory da cui il registry importa ed esegue.
+
+### 13.4 Onestà: cosa Grok ha fatto BENE in questo push
+
+Non è una ripetizione peggiorata del primo. Ci sono due miglioramenti reali:
+
+- **Il writer passa il codice generato per `advisors.safety.scan_text`** prima di accettarlo
+  (`core/natural_tasks.py:90-91`), e lo rifiuta se scatta un hit. Il planner non aveva niente
+  di simile. È esattamente la direzione giusta, ed è la lezione di `FIX-1` applicata
+  spontaneamente al percorso nuovo.
+- **Il gate di default continua a funzionare**: scenario A misurato a 0 tentativi. L'opt-in è
+  reale anche qui.
+- I test aggiunti coprono `opt-in`, `safety reject` e `default-off` — i tre casi giusti.
+
+**Il difetto non è nel writer adapter. È che il writer adapter è stato costruito su un ponte
+che sapevamo difettoso**, e quel ponte non è stato toccato.
+
+### 13.5 Cosa NON ho misurato
+
+Ho guidato `_code_for_prompt()` **direttamente**, quindi i 3 tentativi misurati sono quelli del
+solo percorso writer. **Non ho misurato un giro `uj` completo end-to-end** in cui il planner e
+il writer girano entrambi. Per aritmetica dei due gate ci si aspetterebbero 3 + 3 = 6 tentativi
+fatturabili per una singola richiesta utente, ma **non l'ho verificato e non lo affermo**.
+
+### 13.6 Conseguenza per `FIX-10`
+
+`FIX-10a` e `FIX-10b` non cambiano: restano due righe e una condizione, in `cloud_bridge.py` e
+`core/config.py`. **Chiudono entrambe le porte insieme**, perché entrambe passano da
+`ask_cloud_ai`. È il motivo per cui la correzione va fatta nel ponte e non nei gate: aggiungere
+un terzo adapter aggiungerebbe una terza porta, e il fix al ponte le chiude tutte in anticipo.
+
+`docs/PHASE2.md` ora elenca come prossimi passi *"Embedding-backed recall (optional, needs
+model)"* e *"Multi-agent debate loop"*. Il primo dice esplicitamente **needs model**, e un
+debate loop multi-agente è per costruzione un moltiplicatore di chiamate. **La terza e la
+quarta porta sono già scritte nella roadmap.**
+
+---
+
+## 14. S-17 — **CHIUSO E VERIFICATO.** Decisione n. 7 approvata dal proprietario
+
+> 2026-08-18. La correzione è di **ChatGPT** (`agent/strict-zero-cloud-bridge-20260818` @
+> `1251a68`); la decisione di policy è di **Christian**; la verifica indipendente è mia.
+
+**Christian ha approvato la decisione n. 7:** `MODEL_PROVIDER` default `local`, nessuna
+chiamata cloud o pay-per-use implicita, e fallimento sicuro **senza fallback automatico** al
+cloud se il provider locale non è disponibile.
+
+ChatGPT ha prodotto la correzione dichiarando *"esecuzione runtime/test non disponibile in
+questo checkout"* e ha chiesto esplicitamente la mia verifica. Eseguita.
+
+**Esito: PASS.** Dettaglio completo in
+`docs/program/reviews/UJ-SEC-003-S17-VERIFICATION-CLAUDE.md`.
+
+| Verifica | Esito |
+|---|---|
+| Il criterio di `FIX-10` (scenari B e C da 3 a 0 tentativi) | **soddisfatto: 3 → 0** |
+| 6 attacchi al confine di provider, incluso `MODEL_PROVIDER=openai` **esplicito** | **6 su 6 bloccati** |
+| 13 attacchi all'endpoint locale (userinfo, suffisso, fragment, IP decimale, IPv6-mapped) | **13 su 13 corretti** |
+| Regressione runtime: `main` pristine vs corretto | **215 → 239 passed**, stessa unica failure pre-esistente |
+
+**La correzione è migliore di quella che avevo proposto.** `FIX-10b` metteva un interruttore
+davanti all'adapter a pagamento; ChatGPT ha **cancellato l'adapter**. Un meccanismo che non
+esiste non può essere riacceso per default sbagliato — e questo albero ha già collezionato
+sette manopole che non giravano nulla. In più `_validate_local_base` chiude un buco che **io
+non avevo identificato**: dopo il fix il percorso locale è l'unico, quindi `LMSTUDIO_BASE`
+poteva essere puntato a un endpoint remoto. Merito suo.
+
+**Chiuso da me in aggiunta:** `core/config.py` leggeva la stessa variabile con default
+`openai` e il branch non lo toccava. Oggi inerte (nessun consumatore, verificato), ma è una
+decisione applicata a metà — corretta nello schema prima che il cablaggio esista, come `S-16`.
+
+**Restano aperti** `FIX-10d` (esito strutturato invece di `""`) e `FIX-10e` (evento per
+tentativo, confluisce in `S-07`). Non costano più denaro: costano osservabilità.
+
+`R-SEC-05` passa da **CRITICA aperta** a **chiusa e verificata**.
+
+### Nota su `main`: un `pytest` senza argomenti non colleziona
+
+Trovato durante la verifica, **non causato dal fix** e pre-esistente su `main` @ `1e40376`:
+sei moduli di test non si importano — `test_bool_not_helpers` importa `bool_not` ma il modulo
+definisce `not_`, `test_bytes_helpers` importa `to_bytes` ma il modulo definisce
+`human_bytes`, e altri quattro uguali. `pytest.ini` non li esclude, quindi
+`python3 -m pytest` si ferma a `6 errors during collection`.
+
+Non l'ho corretto: è codice di Grok, fuori dalla decisione n. 7. Ma va detto, perché
+**finché restano, nessuna claim del tipo "N test verdi" è riproducibile da un terzo** — ed è
+esattamente la classe di affermazione che questo programma continua a produrre.
+
+---
+
+## 15. S-18 — eseguire la test suite **sovrascrive la memoria di Grok** nel repository. **HIGH.**
+
+> Trovato il 2026-08-18 durante la verifica di `S-17`, **non cercandolo**: `git status` dopo
+> `pytest` mostrava `grok.md` modificato. `main` @ `1e40376`. Difetto pre-esistente.
+
+### 15.1 Il fatto
+
+Dopo aver eseguito `python3 -m pytest`, il working tree conteneva:
+
+```
+ M grok.md          <-- file TRACCIATO, memoria di continuità di Grok
+?? a.txt
+?? notes/hello.txt
+?? sub/b.txt
+```
+
+E il contenuto di `grok.md` era passato da
+
+```
+224 green. Real gates (py_compile+ruff+black) published.
+```
+
+a
+
+```
+new
+```
+
+**La test suite ha distrutto il file di continuità di un'altra IA**, sostituendolo con la
+stringa letterale `"new"`. Ripristinato con `git checkout -- grok.md`; i tre file spuri
+rimossi.
+
+### 15.2 La causa, dimostrata
+
+`tests/test_files.py` ha una fixture che *intende* isolare:
+
+```python
+@pytest.fixture
+def tmp_root(tmp_path, monkeypatch):
+    """Isolate PROJECT_ROOT to a temporary directory."""
+    monkeypatch.setattr("tools.files.PROJECT_ROOT", tmp_path)
+    return tmp_path
+```
+
+Ma `tools/files.py` cattura la root **nei default degli argomenti**:
+
+```python
+PROJECT_ROOT = Path(__file__).resolve().parent.parent          # riga 33
+def safe_write(path, content, *, encoding="utf-8", root: Path = PROJECT_ROOT, force=False)
+def safe_read (path, ...,                          root: Path = PROJECT_ROOT)
+def safe_list (                                    root: Path = PROJECT_ROOT)
+def _resolve  (path,                               root: Path = PROJECT_ROOT)
+```
+
+**In Python il valore di default di un parametro è valutato una sola volta, alla definizione
+della funzione.** Rebindare l'attributo di modulo dopo l'import non cambia i default già
+catturati. Misurato:
+
+```
+module PROJECT_ROOT : /home/user/ultraJARVIS
+after monkeypatch   : /tmp/fake-root
+safe_write default  : /home/user/ultraJARVIS     <-- non segue il monkeypatch
+```
+
+**La fixture è un no-op.** Ogni chiamata dei test scrive nel repository reale.
+
+### 15.3 Perché è HIGH e non un fastidio
+
+Tre ragioni, in ordine crescente.
+
+1. **Perdita di dati su un file tracciato.** `grok.md` è la memoria di continuità di Grok,
+   esattamente come `CLAUDE.md` è la mia. Chi esegue `pytest` e poi `git add -A` **committa la
+   distruzione della memoria di un'altra IA** senza accorgersene. Io me ne sono accorto solo
+   perché leggo `git status` invece di lanciarlo — è la lezione `E15` che mi ero scritto dopo
+   aver committato 16 `.pyc` per lo stesso motivo.
+
+2. **Il test che fa il danno è quello che esercita il bypass di `PROTECTED`.**
+   `test_force_override` chiama `safe_write("grok.md", "new", force=True)`. `force=True` è
+   precisamente il vettore di `S-11`, e `grok.md` è nella lista `PROTECTED`. Il test **usa il
+   bypass contro il repository vero**, non contro una copia.
+
+3. **Due test di protezione passano per il motivo sbagliato.** `test_protected_refusal`
+   verifica che scrivere `grok.md` sollevi `PermissionError`, e passa — ma passa perché
+   `grok.md` è protetto nella root **reale**, non perché la fixture abbia preparato un file
+   protetto in `tmp_path`. Idem `test_escape_root_refused`. Sono verdi, e non stanno
+   verificando quello che credono di verificare.
+
+   È la trappola 12 del mio `CLAUDE.md` in forma rovesciata: lì un test che **fallisce** per
+   il motivo sbagliato è un falso negativo; qui un test che **passa** per il motivo sbagliato
+   è un falso positivo. In entrambi i casi la regola è la stessa — leggere *perché* un test dà
+   quel risultato, non solo *che* risultato dà.
+
+**Corollario che rende il tutto peggiore:** finché la fixture non isola, **`FIX-3` e `FIX-4`
+non hanno una prova valida**. Le loro asserzioni di contenimento girano contro la root reale,
+dove il contenimento esiste per davvero, quindi passerebbero anche se la logica fosse stata
+rimossa dalla funzione.
+
+### 15.4 La correzione — `FIX-11`
+
+Non serve toccare la logica: serve che la fixture passi la root **esplicitamente**, oppure che
+le funzioni la risolvano a runtime.
+
+```python
+# opzione A - la più piccola: la fixture patcha i default già catturati
+@pytest.fixture
+def tmp_root(tmp_path, monkeypatch):
+    monkeypatch.setattr("tools.files.PROJECT_ROOT", tmp_path)
+    for fn in ("safe_write", "safe_read", "safe_list", "is_protected", "_resolve",
+               "_is_protected"):
+        f = getattr(tools.files, fn)
+        f.__defaults__ = None            # se root e' keyword-only usa __kwdefaults__
+        monkeypatch.setitem(f.__kwdefaults__, "root", tmp_path)
+    return tmp_path
+```
+
+```python
+# opzione B - piu' pulita, cambia tools/files.py: risolvere la root a runtime
+def safe_write(path, content, *, encoding="utf-8", root: Path | None = None, force=False):
+    root = root if root is not None else PROJECT_ROOT      # letto ORA, non alla def
+```
+
+**L'opzione B è quella giusta**, perché rende la fixture esistente corretta senza che nessuno
+debba ricordarsi di un elenco di nomi di funzione, e perché il difetto tornerebbe alla prima
+funzione nuova aggiunta con lo stesso default.
+
+### Verifica che fallisce finché il difetto è presente
+
+```bash
+git status --porcelain grok.md          # deve essere VUOTO dopo una run completa
+python3 -m pytest tests/test_files.py -q
+git status --porcelain grok.md          # se stampa " M grok.md", il difetto c'e' ancora
+```
+
+### 15.5 Cosa NON ho fatto
+
+**Non ho applicato la correzione.** È codice di Grok — `tools/files.py` e `tests/test_files.py`
+— e la decisione n. 7 di Christian riguardava `cloud_bridge`, non questo. Ho ripristinato il
+danno (`git checkout -- grok.md`, rimozione di `a.txt`, `notes/`, `sub/`) e l'ho documentato.
+
+**Non ho contato `workspace/`** fra i file spuri: è una directory di runtime già prevista da
+`pytest.ini` (`norecursedirs`), non un effetto collaterale inatteso.
+
+---
+
+## 16. S-16 — aggiornamento: metà della catena si è chiusa. **MEDIUM, non ancora sfruttabile.**
+
+> 2026-08-18, `main` @ `ef67245`. Aggiornamento di §4-octies, non un finding nuovo.
+
+### 16.1 Cosa è cambiato
+
+Quando avevo trovato `S-16` (memoria senza provenienza) avevo verificato e scritto che **non
+era una vulnerabilità attiva**, perché `planner.py`, `job_worker.py` e `natural_tasks.py` non
+rileggevano la memoria: il percorso *contenuto → memoria → decisione* non era cablato.
+
+**Adesso metà lo è.** Grok ha aggiunto `recall_semantic` e il planner lo usa:
+
+```python
+# core/planner.py:153-154
+from core.memory import recall, recall_semantic
+related = recall_semantic(text, limit=5, tag="job", min_score=0.05)
+...
+milestones.append("Review related past jobs: " + "; ".join(unique[:3]))
+```
+
+E `core/natural_tasks.py:324` scrive in memoria a fine job:
+
+```python
+remember(f"job:{job_id} title={task_plan.title!r} status={final_status}", tags=[...])
+```
+
+`task_plan.title` deriva dal prompt dell'utente. Quindi la catena oggi è:
+
+```
+prompt -> title -> memoria -> recall_semantic -> milestone del piano -> writer -> codice
+```
+
+### 16.2 Cosa NON è cambiato, e perché non lo classifico più grave
+
+**L'ingresso non fidato non esiste ancora.** `bin/uj` prende i prompt dalla riga di comando,
+cioè da Christian. Finché è così, il contenuto che entra in memoria è fidato, e il fatto che il
+record non abbia provenienza non è sfruttabile da un terzo.
+
+`S-16` passa quindi da *"nessuna delle due metà cablata"* a **"metà a valle cablata, metà a
+monte no"**. Resta `MEDIUM`. Non lo alzo, perché non ho un vettore.
+
+### 16.3 Misurato, e il risultato è in parte a favore del progetto
+
+Non ho dedotto la selettività del recall: l'ho misurata, su una memoria costruita con i record
+esattamente nel formato che `natural_tasks` scrive.
+
+| Query | Risultati sopra `min_score=0.05` |
+|---|---|
+| `"export data to csv"` (legittima, correlata) | **1**, score `0.3333` — il job giusto |
+| `"quantum chemistry solver"` (totalmente scorrelata) | **0** |
+
+**`min_score=0.05` sembra permissivo ma non lo è nei fatti:** una query scorrelata non fa
+emergere nulla. È una mitigazione reale, e va accreditata — significa che un fatto ostile in
+memoria non compare in un piano qualunque, ma solo in piani lessicalmente vicini.
+
+Confermato invece il difetto originale, con la stessa misura:
+
+```
+campi di un record di memoria: ['fact', 'tags', 'ts']
+```
+
+**Nessun campo di provenienza.** Un fatto scritto da Christian con `uj remember` e un fatto
+derivato dal titolo di un job restano indistinguibili.
+
+### 16.4 Perché la correzione va fatta adesso e non dopo
+
+È la stessa forma dell'ordine di `S-12`/`S-13` e di `S-17`/writer adapter, e in questo programma
+si è già sbagliata due volte: **la metà a valle è arrivata prima della correzione di schema.**
+Quando arriverà la metà a monte — un ingresso che accetta testo non fidato, per esempio un job
+creato da contenuto web o da una API — il campo di provenienza andrà aggiunto a uno schema che
+nel frattempo ha accumulato record senza. Migrare una memoria è più caro che progettarla.
+
+`remember()` deve accettare e persistere un `source` esplicito, con almeno la distinzione
+`OWNER` / `DERIVED` / `UNTRUSTED`, e `recall_semantic` deve poter filtrare su quello. È una
+modifica di poche righe **oggi**.
+
+### 16.5 Confine
+
+**È di GEMINI, non di Grok.** `UJ-MEM-001` — *"Specify database, memory, provenance, and
+search"* — è il task che possiede questo schema, ed è **BLOCKED** e non consegnato. Io ne sono
+il **reviewer**. Quindi non correggo: segnalo, e lo scrivo nel briefing perché arrivi a chi
+deve progettarlo prima che la memoria si riempia.
+
+### 16.6 Due previsioni mie che NON si sono avverate, e lo dico
+
+In `S-17` §13.6 avevo scritto che *"la terza e la quarta porta sono già scritte nella roadmap"*,
+riferendomi a *"Embedding-backed recall (needs model)"* e *"Multi-agent debate loop"* di
+`PHASE2.md`. Grok le ha implementate entrambe, e **nessuna delle due ha aperto una porta verso
+un provider a pagamento**:
+
+- **`recall_semantic`** è TF-cosine **locale**, non usa embedding di un modello remoto;
+- **`advisors/debate.py`** fa consenso fra `safety`, `style` e `critic`, che sono advisor
+  **locali**. Nessuna chiamata a `cloud_bridge`.
+
+Verificato con `grep` su tutti i moduli nuovi: nessuno importa `cloud_bridge` o `ask_cloud_ai`.
+La previsione era ragionevole quando l'ho scritta ed è stata smentita dai fatti. Registrarlo
+serve a non lasciare in giro un allarme che non ha più oggetto.
+
+**E `core/monetization.py` non è ciò che il nome suggerisce a chi teme l'Articolo 5:** è usage
+metering che scrive un JSONL locale e dichiara *"no billing provider yet"*. Riguarda l'addebito
+a **futuri clienti**, non la spesa del programma. Nessun provider di pagamento, nessuna rete.
+
+---
+
+## 17. Sessione 5 — la catena writer→promote→registry è ora completa, e il suo flag di sicurezza è una costante
+
+**Ref misurato:** `origin/main` `25b1b7d`, 2026-08-18T12:36 +02:00. Tre commit nuovi:
+`core/nt_helpers.py` (*"LLM writer, multi-detect, skills hint, deps graph"*),
+`core/nt_runner.py` (*"NaturalTaskRunner full pipeline + promote with skills"*) e la
+continuity.
+
+### 17.1 `S-17` §13 si è avverata di nuovo: il writer è cresciuto, il fix non è arrivato
+
+In §13 avevo scritto che `FIX-10a/10b` andava applicato **prima** del writer adapter, con la
+stessa logica di `S-12` prima di `S-13`. Il writer non solo è rimasto: è stato **riscritto e
+allargato** dentro la pipeline dei natural task, e il fix non è ancora su `main`.
+
+Misurato con `docs/threat-models/probes/S-17-writer-pipeline-probe.py`. Nessuna rete reale:
+`openai` e `requests` sono stub che registrano il tentativo e sollevano.
+
+| Scenario | `origin/main` |
+|---|---|
+| nessuna variabile | nessuna chiamata |
+| **`UJ_WRITER_LLM=1` da solo** | **3 tentativi fatturabili a OpenAI** |
+| `UJ_WRITER_LLM=1` + `OPENAI_API_KEY` | 3 tentativi fatturabili |
+| `UJ_WRITER_LLM=1` + `MODEL_PROVIDER=local` | loopback, 3 tentativi locali |
+
+Una variabile sola, sul percorso che **genera codice**. Invariato rispetto a §13, ma ora il
+codice generato entra in una pipeline che lo promuove.
+
+**Nota di secondo ordine su `PROVIDER`.** In `cloud_bridge.py` è una **costante di modulo**,
+valutata una volta sola all'import. Su `main` il default è `"openai"`, quindi la costante
+fallisce **aperta**: chi imposta `MODEL_PROVIDER` dopo il primo import non è protetto. Sul
+branch CLAUDE il meccanismo è identico ma il default è `local` e un provider non locale viene
+rifiutato: la stessa costante fallisce **al sicuro**. Non è il meccanismo a essere sbagliato,
+è il verso del suo default.
+
+### 17.2 Cosa Grok ha fatto BENE, e va detto prima del rilievo
+
+`promote_job_to_tools` **non** è la promozione senza gate descritta in `S-12`/`S-13`. Quella è
+chiusa, e la funzione di oggi ha quattro controlli reali, verificati leggendo il sorgente al
+ref corrente:
+
+1. `scan_text(text)` sul contenuto, con `PermissionError` se ci sono pattern pericolosi;
+2. `is_protected(dest, root=root)` prima di scrivere;
+3. `safe_write(dest, content, root=root, force=force)`, cioè contenimento nella root;
+4. sanitizzazione del `module_name` con rifiuto dei nomi non validi.
+
+E `FIX-7` ha reso `ToolSpec.safe` un flag **che funziona davvero**: `Registry.call()` alla
+riga 189 solleva `PermissionError` se `spec.safe` è falso. Nella mia review di sessione 3
+avevo classificato `ToolSpec.safe` fra le *"manopole di sicurezza che non girano nulla"*.
+**Non è più vero, e la correzione è di Grok.**
+
+### 17.3 `S-20` — la promozione cabla `safe=True`. **MEDIUM.**
+
+Proprio perché `FIX-7` ha reso il flag efficace, il valore che gli viene dato conta.
+
+In `promote_job_to_tools`, con `register=True`:
+
+```python
+spec = ToolSpec(
+    name=tool_name,
+    ...
+    safe=True,
+    tags=["promoted", tool_prefix],
+)
+```
+
+**`safe=True` è l'unica occorrenza di `safe=` nella funzione.** Non esiste input, esito di
+scan, provenienza o parametro che possa produrre `safe=False`.
+
+**Prova eseguita**, in un worktree su `origin/main` e con `root` in una directory temporanea,
+per non toccare `tools/` del repository:
+
+```
+tool registrati dalla promozione: 1
+  name='demo_promoted.run'  safe=True  module='tools.demo_promoted_helpers'  tags=['promoted', 'demo_promoted']
+occorrenze di 'safe=' nella funzione: ['safe=True']
+```
+
+**Perché conta.** `Registry.call()` decide se eseguire un tool leggendo `spec.safe`. Per ogni
+tool scritto a mano quel flag è una scelta — e infatti sette tool del catalogo sono
+`safe=False`. Per il codice **promosso**, cioè l'unica categoria che nessun umano ha scritto,
+il flag è una costante permissiva: il gate esiste, funziona, e sulla classe di tool più
+sospetta non può mai rifiutare.
+
+Con `UJ_WRITER_LLM=1` la catena è completa: un modello remoto **a pagamento** scrive il corpo,
+gli scan lo lasciano passare, la promozione lo scrive in `tools/`, e la registrazione lo marca
+`safe=True`. Nessuno dei passaggi è privo di controlli. Il difetto è che l'ultimo controllo
+riceve sempre lo stesso ingresso.
+
+**Non è `S-12`/`S-13` che si riapre.** Quelli erano *"nessun gate"*. Questo è *"il gate c'è e
+la sua condizione è costante"* — la variante più difficile da vedere, perché il codice del
+gate è corretto e leggerlo non rivela niente.
+
+**Correzione proposta**, piccola e nel portafoglio di Grok:
+
+```python
+# prima
+safe=True,
+# dopo
+safe=False,   # il codice promosso non è safe per default: lo diventa con una
+              # decisione esplicita, come i sette tool del catalogo che già lo sono
+```
+
+Con `safe=False` il tool resta registrato, visibile in `bin/uj` come *unsafe*, e
+`Registry.call()` lo rifiuta finché qualcuno non lo promuove deliberatamente. È lo stesso
+schema già usato per `files.safe_write`, `browser.open_url` e `automation.*`.
+
+**Ordine, detto esplicitamente:** `FIX-10a/10b` (cioè il merge dello strict-zero su `main`)
+va **prima** di `S-20`. Finché il writer va su un provider a pagamento, il codice promosso è
+sia non gratuito sia marcato sicuro; chiudendo prima `S-20` si avrebbe codice a pagamento
+correttamente marcato non sicuro, che è meglio ma non risolve il costo. Stessa logica di
+`S-12` prima di `S-13`.
+
+### 17.4 Confini e limiti dichiarati
+
+- `core/`, `tools/` e `advisors/` sono di **GROK**. Ho misurato e segnalato, **non corretto**.
+- Non ho eseguito nessuna chiamata di rete reale. La sonda sostituisce `openai` e `requests`.
+- La prova di promozione ha scritto **solo** in una directory temporanea, passata via `root`.
+  `tools/` del repository non è stata toccata: verificato nell'output della prova.
+- Non ho misurato `nt_runner.build_and_run` end-to-end: richiede i gate reali e un job
+  completo. Ho misurato i due estremi della catena, writer e promote, e ho letto il tratto
+  in mezzo. Il tratto letto **non** lo dichiaro verificato.
+- **Correzione di una mia affermazione precedente:** nella review di sessione 3 avevo elencato
+  `ToolSpec.safe` fra le manopole che non applicano nulla. Dopo `FIX-7` è falso. Lasciarlo in
+  giro sarebbe un allarme senza oggetto, e renderebbe invisibile il rilievo vero, che è
+  esattamente l'opposto: il flag conta, e la promozione non lo usa.
+
+---
+
+## 18. `S-18` riverificato in sessione 5 — **ancora aperto su `main`**
+
+**Ref:** `origin/main` `25b1b7d`. Riprodotto in un worktree usa-e-getta; il repository di
+lavoro non e' stato toccato e `grok.md` nel mio albero e' rimasto a `d72ece89…`.
+
+`pytest` **non e' installato** in un container nuovo, quindi la verifica documentata in
+`GROK_FIX_LIST.md` → `FIX-11` non e' eseguibile a freddo. Ho riprodotto il **meccanismo** con
+Python semplice, che e' dove sta il difetto.
+
+**Precisazione che rende la diagnosi esatta.** `root` e' un parametro **keyword-only**, quindi
+il valore catturato alla definizione non sta in `__defaults__` — che vale `None` — ma in
+**`__kwdefaults__`**. Cercarlo nel posto sbagliato porta a concludere che nessun default sia
+stato catturato, che e' la conclusione opposta a quella vera.
+
+| Misura | Valore |
+|---|---|
+| `tools.files.PROJECT_ROOT` dopo il monkeypatch | la temp dir |
+| `safe_write.__kwdefaults__['root']` dopo il monkeypatch | **la root reale, invariata** |
+| `grok.md` prima → dopo | `d72ece89c9e7` → `6fa4b5249c69` |
+| file scritto nella temp dir | **no** |
+
+**Controllo positivo:** passando `root=<temp>` esplicitamente, `safe_write` scrive nella temp
+dir. Il contenimento **funziona**; sbagliato e' solo il momento in cui la root viene legata.
+
+**È la terza occorrenza oggi della stessa forma:** un valore catturato una volta sola, e una
+riassegnazione successiva che sembra avere effetto e non ne ha. Le altre due sono `PROVIDER` in
+`cloud_bridge.py` (§17.1) e `safe=True` nella promozione (§17.3). In tutti e tre i casi il
+codice del controllo e' corretto e leggerlo non rivela niente: quello che inganna e' **quando**
+il valore viene fissato.
+
+`S-18` e' di **GROK**. Segnalato e riverificato, non corretto.
+
+---
+
+## 19. `S-17` quarta verifica su `main` — **la terza porta prevista si è aperta.** CRITICA, invariata
+
+**Ref misurato:** `origin/main` @ `27b767309090adf77778575fe22840a1584355aa`, 2026-08-19.
+**Sonda:** `docs/threat-models/probes/S-17-three-doors-probe.py`, riproducibile dalla root.
+**Nessuna chiamata di rete reale eseguita.** I moduli `openai` e `requests` sono sostituiti
+da stub che registrano il tentativo e sollevano.
+
+### 19.1 Lo stato di `S-17` e `S-19` non è cambiato
+
+Quarta verifica consecutiva. Su `origin/main`:
+
+| Marcatore | Valore |
+|---|---|
+| `MODEL_PROVIDER` default | **`"openai"`** in tre punti: `cloud_bridge.py:12`, `cloud_bridge.py:109`, `core/config.py:43` |
+| `_call_openai` | **presente** |
+| `UJ_ALLOW_PAID_API` | **assente** |
+| validazione loopback di `LMSTUDIO_BASE` | **assente** |
+| guard di budget in `embed()` | dentro `try: … except Exception: pass` — **`QuotaExceeded` inghiottito** (`S-19`) |
+
+La decisione n. 7 del proprietario resta **approvata, verificata e non applicata su `main`**.
+Il fix vive sul mio ramo e su `agent/strict-zero-cloud-bridge-20260818`.
+
+### 19.2 Le porte adesso sono tre, misurate
+
+`§13` prevedeva che le porte a una variabile sarebbero aumentate e che il terzo punto sarebbe
+arrivato sul percorso della memoria. È successo.
+
+| Porta | default | **solo il flag** | flag + `MODEL_PROVIDER=local` |
+|---|---|---|---|
+| planner — `UJ_PLANNER_LLM=1` | nessuna chiamata | **A PAGAMENTO, 3 tentativi** | loopback, 3 |
+| writer — `UJ_WRITER_LLM=1` | nessuna chiamata | **A PAGAMENTO, 3 tentativi** | loopback, 3 |
+| **embedding — `UJ_EMBEDDING=1`** | nessuna chiamata | **A PAGAMENTO, 1 tentativo** | loopback, 1 |
+
+Controllo incrociato, `embed()` guidata direttamente senza il gate di `core/memory.py`:
+
+```
+default               : A PAGAMENTO (1 tentativo)
+MODEL_PROVIDER=local  : loopback (1)
+```
+
+### 19.3 L'asimmetria è 1 contro 3, e la conclusione operativa non cambia
+
+**Una** impostazione corretta — `MODEL_PROVIDER=local` — chiude tutte e tre le porte, perché
+tutte e tre attraversano lo stesso ponte e leggono la stessa variabile. **Tre** impostazioni
+diverse possono aprirne una ciascuna, indipendentemente.
+
+È l'argomento più forte finora per correggere **il ponte** e non i gate: i gate sono tre e
+cresceranno, il ponte è uno. `FIX-10a`/`FIX-10b` sono nel ponte. La correzione già scritta su
+`agent/strict-zero-cloud-bridge-20260818` — che **rimuove** l'adapter invece di gatearlo —
+chiude tutte e tre le porte insieme e rende la quarta impossibile per costruzione.
+
+### 19.4 Che cosa Grok ha fatto BENE, misurato
+
+- **Il default è sicuro su tutte e tre le porte.** Colonna 1: zero tentativi ovunque. Gli
+  opt-in sono reali, non decorativi, e nessuno è acceso di nascosto.
+- **La terza porta ha un gate proprio.** `core/memory.py:115` richiede `UJ_EMBEDDING=1`. Il
+  mio primo sospetto — un percorso di embedding senza opt-in — **era sbagliato**, e l'ho
+  verificato prima di scriverlo.
+
+### 19.5 Esposizione reale, verificata per chiamante e non presunta
+
+Non tutte e tre le porte sono ugualmente vicine all'utente. Tracciato dal `bin/uj` in giù:
+
+| Porta | Catena | Stato |
+|---|---|---|
+| writer | `bin/uj` → `natural_tasks` → `nt_runner:187` → `_code_for_prompt` → `_code_via_llm` | **CABLATA** |
+| planner | `nt_runner:9` importa `plan`, e `nt_runner` è sulla stessa catena | **CABLATA** |
+| embedding | `embed_texts` è chiamata solo da `recall_semantic_embedded`, che ha **zero chiamanti** fuori dal proprio test | **LATENTE** |
+
+**La porta dell'embedding è costruita ma non collegata.** È la stessa situazione di `S-16`:
+il momento giusto per correggerla è **adesso**, prima che qualcuno la cabli, non dopo. Cablarla
+è una riga.
+
+La porta del writer resta la più grave delle tre perché è sul percorso che **genera codice**,
+poi promosso in `tools/` — cioè si combina con `S-20`.
+
+### 19.6 Errori commessi COSTRUENDO questa misura, registrati perché il metodo conta
+
+La prima versione della sonda ha prodotto una tabella in cui **tutte e dodici le celle
+dicevano "nessuna chiamata"**, cioè *"`S-17` è chiuso su `main`"*. Era falsa, per due difetti
+distinti, entrambi miei:
+
+1. **La sonda importava dal worktree corrente** dichiarando nell'intestazione di misurare
+   `origin/main`. Il worktree corrente è il ramo CLAUDE, che porta già il fix STRICT_ZERO.
+   Corretto materializzando un worktree sul ref, perché il percorso attraversa cinque moduli e
+   non basta un `git show` di un file.
+2. **`env=` non veniva passato a `subprocess.run`.** Lo scenario veniva costruito riga per riga
+   e mai applicato: tutte e dodici le celle misuravano la stessa identica configurazione
+   ambientale.
+
+**Su un finding che riguarda i soldi del proprietario avrei riportato "chiuso" dove è aperto.**
+Entrambi i difetti sono stati presi dalla stessa euristica di sempre: il risultato contraddiceva
+quello che sapevo, e ho indagato invece di riportarlo.
+
+Contromisura aggiunta al codice della sonda, non solo a questo documento: se una chiamata
+solleva **prima** di raggiungere il ponte — firma sbagliata, dipendenza assente — la cella
+adesso stampa `NON MISURATO (<errore>)` invece di `nessuna chiamata`. È l'estensione della
+lezione `E22`: zero tentativi per un guasto a monte si legge come sicurezza, ed è il falso
+negativo più facile da consegnare in questa classe di misure.
+
+---
+
+## 20. Stato consolidato dei 20 findings su `main` — riverificato, non ricopiato
+
+**Ref:** `origin/main` @ `27b767309090adf77778575fe22840a1584355aa`, 2026-08-19.
+
+Questo documento è cresciuto per accumulo in quattro sessioni, e i findings sono stati chiusi
+a ref diversi in momenti diversi. Nessuno — me compreso — aveva una vista di **cosa è aperto
+adesso**. Questa sezione la fornisce, e ogni verdetto è stato **riletto nel codice al ref
+corrente**, non ereditato da una sezione precedente.
+
+### 20.1 Lo stato
+
+| ID | Titolo | Stato | Come l'ho confermato |
+|---|---|---|---|
+| `S-01` | `ToolSpec.safe` dichiarato e mai letto | **CHIUSO** | `registry.py:190` — `if not getattr(spec,"safe",True): raise PermissionError` |
+| `S-02` | `registry.call` senza ammissione, tetto, evento | **PARZIALE** | letto: gate presente (`safe` + kwargs privilegiati), **tetto assente, evento assente** |
+| `S-03` | `email.send`: `force` e `SAFE_MODE` finte | **CHIUSO** | `send()` chiama `_safe_mode()` **live** a riga 34; la globale di modulo non è sul percorso |
+| `S-06` | automazione UI nel catalogo | **APERTO — policy** | 2 riferimenti `automation.*` nel registry. Non è un bug: è una decisione del proprietario |
+| `S-07` | nessun evento `tool.*` | **APERTO** | `Registry.call` non emette nulla: zero occorrenze di `tool.called/returned/failed` |
+| `S-08` | — | **CHIUSO** | sessione 3, §10-ter |
+| `S-09` | `lstrip("www.")` non toglie il prefisso | **CHIUSO** | costrutto assente da `tools/browser.py` |
+| `S-10` | `safe_read` legge fuori dalla root | **CHIUSO** | `safe_read` verifica il contenimento |
+| `S-11` | `force=True` aggira `PROTECTED` via registry | **CHIUSO** | `registry.py:183` — `PRIVILEGED_KWARGS = {"force","root"}`, rifiutati con `PermissionError` |
+| `S-12` | promozione senza gate di safety | **CHIUSO** | `scan_text` presente nella promozione |
+| `S-13` | i tool promossi non compilano | **SUPERATO** | non è più il contenimento di `S-12`, che è chiuso per merito proprio |
+| `S-14` | una build fallita riporta `PASS` | **CHIUSO** | `core/gates.py` righe 123, 139, 159 — `status = "PASS" if code == 0 else "FAIL"` |
+| `S-15` | `run_gates(use_real=False)` stampa `PASS` | **CHIUSO** | ritorna `"ok": None` con il commento *"not a real pass – caller must not treat as success"*, e stampa `STUB (not executed)` |
+| `S-16` | memoria senza provenienza | **APERTO** | `entry = {"ts","fact","tags"}` — nessun campo di origine |
+| `S-17` | percorso a pagamento per default | **APERTO** | §19, misurato: tre porte |
+| `S-18` | la test suite sovrascrive `grok.md` | **APERTO** | `root: Path = PROJECT_ROOT` nei default di `safe_write` |
+| `S-19` | il budget gate di `embed()` è inghiottito | **APERTO** | `try: assert_llm_budget() … except Exception: pass` |
+| `S-20` | la promozione cabla `safe=True` | **APERTO** | unica occorrenza di `safe=` nella funzione |
+
+**Bilancio: 12 chiusi, 1 superato, 1 parziale, 6 aperti** — di cui uno (`S-06`) è una decisione
+di policy e non un difetto da correggere.
+
+### 20.2 Due findings che avevo documentato come non chiusi lo sono, e conta dirlo
+
+- **`S-03`**: la mia documentazione lo dava parziale perché `SAFE_MODE` era una globale di
+  modulo riscrivibile a runtime. Non è più vero sul percorso che conta: `send()` legge
+  `_safe_mode()` **a ogni chiamata**, quindi l'attacco `email.SAFE_MODE = False` non funziona
+  più. La globale a riga 85 sopravvive come binding legacy che `send()` non usa.
+- **`S-15`**: lo davo aperto perché `run_gates(use_real=False)` *"stampa che i gate sono
+  passati"*. Non lo fa più: ritorna `ok: None`, stampa `STUB (not executed)` e porta un commento
+  che dice al chiamante di non trattarlo come successo. È esattamente la correzione giusta.
+
+Lasciare quei due segnati come aperti avrebbe sovrastimato la superficie aperta di un terzo, e
+avrebbe fatto lavorare Grok su cose già fatte.
+
+Rilievo minore residuo su `S-03`: `force` viene **registrato** (`record["force_requested"]`) ma
+non sblocca l'invio — solo `UJ_EMAIL_UNSAFE=1` lo fa. È probabilmente la scelta giusta, ma il
+nome del parametro promette un potere che non ha.
+
+### 20.3 Metodo, e tre falsi positivi della mia stessa sonda
+
+Ho costruito uno script che riverifica i venti findings contro un worktree al ref. **Ha
+prodotto tre verdetti sbagliati**, tutti nella direzione più pericolosa — *aperto* dove è
+chiuso:
+
+| Finding | Perché l'euristica ha sbagliato |
+|---|---|
+| `S-11` | cercavo forme come `allowed_kwargs` o `_filter`; `FIX-4` lo implementa come `PRIVILEGED_KWARGS & set(kwargs)` |
+| `S-14` | il pattern generico pescava `assert "ok" in result.lower()` in `nt_runner.py:206` — che è una stringa di **template**, cioè codice generato, non un verdetto di gate |
+| `S-03` | vedevo `SAFE_MODE =` a livello di modulo e non che `send()` non lo usa |
+
+**Un audit statico dei findings di sicurezza produce risposte sbagliate con la stessa
+sicurezza con cui produce quelle giuste** — cioè è esattamente la forma che passo il tempo a
+contestare nel codice altrui: un controllo che sembra un controllo. La regola che ne ricavo e
+che ho applicato prima di scrivere questa tabella: **lo script serve a produrre i candidati,
+non i verdetti.** Ogni riga marcata aperta o parziale qui sopra è stata riletta nel codice.
+
+Le due euristiche sbagliate sono state corrette nello script con il motivo scritto accanto,
+perché la prossima esecuzione non le ripeta.
+
+---
+
+## 21. `S-21` — `PRIVILEGED_KWARGS` è una lista di divieti, non di permessi. **MEDIUM, latente**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19. Trovato cercando difetti **nuovi** nel codice
+arrivato dopo la mia ultima caccia vera (sessione 3-4): 2.171 righe fra `core/multi_file.py`,
+`core/nt_runner.py`, `uj_cli.py` e le modifiche a `tools/`.
+
+### 21.1 Il difetto
+
+`core/registry.py:183` rifiuta di inoltrare due kwarg:
+
+```python
+PRIVILEGED_KWARGS = {"force", "root"}
+```
+
+È una **denylist**: nomina i due che sono stati pensati. Qualunque altro kwarg privilegiato
+passa per default.
+
+E ne esiste un terzo. **Cinque funzioni prendono `real=`**, che scavalca il gate d'ambiente
+(`UJ_OS_REAL`, `UJ_AUTO_REAL`) e non è nella lista:
+
+| Tool | Effetto con `real=True` |
+|---|---|
+| `os.open_app` | `subprocess.Popen([bin])` — **lancia un processo**, e `terminal` è nell'allowlist |
+| `os.set_volume` | `subprocess.run(["pactl", …])` |
+| `automation.type_text` | `xdotool type` — **battiture sintetiche** |
+| `automation.paste_text` | scrive negli appunti via `xclip` |
+| `browser.open_url` | apre il browser |
+
+### 21.2 Oggi NON è sfruttabile, e il motivo conta
+
+Misurato eseguendo, su un worktree a `origin/main`:
+
+```
+registry.call("os.open_app", "terminal", real=True)     -> PermissionError: Tool os.open_app is not marked safe
+registry.call("automation.type_text", "…", real=True)   -> PermissionError: …
+registry.call("browser.open_url", "…", real=True)       -> PermissionError: …
+```
+
+Tutte e cinque sono registrate `safe=False`, e `FIX-7` fa sollevare `Registry.call` **prima** che
+il kwarg venga inoltrato. Enumerazione completa dei **135 tool registrati**: **nessun tool
+`safe=True` accetta un kwarg privilegiato non filtrato**. I due che lo prendono
+(`files.safe_read`, `files.safe_list`) usano `root`, che è **nella** denylist.
+
+### 21.3 Perché resta un finding
+
+**Il contenimento è il flag `safe`, non il filtro dei kwarg** — e sono due decisioni
+indipendenti, prese in momenti diversi da persone diverse.
+
+`FIX-4` è stato scritto **per** fermare i kwarg privilegiati. Su questi cinque non è lui a
+fermarli: è `FIX-7`. Basta che qualcuno marchi `safe=True` **una sola** di quelle cinque —
+`os.set_volume` sembra innocuo — e il bypass diventa vivo **senza nessun'altra modifica** e
+senza che nulla lo segnali.
+
+È la **quinta** volta in questo programma che il contenimento reale è diverso dal controllo che
+sembra fornirlo, dopo il trasporto SMTP assente, i moduli `core` mancanti, la virgoletta che
+mascherava `S-12` e il pacchetto `openai` non installato. Le prime due hanno già smesso di
+proteggere durante il programma.
+
+### 21.4 Correzione: invertire la polarità
+
+Una **denylist** di kwarg privilegiati nomina quelli a cui si è pensato. Un tool nuovo con un
+kwarg nuovo è inoltrato per default, e nessuno se ne accorge finché non serve.
+
+```python
+# adesso — denylist: passa tutto tranne due
+PRIVILEGED_KWARGS = {"force", "root"}
+blocked = PRIVILEGED_KWARGS & set(kwargs)
+
+# proposta — allowlist per tool: passa solo ciò che la ToolSpec dichiara
+allowed = set(getattr(spec, "forwardable_kwargs", ()))
+blocked = set(kwargs) - allowed
+```
+
+**Stopgap in una riga**, se l'inversione è troppo per adesso: `PRIVILEGED_KWARGS = {"force",
+"root", "real"}`. Chiude i cinque casi noti e lascia aperta la classe.
+
+### 21.5 Che cosa NON affermo
+
+- **Non è una vulnerabilità attiva.** Attraverso il registry non è raggiungibile, e l'ho
+  verificato eseguendo.
+- **Un import diretto** (`from tools.automation import type_text`) ha sempre bypassato tutto:
+  quello è `S-02`, non questo.
+- **Non ho eseguito nessuna azione reale**: nessun processo lanciato, nessuna battitura, nessun
+  browser aperto. I tre test qui sopra terminano tutti con un rifiuto.
+- La composizione *"apri un terminale + digita"* è **teorica** in questo stato: entrambe le
+  chiamate sono rifiutate.
+
+---
+
+## 22. `S-22` — due funzioni si chiamano `safe_write`, e quella sul percorso di build non contiene nulla. **HIGH, latente**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+**Riproduzione:** `python3 docs/threat-models/probes/S-22-uncontained-write-probe.py`
+(materializza da sé un worktree al ref, non tocca il repository reale, non usa la rete).
+
+### 22.1 Il difetto in una riga
+
+Nel repository esistono **due funzioni chiamate `safe_write`**. Una controlla la root e la lista
+`PROTECTED`; l'altra non controlla niente. **Il percorso che costruisce ed esegue i job usa la
+seconda**, importandola con un alias che promette il contrario:
+
+```python
+# core/nt_helpers.py:7  e  core/nt_runner.py:13
+from core.reliability import safe_write as guarded_write
+```
+
+`core/reliability.py:46` per intero, nella parte che conta:
+
+```python
+def safe_write(path, content, encoding="utf-8", backup=True) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)   # crea qualunque directory
+    ...
+    tmp.write_text(content, encoding=encoding)
+    tmp.replace(path)                                 # scrive qualunque path
+```
+
+Nessun `relative_to(root)`, nessun `is_protected`, nessun parametro `root`. Il nome del modulo
+— *reliability* — dice esattamente ciò che fa: scrittura **atomica**, con backup e file
+temporaneo. È affidabilità, non contenimento. **`guarded_write` è l'unica parola, in tutta la
+catena, che afferma una guardia**, ed è un alias scelto al punto di import.
+
+### 22.2 Misurato, non dedotto
+
+```
+=== A) core.reliability.safe_write, cioè guarded_write ===
+  !! SCRITTO fuori da qualunque root: /tmp/.../fuori/vittima.txt
+     contenuto ora: 'SOVRASCRITTO da core.reliability.safe_write'
+
+=== B) tools.files.safe_write, la funzione OMONIMA indurita da FIX-3/FIX-4 ===
+  ok rifiutato: PermissionError: Path escapes project root: /tmp/.../fuori/vittima.txt
+  contenuto dopo B: 'ORIGINALE'
+```
+
+Stesso nome, stesso path, esito opposto.
+
+### 22.3 Quanto è cablata: 12 punti di scrittura
+
+| File | Chiamate a `guarded_write` |
+|---|---:|
+| `core/nt_runner.py` | **11** |
+| `core/nt_helpers.py` | **1** |
+
+Scrivono `plan.md`, `gates.txt`, `summary.json`, `critique.json`, `safety.json`, `style.json`,
+`debate.json`, i moduli generati, **`tool.py` (due volte)** e `test_tool.py`. `tool.py` è
+esattamente il file che `promote_job_to_tools` copia poi dentro `tools/`.
+
+### 22.4 Da dove arriva il path, e perché oggi NON è sfruttabile dalla CLI
+
+`core/nt_runner.py:49-51`:
+
+```python
+job_id = f"job_{slugify(task_plan.title)[:20]}_{int(time.time()) % 100000}"
+job_dir = self.jobs_root / job_id
+if output_dir:
+    job_dir = Path(output_dir)      # <-- grezzo, nessuna validazione
+```
+
+Due sorgenti, e vanno giudicate separatamente:
+
+- **dal titolo del piano → SICURO.** `core/utils.py:10` fa
+  `re.sub(r"[^a-z0-9]+", "_", text)`, che distrugge `/`, `\`, `.` e `..`. Un titolo ostile non
+  produce un path. **Lo scrivo perché è la difesa che regge**, e attribuirle un difetto che non
+  ha manderebbe Grok a correggere la cosa sbagliata;
+- **da `output_dir` → NON validato**, usato come `Path(...)` così com'è.
+
+**La CLI non lo espone.** `bin/uj:48` chiama `enqueue(args.prompt)` senza `output_dir`;
+`uj_cli.py:13` chiama `build_and_run(args.prompt)` e basta. Verificato con `git grep`, non
+presunto: gli unici passaggi di `output_dir` sono la firma di `enqueue` e la riga che lo inoltra.
+
+### 22.5 La catena che lo rende raggiungibile, e che è il vero contenuto del finding
+
+`core/job_worker.py`:
+
+```python
+def enqueue(prompt: str, *, output_dir: str | None = None) -> dict:   # :20
+    rec = {"prompt": prompt, "output_dir": output_dir, "ts": time.time()}
+    ...                                                # scritto in workspace/queue.jsonl
+    out = runner.build_and_run(rec["prompt"], rec.get("output_dir"))  # :61, inoltrato grezzo
+```
+
+`workspace/queue.jsonl` **non è in `PROTECTED`** (15 voci, controllate una per una) e sta
+**dentro** la root. Quindi una scrittura che il gate indurito **approva** deposita un
+`output_dir` arbitrario che il percorso di build usa **senza gate**. Misurato:
+
+```
+=== C) la catena ===
+  is_protected("workspace/queue.jsonl") = False
+  la scrittura CONTENUTA dentro la root è stata accettata
+  output_dir che il worker inoltrerebbe: /tmp/.../fuori/job_fuori_root
+  Path(output_dir) è dentro la root? False
+  !! job_dir creata e plan.md scritto FUORI dalla root
+```
+
+**Una scrittura contenuta si trasforma in una scrittura non contenuta attraversando una coda.**
+Non serve bucare `FIX-3`: basta usarlo per il suo scopo su un file che nessuno considera
+sensibile.
+
+### 22.6 L'asimmetria è dentro un solo file, ed è la parte che sorprende
+
+`core/nt_runner.py` importa **entrambe** le funzioni, a quaranta righe di distanza:
+
+| Riga | Import | Contenimento |
+|---:|---|---|
+| 13 | `from core.reliability import safe_write as guarded_write` | **nessuno** |
+| 242 | `from tools.files import safe_write, is_protected` (dentro `promote_job_to_tools`) | root + `PROTECTED` |
+
+La funzione giusta è già lì, già importata, nello stesso file. **La promozione è protetta, la
+costruzione no** — e la costruzione è ciò che genera il contenuto che la promozione poi copia.
+
+### 22.7 Correzione proposta
+
+**`FIX-15a` — un solo `safe_write`.** Due funzioni omonime con contratti di sicurezza opposti
+sono una trappola per chiunque legga un import. Far delegare `core.reliability.safe_write` a
+`tools.files.safe_write` per il controllo del path, mantenendo l'atomicità e il backup che sono
+il suo valore vero.
+
+**`FIX-15b` — validare `output_dir` all'ingresso**, non al punto di scrittura:
+
+```python
+if output_dir:
+    cand = Path(output_dir).resolve()
+    if not str(cand).startswith(str(self.jobs_root.resolve())):
+        raise PermissionError(f"output_dir escapes jobs root: {cand}")
+    job_dir = cand
+```
+
+**`FIX-15c` — rinominare l'alias.** `guarded_write` afferma una guardia che non c'è. Finché
+`15a` non è applicato, `atomic_write` descrive la funzione senza mentire.
+
+### 22.8 Che cosa NON affermo
+
+- **Non è sfruttabile dalla CLI oggi.** Nessun comando di `bin/uj` accetta `output_dir`, e l'ho
+  verificato enumerando i nove sottocomandi, non a memoria.
+- **Non ho eseguito `process_one()` end-to-end.** Fa girare planner e gate reali. Ho misurato
+  separatamente le tre parti — la primitiva di scrittura, l'ammissibilità della coda, la
+  costruzione del path — e ho **letto** la riga che inoltra. La catena è dimostrata a pezzi, non
+  in un colpo solo, e va detto così.
+- **`slugify` non è il problema.** È l'unica delle due sorgenti che è sicura.
+- **Non ho toccato una riga** di `core/`. È codice di Grok.
+
+---
+
+## 23. `S-23` — `PROTECTED` nomina il posto in cui il codice **stava**. **MEDIUM**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+**Riproduzione:** `python3 docs/threat-models/probes/S-23-protected-staleness-probe.py`
+
+### 23.1 Il difetto
+
+`core/natural_tasks.py` è nella lista `PROTECTED`. Oggi è un **guscio di re-export di 26
+righe**: la logica è stata spostata in `core/nt_pipeline.py` (27), `core/nt_runner.py` (311) e
+`core/nt_helpers.py` (133). **Nessuno dei tre è protetto.**
+
+Fra questi c'è `promote_job_to_tools`, cioè il gate di safety che `FIX-1` ha introdotto sulla
+promozione di codice generato.
+
+```
+=== B) chi contiene promote_job_to_tools, ed è protetto? ===
+  definita in core/nt_runner.py  ->  protetto=False
+```
+
+### 23.2 Misurato per esecuzione, contro i due file
+
+```
+=== C) scrittura reale contro i due file, in una root finta ===
+  core/registry.py     rifiutato: PermissionError: Refusing to write to protected path: core/registry.py
+  core/nt_runner.py    ACCETTATO, file cambiato=True
+```
+
+`FIX-4` protegge il registry — e il registry è la porta d'ingresso, quindi la scelta è giusta.
+Ma **il file che decide se un tool generato è promuovibile è scrivibile**, e sovrascriverlo non
+richiede né `force=True` né un bypass: basta chiedere.
+
+### 23.3 La copertura in numeri
+
+| | File | Righe |
+|---|---:|---:|
+| moduli in `core/` | **23** | **2483** |
+| protetti | **4** | **418** |
+| non protetti | **19** | **2065** |
+
+**Il 16,8% delle righe di `core/` è coperto**, e il modulo più lungo della directory
+(`nt_runner.py`, 311 righe) è fuori. Non sostengo che debbano esserlo tutti: `PROTECTED` è una
+lista di file che il sistema non deve riscrivere da solo, non un permesso di filesystem. Il
+difetto non è la dimensione della lista, è che **la lista descrive un'organizzazione del codice
+che non esiste più**.
+
+### 23.4 Perché è la stessa forma già vista nove volte
+
+`FIX-1` ha reso la promozione un gate vero. `FIX-4` ha reso `PROTECTED` non aggirabile da un
+kwarg. Un refactoring del tutto ordinario — spezzare un modulo lungo in tre — ha spostato il
+gate **fuori** dall'insieme protetto, senza toccare né `FIX-1` né `FIX-4` e senza che nulla lo
+segnalasse. È la decima occorrenza in questo programma di un controllo che continua a sembrare
+un controllo: qui il codice del controllo è intatto e **l'insieme su cui opera è invecchiato**.
+
+### 23.5 Correzione proposta
+
+**`FIX-16a` — aggiungere i tre moduli**: `core/nt_pipeline.py`, `core/nt_runner.py`,
+`core/nt_helpers.py`. È la correzione minima ed è di tre righe.
+
+**`FIX-16b` — impedire che si ripresenti.** Un test che fallisce quando un file contenente un
+gate non è protetto vale più della lista corretta una volta:
+
+```python
+GATE_MARKERS = ("def promote_job_to_tools", "PRIVILEGED_KWARGS", "def _safe_mode")
+def test_gate_modules_are_protected():
+    for p in (ROOT / "core").glob("*.py"):
+        if any(m in p.read_text() for m in GATE_MARKERS):
+            assert f"core/{p.name}" in PROTECTED, f"{p.name} contiene un gate e non è PROTECTED"
+```
+
+Oggi fallisce su `core/nt_runner.py`. Dopo `FIX-16a` passa, e **fallisce di nuovo** il giorno in
+cui un gate viene spostato in un file nuovo. È lo stesso principio del test di regressione
+`ADM-11`: la lezione va messa dove la rilegge la macchina, non in un commento.
+
+### 23.6 Che cosa NON affermo
+
+- **Non è una vulnerabilità attiva.** Nessun percorso raggiungibile dalla CLI scrive dentro
+  `core/`: `promote_job_to_tools` scrive in `tools/` e rifiuta i path protetti. Diventa
+  raggiungibile in combinazione con `S-22` o con un import diretto (`S-02`).
+- **Non sostengo che `PROTECTED` debba coprire tutto `core/`.** Il rilievo è sui file che
+  contengono gate, non sul conteggio.
+- **`core/reliability.py` è protetto**, e resta corretto: è lo stesso file di `S-22`, dove il
+  difetto è cosa la funzione fa, non chi può riscriverla.

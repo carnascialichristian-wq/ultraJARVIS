@@ -11,10 +11,16 @@ from core.config import Config, get_config
 
 
 def test_defaults(monkeypatch: pytest.MonkeyPatch):
+    """STRICT_ZERO (decision #7): the default provider must be local.
+
+    This assertion used to expect "openai". It was changed on 2026-08-18 when
+    the owner approved decision #7: no cloud or pay-per-use call may happen
+    implicitly, so an unset MODEL_PROVIDER must resolve to a local provider.
+    """
     monkeypatch.delenv("MODEL_PROVIDER", raising=False)
     monkeypatch.delenv("MODEL_NAME", raising=False)
     cfg = Config.from_env()
-    assert cfg.model_provider == "openai"
+    assert cfg.model_provider == "local"
     assert cfg.model_name == "gpt-4o-mini"
 
 
