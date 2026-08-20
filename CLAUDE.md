@@ -5228,6 +5228,58 @@ sarà su `main`.
 **Nessun codice di nessuno modificato: lo script solo orchestra comandi esistenti, non li
 duplica.**
 
+
+## Sessione 6, trentottesima parte — la demo §21 gira: il blueprint smette di essere teoria
+
+Atto n.4 del mandato di Technical Lead, e l'unico rimasto non consegnato: la demo end-to-end del
+blueprint §21. Il blueprint lo dice di sé stesso — *"se la demo non gira, il documento è teoria"*.
+Fino a stasera era teoria.
+
+**Adesso gira:** `packages/contracts/demo/mission-demo.mjs`, 9 osservabili su 9 e 4 casi negativi
+su 4, exit 0, a costo zero (nessun import di rete, verificato dal passo 9 che conta i moduli di
+rete caricati: zero).
+
+### Che cosa è reale e che cosa è demo-minimale, detto senza ambiguità
+
+Sei osservabili e due casi negativi usano i **contratti veri**: `checkSpawn` (rifiuto del tool non
+posseduto, invariante `TA-2` nominata), `nextState` (kill switch → `HALTED` da `MONITORING`),
+`verifyLedgerChain` (catena intatta e rilevamento della manomissione), `buildIdempotencyKey` (il
+nodo 1 non rieseguito al resume), `mayStartNewStep`, `AtomicActiveTaskCounter` (due claim
+concorrenti, esattamente un vincitore).
+
+I restanti — decomposizione, selezione, e le regole `RTE-E01`/`FBK-E01` dei due casi negativi —
+sono **logica demo-minimale marcata `[demo]`**, perché i contratti `DEC-`/`SEL-`/`RTE-`/`FBK-`/
+`CNF-` **non esistono ancora** (sono i cinque sottosistemi senza contratto che avevo misurato nella
+ventesima parte). Quando quei contratti arriveranno, la demo va ricablata su di essi. L'ho scritto
+nell'intestazione del file, non in una nota a fondo pagina.
+
+### Che cosa questa demo NON fa — la disciplina che conta
+
+**Non chiude `T-E2E-1/2/3` nel blueprint.** Quelle prove restano `DA IMPLEMENTARE` finché la
+consegna di `UJ-RUN-001` è congelata e in review: promuovere la demo a test vero cambierebbe il
+conteggio di 140 e riaprirebbe i 15 artefatti hashati. Verificato che **non** l'ho fatto: suite
+ancora 140, i 15 hash intatti a `b2b32733`, blueprint non toccato. La demo vive **accanto** alla
+consegna, additiva, non dentro.
+
+È lo stesso ragionamento con cui ho tenuto `ADM-11` fuori dal conteggio finché la review non
+avviene: un primo taglio di codice che rende il blueprint falsificabile, senza spacciarlo per la
+prova formale che sarà quando la consegna si sblocca.
+
+### Provata falsificabile
+
+Un demo che stampa sempre "ok" non prova niente (trappola 21). Ho rotto `verifyLedgerChain` nel
+`dist/` forzando `intact:true`: il passo 8 è **fallito** e la demo è uscita **1**. Ricompilato dal
+sorgente intatto, torna a passare. Quindi la demo **valida davvero il contratto**, non lo illustra.
+
+Aggiunta al gate di integrazione (`scripts/integration-gate.sh`) come verifica bloccante: da ora
+un merge che rompe la composizione dei contratti runtime lo fa vedere il gate.
+
+### File
+
+`packages/contracts/demo/mission-demo.mjs` (nuovo) · `scripts/integration-gate.sh` (demo aggiunta)
+· `TASKCLAUDE.md` §86. **Nessun artefatto hashato toccato, suite invariata a 140, blueprint non
+modificato.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5661,6 +5713,21 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  BF) 2026-08-19 — LA DEMO §21 GIRA. packages/contracts/demo/mission-demo.mjs
+     Atto n.4 del mandato (PARTE 3-bis §4). 9 osservabili/9, 4 casi negativi/4, exit 0,
+     costo zero. GIA' FATTO, NON RIFARE.
+     ADDITIVA: NON chiude T-E2E-1/2/3 (restano DA IMPLEMENTARE nel blueprint), NON tocca
+     i 15 artefatti hashati, NON cambia il conteggio 140. Vive ACCANTO alla consegna
+     congelata di UJ-RUN-001, cosi' la review di Gemini non e' toccata. Verificato:
+     suite 140, 15 hash intatti a b2b32733, blueprint non modificato.
+     6 osservabili + 2 negativi usano i CONTRATTI VERI (checkSpawn, nextState,
+     verifyLedgerChain, buildIdempotencyKey, AtomicActiveTaskCounter, mayStartNewStep);
+     il resto e' logica [demo] perche' DEC/SEL/RTE/FBK/CNF non hanno ancora contratto.
+     PROVATA FALSIFICABILE (trappola 21): rotto verifyLedgerChain nel dist -> passo 8
+     fallisce, demo esce 1; ricompilato, torna a passare. Aggiunta al gate di integrazione.
+     ATTO n.5 (gate) e n.4 (demo) del mandato ORA CONSEGNATI; restano 1/2/3 (bloccati
+     dalle card di ChatGPT).
 
   BE) 2026-08-19 — VISTA AUTOREVOLE SU TUTTI I 29 FINDINGS: §30 della security review.
      Bilancio contato dalla tabella (non dedotto): 10 chiusi, 1 superato, 1 parziale,

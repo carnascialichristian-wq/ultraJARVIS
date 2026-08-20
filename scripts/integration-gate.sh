@@ -70,6 +70,9 @@ else
   printf '  [FAIL] %-38s %s pass, %s fail  (BLOCCANTE)\n' "contract suite" "$tot" "$sfail"
 fi
 
+echo "-- B2) demo end-to-end §21 di UJ-RUN-001 --"
+run 1 "demo end-to-end (mission-demo)"  node packages/contracts/demo/mission-demo.mjs
+
 echo "-- C) validatori del Council (di ChatGPT, riusati) --"
 run 1 "validate-council-packets"       node scripts/validate-council-packets.mjs
 run 1 "validate-program-os"            node scripts/validate-program-os.mjs
