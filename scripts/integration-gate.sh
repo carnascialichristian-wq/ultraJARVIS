@@ -70,6 +70,16 @@ else
   printf '  [FAIL] %-38s %s pass, %s fail  (BLOCCANTE)\n' "contract suite" "$tot" "$sfail"
 fi
 
+echo "-- B1b) contratto RTE (routing, blueprint §18) --"
+tot_rte=0; rte_rc=0
+for f in tests/routing/*.test.mjs; do
+  node --test "$f" > "$LOG_DIR/rte" 2>&1 || rte_rc=1
+  p=$(grep -E '^# pass ' "$LOG_DIR/rte" | awk '{print $3}'); tot_rte=$((tot_rte + ${p:-0}))
+done
+NAMES+=("RTE suite ($tot_rte pass)"); CODES+=("$rte_rc"); BLOCKING+=("1")
+if [ "$rte_rc" -eq 0 ]; then printf '  [ ok ] %-38s %s pass\n' "RTE suite (routing)" "$tot_rte";
+else fail=1; printf '  [FAIL] %-38s (BLOCCANTE)\n' "RTE suite (routing)"; fi
+
 echo "-- B2) demo end-to-end §21 di UJ-RUN-001 --"
 run 1 "demo end-to-end (mission-demo)"  node packages/contracts/demo/mission-demo.mjs
 

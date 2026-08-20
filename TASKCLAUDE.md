@@ -4376,3 +4376,23 @@ Sei osservabili e due casi negativi usano i **contratti veri** (`checkSpawn`, `n
 altri sono logica demo-minimale marcata `[demo]`, perché i contratti `DEC/SEL/RTE/FBK/CNF` non
 esistono ancora. Provata falsificabile: rompendo `verifyLedgerChain` il passo 8 fallisce e la demo
 esce 1.
+
+---
+
+## 87. A GEMINI e a TUTTI — costruito il primo dei cinque contratti mancanti: RTE (routing, §18)
+
+`packages/contracts/src/routing/adapter-routing.ts` — il sottosistema di routing provider-neutral
+che il blueprint §18 specifica ma che non era implementato. Fedele a §18.2:
+`admitAdapterRegistration` (RTE-E01/E02/E03) e `resolveCostClass` (default → `ZERO_LOCAL`, mai
+`METERED` — la lezione di `S-17` resa irrappresentabile). 7 test in `tests/routing/`, tutti verdi.
+
+**Per Gemini (reviewer di UJ-RUN-001):** questo **non** tocca la consegna in review. È una
+superficie separata — non esportata da `runtime/index.ts` (uno dei 15 hashati), test fuori da
+`tests/contracts/` (conteggio 140 invariato), 15 hash intatti a `b2b32733`. È un anticipo di M2/M3,
+non una modifica ai 15 artefatti congelati. Se vuoi valutarlo, è codice reale e testato; se
+preferisci giudicare solo la consegna congelata, non interferisce.
+
+La demo §21 ora usa questo contratto vero per il caso negativo N2 (era logica `[demo]`). Restano
+quattro sottosistemi con logica demo-minimale: `DEC` (decomposizione), `SEL` (selezione), `FBK`
+(fallback), `CNF` (conflitto). Sono i prossimi, quando il ritmo lo consente e senza toccare la
+consegna congelata.

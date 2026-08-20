@@ -35,6 +35,23 @@ import {
   mayStartNewStep,
 } from "../dist/runtime/index.js";
 import { AtomicActiveTaskCounter } from "../dist/recovery/index.js";
+import { admitAdapterRegistration } from "../dist/routing/index.js";
+
+import net from "node:net";
+
+// Sentinella di costo: intercetta OGNI tentativo di connessione reale e registra gli host
+// non-loopback. E' la misura corretta di "0 richieste uscenti" del §21 passo 9 — non il
+// proxy fragile su process.moduleLoadList, che segnala 'net' anche quando Node lo carica per
+// ragioni interne SENZA aprire nessun socket (falso segnale, corretto qui).
+const nonLoopbackAttempts = [];
+const isLoopback = (h) => !h || h === "localhost" || h === "127.0.0.1" || h === "::1" || h.startsWith("127.");
+const _connect = net.Socket.prototype.connect;
+net.Socket.prototype.connect = function (...args) {
+  const opt = args[0];
+  const host = typeof opt === "object" && opt ? opt.host : (typeof args[1] === "string" ? args[1] : undefined);
+  if (!isLoopback(host)) nonLoopbackAttempts.push(String(host));
+  return _connect.apply(this, args);
+};
 
 const sha256 = (s) => createHash("sha256").update(s).digest("hex");
 let failures = 0;
@@ -153,13 +170,10 @@ const broken = verifyLedgerChain(tampered, hashEvent).intact === false;
 check(8, "ledger: catena intatta, e un evento alterato la rompe",
   intact && broken);
 
-// 9) controllo di costo: zero moduli di rete caricati
-const NET = ["http", "https", "net", "tls", "node:http", "node:https", "node:net", "node:tls", "undici", "axios", "node-fetch"];
-const netLoaded = NET.filter((m) => {
-  try { return process.moduleLoadList?.includes(`NativeModule ${m}`); } catch { return false; }
-});
-check(9, "controllo di costo: 0 moduli di rete caricati",
-  netLoaded.length === 0, netLoaded.length ? "caricati: " + netLoaded.join(",") : "nessuno");
+// 9) controllo di costo: zero tentativi di connessione a host non-loopback in tutta la demo
+check(9, "controllo di costo: 0 tentativi di connessione non-loopback",
+  nonLoopbackAttempts.length === 0,
+  nonLoopbackAttempts.length ? "tentativi: " + nonLoopbackAttempts.join(",") : "nessuno");
 
 // === CASI NEGATIVI — i 4 richiesti ==========================================
 console.log("\n  -- casi negativi (una demo del solo percorso felice non prova nulla) --");
@@ -177,17 +191,14 @@ const d1 = checkSpawn({ parentDepth: 1, childDepth: 2, parentChildCount: 0, acti
 neg("N1 tool non posseduto dal padre -> checkSpawn rifiuta (analogo SEL-E02/TA-2)",
   d1.admitted === false, "invarianti: " + (d1.admitted ? "-" : d1.violations.map((v) => v.invariant).join(",")));
 
-// N2) un adapter METERED registrato a L2 -> rifiuto ALLA REGISTRAZIONE [demo]
-const registerAdapter = (adapter) => {
-  // [demo] regola RTE minimale: un adapter METERED richiede autonomia >= L3
-  if (adapter.costClass === "METERED" && adapter.minAutonomy !== "L3") {
-    return { ok: false, error: "RTE-E01" };
-  }
-  return { ok: true };
-};
-const r2 = registerAdapter({ id: "paid@1", costClass: "METERED", minAutonomy: "L2" });
-neg("N2 adapter METERED a L2 -> RTE-E01 alla registrazione [demo]",
-  r2.ok === false && r2.error === "RTE-E01");
+// N2) un adapter METERED registrato a L2 -> rifiuto ALLA REGISTRAZIONE (contratto VERO)
+// Usa il contratto RTE reale (src/routing/adapter-routing.ts, blueprint §18), non piu' [demo].
+const r2 = admitAdapterRegistration(
+  { adapterId: "paid@1", costClass: "METERED", endpointConstraint: "NONE" },
+  { runMaxAutonomy: "L2", strictZeroCard: false },
+);
+neg("N2 adapter METERED a L2 -> rifiuto alla registrazione (RTE-E02, contratto vero)",
+  r2.admitted === false && r2.violations.some((v) => v.rule === "RTE-E02"));
 
 // N3) una capability senza fallback -> BLOCKED prima della coda [demo]
 const enqueueIfRoutable = (cap) => {

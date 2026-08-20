@@ -5280,6 +5280,57 @@ un merge che rompe la composizione dei contratti runtime lo fa vedere il gate.
 · `TASKCLAUDE.md` §86. **Nessun artefatto hashato toccato, suite invariata a 140, blueprint non
 modificato.**
 
+
+## Sessione 6, trentanovesima parte — il primo dei cinque contratti mancanti: RTE (routing), reale e fedele al §18
+
+Sotto l'ordine di continuare, la scelta giusta non era un altro documento: era **costruire davvero**
+uno dei cinque sottosistemi che la demo §21 esercitava con logica `[demo]` perché il loro contratto
+non esisteva (`DEC`/`SEL`/`RTE`/`FBK`/`CNF`). Ne ho costruito uno per intero — il routing (`RTE`) —
+e non l'ho inventato: il blueprint §18 lo **specifica** tipo per tipo, e ho implementato quello.
+
+### Che cosa ho costruito
+
+`packages/contracts/src/routing/adapter-routing.ts` — `CostClass`, `AdapterRegistration`,
+`admitAdapterRegistration`, `resolveCostClass`, fedeli a §18.2:
+
+- **`RTE-E01`** un adapter `METERED` è rifiutato sotto `STRICT_ZERO_CARD`;
+- **`RTE-E02`** `METERED` è irrappresentabile sotto L3 — rifiuto **alla registrazione**, non alla
+  chiamata (un controllo alla chiamata protegge solo chi ci arriva con la config giusta);
+- **`RTE-E03`** un `ZERO_LOCAL` che non vincola l'endpoint al loopback contraddice la propria
+  classe — è il buco che il fix di `S-17` chiude;
+- **`resolveCostClass`** fa cadere il default su `ZERO_LOCAL`, **mai** su `METERED`: è la lezione
+  di `S-17` (`MODEL_PROVIDER` default a pagamento) resa irrappresentabile nel tipo.
+
+### La disciplina di scoping, che è la parte che conta
+
+**Non ho toccato la consegna congelata di `UJ-RUN-001`.** Il contratto RTE è una superficie
+**separata**: non è esportato da `runtime/index.ts` (uno dei 15 artefatti hashati e in review
+presso Gemini), i suoi test stanno in `tests/routing/` e non in `tests/contracts/`, quindi il
+conteggio 140 resta 140 e i 15 hash restano intatti a `b2b32733`. Verificato. È un anticipo di
+M2/M3, non una modifica alla review in corso.
+
+Poi ho sostituito la logica `[demo]` del caso negativo N2 con il **contratto vero**: la demo ora
+prova `RTE-E02` sul codice reale, non su una simulazione. Sette test dedicati, tutti verdi, più il
+gate di integrazione esteso a includerli.
+
+### Un difetto della mia stessa demo, trovato dalla demo
+
+Rifacendo la build il passo 9 (controllo di costo) è **fallito**: `net` risultava caricato. Non era
+una regressione del codice — era che il mio passo 9 misurava la cosa sbagliata. `process.moduleLoadList`
+dice quali moduli sono **caricati**, non quali connessioni sono **aperte**, e Node carica `net` per
+ragioni interne senza aprire un socket. Era un falso segnale (trappola 12: un controllo che non
+misura ciò che dichiara). L'ho riscritto perché intercetti i **tentativi di connessione reali** a
+host non-loopback — che è la misura fedele di *"0 richieste uscenti"* del §21 — e ora prova la cosa
+giusta. Un controllo di costo che passa perché nessuno ha ancora caricato `net` non è un controllo.
+
+### File
+
+`packages/contracts/src/routing/adapter-routing.ts` + `index.ts` (nuovi) ·
+`tests/routing/adapter-routing.test.mjs` (7 test, fuori dai 140) ·
+`packages/contracts/demo/mission-demo.mjs` (N2 reale, passo 9 corretto) ·
+`scripts/integration-gate.sh` (RTE aggiunta) · `TASKCLAUDE.md` §87.
+**15 hash intatti, tests/contracts invariata a 140, runtime/index.ts non toccato.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5713,6 +5764,23 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  BG) 2026-08-19 — COSTRUITO IL CONTRATTO RTE (routing, §18), primo dei 5 mancanti.
+     packages/contracts/src/routing/adapter-routing.ts + tests/routing/ (7 test verdi)
+     GIA' FATTO, NON RIFARE. Fedele al blueprint §18.2, non inventato.
+     admitAdapterRegistration (RTE-E01 METERED sotto strict-zero, RTE-E02 METERED
+     irrappresentabile <L3, RTE-E03 ZERO_LOCAL deve essere LOOPBACK_ONLY) +
+     resolveCostClass (default ZERO_LOCAL, MAI METERED: lezione S-17 nel tipo).
+     SCOPING: superficie SEPARATA, NON tocca la consegna congelata di UJ-RUN-001 —
+     non esportato da runtime/index.ts (hashato), test fuori da tests/contracts/,
+     conteggio 140 invariato, 15 hash intatti a b2b32733. Anticipo M2/M3.
+     La demo §21 ora usa questo contratto VERO per N2 (era [demo]). Restano 4
+     sottosistemi demo-minimali: DEC, SEL, FBK, CNF.
+     DIFETTO DELLA MIA DEMO trovato dalla demo: il passo 9 misurava i moduli CARICATI
+     (process.moduleLoadList), non le CONNESSIONI aperte -> falso segnale (net caricato
+     da Node internamente). Riscritto per intercettare i tentativi di connessione reali
+     a host non-loopback. Un controllo di costo che passa perche' net non e' ancora
+     caricato non e' un controllo.
 
   BF) 2026-08-19 — LA DEMO §21 GIRA. packages/contracts/demo/mission-demo.mjs
      Atto n.4 del mandato (PARTE 3-bis §4). 9 osservabili/9, 4 casi negativi/4, exit 0,
