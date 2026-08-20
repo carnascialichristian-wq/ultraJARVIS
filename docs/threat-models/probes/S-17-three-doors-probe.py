@@ -26,7 +26,11 @@ import json, os, shutil, subprocess, sys, tempfile, pathlib
 # su un finding CRITICO. E' la trappola 36: ref giusto per i DATI, ref sbagliato
 # per il CODICE ESEGUITO. Il percorso attraversa cinque moduli, quindi serve un
 # worktree, non un `git show` di un file solo.
-TARGET_REF = os.environ.get("UJ_PROBE_REF", "origin/main")
+# Accetta sia TARGET_REF (convenzione delle sonde S-22..S-27) sia UJ_PROBE_REF
+# (nome storico di questa sonda). Una sessione futura che segue la convenzione nuova
+# passerebbe TARGET_REF e, senza questo alias, misurerebbe origin/main per sbaglio —
+# ci sono cascato io stesso: trappola 37.
+TARGET_REF = os.environ.get("TARGET_REF") or os.environ.get("UJ_PROBE_REF", "origin/main")
 
 
 def _materialise_worktree() -> str:

@@ -5155,6 +5155,42 @@ sono di ChatGPT; `S-16` è di Gemini; i 15 fix aperti sono di Grok. Se una sessi
 non trova consegne nuove dopo la trappola 11, **la risposta corretta è registrare l'attesa, non
 inventare lavoro** — ed è la stessa regola che la PARTE 4 di questo file impone da sempre.
 
+
+## Sessione 6, trentaseiesima parte — verificato che la raccomandazione su S-17 regge, e ci sono quasi cascato
+
+L'azione pendente più importante del programma è la mia raccomandazione di mergiare su `main` il
+`cloud_bridge.py` del ramo CLAUDE, che chiude `S-17`/`S-19` — le uniche cose che possono addebitare
+a Christian. Quella raccomandazione resterà ferma finché qualcuno non la applica, e una
+raccomandazione che aspetta va riconfermata prima che diventi stantia.
+
+**Regge, verificato:** sul mio ramo (`HEAD`) tutte e tre le porte a pagamento — planner, writer,
+embedding — vanno a `loopback` anche con il solo flag attivo, senza `MODEL_PROVIDER=local`. Su
+`origin/main` sono invece tutte "A PAGAMENTO". Il fix va mergiato, e continua a essere quello
+giusto.
+
+### Ci sono quasi cascato io, ed è la trappola 37 sul mio stesso strumento
+
+La prima esecuzione ho passato `TARGET_REF=HEAD` — la convenzione delle sonde `S-22`…`S-27`, che ho
+scritto io più tardi. **La sonda `S-17-three-doors` usa invece `UJ_PROBE_REF`**, il suo nome
+storico, e ha ignorato `TARGET_REF` misurando `origin/main`. L'output diceva "ref misurato:
+origin/main" e mostrava le porte **aperte** — stavo per registrare "il mio ramo non chiude le
+porte", cioè il contrario del vero.
+
+Me ne sono accorto perché l'header diceva `origin/main` mentre io avevo chiesto `HEAD`:
+l'incoerenza fra quello che ho chiesto e quello che la sonda dichiara di misurare, la stessa
+euristica che salva da sempre. **Una convenzione stabilita a metà è una trappola per chi la
+segue**: un verificatore futuro passerebbe `TARGET_REF` e misurerebbe il ref sbagliato in silenzio.
+
+Corretto: `S-17-three-doors` ora accetta **entrambe** le variabili (`TARGET_REF` prima,
+`UJ_PROBE_REF` come retrocompat), con il motivo nel commento. Verificato che `TARGET_REF=HEAD` ora
+misura `HEAD` e `UJ_PROBE_REF=origin/main` continua a funzionare.
+
+### File
+
+`docs/threat-models/probes/S-17-three-doors-probe.py` (accetta entrambe le variabili).
+**Nessun findings nuovo: la raccomandazione era già scritta, questa è la sua riconferma prima che
+resti in attesa.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
