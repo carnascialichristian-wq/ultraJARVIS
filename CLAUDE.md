@@ -4980,6 +4980,47 @@ verificato. Finché resta così non c'è vulnerabilità attiva.
 `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §27 · `TASKCLAUDE.md` §82.
 **Nessuna riga di `core/memory.py` o `core/planner.py` modificata.**
 
+
+## Sessione 6, trentunesima parte — `S-27`: l'iniezione nel codice generato è contenuta solo per caso
+
+Chiudendo `S-26` mi era rimasta una domanda: `execute_graph` esegue il modulo generato, e il
+modulo generato incastona il **prompt grezzo** nella sua docstring. Un prompt ostile può chiudere
+la docstring e iniettare codice? L'ho misurato, perché è la differenza fra un difetto di igiene e
+una RCE via prompt.
+
+### Il risultato, onesto in entrambe le direzioni
+
+**Tre payload costruiti, nessuno compila.** Ma — e questo è il finding — nessuno è fermato da un
+controllo: sono **tre accidenti sintattici diversi**. Stringa tripla non terminata (come `S-13`);
+`from __future__ import annotations` che deve stare in cima, quindi rompe qualunque codice
+iniettato prima; e il `return "ok – executed for {title}"` che si spezza sull'iniezione via title.
+
+Il più robusto, `from __future__`, **non è lì per sicurezza**: è lì per le type hint. Spostarlo in
+un refactor aprirebbe il vettore, e nessuno se ne accorgerebbe perché oggi "funziona".
+
+### Perché l'ho registrato come finding e non come "va bene così"
+
+È la **quarta** volta che il contenimento in questo programma è un accidente di sintassi, e tre di
+quei quattro hanno già smesso di proteggere almeno una volta. E si somma a `S-26`: oggi l'unica
+cosa che impedisce a un prompt ostile di far eseguire codice arbitrario è che il file generato
+**non compili per caso**. Le due difese vere — scansionare prima di eseguire (`FIX-19a`) e non
+interpolare input grezzo — non ci sono.
+
+### Ho scritto contro la mia stessa conclusione
+
+La riga più importante della §28.5: *"non escludo che una quarta forma più astuta bilanci tutti
+gli accidenti"*. Ho provato tre payload e sono caduti; dichiarare "è sicuro" sarebbe stato
+esattamente il difetto che contesto — una conclusione più forte della misura. Il punto non è che
+i miei tre attacchi falliscono, è che **la tenuta dipende da accidenti invece che da un
+controllo**, e quello si vede indipendentemente da quanti attacchi provo.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §28 · `GROK_FIX_LIST.md` → `FIX-20` ·
+`docs/threat-models/probes/S-27-template-injection-probe.py` · `TASKCLAUDE.md` §83.
+**Payload benigni (scrivono un file marcatore in `/tmp`), nessuna rete, nessun comando di
+sistema, nessuna riga di codice di Grok modificata.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5411,6 +5452,30 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  BC) 2026-08-19 — S-27 (NUOVO, MEDIUM): l'iniezione prompt -> codice generato e'
+     contenuta SOLO PER CASO.
+     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §28 · GROK_FIX_LIST.md -> FIX-20
+     docs/threat-models/probes/S-27-template-injection-probe.py
+     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
+
+     nt_runner.py:187-197 incastona il PROMPT GREZZO nella docstring del modulo
+     generato, che execute_graph poi ESEGUE (S-26). Tre payload costruiti: NESSUNO
+     compila, ma per TRE ACCIDENTI SINTATTICI diversi, non per un controllo:
+       - triple-quote sbilanciato -> stringa non terminata (come S-13);
+       - triple-quote bilanciato -> `from __future__` deve stare in cima, rompe il
+         codice iniettato prima. MA E' LI' PER LE TYPE HINT, non per sicurezza;
+       - iniezione via title -> il `return` con {title} si spezza.
+     Quarta volta che il contenimento e' un accidente di sintassi (dopo S-13, moduli
+     mancanti, openai assente); tre di quei quattro hanno gia' smesso di proteggere.
+     Si somma a S-26: oggi l'unica cosa che ferma un prompt ostile e' che il file
+     generato non compili per caso.
+     CORREZIONE FIX-20: interpolare con repr() invece che grezzo (ogni triple-quote
+     diventa testo inerte), o scrivere il prompt in prompt.txt accanto. FIX-19a resta
+     la rete a valle per il ramo UJ_WRITER_LLM.
+     HO SCRITTO CONTRO LA MIA CONCLUSIONE: "non escludo che una quarta forma bilanci
+     tutti gli accidenti". Tre attacchi caduti non provano "e' sicuro"; il punto e'
+     che la tenuta dipende da accidenti, e quello si vede a prescindere dagli attacchi.
 
   BB) 2026-08-19 — S-16 TERZA VERIFICA: IL CONSUMATORE E' ARRIVATO, ma non e' il
      percorso del codice. VA A GEMINI (UJ-MEM-001), NON A GROK.

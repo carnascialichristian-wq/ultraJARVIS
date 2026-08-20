@@ -17,11 +17,11 @@
 
 > ## STATO DELLE CORREZIONI — riverificato su `origin/main` @ `27b767309090`, 2026-08-19
 >
-> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su diciannove sono
+> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su venti sono
 > chiuse — otto applicate e una superata — verificate da me eseguendo, non leggendo. Lavorare su
 > una di quelle è tempo perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
-> §20. Le sei più recenti (`FIX-14`…`FIX-19`) sono del 19 agosto e non sono ancora state viste
-> da nessuno: §21…§26 della stessa review. **`FIX-19` è quella da leggere per prima.**
+> §20. Le sette più recenti (`FIX-14`…`FIX-20`) sono del 19 agosto e non sono ancora state
+> viste da nessuno: §21…§28 della stessa review. **`FIX-19` è quella da leggere per prima.**
 >
 > | FIX | Finding | Stato al ref corrente |
 > |---|---|---|
@@ -44,8 +44,9 @@
 > | **`FIX-17`** | **`S-24` il contatore della spesa è spento per default e perde** | **DA APPLICARE — HIGH** |
 > | **`FIX-18`** | **`S-25` il webhook di pagamento non verifica la firma** | **DA APPLICARE — HIGH, latente** |
 > | **`FIX-19`** | **`S-26` `execute_graph` esegue codice generato senza `scan_text`** | **DA APPLICARE — HIGH** |
+> | **`FIX-20`** | **`S-27` il prompt e' interpolato grezzo nel sorgente generato** | **DA APPLICARE — MEDIUM** |
 >
-> **Restano dieci.** L'ordine qui sotto è **verificato**, non asserito:
+> **Restano undici** (`FIX-20` è a valle di `FIX-19`, MEDIUM). L'ordine qui sotto è **verificato**, non asserito:
 > `docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md` — e due posizioni sono cambiate rispetto a
 > quanto avevo scritto prima, perché le ho controllate invece di ricopiarle.
 >
@@ -1360,3 +1361,49 @@ python3 docs/threat-models/probes/S-26-graph-exec-probe.py
 **Dopo la correzione** entrambi devono diventare un `GraphError` esplicito, e il blocco B deve
 continuare a mostrare che lo scanner riconosce quel testo — se smette, hai rotto lo scanner invece
 di collegarlo.
+
+---
+
+## FIX-20 — il prompt è interpolato grezzo nel sorgente generato · **MEDIUM** *(a valle di FIX-19)*
+
+**Finding:** `S-27`, §28 della review.
+**Riproduzione:** `python3 docs/threat-models/probes/S-27-template-injection-probe.py`
+
+### Il fatto
+
+`nt_runner.py:187-197` interpola il **prompt** grezzo dentro la docstring del modulo generato:
+
+```python
+f'"""Auto-generated module for: {task_plan.title}\n\n'
+f"Original prompt:\n{prompt}\n\n"
+'Produced by NaturalTaskRunner (controlled write).\n"""\n\n'
+```
+
+Un prompt con `"""` può chiudere la docstring. Quel modulo viene poi **eseguito** da
+`execute_graph` (`S-26`).
+
+**Ho provato tre payload: nessuno compila.** Ma nessuno è fermato da un controllo — sono tre
+accidenti sintattici diversi (stringa non terminata; `from __future__` che deve stare in cima;
+`return` che si rompe). Il più robusto, `from __future__ import annotations`, è lì per le type
+hint, **non** per sicurezza: spostarlo o toglierlo in un refactor apre il vettore.
+
+### FIX-20a — non interpolare input grezzo in sorgente
+
+```python
+# invece di incastonare {prompt} dentro una docstring:
+f"Original prompt:\n{prompt!r}\n\n"     # repr(): ogni """ diventa testo inerte
+```
+
+oppure scrivere il prompt in un `prompt.txt` accanto al modulo, fuori dal sorgente eseguibile.
+Vale anche per `{title}` nel corpo (`code_templates.py:179-180`).
+
+### FIX-20b — `FIX-19a` resta la rete a valle
+
+Anche con l'header ripulito, il ramo `UJ_WRITER_LLM` produce codice che il template non controlla.
+`scan_text` prima di `exec_module` (`FIX-19a`) resta necessario.
+
+### Come verificare
+
+`python3 docs/threat-models/probes/S-27-template-injection-probe.py` — oggi i tre payload danno
+`compila: NO` per tre motivi diversi. Dopo la correzione devono dare `NO` per **un** motivo solo:
+il prompt è testo inerte, non può nemmeno tentare di chiudere la docstring.

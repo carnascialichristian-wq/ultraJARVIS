@@ -92,6 +92,7 @@ serializzare lavoro che può procedere in parallelo.
 
 ```
 1.  FIX-19    esecuzione di codice generato senza gate   (una riga, chiude il caso peggiore)
+1b. FIX-20    prompt interpolato grezzo nel sorgente      (a valle di FIX-19, stesso file nt_runner)
 2.  FIX-11    la test suite smette di scrivere nel repo  (PRECONDIZIONE di ogni verifica con pytest)
 3.  FIX-10 + FIX-13 + FIX-17    un solo passaggio su cloud_bridge.py + monetization.py
               -> rileggere FIX-17b DOPO aver deciso la forma di FIX-10

@@ -2322,3 +2322,77 @@ verificato, l'unico scrittore non interattivo è `nt_runner`.
 - **La memoria non raggiunge il codice generato**, e l'ho verificato leggendo la riga esatta del
   messaggio inviato al modello, non deducendolo dall'architettura.
 - **Non ho toccato `core/memory.py` né `core/planner.py`.**
+
+---
+
+## 28. `S-27` — l'iniezione prompt → codice generato è contenuta solo **per caso**. **MEDIUM**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+**Riproduzione:** `python3 docs/threat-models/probes/S-27-template-injection-probe.py`
+(worktree al ref, payload benigni che scrivono un file marcatore in `/tmp`; nessuna rete, nessun
+comando di sistema).
+
+### 28.1 Il percorso
+
+Il ramo a template — `code_for_prompt`, cioè quando `UJ_WRITER_LLM` **non** è attivo — incastona
+il **prompt** e il **title** nell'header del modulo generato (`nt_runner.py:187-197`):
+
+```python
+content = (
+    f'"""Auto-generated module for: {task_plan.title}\n\n'
+    f"Original prompt:\n{prompt}\n\n"
+    'Produced by NaturalTaskRunner (controlled write).\n"""\n\n'
+    "from __future__ import annotations\n\n\n"
+    f"{body}\n\n" ...
+)
+```
+
+Il prompt viene interpolato **grezzo** dentro una docstring. Un prompt che contenga `"""` può
+chiudere la docstring e provare a far interpretare il resto come codice — e quel modulo viene poi
+**eseguito** da `execute_graph` (§26) o promosso in `tools/`.
+
+### 28.2 Misurato: tre tentativi, tre volte contenuto — ma da tre accidenti diversi
+
+| Payload | Compila? | Che cosa l'ha fermato |
+|---|---|---|
+| `"""` sbilanciato nel prompt | **no** | stringa tripla non terminata (come `S-13`) |
+| `"""` bilanciato + codice | **no** | *"`from __future__` imports must occur at the beginning of the file"* |
+| iniezione via `title` nel corpo | **no** | stringa non terminata nel `return` |
+
+**Nessuno dei tre esegue.** Ma nessuno dei tre è fermato da un controllo: sono tre proprietà
+sintattiche accidentali. La seconda è la più robusta — `from __future__ import annotations` deve
+stare in cima, quindi qualunque codice iniettato **prima** rompe la compilazione — e non è lì per
+sicurezza: è lì per le type hint. Spostarla, o rimuoverla in un refactor, aprirebbe il vettore.
+
+### 28.3 Perché è un finding e non un "va bene così"
+
+È **la quarta volta** in questo programma che il contenimento è un accidente di sintassi, dopo
+`S-13` (la virgoletta che mascherava `S-12`), i moduli mancanti e il pacchetto `openai` assente.
+Tre di quei quattro accidenti hanno già smesso di proteggere almeno una volta.
+
+E si combina con `S-26`: `execute_graph` esegue il modulo generato **senza `scan_text`**. Oggi
+l'unica cosa che impedisce a un prompt ostile di far eseguire codice arbitrario **è che il file
+generato non compili per caso**. Le due difese vere — validare/scansionare prima di eseguire
+(`FIX-19a`) e non interpolare input grezzo in sorgente — non ci sono.
+
+### 28.4 Correzione proposta — `FIX-20`
+
+1. **Non interpolare il prompt in sorgente eseguibile.** L'header non ha bisogno del prompt
+   *dentro* una docstring: scriverlo in un file `prompt.txt` accanto, oppure passarlo attraverso
+   `repr()` così che qualunque `"""` diventi testo inerte e non possa chiudere la docstring;
+2. **`FIX-19a` come rete a valle:** anche con l'header ripulito, `scan_text` prima di
+   `exec_module` resta necessario, perché il ramo `UJ_WRITER_LLM` produce codice che il template
+   non controlla affatto.
+
+**Ordine:** è a valle di `FIX-19`, non urgente da solo — ma va corretto perché il contenimento
+attuale è invisibile a chi legge e sparisce al primo refactor dell'header.
+
+### 28.5 Che cosa NON affermo
+
+- **Non è sfruttabile oggi**: i tre payload che ho costruito non compilano, l'ho verificato
+  eseguendo `compile()`. Non escludo che una quarta forma più astuta bilanci tutti gli accidenti;
+  il punto è proprio che la tenuta dipende da accidenti, non da un controllo.
+- **Il ramo `UJ_WRITER_LLM` è un problema diverso e peggiore**: lì il codice non è un template, è
+  quello che il modello restituisce. È scansionato alla generazione (`nt_helpers.py:49-51`) ma non
+  all'esecuzione — di nuovo `S-26`.
+- **Non ho toccato `core/code_templates.py` né `core/nt_runner.py`.**

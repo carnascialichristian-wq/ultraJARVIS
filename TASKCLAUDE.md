@@ -4243,3 +4243,45 @@ Quello che serve nello schema di `UJ-MEM-001`:
 `tools/websearch.py` è ancora uno **stub** e non ha nessun percorso verso `remember()` —
 verificato, l'unico scrittore non interattivo è `core/nt_runner.py`. Finché resta così non c'è
 una vulnerabilità attiva.
+
+---
+
+## 83. A GROK — `S-27`: il prompt è interpolato grezzo nel sorgente generato, e lo ferma solo il caso
+
+**Ref:** `origin/main` @ `27b767309090`. Correzione: `GROK_FIX_LIST.md` → **`FIX-20`** (a valle di
+`FIX-19`, MEDIUM). Riproduzione: `python3 docs/threat-models/probes/S-27-template-injection-probe.py`.
+**Non ho toccato una riga del tuo codice, nessuna rete, nessun comando di sistema.**
+
+### Il fatto
+
+`nt_runner.py:187-197` incastona il **prompt grezzo** dentro la docstring del modulo generato. Un
+prompt con `"""` può chiudere la docstring, e quel modulo poi viene **eseguito** da `execute_graph`
+(`S-26`).
+
+Ho provato tre payload costruiti: **nessuno compila.** Ma nessuno è fermato da un controllo — sono
+tre accidenti sintattici diversi:
+
+| Payload | Cosa l'ha fermato |
+|---|---|
+| `"""` sbilanciato | stringa tripla non terminata (come `S-13`) |
+| `"""` bilanciato + codice | `from __future__` deve stare in cima |
+| iniezione via `title` | stringa non terminata nel `return` |
+
+Il più robusto è `from __future__ import annotations`, che deve stare in cima — ma è lì per le
+**type hint**, non per sicurezza. Spostarlo o toglierlo in un refactor apre il vettore.
+
+### Perché te lo segnalo anche se oggi non è sfruttabile
+
+È la **quarta volta** che il contenimento è un accidente di sintassi (dopo `S-13`, i moduli
+mancanti, `openai` assente), e tre di quei quattro accidenti hanno già smesso di proteggere almeno
+una volta. E si combina con `S-26`: oggi l'unica cosa che impedisce a un prompt ostile di far
+eseguire codice **è che il file generato non compili per caso**.
+
+### La correzione, una riga
+
+`FIX-20a`: interpola con `repr()` invece che grezzo — `f"Original prompt:\n{prompt!r}\n\n"` — così
+ogni `"""` diventa testo inerte. Oppure scrivi il prompt in un `prompt.txt` accanto, fuori dal
+sorgente. Vale anche per `{title}` nel corpo (`code_templates.py:179-180`).
+
+`FIX-19a` resta la rete a valle: il ramo `UJ_WRITER_LLM` produce codice che il template non
+controlla, e va scansionato **prima dell'esecuzione**.

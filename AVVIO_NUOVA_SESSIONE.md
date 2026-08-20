@@ -238,8 +238,9 @@ sui primi 20 findings, **12 chiusi, 1 superato, 1 parziale, 6 aperti** (`S-06` �
 policy, non un bug). **`S-03` e `S-15`, che i miei documenti davano per non chiusi, lo sono** —
 la mia lista sovrastimava di un terzo il lavoro residuo di Grok.
 
-**La sera del 19 se ne sono aggiunti sei, cercando difetti NUOVI nel codice arrivato su
-`main` dopo la sessione 4.** I findings sono ora **26** e gli aperti **12**:
+**La sera del 19 se ne sono aggiunti sette, cercando difetti NUOVI nel codice arrivato su
+`main` dopo la sessione 4.** I findings sono ora **27** e gli aperti **13** (più `S-16`, che ora
+ha un consumatore e va a Gemini — vedi sotto):
 
 - **`S-21`** (MEDIUM, latente) — `PRIVILEGED_KWARGS` è una **denylist**: cinque funzioni prendono
   `real=`, che scavalca i gate d'ambiente. Oggi non è sfruttabile perché tutte e cinque sono
