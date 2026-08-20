@@ -451,7 +451,7 @@ if (!schemasOnly) {
     const task = byTask.get(card.task_id);
     assert(expectedTargets.get(card.task_id) === card.target_ai, `${path} target AI does not match the mission assignment.`);
     assert(task?.owner === card.target_ai, `${path} target AI differs from backlog owner.`);
-    assert(task?.status === "READY", `${path} task must be READY in the source snapshot.`);
+    assert(["READY", "REVIEW"].includes(task?.status), `${path} task must be READY or REVIEW in the source snapshot.`);
     assert(task?.weight === card.task_snapshot.weight, `${path} task weight differs from backlog.`);
     assert(task?.reviewer === card.reviewer, `${path} reviewer differs from backlog.`);
     assert(mission?.repository?.commit_sha === card.repository_scope.read_ref, `${path} read_ref must match mission repository commit.`);
