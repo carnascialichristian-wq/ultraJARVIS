@@ -6182,9 +6182,11 @@ SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      delegation_card_count=4 mentre nella directory c'erano 10 card. Il validatore
      NON scandisce la directory. Il segnale era il CONTEGGIO, non l'exit code.
 
-  >>> AGGIORNATO DAI PUNTI AU e AV: i findings ora sono 23, non 20. Il bilancio
-  >>> qui sotto resta corretto per i primi 20; gli aperti sono 9, non 6, perche'
-  >>> S-21, S-22 e S-23 sono nuovi e nessuno li ha ancora visti.
+  >>> SUPERATO DAL PUNTO BE / §30: la vista autorevole e' ora la §30 della security
+  >>> review, con TUTTI i 29 findings — 10 chiusi, 1 superato, 1 parziale, 17 aperti.
+  >>> Questo punto (e il "23" del vecchio marcatore) descrivono stati intermedi. Per
+  >>> il conteggio corrente NON leggere qui: leggi §30. Il metodo dell'audit resta
+  >>> valido (la sonda produce CANDIDATI, non verdetti), il conteggio no.
   AL) 2026-08-19 — STATO CONSOLIDATO DEI 20 FINDINGS SU main. GIA' FATTO, NON RIFARE.
      docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §20
      docs/threat-models/GROK_FIX_LIST.md (tabella di stato IN CIMA)
@@ -6205,6 +6207,9 @@ SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
      LO SCRIPT PRODUCE CANDIDATI, NON VERDETTI. Ogni riga aperta va RILETTA nel
      codice prima di pubblicarla. L'avvertenza e' dentro lo script, in testa.
 
+  >>> AGGIORNATO: S-17/S-19 riconfermati aperti su origin/main anche nella quinta
+  >>> verifica (log sessione 6 parte 36); il ramo CLAUDE li chiude, misurato con
+  >>> UJ_PROBE_REF=HEAD o TARGET_REF=HEAD. Vista completa: §30.
   AK) 2026-08-19 — S-17 QUARTA VERIFICA: TERZA PORTA APERTA. GIA' FATTO, NON RIFARE.
      docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §19
      docs/threat-models/GROK_FIX_LIST.md -> FIX-13
