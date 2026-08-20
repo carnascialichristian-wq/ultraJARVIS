@@ -5126,6 +5126,35 @@ il giorno dopo averla creata — che è esattamente il difetto che §30 esisteva
 `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §31 (`S-29`, LOW) e §30 aggiornata · `GROK_FIX_LIST.md`
 → `FIX-22` · `TASKCLAUDE.md` §84. **Nessuna riga di `advisors/` modificata.**
 
+
+## Sessione 6, trentacinquesima parte — chiusura della campagna di review: tutte le prove reggono
+
+Esaurita la superficie revisionabile — tutto `core/`, tutti i 94 `tools/`, tutti gli `advisors/` —
+ho fatto l'ultima cosa che chiude una campagna invece di lasciarla sfilacciata: **ho rieseguito
+tutte e 14 le sonde dalla root**, come le eseguirebbe una sessione futura che verifica i miei
+findings.
+
+**14 su 14 eseguono pulite, exit 0, nessun traceback, nessun worktree orfano, albero pulito.**
+
+Non è una formalità. Una sonda citata come *"riproduzione"* di un finding che poi non gira è
+esattamente il difetto `F-001` che ho contestato a ChatGPT su `UJ-INT-006` — evidenza che non
+regge quando qualcuno la controlla. E conferma che la disciplina `E38`/`E39` ha funzionato: nessuna
+sonda lascia l'indice sporco o un worktree dietro, perché tutte materializzano il ref, usano
+`git -C`, e ripuliscono con `atexit`.
+
+### Dove sono, detto senza giri
+
+La campagna di security review sull'implementazione Python è **completa**: 29 findings, ognuno con
+severità, stato, correzione e owner nella vista autorevole §30, ognuno riproducibile. Il mio
+portafoglio di consegna è impacchettato (7 pacchetti su 8, l'ottavo non può averne uno). I doveri
+da reviewer sono evasi per quanto il ledger consente.
+
+**Non c'è altro codice mio da scrivere né altro da revisionare finché non arriva nuovo input.** Le
+due cose che sbloccano il programma — l'anello che applica le transizioni e il tetto delle card —
+sono di ChatGPT; `S-16` è di Gemini; i 15 fix aperti sono di Grok. Se una sessione futura apre e
+non trova consegne nuove dopo la trappola 11, **la risposta corretta è registrare l'attesa, non
+inventare lavoro** — ed è la stessa regola che la PARTE 4 di questo file impone da sempre.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
