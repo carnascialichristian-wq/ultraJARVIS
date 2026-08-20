@@ -17,11 +17,11 @@
 
 > ## STATO DELLE CORREZIONI — riverificato su `origin/main` @ `27b767309090`, 2026-08-19
 >
-> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su diciassette sono
+> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su diciotto sono
 > chiuse — otto applicate e una superata — verificate da me eseguendo, non leggendo. Lavorare su
 > una di quelle è tempo perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
-> §20. Le quattro più recenti (`FIX-14`…`FIX-17`) sono del 19 agosto e non sono ancora state
-> viste da nessuno: §21, §22, §23, §24 della stessa review.
+> §20. Le cinque più recenti (`FIX-14`…`FIX-18`) sono del 19 agosto e non sono ancora state
+> viste da nessuno: §21, §22, §23, §24, §25 della stessa review.
 >
 > | FIX | Finding | Stato al ref corrente |
 > |---|---|---|
@@ -42,11 +42,12 @@
 > | **`FIX-15`** | **`S-22` due `safe_write`, quella di build non contiene** | **DA APPLICARE** |
 > | **`FIX-16`** | **`S-23` `PROTECTED` nomina il vecchio posto del codice** | **DA APPLICARE** |
 > | **`FIX-17`** | **`S-24` il contatore della spesa è spento per default e perde** | **DA APPLICARE — HIGH** |
+> | **`FIX-18`** | **`S-25` il webhook di pagamento non verifica la firma** | **DA APPLICARE — HIGH, latente** |
 >
-> **Restano otto, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
+> **Restano nove, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
 > intervento solo. Ordine consigliato:
-> `FIX-10`+`FIX-13`+`FIX-17` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-11` → `FIX-12` →
-> `FIX-14`.
+> `FIX-10`+`FIX-13`+`FIX-17` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-18` (pagamenti) →
+> `FIX-11` → `FIX-12` → `FIX-14`.
 >
 > **`FIX-17` sta nel primo gruppo perché è la seconda metà dello stesso problema:** `FIX-10`
 > chiude il rubinetto acceso per default, `FIX-17` accende il contatore spento per default.
@@ -1131,3 +1132,113 @@ python3 docs/threat-models/probes/S-24-quota-meter-probe.py
 **Oggi** i blocchi A e B mostrano che i controlli non scattano e il blocco C che passano fino a 8
 chiamate dove ne dovrebbe passare una. **Dopo la correzione**: A e B devono sollevare senza
 impostare nessuna variabile, e C deve dare `1` in ogni run, a tutte e tre le dimensioni.
+
+---
+
+## FIX-18 — il webhook di pagamento non verifica la firma, la ispeziona · **HIGH, latente**
+
+**Finding:** `S-25`, §25 della review. **Ref:** `origin/main` @ `27b767309090`.
+**Riproduzione:** `python3 docs/threat-models/probes/S-25-billing-webhook-probe.py`
+(nessuna chiamata a Stripe: `handle_webhook` non ne fa, e la sonda non tocca le due funzioni che
+ne farebbero).
+
+### Il fatto
+
+`core/billing.py:102-105`:
+
+```python
+secret = (os.getenv("STRIPE_WEBHOOK_SECRET") or "").strip()
+if secret and sig_header:
+    if "t=" not in sig_header and "v1=" not in sig_header:
+        return {"ok": False, "error": "invalid signature header"}
+```
+
+Il segreto è letto e **mai usato in un calcolo** — `hmac` compare 0 volte nel file. La condizione
+è `and`, quindi basta uno dei due marcatori. E se `sig_header` è vuoto il controllo è saltato del
+tutto.
+
+Misurato, con un segreto configurato e un payload che chiede il tier `team`:
+
+```
+nessun header di firma           -> ACCETTATO   tier: team
+header inventato con t=          -> ACCETTATO   tier: team
+header inventato con v1=         -> ACCETTATO   tier: team
+firma plausibile ma falsa        -> ACCETTATO   tier: team
+header che NON somiglia a firma  -> rifiutato
+```
+
+**L'unico caso respinto è quello malformato.** È un controllo di sintassi travestito da controllo
+di autenticità.
+
+### La trappola della correzione — leggila PRIMA di scrivere il codice
+
+La firma di Stripe è calcolata sui **byte grezzi del corpo**:
+
+```
+firma_attesa = HMAC-SHA256(secret, f"{t}.{corpo_grezzo}")
+```
+
+`handle_webhook(payload: dict, ...)` riceve un dizionario **già interpretato**. Riserializzarlo
+non restituisce gli stessi byte — cambiano spaziatura e ordine delle chiavi — quindi qualunque
+HMAC calcolato da lì **non coinciderà mai**, e concluderai che la firma è sbagliata invece che il
+tuo input.
+
+**Serve un cambio di interfaccia**: la funzione deve ricevere il corpo grezzo e interpretarlo
+**dopo** la verifica.
+
+### FIX-18a — verifica vera
+
+```python
+import hmac, hashlib, time
+
+def handle_webhook(raw_body: bytes, *, sig_header: str = "", tolerance: int = 300) -> dict:
+    secret = (os.getenv("STRIPE_WEBHOOK_SECRET") or "").strip()
+    if secret:
+        parts = dict(p.split("=", 1) for p in sig_header.split(",") if "=" in p)
+        ts, sig = parts.get("t"), parts.get("v1")
+        if not ts or not sig:
+            return {"ok": False, "error": "missing signature"}
+        if abs(time.time() - int(ts)) > tolerance:          # blocca il replay
+            return {"ok": False, "error": "signature timestamp outside tolerance"}
+        atteso = hmac.new(secret.encode(),
+                          f"{ts}.".encode() + raw_body,
+                          hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(atteso, sig):            # confronto a tempo costante
+            return {"ok": False, "error": "signature mismatch"}
+    payload = json.loads(raw_body.decode("utf-8"))          # SOLO dopo la verifica
+    ...
+```
+
+Senza la tolleranza sul timestamp sostituisci un difetto di autenticazione con uno di replay.
+Senza `compare_digest` ne lasci uno di timing.
+
+### FIX-18b — idempotency key sulle scritture verso Stripe
+
+`create_customer` fa una POST non idempotente verso un provider di pagamento: un retry crea un
+cliente duplicato. Stripe supporta l'header `Idempotency-Key`, e non è usato. Viola `ADM-13` dei
+contratti di admission.
+
+```python
+headers={"Authorization": f"Bearer {key}",
+         "Idempotency-Key": hashlib.sha256(email.encode()).hexdigest()}
+```
+
+### FIX-18c — un interruttore dedicato per le chiamate reali
+
+Oggi l'unica condizione è `key.startswith("sk_")`: la presenza di una chiave abilita la chiamata
+reale. È la stessa asimmetria di `FIX-10`. Aggiungi una condizione esplicita
+(`UJ_ALLOW_BILLING=1`) così che una chiave finita nell'ambiente per sbaglio non basti.
+
+### FIX-18d — ancorare i due registri al modulo
+
+`DEFAULT_CUSTOMERS` e `DEFAULT_EVENTS` sono relativi e seguono la cwd, come in `FIX-17d`.
+
+### Come verificare
+
+```bash
+python3 docs/threat-models/probes/S-25-billing-webhook-probe.py
+```
+
+**Oggi** accetta quattro contraffazioni su cinque. **Dopo la correzione** devono essere respinte
+tutte e cinque, e un test nuovo deve mostrare che una firma **calcolata correttamente** passa —
+altrimenti hai chiuso il webhook invece di autenticarlo.

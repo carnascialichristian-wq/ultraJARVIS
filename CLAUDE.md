@@ -4720,6 +4720,79 @@ uno solo lascia il sistema o senza tetto o senza misura) ·
 
 **Nessuna riga di codice di Grok modificata. Nessuna chiamata di rete, in nessuna variante.**
 
+
+## Sessione 6, ventisettesima parte — `S-25`: il webhook di pagamento ispeziona la firma invece di verificarla
+
+Finito `monetization`, l'altro modulo che tocca i soldi e che avevo segnalato in sessione 4 senza
+mai revisionarlo è `core/billing.py` — skeleton Stripe, 126 righe. All'epoca avevo scritto che non
+aveva chiamanti; **riverificato oggi, è ancora vero**, e resta latente. Ma il contenuto è peggiore
+di quanto la nota di allora lasciasse intendere.
+
+### Il difetto, in cinque righe
+
+```python
+secret = (os.getenv("STRIPE_WEBHOOK_SECRET") or "").strip()
+if secret and sig_header:
+    if "t=" not in sig_header and "v1=" not in sig_header:
+        return {"ok": False, "error": "invalid signature header"}
+```
+
+Tre difetti sovrapposti: **il segreto non entra in nessun calcolo** (`hmac` compare zero volte nel
+file, `secret` compare a due sole righe, 102 e 103); la condizione è `and`, quindi basta uno dei
+due marcatori; e se l'header è vuoto il controllo è saltato del tutto.
+
+### Misurato, e il risultato è netto
+
+| Header | Esito | Tier concesso |
+|---|---|---|
+| *(nessuno)* | **ACCETTATO** | `team` |
+| `t=1` | **ACCETTATO** | `team` |
+| `t=…,v1=000…0` | **ACCETTATO** | `team` |
+| `ciao` | rifiutato | — |
+
+**L'unico caso respinto è quello malformato.** Il controllo rifiuta gli header che non
+*somigliano* a una firma e accetta tutti quelli che le somigliano, qualunque sia il valore. È un
+controllo di **sintassi** travestito da controllo di **autenticità**: dodicesima occorrenza della
+forma in questo programma, e la prima su un percorso di pagamento.
+
+### Che cosa otterrebbe la contraffazione, e perché lo dico al condizionale
+
+`result["suggested_env"] = {"UJ_TIER": tier}`, e `UJ_TIER` è la variabile che
+`monetization.current_tier()` legge per decidere i limiti giornalieri — `free` 10 chiamate LLM,
+`team` 20.000. Un webhook falso è una **richiesta di promozione di quota**.
+
+Ma `suggested_env` **non è consumato da nessuno**: `git grep` dà una sola occorrenza, la sua
+produzione. E `handle_webhook` non ha chiamanti fuori dai propri test. **Il difetto è latente**, e
+va scritto così invece di lasciarlo sembrare vivo.
+
+### La parte che vale più del finding: la correzione ha una trappola
+
+La correzione ovvia è calcolare l'HMAC. Ma la firma di Stripe è calcolata sui **byte grezzi del
+corpo**, e `handle_webhook` riceve un dizionario **già interpretato**. Riserializzarlo non dà gli
+stessi byte — cambiano spaziatura e ordine delle chiavi — quindi qualunque HMAC calcolato da lì
+**non coinciderà mai**, e chi corregge concluderà che la firma è sbagliata invece che il proprio
+input.
+
+**La correzione richiede un cambio di interfaccia**, e l'ho scritto in testa a `FIX-18` invece di
+lasciarlo scoprire. È la terza volta in due giorni che segnalo una coppia in cui la versione
+facile applicata per prima produce qualcosa che *sembra* corretto: `S-12` prima di `S-13`,
+`FIX-15` prima di `FIX-16`, e ora questa.
+
+### Perché correggerlo adesso che è latente
+
+Quando ci sarà un endpoint HTTP, il difetto diventa **remoto e non autenticato senza nessun'altra
+modifica al file** — e la correzione costerà un cambio di interfaccia con chiamanti veri da
+aggiornare. È la stessa logica di `S-16`: si corregge lo schema **prima** che il cablaggio esista,
+e costa una frazione.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §25 · `GROK_FIX_LIST.md` → `FIX-18` ·
+`docs/threat-models/probes/S-25-billing-webhook-probe.py` · `TASKCLAUDE.md` §79.
+
+**Nessuna chiamata a Stripe, nessuna chiave impostata**: la sonda non invoca `create_customer` né
+`create_checkout_session`, che sono le uniche due funzioni del file che contatterebbero la rete.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5151,6 +5224,46 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AY) 2026-08-19 — S-25 (NUOVO, HIGH latente): il webhook di pagamento ISPEZIONA
+     la firma invece di verificarla.
+     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §25 · GROK_FIX_LIST.md -> FIX-18
+     docs/threat-models/probes/S-25-billing-webhook-probe.py  (nessuna chiamata a Stripe)
+     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
+
+     core/billing.py:102-105. Il segreto e' letto e MAI usato in un calcolo: `hmac`
+     compare ZERO volte nel file, `secret` compare a due sole righe. La condizione e'
+     `and`, quindi basta uno dei due marcatori. E se sig_header e' vuoto il controllo
+     e' saltato del tutto.
+     MISURATO, con segreto configurato e payload che chiede il tier `team`:
+       nessun header          -> ACCETTATO, tier team
+       "t=1"                  -> ACCETTATO, tier team
+       "t=...,v1=000...0"     -> ACCETTATO, tier team
+       "ciao"                 -> rifiutato
+     L'UNICO CASO RESPINTO E' QUELLO MALFORMATO: e' un controllo di SINTASSI
+     travestito da controllo di AUTENTICITA'. Dodicesima occorrenza della forma, la
+     prima su un percorso di pagamento.
+
+     LATENTE, e va detto: `suggested_env` NON e' consumato da nessuno (git grep: una
+     sola occorrenza, la sua produzione) e handle_webhook non ha chiamanti fuori dai
+     test. Ma UJ_TIER e' cio' che monetization.current_tier() legge per i limiti
+     (free 10 chiamate LLM, team 20.000): un webhook falso e' una richiesta di
+     promozione di quota. Con un endpoint HTTP diventa REMOTO E NON AUTENTICATO senza
+     nessun'altra modifica al file.
+
+     >>> LA TRAPPOLA DELLA CORREZIONE, scritta in testa a FIX-18: la firma di Stripe
+     e' calcolata sui BYTE GREZZI del corpo, e handle_webhook riceve un dizionario
+     GIA' INTERPRETATO. Riserializzarlo non da' gli stessi byte, quindi qualunque HMAC
+     calcolato da li' NON COINCIDERA' MAI e sembrera' che la firma sia sbagliata
+     invece che l'input. SERVE UN CAMBIO DI INTERFACCIA (corpo grezzo, interpretato
+     DOPO la verifica) piu' la tolleranza sul timestamp contro il replay e
+     hmac.compare_digest. Terza coppia "versione facile prima = sembra corretta e non
+     lo e'" dopo S-12/S-13 e FIX-15/FIX-16.
+
+     Tre rilievi minori sullo stesso file: create_customer verso Stripe NON ha
+     idempotency key (viola ADM-13); la sola presenza di una chiave `sk_` abilita la
+     chiamata reale (stessa asimmetria di FIX-10); DEFAULT_CUSTOMERS/DEFAULT_EVENTS
+     sono path RELATIVI e seguono la cwd (come FIX-17d).
 
   AX) 2026-08-19 — S-24 (NUOVO, HIGH): il contatore della spesa e' spento per default.
      MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §24 · GROK_FIX_LIST.md -> FIX-17

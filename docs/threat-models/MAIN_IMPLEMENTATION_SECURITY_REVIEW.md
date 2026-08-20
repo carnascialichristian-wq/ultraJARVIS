@@ -2008,3 +2008,110 @@ Nell'ordine, e il primo è quello che chiude il rischio:
   contenimento per assenza già registrato in `S-17`, non una difesa.
 - **Non ho eseguito nessuna chiamata reale** e non ho installato `openai`.
 - **Non ho toccato una riga** di `core/monetization.py` né di `cloud_bridge.py`.
+
+---
+
+## 25. `S-25` — il webhook di pagamento non verifica la firma: la **ispeziona**. **HIGH, latente**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+**Riproduzione:** `python3 docs/threat-models/probes/S-25-billing-webhook-probe.py`
+(worktree materializzato al ref, **nessuna chiamata a Stripe**: `handle_webhook` non ne fa, e la
+sonda non invoca le due funzioni che ne farebbero).
+
+### 25.1 Il difetto, in cinque righe di codice
+
+`core/billing.py:102-105`:
+
+```python
+secret = (os.getenv("STRIPE_WEBHOOK_SECRET") or "").strip()
+if secret and sig_header:
+    if "t=" not in sig_header and "v1=" not in sig_header:
+        return {"ok": False, "error": "invalid signature header"}
+```
+
+Tre difetti distinti, sovrapposti:
+
+1. **il segreto non entra in nessun calcolo.** È letto alla riga 102 e usato solo nel test di
+   verità alla 103. Misurato: `hmac` compare **0 volte** nel file, `compare_digest` **0 volte**;
+   `secret` compare a **due sole righe**, 102 e 103;
+2. **la condizione è `and`, non `or`:** per essere respinto un header deve mancare di
+   **entrambi** i marcatori. `t=1` da solo passa;
+3. **se `sig_header` è vuoto il controllo è saltato per intero.** Non serve indovinare una firma:
+   basta non mandarne una.
+
+### 25.2 Misurato: quattro contraffazioni su cinque accettate
+
+Con un segreto configurato, e un payload che chiede il tier più alto:
+
+| Header di firma | Esito | Tier concesso |
+|---|---|---|
+| *(nessuno)* | **ACCETTATO** | `team` |
+| `t=1` | **ACCETTATO** | `team` |
+| `v1=deadbeef` | **ACCETTATO** | `team` |
+| `t=1755600000,v1=000…0` | **ACCETTATO** | `team` |
+| `ciao` | rifiutato | — |
+
+**L'unico caso respinto è quello malformato.** Il controllo rifiuta gli header che non
+*somigliano* a una firma e accetta tutti quelli che le somigliano, indipendentemente dal loro
+valore. È un controllo di **sintassi** travestito da controllo di **autenticità** — la dodicesima
+occorrenza della forma in questo programma, e la prima su un percorso di pagamento.
+
+### 25.3 Che cosa otterrebbe la contraffazione
+
+```python
+result["suggested_env"] = {"UJ_TIER": tier}
+```
+
+`UJ_TIER` è la variabile che `core/monetization.current_tier()` legge per decidere i limiti
+giornalieri: `free` 10 chiamate LLM, `team` 20.000. **Un webhook falso è una richiesta di
+promozione di tier**, cioè di quota.
+
+**Oggi non produce nulla, e lo dico chiaramente:** `suggested_env` non è consumato da nessuno
+(verificato con `git grep`: una sola occorrenza, la sua produzione), e `handle_webhook` non ha
+chiamanti fuori dai propri test. Il difetto è **latente**. Ma il campo esiste perché qualcuno lo
+applichi, e nel momento in cui un endpoint HTTP viene cablato il difetto diventa **remoto e non
+autenticato** — che è la peggiore combinazione possibile, e non richiede nessun'altra modifica al
+file.
+
+### 25.4 La correzione ha una trappola, e va detta prima
+
+La correzione ovvia è calcolare l'HMAC. Ma **la firma di Stripe è calcolata sui byte grezzi del
+corpo**, non sul dizionario già interpretato:
+
+```
+firma_attesa = HMAC-SHA256(secret, f"{t}.{corpo_grezzo}")
+```
+
+`handle_webhook(payload: dict, ...)` riceve un dizionario **già interpretato**. Riserializzarlo
+non restituisce gli stessi byte — cambiano spaziatura e ordine delle chiavi — quindi qualunque
+HMAC calcolato da lì **non coinciderà mai**, e chi corregge concluderà che la firma è sbagliata
+invece che il proprio input.
+
+**La correzione richiede quindi un cambio di interfaccia**: la funzione deve ricevere il corpo
+grezzo (`bytes`) e interpretarlo **dopo** la verifica. È la stessa forma di `FIX-15` prima di
+`FIX-16`: la versione facile applicata per prima produce qualcosa che sembra corretto e non lo è.
+
+Serve inoltre una **tolleranza sul timestamp** (Stripe usa 5 minuti) e `hmac.compare_digest` per
+il confronto, altrimenti si sostituisce un difetto di autenticazione con uno di replay.
+
+### 25.5 Altri tre rilievi sullo stesso file, minori
+
+- **`create_customer` verso Stripe non ha idempotency key.** È un `EXTERNAL_WRITE` non idempotente
+  verso un provider di pagamento: viola `ADM-13` del mio `UJ-MCP-001`, e un retry crea un cliente
+  duplicato. Stripe supporta l'header `Idempotency-Key`, e non è usato.
+- **La sola presenza di una chiave abilita la chiamata reale** (`key.startswith("sk_")`). Non c'è
+  nessun interruttore d'ambiente dedicato: è la stessa asimmetria di `S-17`, dove la
+  configurazione pericolosa richiede una condizione sola.
+- **`DEFAULT_CUSTOMERS` e `DEFAULT_EVENTS` sono path relativi**, quindi seguono la directory di
+  lavoro. Misurato: il registro finisce sotto la cwd corrente. Stesso difetto di `S-24.5`, e vale
+  la stessa correzione.
+
+### 25.6 Che cosa NON affermo
+
+- **Non è sfruttabile oggi.** Nessun endpoint HTTP espone `handle_webhook`, e `suggested_env` non
+  è applicato da niente. È un difetto latente in uno skeleton, e va corretto **adesso proprio
+  perché è latente**: quando ci sarà un endpoint, correggerlo costerà un cambio di interfaccia
+  con chiamanti veri da aggiornare.
+- **Non ho eseguito nessuna chiamata a Stripe** e non ho impostato nessuna chiave.
+  `create_customer` e `create_checkout_session` non sono state invocate.
+- **Non ho toccato una riga** di `core/billing.py`.

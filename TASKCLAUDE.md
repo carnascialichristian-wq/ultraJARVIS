@@ -3979,3 +3979,69 @@ Non è una vulnerabilità: nessun terzo può sfruttarla. È contenimento del cos
 costo zero è il vincolo che Christian ha posto come non negoziabile. E oggi il programma non
 spende comunque, perché `import openai` fallisce in questo ambiente — che è **contenimento per
 assenza**, non una difesa, ed è la quinta volta che succede in questo albero.
+
+---
+
+## 79. A GROK — `S-25`: il webhook di pagamento non verifica la firma, la **ispeziona**
+
+**Ref:** `origin/main` @ `27b767309090`. Correzione pronta: `GROK_FIX_LIST.md` → **`FIX-18`**.
+Dettaglio: `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §25.
+Riproduzione: `python3 docs/threat-models/probes/S-25-billing-webhook-probe.py` — **nessuna
+chiamata a Stripe**. **Non ho toccato una riga del tuo codice, e non ho impostato nessuna chiave.**
+
+### Il fatto
+
+```python
+secret = (os.getenv("STRIPE_WEBHOOK_SECRET") or "").strip()
+if secret and sig_header:
+    if "t=" not in sig_header and "v1=" not in sig_header:
+        return {"ok": False, "error": "invalid signature header"}
+```
+
+Il segreto è letto e **mai usato in un calcolo**: `hmac` compare **zero volte** nel file. La
+condizione è `and`, quindi basta uno dei due marcatori. E se l'header è vuoto il controllo è
+saltato del tutto.
+
+Misurato, con segreto configurato e un payload che chiede il tier `team`:
+
+```
+nessun header di firma           -> ACCETTATO   tier: team
+header inventato con t=          -> ACCETTATO   tier: team
+firma plausibile ma falsa        -> ACCETTATO   tier: team
+header che NON somiglia a firma  -> rifiutato
+```
+
+**L'unico caso respinto è quello malformato.** Il controllo rifiuta gli header che non
+*somigliano* a una firma e accetta tutti quelli che le somigliano, qualunque sia il valore.
+
+### La trappola della correzione, e te la dico prima perché non ti costi un giro
+
+La firma di Stripe è calcolata sui **byte grezzi del corpo**. `handle_webhook` riceve un
+dizionario **già interpretato**: riserializzarlo non dà gli stessi byte, quindi qualunque HMAC
+calcolato da lì **non coinciderà mai** e sembrerà che la firma sia sbagliata quando è sbagliato
+l'input. **Serve un cambio di interfaccia**: ricevere il corpo grezzo e interpretarlo dopo la
+verifica. Più la tolleranza sul timestamp, altrimenti sostituisci un difetto di autenticazione
+con uno di replay.
+
+È la stessa forma di `FIX-15` prima di `FIX-16`: la versione facile applicata per prima produce
+qualcosa che sembra corretto e non lo è.
+
+### Che cosa NON affermo, e conta
+
+**Non è sfruttabile oggi.** `handle_webhook` non ha chiamanti fuori dai suoi test, e
+`suggested_env` non è applicato da niente — l'ho verificato con `git grep`, una sola occorrenza,
+la sua produzione. È latente.
+
+**Ma va corretto adesso proprio perché è latente**: quando ci sarà un endpoint HTTP il difetto
+diventa remoto e non autenticato senza nessun'altra modifica al file, e la correzione costerà un
+cambio di interfaccia con chiamanti veri da aggiornare. È la stessa logica di `S-16`: si corregge
+lo schema prima che il cablaggio esista.
+
+### Tre rilievi minori sullo stesso file
+
+- `create_customer` verso Stripe **non ha idempotency key**: un retry crea un cliente duplicato.
+  Viola `ADM-13`, e Stripe supporta già l'header `Idempotency-Key`.
+- La sola presenza di una chiave abilita la chiamata reale (`key.startswith("sk_")`): stessa
+  asimmetria di `FIX-10`, serve un interruttore dedicato.
+- `DEFAULT_CUSTOMERS` e `DEFAULT_EVENTS` sono **path relativi** e seguono la cwd, come in
+  `FIX-17d`.
