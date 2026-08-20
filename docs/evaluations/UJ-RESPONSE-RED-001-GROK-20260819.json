@@ -1,7 +1,7 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
   "response_id": "UJ-RESPONSE-RED-001-GROK-20260819",
-  "created_at": "2026-08-19T17:35:00Z",
+  "created_at": "2026-08-20T08:55:00Z",
   "card_id": "UJ-CARD-RED-001-GROK",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "GROK",
@@ -26,7 +26,7 @@
   ],
   "task_id": "UJ-RED-001",
   "status": "REVIEW",
-  "executive_delta": "Corrected re-delivery of UJ-RED-001 against read_ref 25b1b7d53ff5bc4b05348453ebb704aba3a88630. Packet does not self-list in artifacts (no circular hash). Removed non-schema field verification.self_hash_policy. Only the report is listed in artifacts with verified SHA-256. status=REVIEW, accepted_weight=0. Validators PASS at read_ref. Old PR #13 abandoned; prior AC-05 FAIL reviews superseded by this file.",
+  "executive_delta": "Schema-clean re-delivery of UJ-RED-001 at read_ref 25b1b7d53ff5bc4b05348453ebb704aba3a88630. Packet lists only the external report in artifacts (no self-entry). verification contains only schema-allowed keys (checks_run, passed, failed, not_run). status=REVIEW, accepted_weight=0. Program and council validators PASS.",
   "facts": [
     {
       "claim": "source_commit_sha 25b1b7d53ff5bc4b05348453ebb704aba3a88630 is a real 40-hex commit and is the mandated read_ref",
@@ -59,7 +59,7 @@
       "verified_at": "2026-08-19T11:48:00Z"
     },
     {
-      "claim": "validate-program-os.mjs and validate-council-packets.mjs both PASS at 25b1b7d…",
+      "claim": "validate-program-os.mjs and validate-council-packets.mjs both PASS at 25b1b7d",
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "node scripts run at checkout",
       "verified_at": "2026-08-19T11:42:00Z"
@@ -71,16 +71,10 @@
       "verified_at": "2026-08-19T11:50:00Z"
     },
     {
-      "claim": "Packet does not self-list with a content hash (circular-reference avoided); only the external report is content-addressed",
+      "claim": "ResponsePacket does not appear in artifacts; only the external report is content-addressed. Packet identity equals response_id plus path plus source_commit_sha.",
       "classification": "VERIFIED_FACT",
-      "source_ref": "this ResponsePacket artifacts array",
-      "verified_at": "2026-08-19T12:05:00Z"
-    },
-    {
-      "claim": "ResponsePacket does not appear in artifacts[]; only the external report is content-addressed. Packet identity = response_id + path + source_commit_sha (avoids circular self-hash).",
-      "classification": "VERIFIED_FACT",
-      "source_ref": "artifacts array of this packet; schemas/response-packet.schema.json verification.additionalProperties=false",
-      "verified_at": "2026-08-19T17:35:00Z"
+      "source_ref": "artifacts array of this packet; schemas/response-packet.schema.json",
+      "verified_at": "2026-08-20T08:55:00Z"
     }
   ],
   "assumptions": [
@@ -110,7 +104,7 @@
     },
     {
       "decision_id": "DEC-RED-001-03",
-      "proposal": "Abandon PR #13 and prior self-hash / schema-invalid packets as non-deliveries",
+      "proposal": "Abandon prior invalid or schema-rejected packets as non-deliveries",
       "owner": "CHATGPT / Christian",
       "gate": "this packet supersedes"
     }
@@ -130,23 +124,23 @@
       "validate-program-os.mjs PASS",
       "validate-council-packets.mjs PASS",
       "report SHA-256 recomputed and matches declared",
-      "packet does not contain a self-referential artifact hash",
+      "packet does not contain a self-referential artifact entry",
+      "verification object contains only schema-allowed keys",
       "no paid API / billing / cookie / browser automation / secret use",
-      "18 findings with full structure",
-      "verification object contains only schema-allowed keys"
+      "18 findings with full structure"
     ],
     "passed": [
       "source_commit_sha matches read_ref",
       "both validators PASS",
       "report hash",
-      "no circular self-hash",
+      "no circular artifact entry",
+      "schema verification keys only",
       "no forbidden side effects",
-      "findings complete",
-      "schema verification keys only"
+      "findings complete"
     ],
     "failed": [],
     "not_run": [
-      "independent CHATGPT re-review of AC-01..AC-05 after this correction",
+      "independent CHATGPT re-review of AC-01..AC-05 after this schema-clean delivery",
       "live OpenAI/Stripe smoke (forbidden)",
       "full Python test suite of target application paths"
     ]
@@ -156,7 +150,7 @@
       "classification": "INTERNAL_WRITE",
       "description": "Updated packet on branch agent/uj-red-001-grok-review-20260819; no main/BACKLOG/weight changes",
       "approval_ref": "card write_branch_patterns agent/uj-red-001-*",
-      "idempotency_key": "UJ-IDEMP-RED-001-GROK-20260819-REVIEW-V3",
+      "idempotency_key": "UJ-IDEMP-RED-001-GROK-20260820-REVIEW-R3",
       "proof_ref": "branch + PR after push"
     }
   ],
@@ -212,14 +206,14 @@
   "remaining_work": {
     "weight": 13,
     "blockers": [
-      "Independent CHATGPT re-review of AC-01..AC-05 after packet schema correction",
+      "Independent CHATGPT re-review of AC-01..AC-05 after schema-clean packet",
       "Possible follow-up: implement UJ_ZERO_COST profile (F-017)"
     ],
-    "next_action": "CHATGPT re-validates packet against schemas/response-packet.schema.json (no extra verification keys), report hash, evaluates findings; accepted_weight stays 0 until PASS."
+    "next_action": "CHATGPT validates packet against schemas/response-packet.schema.json, confirms report hash, emits ReviewResult; accepted_weight stays 0 until PASS."
   },
   "confidence": {
     "level": "HIGH",
-    "reason": "Exact mandated read_ref checked out; validators PASS; paid paths and DepthGuard/memory/skills surfaces directly observed; circular self-hash removed; schema-illegal field removed"
+    "reason": "Exact mandated read_ref checked out; validators PASS; paid paths and DepthGuard/memory/skills surfaces observed; schema-clean verification object"
   },
   "policy_attestation": {
     "no_secret_values": true,
@@ -232,7 +226,7 @@
   },
   "handoff": {
     "target": "CHATGPT (reviewer for UJ-RED-001)",
-    "next_action": "Re-validate ResponsePacket against closed schema (verification keys only checks_run/passed/failed/not_run), confirm artifacts contains only the report with matching sha256, source_commit_sha=25b1b7d…, then emit ReviewResult. Do not award accepted_weight until PASS.",
-    "resume_point": "Corrected packet on agent/uj-red-001-grok-review-20260819; accepted_weight 0; self_hash_policy field removed for schema compliance; previous AC-05 FAIL reviews superseded."
+    "next_action": "Validate ResponsePacket against closed schema (verification keys only checks_run/passed/failed/not_run), confirm artifacts contains only the report with matching sha256, source_commit_sha=25b1b7d, then emit ReviewResult. Do not award accepted_weight until PASS.",
+    "resume_point": "Schema-clean packet on agent/uj-red-001-grok-review-20260819; accepted_weight 0; prior AC-05 FAIL reviews superseded."
   }
 }
