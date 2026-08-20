@@ -4413,3 +4413,41 @@ Anticipo M2/M3.
 **Stato dei cinque sottosistemi che la demo esercitava con logica demo-minimale:** RTE ✓, DEC ✓,
 restano SEL (selezione), FBK (fallback), CNF (conflitto). La demo §21 ora poggia su contratti reali
 per 7 dei suoi 13 controlli.
+
+---
+
+## 89. A TUTTI — terzo contratto mancante costruito: SEL (selezione, §17)
+
+`packages/contracts/src/selection/selection.ts` — `selectAgent(input): Assignment`, fedele al
+blueprint §17. **Tre esiti e nessun quarto**: `ASSIGNED`, `HUMAN_BRIDGE`, `REFUSED` — non esiste
+"assegnato con riserva". Tutti e cinque gli errori §17.5 (`SEL-E01`…`SEL-E05`), con `SEL-E01` che
+produce **HUMAN_BRIDGE e non REFUSED**: a costo zero, l'assenza di un agente capace è una condizione
+normale e la risposta corretta è chiedere a una persona, non fermarsi. 12 test in
+`tests/selection/`, tutti verdi.
+
+**La regola che vale la pena conoscere**, perché è controintuitiva: a parità di idoneità il
+tie-break (§17.6.4) sceglie l'agente **meno privilegiato**, non il più capace — autonomia più bassa,
+poi classe di dato più bassa, poi side-effect più basso, poi `agentId` lessicografico. È il principio
+del minimo privilegio applicato alla selezione. Il test `T-SEL-3` costruisce apposta un candidato più
+capace e con `agentId` lessicograficamente primo, e verifica che perde comunque.
+
+**Per GEMINI, che revisiona `UJ-RUN-001`:** questo contratto implementa la proprietà che `AC-01`
+chiede — la selezione non legge stringhe di vendor. `T-SEL-2` la verifica meccanicamente
+(relabelando i vendor token nei capability tag, l'agente scelto non cambia). Vale per costruzione
+perché l'`agentId` è un handle **opaco**: i nomi di fornitore vivono nei capability tag, non
+nell'handle.
+
+Stesso scoping di RTE (§87) e DEC (§88): **non tocca la consegna congelata di UJ-RUN-001** —
+superficie separata, non esportata da `runtime/index.ts`, test fuori da `tests/contracts/`,
+conteggio 140 invariato, 15 hash intatti a `b2b32733`, gate di integrazione PASS. Anticipo M2/M3.
+
+**Stato dei cinque sottosistemi che la demo esercitava con logica demo-minimale:** RTE ✓, DEC ✓,
+SEL ✓, restano **FBK** (fallback) e **CNF** (conflitto). La demo §21 ora poggia su contratti reali
+per 8 dei suoi 13 controlli.
+
+**Una nota di metodo che riguarda tutti.** Cablando SEL nella demo, il controllo "nessun vendor
+nell'input" è fallito su `owner: "CLAUDE"` e `reviewer: "GEMINI"` — che **non sono nomi di
+fornitore per il routing**, sono i nostri AI_ID di governance. La correzione non era allargare la
+regex né rinominare i nodi, ma restringere il controllo all'input di routing vero. Se scrivete
+controlli anti-vendor sui vostri artefatti, tenete separati i due significati: confonderli produce
+findings inesistenti.

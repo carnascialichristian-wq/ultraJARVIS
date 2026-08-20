@@ -90,6 +90,16 @@ NAMES+=("DEC suite ($tot_dec pass)"); CODES+=("$dec_rc"); BLOCKING+=("1")
 if [ "$dec_rc" -eq 0 ]; then printf '  [ ok ] %-38s %s pass\n' "DEC suite (decomposition)" "$tot_dec";
 else fail=1; printf '  [FAIL] %-38s (BLOCCANTE)\n' "DEC suite (decomposition)"; fi
 
+echo "-- B1d) contratto SEL (selection, blueprint §17) --"
+tot_sel=0; sel_rc=0
+for f in tests/selection/*.test.mjs; do
+  node --test "$f" > "$LOG_DIR/sel" 2>&1 || sel_rc=1
+  p=$(grep -E '^# pass ' "$LOG_DIR/sel" | awk '{print $3}'); tot_sel=$((tot_sel + ${p:-0}))
+done
+NAMES+=("SEL suite ($tot_sel pass)"); CODES+=("$sel_rc"); BLOCKING+=("1")
+if [ "$sel_rc" -eq 0 ]; then printf '  [ ok ] %-38s %s pass\n' "SEL suite (selection)" "$tot_sel";
+else fail=1; printf '  [FAIL] %-38s (BLOCCANTE)\n' "SEL suite (selection)"; fi
+
 echo "-- B2) demo end-to-end §21 di UJ-RUN-001 --"
 run 1 "demo end-to-end (mission-demo)"  node packages/contracts/demo/mission-demo.mjs
 

@@ -7,12 +7,14 @@
  *
  * Onestà su cosa è REALE e cosa è DEMO-MINIMALE:
  *   - Usa i CONTRATTI VERI dove esistono: checkSpawn, nextState, verifyLedgerChain,
- *     buildIdempotencyKey, AtomicActiveTaskCounter, mayStartNewStep.
- *   - Usa logica DEMO-MINIMALE, marcata [demo], per i cinque sottosistemi che NON
- *     hanno ancora un contratto (decomposizione DEC-, selezione SEL-, routing RTE-,
- *     conflitto CNF-, fallback FBK-). Quando quei contratti arriveranno (M2/M3), la
- *     demo va ricablata su di essi. Finché non arrivano, questa demo NON chiude
- *     T-E2E-1/2/3 nel blueprint: quelle prove restano "DA IMPLEMENTARE".
+ *     buildIdempotencyKey, AtomicActiveTaskCounter, mayStartNewStep, e i tre
+ *     sottosistemi gia' contrattualizzati: validateDecomposition (DEC),
+ *     selectAgent (SEL), admitAdapterRegistration (RTE).
+ *   - Usa logica DEMO-MINIMALE, marcata [demo], per i due sottosistemi che NON hanno
+ *     ancora un contratto (conflitto CNF-, fallback FBK-). Quando quei contratti
+ *     arriveranno (M2/M3), la demo va ricablata su di essi. Finché non arrivano,
+ *     questa demo NON chiude T-E2E-1/2/3 nel blueprint: quelle prove restano
+ *     "DA IMPLEMENTARE".
  *
  * COSTO ZERO PER COSTRUZIONE: nessun import di rete, nessuna chiave. L'unico adapter
  * è `echo@1`, che restituisce l'input in maiuscolo. Il passo 9 verifica che nessuna
@@ -37,6 +39,7 @@ import {
 import { AtomicActiveTaskCounter } from "../dist/recovery/index.js";
 import { admitAdapterRegistration } from "../dist/routing/index.js";
 import { validateDecomposition } from "../dist/decomposition/index.js";
+import { selectAgent } from "../dist/selection/index.js";
 
 import net from "node:net";
 
@@ -121,11 +124,25 @@ const validated = validateDecomposition(decA, DEC_CTX).admitted === true;
 check(1, "decomposizione: DAG valido (contratto DEC) e stabile su due esecuzioni",
   decA.nodes.length === 4 && stable && validated, `${decA.nodes.length} nodi, DEC ammette`);
 
-// 2) selezione [demo]: tutti ASSIGNED, nessuna stringa di vendor nell'input
+// 2) selezione: contratto SEL reale (src/selection/selection.ts, blueprint §17), non piu' [demo].
+// Due candidati coprono "echo"; il MENO privilegiato (SEL §17.6.4) deve vincere. Nessuna
+// stringa di vendor nell'input della selezione: e' la proprieta' AC-01 (§17.1).
 const VENDOR = /openai|anthropic|gpt-4|claude-|gemini|api\.stripe/i;
-const assigned = decA.nodes.map((n) => ({ ...n, state: "ASSIGNED" }));
-check(2, `selezione: ${assigned.length}/${assigned.length} ASSIGNED, nessun vendor nell'input`,
-  assigned.every((n) => n.state === "ASSIGNED") && !VENDOR.test(MISSION));
+const SEL_CANDIDATES = [
+  { agentId: "agent-broad", declaredCapabilities: ["echo", "write"], maxDataClass: "C2", maxAutonomy: "L2", maxSideEffect: "INTERNAL_WRITE", expiresAt: null },
+  { agentId: "agent-local", declaredCapabilities: ["echo"], maxDataClass: "C1", maxAutonomy: "L1", maxSideEffect: "NONE", expiresAt: null },
+];
+const SEL_PARENT = { capabilities: ["echo", "write"], maxDataClass: "C3", maxAutonomy: "L3", maxSideEffect: "EXTERNAL_WRITE" };
+const SEL_NOW = "2026-08-20T00:00:00Z";
+const selections = decA.nodes.map((n) => selectAgent({ task: n, candidates: SEL_CANDIDATES, parentGrants: SEL_PARENT, now: SEL_NOW }));
+const allAssigned = selections.every((a) => a.kind === "ASSIGNED");
+const leastPrivilegedWins = selections.every((a) => a.kind === "ASSIGNED" && a.agentId === "agent-local");
+// L'input di ROUTING (candidati + missione) non contiene stringhe di vendor: e' cio' su cui il
+// selettore decide. owner/reviewer dei nodi sono AI_ID di governance (CLAUDE, GEMINI...), letti
+// solo per l'uguaglianza di indipendenza SEL-E03 — neutrale per costruzione (provato da T-SEL-2).
+const inputHasNoVendor = !VENDOR.test(MISSION) && !VENDOR.test(JSON.stringify(SEL_CANDIDATES));
+check(2, `selezione (contratto SEL): ${selections.length}/${selections.length} ASSIGNED al meno privilegiato, input di routing senza vendor`,
+  allAssigned && leastPrivilegedWins && inputHasNoVendor);
 
 // 3) esecuzione nodo 1 con echo@1: eventi tool.invoked + tool.completed
 const echo = (input) => String(input).toUpperCase();

@@ -5383,6 +5383,99 @@ controlli (passo 1 DEC, 5 kill, 6 idempotency, 8 ledger, N1 checkSpawn, N2 RTE, 
 · `scripts/integration-gate.sh` (DEC aggiunta) · `TASKCLAUDE.md` §88.
 **15 hash intatti, tests/contracts invariata a 140, runtime/index.ts non toccato.**
 
+
+## Sessione 6, quarantunesima parte — il terzo contratto mancante: SEL (selezione), e la regola più difficile è il tie-break
+
+Terzo dei cinque sottosistemi che la demo esercitava con logica `[demo]`: la **selezione**
+(`SEL`), fedele al blueprint §17. Lega un `TaskNode` a un agente per capability e ceiling, **mai
+per qualità percepita di un modello e mai per nome di fornitore** — è la proprietà che `AC-01` di
+`UJ-RUN-001` chiede, e §17 la rende meccanicamente verificabile.
+
+### Che cosa ho costruito
+
+`packages/contracts/src/selection/selection.ts` — `selectAgent(input): Assignment`, tre esiti e
+nessun quarto (§17.3): `ASSIGNED`, `HUMAN_BRIDGE`, `REFUSED`. Tutti e cinque gli errori §17.5:
+
+- `SEL-E01` nessun candidato copre le capability → **HUMAN_BRIDGE, non REFUSED** (a costo zero
+  l'assenza di un agente capace è normale, la risposta è chiedere a una persona);
+- `SEL-E02` il candidato migliore viola un ceiling (`TA-2`/`TA-4`/`TA-5`/`TA-8`) → REFUSED, con
+  **tutte** le invarianti elencate, non la prima;
+- `SEL-E03` owner e reviewer coincidono → REFUSED (indipendenza ri-verificata a selezione, §17.6.5);
+- `SEL-E04` manifest scaduto rispetto a `now` → REFUSED;
+- `SEL-E05` due candidati ugualmente idonei → risolto dal tie-break, **mai** a caso.
+
+12 test in `tests/selection/`, tutti verdi: uno per errore più il percorso felice, il tie-break su
+due assi, la neutralità di provider, e il determinismo.
+
+### La regola più difficile, e perché
+
+Il tie-break §17.6.4 preferisce **l'agente MENO privilegiato**, non il più capace: (a) `maxAutonomy`
+più basso, (b) `maxDataClass` più bassa, (c) `maxSideEffect` più basso, (d) `agentId` lessicografico.
+È controintuitivo — un router "normale" sceglierebbe il più capace — ed è esattamente il punto: dare
+a un task il minimo privilegio che lo svolge è il principio del minimo privilegio applicato alla
+selezione. Il test `T-SEL-3` costruisce apposta un candidato più capace con `agentId`
+lessicograficamente primo, e verifica che **perde comunque**: il privilegio domina il nome.
+
+### Tre scelte di fedeltà, dichiarate
+
+1. **`EffectiveGrants` non esiste come tipo concreto.** Il blueprint lo nomina (§17.2, §17.3) e non
+   lo definisce mai. L'ho reso fedele a §9 — l'insieme di capability effettive del padre più i tre
+   ceiling ordinati contro cui si applicano `TA-2/4/5/8`. Dichiarato nel commento, non inventato in
+   silenzio.
+2. **`SEL-E03` è un controllo a livello di TASK, non di candidato.** Il blueprint lo formula sul
+   candidato ("owner AND reviewer"), ma `owner !== reviewer` è già un invariante garantito da
+   `DEC-E03`: il re-check che ha senso a selezione è che il task non sia arrivato con
+   `owner === reviewer` per una deriva del manifest fra `FROZEN` e assegnazione. È REFUSED e non
+   HUMAN_BRIDGE — un self-review non si corregge incollando, va corretta la decomposizione.
+3. **La neutralità di provider vale per costruzione perché l'`agentId` è un handle OPACO.** Il
+   tie-break lessicografico su `agentId` non introduce dipendenza dal vendor: i nomi di fornitore
+   vivono nei capability tag, non nell'handle. `T-SEL-2` lo prova relabelando i vendor token nei
+   capability tag e mostrando che l'agente scelto non cambia.
+
+### L'errore, e stavolta l'ha preso la demo
+
+Cablando `SEL` reale nel **passo 2** della demo, il controllo è fallito. Causa: la regex
+`VENDOR = /…|gemini|claude-|…/` che verifica "nessun vendor nell'input" ha fatto match su
+`reviewer: "GEMINI"` e `owner: "CLAUDE"` dei nodi. **Ma quelli non sono nomi di fornitore per il
+routing: sono gli AI_ID di governance dei membri del Council**, letti solo per l'uguaglianza di
+indipendenza `SEL-E03`, che è neutrale per costruzione. La correzione non è allargare la regex né
+rinominare i nodi: è restringere il controllo all'**input di routing** vero — i candidati e la
+missione — e dichiararlo nel commento. Confondere l'identità di governance con il nome di vendore
+avrebbe fatto sovra-dichiarare un difetto inesistente, che è la classe di errore che contesto agli
+altri.
+
+Secondo inciampo, minore: la prima falsificazione del tie-break (rompere il comparatore nel `dist`)
+**non ha cambiato niente** perché il mio `sed` non combaciava con la forma su due righe del `dist`
+(`return dAut;` su riga propria). È la trappola 12 — una falsificazione che non esercita il ramo
+che credi. Me ne sono accorto perché "12 pass" con il codice "rotto" non tornava; rifatto il `sed`
+sulla forma vera, `T-SEL-3` è diventato `not ok` (2 test falliti), poi la ricompilazione ha guarito.
+Una falsificazione che non fallisce non prova la robustezza del test: prova solo che non hai toccato
+il codice.
+
+### Scoping identico a RTE e DEC
+
+Superficie **separata**: non esportata da `runtime/index.ts` (uno dei 15 hashati), test fuori da
+`tests/contracts/`. Verificato dopo il lavoro: **15 hash intatti a `b2b32733`, `tests/contracts`
+invariata a 140, `runtime/index.ts` non toccato** (git diff vuoto su `runtime/` e `tests/contracts/`),
+gate di integrazione PASS con la nuova suite `SEL (12 pass)`, `cross-document-consistency` exit 0.
+
+La demo §21 ora usa il contratto `SEL` vero per il passo 2 (era `[demo]`): costruisce due candidati
+che coprono `echo` e verifica che vince il meno privilegiato. **RTE ✓ · DEC ✓ · SEL ✓ · restano
+FBK (fallback), CNF (conflitto).** La demo poggia su contratti reali per 8 dei suoi 13 controlli.
+
+### Chiusura su "stop"
+
+Christian ha scritto **stop** mentre verificavo i 15 hash — il segnale che il `/goal` aspettava. Ho
+chiuso senza iniziare il quarto contratto: ho salvato il lavoro `SEL` completo e verde (Regola 2:
+non committare significa perderlo alla prossima sessione), aggiornato la memoria, e mi sono fermato.
+
+### File
+
+`packages/contracts/src/selection/` (nuovo) · `tests/selection/selection.test.mjs` (12 test) ·
+`packages/contracts/demo/mission-demo.mjs` (passo 2 reale, controllo vendor ristretto al routing) ·
+`scripts/integration-gate.sh` (SEL aggiunta) · `TASKCLAUDE.md` §89.
+**15 hash intatti, tests/contracts invariata a 140, runtime/index.ts non toccato.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5662,6 +5755,7 @@ Sintesi operativa degli errori sopra, in forma di regole:
 > | Hash del piano canonico | `a3fcdfc9…a69a87` — invariato da sessione 1 |
 > | Suite contratti | **140 pass, 0 fail** (runtime 36 · policy 28 · tools 30 · recovery 9 · skills 37) |
 > | Copertura delle regole | **41 su 41**, zero scoperte (`ADM-11` chiusa, punto AT) |
+> | Contratti dei 5 sottosistemi mancanti | **RTE ✓ · DEC ✓ · SEL ✓ · restano FBK, CNF** — superfici separate, `tests/contracts` resta 140 (punti BG, BH, BI) |
 > | Mio portafoglio accettato | **0 / 76** — corretto, nessun reviewer si è espresso |
 > | Programma | **26 / 340 accettate**, e tutte e 26 sono task meta di ChatGPT |
 > | Pacchetti di evidenza | **7 su 8** — l'ottavo (`UJ-REV-002`) non può averne uno |
@@ -5816,6 +5910,35 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  BI) 2026-08-20 — COSTRUITO IL CONTRATTO SEL (selezione, §17), terzo dei 5.
+     packages/contracts/src/selection/ + tests/selection/ (12 test verdi)
+     GIA' FATTO, NON RIFARE. Fedele al blueprint §17.3/§17.5/§17.6, non inventato.
+     selectAgent(input): Assignment — TRE esiti e nessun quarto (ASSIGNED /
+     HUMAN_BRIDGE / REFUSED). Tutti e 5 gli errori: SEL-E01 nessuna copertura ->
+     HUMAN_BRIDGE (NON REFUSED), E02 ceiling TA-2/TA-4/TA-5/TA-8 con TUTTE le
+     invarianti elencate, E03 owner==reviewer, E04 manifest scaduto vs `now`,
+     E05 tie-break deterministico mai a caso.
+     LA REGOLA CHE INGANNA: il tie-break §17.6.4 preferisce l'agente MENO
+     privilegiato, non il piu' capace (autonomy, poi dataClass, poi sideEffect,
+     poi agentId lessicografico). T-SEL-3 lo prova con un candidato piu' capace e
+     agentId lessicograficamente PRIMO: perde comunque.
+     `now` E' UN PARAMETRO INIETTATO, mai letto dall'orologio (§17.2): senza,
+     la selezione non sarebbe riproducibile e il ledger non replayabile.
+     TRE SCELTE DI FEDELTA' DICHIARATE: (1) EffectiveGrants e' nominato dal
+     blueprint e MAI definito -> reso fedele a §9 (capabilities + 3 ceiling);
+     (2) SEL-E03 e' un controllo di TASK, non di candidato (owner!==reviewer e'
+     gia' DEC-E03; qui e' il re-check contro la deriva dei manifest);
+     (3) la neutralita' di provider vale perche' l'agentId e' un handle OPACO —
+     i nomi di fornitore vivono nei capability tag, non nell'handle (T-SEL-2).
+     Superficie SEPARATA come RTE/DEC: non tocca i 15 hashati, test fuori da
+     tests/contracts/, 140 invariato, 15 hash intatti a b2b32733, gate PASS.
+     La demo §21 passo 2 ora usa il contratto SEL reale (era [demo]).
+     STATO 5 mancanti: RTE ok, DEC ok, SEL ok, restano FBK e CNF.
+     ERRORE PRESO DALLA DEMO, non da me: la regex VENDOR del passo 2 faceva match
+     su reviewer:"GEMINI"/owner:"CLAUDE" dei nodi, che NON sono nomi di fornitore
+     per il routing ma AI_ID di GOVERNANCE del Council. Correzione: restringere il
+     controllo all'input di ROUTING (candidati + missione). Non allargare la regex.
 
   BH) 2026-08-19 — COSTRUITO IL CONTRATTO DEC (decomposizione, §16), secondo dei 5.
      packages/contracts/src/decomposition/ + tests/decomposition/ (12 test verdi)
