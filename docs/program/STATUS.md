@@ -1,6 +1,6 @@
 # STATUS v0.1
 
-Snapshot date: 2026-08-17. Numeric source: `BACKLOG.json` on the same ref.
+Snapshot date: 2026-08-20. Numeric source: `BACKLOG.json` on the same ref.
 
 ## Executive status
 
@@ -11,7 +11,7 @@ Snapshot date: 2026-08-17. Numeric source: `BACKLOG.json` on the same ref.
 | Meta bootstrap only | 26 / 29 | 89.66% | 3 | HIGH: PR #1 and its remaining gate are observable |
 | Lifetime ultraJARVIS program | UNKNOWN | N/A | UNKNOWN | Correctly unbaselined and extensible |
 
-`UJ-INT-001` and `UJ-INT-006` are submitted for review with 21 units of produced
+`UJ-INT-001`, `UJ-INT-006`, and `UJ-RED-001` are submitted for review with 34 units of produced
 scope, but they contribute zero accepted weight until their named independent
 reviews pass.
 
@@ -19,8 +19,8 @@ reviews pass.
 
 | Status | Tasks | Weight | Meaning |
 |---|---:|---:|---|
-| REVIEW | 2 | 21 | Artifacts submitted; acceptance pending |
-| READY | 6 | 73 | Inputs sufficient to begin, subject to one-primary-task WIP rule |
+| REVIEW | 3 | 34 | Artifacts submitted; acceptance pending |
+| READY | 5 | 60 | Inputs sufficient to begin, subject to one-primary-task WIP rule |
 | TRIAGED | 1 | 13 | Scoped but not selected as current primary work |
 | BLOCKED | 18 | 160 | Explicit dependency/evidence blocker exists |
 | DEFERRED | 5 | 44 | Future milestone or insufficient operational evidence |
@@ -41,7 +41,7 @@ from this table.
 | UJ-RUN-001 | Claude | READY | 0/13 | none yet | none | produce provider-neutral runtime blueprint |
 | UJ-CAP-001 | Gemini | READY | 0/13 | none yet | none | produce four-AI Capability Registry |
 | UJ-GGL-001 | Gemini | READY | 0/13 | none yet | none | produce coordinated Google evidence pack |
-| UJ-RED-001 | Grok | READY | 0/13 | none yet | none | produce falsification report with remediation |
+| UJ-RED-001 | Grok | REVIEW | 0/13 | report + ResponsePacket; ChatGPT PASS_WITH_ACTIONS | accepted weight remains 0/13 | preserve 0/13; implement hard UJ_ZERO_COST follow-up |
 
 ## Critical path
 
