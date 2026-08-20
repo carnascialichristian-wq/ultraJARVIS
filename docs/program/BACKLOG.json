@@ -1288,7 +1288,7 @@
       ],
       "owner": "GEMINI",
       "reviewer": "GROK",
-      "status": "READY",
+      "status": "DONE",
       "priority": "P0",
       "dependencies": [],
       "inputs": [
@@ -1327,24 +1327,41 @@
         {
           "criterion_id": "AC-05",
           "text": "ResponsePacket is valid, separate from UJ-CAP-001, proposes REVIEW, and keeps accepted weight at 0/13.",
-          "state": "PENDING",
-          "proof_refs": []
+          "state": "PASSED",
+          "proof_refs": [
+            "docs/program/packets/UJ-RESPONSE-GGL-001-GEMINI-001.json"
+          ]
         }
       ],
-      "proof": [],
+      "proof": [
+        {
+          "ref": "docs/evidence/GOOGLE_CAPABILITY_EVIDENCE_PACK.md",
+          "hash": "sha256:4fa97cf76265ec64e914ebf22d9c94a8ec431f23bb3a647d0418a0670a4767ac"
+        },
+        {
+          "ref": "docs/program/packets/UJ-RESPONSE-GGL-001-GEMINI-001.json",
+          "hash": "sha256:7e38adb0a90e1791fccdcf410513a82880620a565fcf084021368cf87db8601c"
+        },
+        {
+          "ref": "docs/program/reviews/inbox/UJ-REVIEW-GGL-001-GROK-20260819.json"
+        },
+        {
+          "ref": "docs/program/decisions/UJ-LEAD-DECISION-001-CLAUDE-20260820.md"
+        }
+      ],
       "data_class": "C0",
       "side_effect": "INTERNAL_WRITE",
       "approval_gate": "REVIEWED_BRANCH_PR",
       "weight": 13,
-      "completed_weight": 0,
-      "remaining_weight": 13,
+      "completed_weight": 13,
+      "remaining_weight": 0,
       "confidence": {
-        "level": "MEDIUM",
-        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+        "level": "HIGH",
+        "reason": "Accepted by CLAUDE as Technical Lead on 2026-08-20 after independent review by GROK (5/5 PASS) and re-verification of both cited artifact hashes at the pinned commit 2d8156a9."
       },
       "blocker": null,
-      "next_action": "Produce a coordinated evidence pack with UJ-CAP-001 while keeping weights separate.",
-      "updated_at": "2026-08-18T17:28:46.783Z"
+      "next_action": "Accepted. Follow-up (non-blocking): date each of the 14 sources in the official source register; keep the surfaces named in GROK finding F-002 out of ACTIVE routing until human-bridge live checks exist.",
+      "updated_at": "2026-08-20T18:00:00.000Z"
     },
     {
       "task_id": "UJ-INF-001",
@@ -1465,7 +1482,7 @@
       ],
       "owner": "GEMINI",
       "reviewer": "CHATGPT",
-      "status": "BLOCKED",
+      "status": "READY",
       "priority": "P2",
       "dependencies": [
         "UJ-GGL-001"
@@ -1503,13 +1520,9 @@
         "level": "MEDIUM",
         "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
       },
-      "blocker": {
-        "kind": "DEPENDENCY",
-        "cause": "Required dependency is not accepted: UJ-GGL-001.",
-        "resolver": "UJ-GGL-001"
-      },
-      "next_action": "Start after the Google inventory is accepted.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "blocker": null,
+      "next_action": "Unblocked on 2026-08-20: UJ-GGL-001 was accepted 13/13 by CLAUDE as Technical Lead. Do not route the surfaces named in GROK finding F-002 as ACTIVE until human-bridge live checks exist.",
+      "updated_at": "2026-08-20T18:00:00.000Z"
     },
     {
       "task_id": "UJ-MED-001",
@@ -1520,7 +1533,7 @@
       ],
       "owner": "GEMINI",
       "reviewer": "GROK",
-      "status": "BLOCKED",
+      "status": "READY",
       "priority": "P2",
       "dependencies": [
         "UJ-GGL-001"
@@ -1558,13 +1571,9 @@
         "level": "MEDIUM",
         "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
       },
-      "blocker": {
-        "kind": "DEPENDENCY",
-        "cause": "Required dependency is not accepted: UJ-GGL-001.",
-        "resolver": "UJ-GGL-001"
-      },
-      "next_action": "Start after the Google inventory is accepted.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "blocker": null,
+      "next_action": "Unblocked on 2026-08-20: UJ-GGL-001 was accepted 13/13 by CLAUDE as Technical Lead. Media rights must still be sourced per surface; the Google pack does not settle them.",
+      "updated_at": "2026-08-20T18:00:00.000Z"
     },
     {
       "task_id": "UJ-ADK-001",
@@ -1687,7 +1696,7 @@
       ],
       "owner": "GROK",
       "reviewer": "CHATGPT",
-      "status": "READY",
+      "status": "DONE",
       "priority": "P0",
       "dependencies": [],
       "inputs": [
@@ -1720,30 +1729,49 @@
         {
           "criterion_id": "AC-04",
           "text": "Simpler reversible alternatives are compared without presenting unverified free services as active.",
-          "state": "PENDING",
-          "proof_refs": []
+          "state": "PASSED",
+          "proof_refs": [
+            "docs/evaluations/ZERO_COST_FALSIFICATION_REPORT.md"
+          ]
         },
         {
           "criterion_id": "AC-05",
           "text": "ResponsePacket is valid, hashes artifacts, proposes REVIEW, and keeps accepted weight at 0/13.",
-          "state": "PENDING",
-          "proof_refs": []
+          "state": "PASSED",
+          "proof_refs": [
+            "docs/evaluations/UJ-RESPONSE-RED-001-GROK-20260819.json"
+          ]
         }
       ],
-      "proof": [],
+      "proof": [
+        {
+          "ref": "docs/evaluations/ZERO_COST_FALSIFICATION_REPORT.md",
+          "hash": "sha256:25db8e963fb26259c757d5c914834a46714569c2514b0c059391f3b9c3200f20"
+        },
+        {
+          "ref": "docs/evaluations/UJ-RESPONSE-RED-001-GROK-20260819.json",
+          "hash": "sha256:06a649f07f4388895c7c3baa133ddbfcf5af2b8be55dc3daf90be1883550280c"
+        },
+        {
+          "ref": "docs/program/reviews/inbox/UJ-REVIEW-RED-001-CHATGPT-20260820-R3.json"
+        },
+        {
+          "ref": "docs/program/decisions/UJ-LEAD-DECISION-001-CLAUDE-20260820.md"
+        }
+      ],
       "data_class": "C0",
       "side_effect": "INTERNAL_WRITE",
       "approval_gate": "REVIEWED_BRANCH_PR",
       "weight": 13,
-      "completed_weight": 0,
-      "remaining_weight": 13,
+      "completed_weight": 13,
+      "remaining_weight": 0,
       "confidence": {
-        "level": "MEDIUM",
-        "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
+        "level": "HIGH",
+        "reason": "Accepted by CLAUDE as Technical Lead on 2026-08-20 after independent review by CHATGPT (5/5 PASS) and re-verification of all three cited artifact hashes at the pinned commit 69acbf28. The report's F-001 to F-008 independently reproduce the cost findings CLAUDE reached separately (S-17, S-19, S-24, S-25)."
       },
       "blocker": null,
-      "next_action": "Produce the falsification ResponsePacket without generic criticism.",
-      "updated_at": "2026-08-18T17:28:46.783Z"
+      "next_action": "Accepted. Follow-up (non-blocking): make the canonical packet validator reachable from the delivery checkout so the command cited in the packet is reproducible (CHATGPT finding F-001, severity INFO).",
+      "updated_at": "2026-08-20T18:00:00.000Z"
     },
     {
       "task_id": "UJ-RSK-001",
@@ -1754,7 +1782,7 @@
       ],
       "owner": "GROK",
       "reviewer": "CLAUDE",
-      "status": "BLOCKED",
+      "status": "READY",
       "priority": "P0",
       "dependencies": [
         "UJ-RED-001"
@@ -1792,13 +1820,9 @@
         "level": "MEDIUM",
         "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
       },
-      "blocker": {
-        "kind": "DEPENDENCY",
-        "cause": "Required dependency is not accepted: UJ-RED-001.",
-        "resolver": "UJ-RED-001"
-      },
-      "next_action": "Start after UJ-RED-001 is submitted.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "blocker": null,
+      "next_action": "Unblocked on 2026-08-20: UJ-RED-001 was accepted 13/13 by CLAUDE as Technical Lead. Build the register on the 18 falsified findings of ZERO_COST_FALSIFICATION_REPORT.md; the loop detector must receive no mitigation credit (measured evasion, CLAUDE session 1).",
+      "updated_at": "2026-08-20T18:00:00.000Z"
     },
     {
       "task_id": "UJ-OSS-001",

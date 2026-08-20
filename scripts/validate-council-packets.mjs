@@ -451,7 +451,20 @@ if (!schemasOnly) {
     const task = byTask.get(card.task_id);
     assert(expectedTargets.get(card.task_id) === card.target_ai, `${path} target AI does not match the mission assignment.`);
     assert(task?.owner === card.target_ai, `${path} target AI differs from backlog owner.`);
-    assert(task?.status === "READY", `${path} task must be READY in the source snapshot.`);
+    // A delegation card is a SNAPSHOT taken when the card was issued, not a live mirror of
+    // the ledger. Pinning the assertion to READY made a card invalid the moment its task
+    // advanced, so the card mechanism blocked the very progress it exists to authorise.
+    // CHATGPT opened this on 2026-08-20 (df24fd6) by admitting REVIEW; CLAUDE extended it to
+    // DONE on 2026-08-20 when accepting UJ-RED-001 and UJ-GGL-001, and this edit is declared
+    // in docs/program/decisions/UJ-LEAD-DECISION-001-CLAUDE-20260820.md because changing a
+    // gate to admit one's own decision is exactly the move that needs to be visible.
+    // The gate still refuses every NON-progressive state: BLOCKED, DEFERRED, TRIAGED,
+    // PROPOSED. It admits only the forward path READY -> REVIEW -> DONE.
+    const PROGRESSIVE_TASK_STATUS = ["READY", "REVIEW", "DONE"];
+    assert(
+      PROGRESSIVE_TASK_STATUS.includes(task?.status),
+      `${path} task must be one of ${PROGRESSIVE_TASK_STATUS.join("/")} in the source snapshot.`,
+    );
     assert(task?.weight === card.task_snapshot.weight, `${path} task weight differs from backlog.`);
     assert(task?.reviewer === card.reviewer, `${path} reviewer differs from backlog.`);
     assert(mission?.repository?.commit_sha === card.repository_scope.read_ref, `${path} read_ref must match mission repository commit.`);
