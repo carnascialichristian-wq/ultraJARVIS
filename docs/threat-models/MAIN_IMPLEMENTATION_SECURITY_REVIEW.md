@@ -2487,9 +2487,9 @@ darebbe l'impressione opposta.
 
 ---
 
-## 30. Stato consolidato COMPLETO — tutti i 28 findings al 2026-08-19 sera
+## 30. Stato consolidato COMPLETO — tutti i 29 findings al 2026-08-19 sera
 
-La §20 copre i primi 20 findings; questa tabella è **l'unica vista autorevole su tutti e 28**.
+La §20 copre i primi 20 findings; questa tabella è **l'unica vista autorevole su tutti e 29**.
 Ref di riferimento per gli aperti: `origin/main` @ `27b767309090`. Il dettaglio di ciascuno è
 nella sezione omonima; le nove chiuse hanno la verifica in §10-ter.
 
@@ -2523,16 +2523,17 @@ nella sezione omonima; le nove chiuse hanno la verifica in §10-ter.
 | S-26 | gate di safety sulla copia, non sull'esecuzione | HIGH | **APERTO** | FIX-19 *(primo)* | GROK |
 | S-27 | prompt interpolato grezzo nel sorgente | MEDIUM | **APERTO** | FIX-20 | GROK |
 | S-28 | `websearch` non più stub, etichettato tale | LOW | **APERTO** | FIX-21 | GROK |
+| S-29 | debate loop fail-open (decisione però consumata) | LOW | **APERTO** | FIX-22 | GROK |
 
 ### 30.1 Il bilancio
 
-**Contato dalla tabella, non dedotto (trappola 24): 10 chiusi, 1 superato, 1 parziale, 16 aperti.**
-Dei 16 aperti:
+**Contato dalla tabella, non dedotto (trappola 24): 10 chiusi, 1 superato, 1 parziale, 17 aperti.**
+Dei 17 aperti:
 
 - **1 è di GEMINI** (`S-16`, lo schema di memoria) — e la finestra per correggerlo a costo quasi
   nullo è aperta **adesso** (§27);
 - **1 è di Christian** (`S-06`, una decisione di policy, non un bug);
-- **14 sono di GROK**, e l'ordine per applicarli è in `FIX_ORDER_ANALYSIS_20260819.md`, verificato:
+- **15 sono di GROK** (`FIX-22` è LOW, advisory), e l'ordine per i principali è in `FIX_ORDER_ANALYSIS_20260819.md`, verificato:
   `FIX-19 → FIX-11 → FIX-10+FIX-13+FIX-17 → FIX-15+FIX-16 → FIX-18 → FIX-12 → FIX-14`, con
   `FIX-20`/`FIX-21` a valle (MEDIUM/LOW).
 
@@ -2557,3 +2558,75 @@ ogni finding ha una sonda riproducibile, non una descrizione.
 
 E il contrappeso, misurato e non teorico (§29.5): **90 tool promossi su 94 sono privi di costrutti
 pericolosi.** Il motore regge; sono i bordi a essere fragili.
+
+---
+
+## 31. `S-29` — il debate loop consuma la decisione (bene), ma la vota fail-open. **LOW**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+**Riproduzione:** parte della sonda in `docs/threat-models/probes/` — verificato eseguendo, sotto.
+
+### 31.1 La parte positiva, e la scrivo per prima
+
+Ho controllato la cosa che conta di più su un advisor: **la sua decisione viene usata, o è
+scartata come il valore di ritorno di `_skills_hint` (§in FIX_ORDER appendice)?** È usata.
+`core/nt_runner.py:122-124`:
+
+```python
+if debate.get("decision") == "reject" and summary.get("status") == "PASS":
+    summary["status"] = "FAIL"
+    summary.setdefault("notes", []).append("Debate rejected the job")
+```
+
+Un `reject` del debate **declassa** il job da PASS a FAIL. È cablato correttamente, e va detto:
+Grok ha collegato l'output al consumatore, che è esattamente ciò che mancava in `_skills_hint`.
+
+### 31.2 Il caveat: la votazione è fail-open, misurato
+
+`advisors/debate.py:_vote_safety` su errore ritorna **`abstain`**, non `reject`:
+
+```python
+except Exception as exc:
+    return ("abstain", {"error": str(exc)})
+```
+
+E l'intero step del debate in `nt_runner.py:117-125` è avvolto in `except Exception: pass`.
+Misurato:
+
+```
+1) normale          -> decision: approve  votes: [approve, approve, approve]
+2) safety ROTTO     -> decision: approve  votes: [abstain, approve, approve]
+3) debate_job ROTTO -> nt_runner lo inghiotte, status resta PASS
+```
+
+Se lo scanner di safety **solleva**, il suo voto diventa un'astensione e i due voti rimanenti
+(style, critic) approvano; se l'intero debate solleva, lo status resta PASS. **Un guasto del
+revisore di sicurezza si legge come approvazione**, non come blocco.
+
+### 31.3 Perché è LOW e non di più
+
+Il debate declassa lo **status riportato**, non contiene niente: la promozione ha il suo gate
+(`FIX-1`), e l'esecuzione via `execute_graph` non è gatata affatto (`S-26`) — ma il debate non
+gata neppure quella. Quindi il fail-open significa *"un job che andrebbe segnalato può riportare
+PASS"*, il che inganna un umano che legge lo status, non apre un percorso di esecuzione.
+
+E il voto di safety eredita comunque `S-08`: lo scanner ha evasioni note, quindi anche quando
+**non** fallisce, il suo `approve` non è una garanzia.
+
+### 31.4 Correzione proposta — `FIX-22`
+
+1. **`_vote_safety` deve fallire chiuso**: su errore ritornare `reject`, non `abstain`. Un revisore
+   di sicurezza che non riesce a esprimersi non è un'astensione, è un no;
+2. **non inghiottire il debate**: se lo step solleva, lo status non deve restare PASS —
+   marcarlo `NEEDS_REVIEW` o `FAIL`, non lasciarlo verde.
+
+**Bassa priorità** perché è advisory, ma è a costo quasi nullo e allinea il comportamento
+all'intenzione dichiarata dal nome ("debate/safety vote").
+
+### 31.5 Che cosa NON affermo
+
+- **Non è un percorso di esecuzione**: il fail-open riguarda un'etichetta di stato, non un gate di
+  contenimento.
+- `critic.py` e `style.py` sono **puri advisor read-only**: letti, nessun costrutto pericoloso,
+  nessuna scrittura fuori dai file del job. Verificati e trovati corretti.
+- **Non ho toccato `advisors/`.**

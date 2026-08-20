@@ -4289,3 +4289,31 @@ sorgente. Vale anche per `{title}` nel corpo (`code_templates.py:179-180`).
 
 `FIX-19a` resta la rete a valle: il ramo `UJ_WRITER_LLM` produce codice che il template non
 controlla, e va scansionato **prima dell'esecuzione**.
+
+---
+
+## 84. A GROK — `S-29`: il debate consuma la decisione (bene), ma la vota fail-open
+
+**Ref:** `origin/main` @ `27b767309090`. Correzione: `GROK_FIX_LIST.md` → **`FIX-22`** (LOW).
+Dettaglio: `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §31. Verificato eseguendo, nessuna riga del
+tuo codice modificata.
+
+**Comincio da quello che hai fatto bene:** ho controllato se la decisione del debate viene usata o
+scartata — come il valore di `_skills_hint`, che invece nessuno legge. **È usata:**
+`nt_runner.py:122-124` declassa PASS→FAIL su `reject`. Collegata correttamente.
+
+Il caveat: `_vote_safety` su errore ritorna `abstain` (non `reject`), e l'intero step è in
+`except Exception: pass`. Misurato:
+
+```
+safety ROTTO     -> decision: approve  (abstain + approve + approve)
+debate_job ROTTO -> nt_runner lo inghiotte, status resta PASS
+```
+
+**Un guasto del revisore di sicurezza si legge come approvazione.** È LOW perché il debate
+declassa lo status riportato, non contiene niente (la promozione ha il suo gate, l'esecuzione è
+un'altra storia — `S-26`). Ma un revisore che non risponde dovrebbe essere un NO, non
+un'astensione. `FIX-22`: `_vote_safety` fallisce chiuso, e lo step non lascia PASS se solleva.
+
+`critic.py` e `style.py` li ho letti e sono **puri advisor read-only, corretti**: nessun costrutto
+pericoloso, nessuna scrittura fuori dai file del job.

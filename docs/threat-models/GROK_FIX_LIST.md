@@ -17,11 +17,11 @@
 
 > ## STATO DELLE CORREZIONI — riverificato su `origin/main` @ `27b767309090`, 2026-08-19
 >
-> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su ventuno sono
+> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su ventidue sono
 > chiuse — otto applicate e una superata — verificate da me eseguendo, non leggendo. Lavorare su
 > una di quelle è tempo perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
 > §20. Le otto più recenti (`FIX-14`…`FIX-21`) sono del 19 agosto e non sono ancora state
-> viste da nessuno: §21…§29 della stessa review. **`FIX-19` è quella da leggere per prima.**
+> viste da nessuno: §21…§31 della stessa review. **`FIX-19` è quella da leggere per prima.**
 >
 > | FIX | Finding | Stato al ref corrente |
 > |---|---|---|
@@ -46,8 +46,9 @@
 > | **`FIX-19`** | **`S-26` `execute_graph` esegue codice generato senza `scan_text`** | **DA APPLICARE — HIGH** |
 > | **`FIX-20`** | **`S-27` il prompt e' interpolato grezzo nel sorgente generato** | **DA APPLICARE — MEDIUM** |
 > | **`FIX-21`** | **`S-28` `websearch` non e' piu' uno stub, descritto e safe come tale** | **DA APPLICARE — LOW** |
+> | **`FIX-22`** | **`S-29` il debate safety-vote fallisce APERTO** | **DA APPLICARE — LOW** |
 >
-> **Restano dodici** (`FIX-20` MEDIUM, `FIX-21` LOW, entrambe non urgenti). L'ordine qui sotto è **verificato**, non asserito:
+> **Restano tredici** (`FIX-20` MEDIUM, `FIX-21`/`FIX-22` LOW, non urgenti). L'ordine qui sotto è **verificato**, non asserito:
 > `docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md` — e due posizioni sono cambiate rispetto a
 > quanto avevo scritto prima, perché le ho controllate invece di ricopiarle.
 >
@@ -1439,3 +1440,27 @@ di `UJ-MCP-001` verranno cablati sul registry Python, va classificato `EXTERNAL_
 Solo quattro hanno un hit (due stub noti, un `re.compile()` innocuo, questo). **90 tool promossi
 su 94 non contengono un solo costrutto pericoloso** — la prova pratica che il gate di promozione
 (`FIX-1`) non ha mai lasciato passare codice dannoso nel catalogo.
+
+---
+
+## FIX-22 — il debate safety-vote fallisce aperto · **LOW**
+
+**Finding:** `S-29`, §31 della review.
+
+**Prima, quello che hai fatto bene:** la decisione del debate È consumata —
+`nt_runner.py:122-124` declassa PASS→FAIL su `reject`. Collegata correttamente, a differenza del
+valore di ritorno di `_skills_hint` che invece viene scartato.
+
+Il caveat: `advisors/debate.py:_vote_safety` su errore ritorna `abstain`, non `reject`, e l'intero
+step è in `except Exception: pass`. Misurato: se lo scanner di safety solleva, il job viene
+approvato; se il debate intero solleva, lo status resta PASS. **Un guasto del revisore di
+sicurezza si legge come approvazione.**
+
+```python
+# advisors/debate.py:_vote_safety — dopo
+except Exception as exc:
+    return ("reject", {"error": str(exc)})     # un revisore che non risponde e' un NO
+```
+
+E in `nt_runner.py`, se il blocco debate solleva, non lasciare lo status a PASS: marcarlo
+`NEEDS_REVIEW`. Bassa priorità (è advisory, non contenimento), ma costo quasi nullo.

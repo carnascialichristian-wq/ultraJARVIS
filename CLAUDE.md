@@ -5093,6 +5093,39 @@ sbagliato.
 `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §30. **Nessun codice toccato: è consolidamento di
 documentazione.**
 
+
+## Sessione 6, trentaquattresima parte — gli advisor, e un fail-open che è quasi una buona notizia
+
+Ultimo componente non revisionato nel mio perimetro: la directory `advisors/` — `critic`, `style`,
+`debate`. Elaborano l'output della pipeline, cioè failure containment, che è §32.2 mio.
+
+`critic` e `style` sono puri advisor read-only: letti, corretti, nessun costrutto pericoloso.
+
+`debate` è il "multi-agent debate loop" di PHASE2, e lì c'era la domanda vera: **la sua decisione
+viene usata, o scartata come il valore di `_skills_hint`?** Ho controllato prima quello, perché è
+la differenza fra un gate e un ornamento. **È usata:** `nt_runner.py:122` declassa PASS→FAIL su
+`reject`. Grok l'ha cablata bene, ed è la lezione di `_skills_hint` applicata al posto giusto —
+va detto per primo.
+
+Il difetto, verificato eseguendo: la votazione è **fail-open**. `_vote_safety` su errore ritorna
+`abstain` invece di `reject`, e l'intero step è in `except: pass`. Misurato: safety rotto → job
+approvato; debate rotto → status resta PASS. Un guasto del revisore di sicurezza si legge come
+approvazione.
+
+L'ho tenuto **LOW**, e la disciplina qui è non gonfiarlo: il debate declassa lo *status riportato*,
+non contiene niente — la promozione ha il suo gate, l'esecuzione è scoperta ma il debate non la
+gata comunque. Quindi il fail-open inganna un umano che legge lo status, non apre un percorso. Un
+finding che riguarda un'etichetta non è un finding che riguarda un'esecuzione, e confonderli
+sarebbe gonfiare la gravità — l'errore che contesto agli altri.
+
+Aggiornata la §30 (la vista autorevole di ieri sera) a **29 findings**, così non diventa stantia
+il giorno dopo averla creata — che è esattamente il difetto che §30 esisteva per risolvere.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §31 (`S-29`, LOW) e §30 aggiornata · `GROK_FIX_LIST.md`
+→ `FIX-22` · `TASKCLAUDE.md` §84. **Nessuna riga di `advisors/` modificata.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5525,9 +5558,10 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
 
-  BE) 2026-08-19 — VISTA AUTOREVOLE SU TUTTI I 28 FINDINGS: §30 della security review.
+  BE) 2026-08-19 — VISTA AUTOREVOLE SU TUTTI I 29 FINDINGS: §30 della security review.
      Bilancio contato dalla tabella (non dedotto): 10 chiusi, 1 superato, 1 parziale,
-     16 APERTI. Dei 16: S-16 -> GEMINI, S-06 -> Christian (policy), 14 -> GROK.
+     17 APERTI. Dei 17: S-16 -> GEMINI, S-06 -> Christian (policy), 15 -> GROK.
+     S-29 (LOW): debate loop fail-open, ma la decisione E' consumata (bene). FIX-22.
      Ordine dei fix di Grok VERIFICATO in FIX_ORDER_ANALYSIS_20260819.md.
      La §20 (primi 20, "12 chiusi") e' superata da §30 dove divergono: §30 classifica
      S-08 come APERTO (FIX-9 copre un caso, le 2 evasioni note restano). Non e' una

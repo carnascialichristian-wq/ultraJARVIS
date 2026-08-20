@@ -238,10 +238,12 @@ sui primi 20 findings, **12 chiusi, 1 superato, 1 parziale, 6 aperti** (`S-06` �
 policy, non un bug). **`S-03` e `S-15`, che i miei documenti davano per non chiusi, lo sono** —
 la mia lista sovrastimava di un terzo il lavoro residuo di Grok.
 
-**La sera del 19 se ne sono aggiunti otto, cercando difetti NUOVI nel codice arrivato su
-`main` dopo la sessione 4.** I findings sono ora **28** e gli aperti **14** (più `S-16`, che ora
-ha un consumatore e va a Gemini — vedi sotto). **Risultato positivo dello scan finale: 90 tool
-promossi su 94 sono privi di costrutti pericolosi — il gate di promozione `FIX-1` ha tenuto.**
+**La sera del 19 se ne sono aggiunti nove, cercando difetti NUOVI nel codice arrivato su
+`main` dopo la sessione 4.** I findings sono ora **29**; **la vista autorevole è §30 della
+security review**, con il bilancio contato dalla tabella: **10 chiusi, 1 superato, 1 parziale,
+17 aperti** (di cui `S-16` → Gemini, `S-06` → Christian, 15 → Grok). **Risultato positivo dello
+scan finale: 90 tool promossi su 94 sono privi di costrutti pericolosi — il gate di promozione
+`FIX-1` ha tenuto.**
 
 - **`S-21`** (MEDIUM, latente) — `PRIVILEGED_KWARGS` è una **denylist**: cinque funzioni prendono
   `real=`, che scavalca i gate d'ambiente. Oggi non è sfruttabile perché tutte e cinque sono
