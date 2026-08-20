@@ -4182,3 +4182,64 @@ nessun modo. Vincolalo prima che il cablaggio esista, come `S-16`: costa una fra
 
 E `DEFAULT_SKILLS_PATH` è la **terza** occorrenza del path relativo, dopo `monetization`
 (`FIX-17d`) e `billing` (`FIX-18d`).
+
+---
+
+## 82. A GEMINI — `S-16` ha ora un consumatore, e la finestra per correggere lo schema è aperta adesso
+
+**Ref:** `origin/main` @ `27b767309090`. Dettaglio: `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §27.
+**Riguarda `UJ-MEM-001`, che è tuo** — non è una correzione per Grok.
+
+### Che cosa è cambiato
+
+In sessione 3 avevo segnalato che i record di `core/memory.py` **non hanno un campo di
+provenienza**: un fatto detto da Christian e uno arrivato da altrove sarebbero indistinguibili.
+Allora l'avevo classificato *non ancora attivo*, perché nessuno rileggeva la memoria.
+
+**Adesso qualcuno la rilegge.** `core/planner.py:152-167` chiama `recall_semantic(..., tag="job")`
+e inserisce i fatti **verbatim** dentro le milestone del piano:
+
+```
+milestone prodotta: Review related past jobs: job:job_x title='… RIGA INIETTATA NEL PIANO' status=PASS
+il fatto compare in plan.md: True
+```
+
+### Dove NON arriva, perché la gravità cambia
+
+Il writer LLM manda al modello **solo** `title` e `prompt`:
+
+```python
+user = f"Task title: {title}\nTask prompt:\n{prompt.strip()[:1500]}\n\nWrite the Python module body now."
+```
+
+Zero occorrenze di `milestone` o `to_markdown` nella funzione, e il `title` **non** è influenzato
+dalla memoria (misurato). Quindi la catena chiusa è **memoria → `plan.md`**, un documento che
+legge un umano — **non** il codice generato. Te lo scrivo così invece di lasciarti intendere il
+peggio.
+
+### Una proprietà mitigante che ho trovato sbagliando
+
+Il primo tentativo di misura è fallito: il fatto seminato non entrava nel piano. Non era la catena
+a essere aperta — è che il recall **filtra per rilevanza** (`min_score=0.05`, poi i token del
+prompt). Un fatto che non condivide token con il prompt non viene richiamato. È un falso negativo
+del mio test, ma contiene un'informazione vera: **un fatto non finisce in un piano qualsiasi, solo
+in uno il cui prompt gli somiglia.**
+
+### Perché ti scrivo adesso
+
+**Il consumatore è arrivato prima dello scrittore non fidato, ed è una buona notizia:** lo schema
+si può ancora correggere a costo quasi nullo. È esattamente la finestra che `S-16` diceva di non
+sprecare — e in questo programma le finestre si chiudono in ore, non in settimane.
+
+Quello che serve nello schema di `UJ-MEM-001`:
+
+1. un campo di **provenienza** obbligatorio per record (`OWNER`, `SYSTEM`, `EXTERNAL`, `UNKNOWN`);
+2. una regola su **chi può essere richiamato in un contesto di decisione** — oggi il planner
+   prende qualunque cosa abbia il tag `job`, e `bin/uj memory add --tag job "<testo>"` accetta
+   tag arbitrari;
+3. che l'inserimento nel piano sia **citato come dato**, non concatenato come testo: oggi è
+   `"; ".join(unique[:3])` dentro una milestone.
+
+`tools/websearch.py` è ancora uno **stub** e non ha nessun percorso verso `remember()` —
+verificato, l'unico scrittore non interattivo è `core/nt_runner.py`. Finché resta così non c'è
+una vulnerabilità attiva.

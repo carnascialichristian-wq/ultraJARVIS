@@ -4923,6 +4923,63 @@ path relativo dopo `monetization` e `billing`.
 `docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md` (nuovo, 5 sezioni + appendice) ·
 `GROK_FIX_LIST.md` (ordine corretto in cima, con le due motivazioni) · `TASKCLAUDE.md` §81.
 
+
+## Sessione 6, trentesima parte — `S-16`: il consumatore è arrivato, e non è quello che temevo
+
+In sessione 3 avevo scritto che il percorso *contenuto non fidato → memoria → decisione* **non
+era cablato**, e che `S-16` andava corretto nello schema **prima** che lo fosse. È il genere di
+affermazione che in questo programma scade in ore, quindi l'ho riverificata.
+
+**Il consumatore esiste.** `core/planner.py:152-167` rilegge la memoria e inserisce i fatti
+**verbatim** nelle milestone del piano; `core/nt_runner.py:135-138` li scrive a fine job. Il
+cerchio si chiude.
+
+### Ma non si chiude dove pensavo, e la differenza è tutta la gravità
+
+Il messaggio che il writer LLM manda al modello è, alla lettera:
+
+```python
+user = f"Task title: {title}\nTask prompt:\n{prompt.strip()[:1500]}\n\nWrite the Python module body now."
+```
+
+**Solo `title` e `prompt`.** Zero occorrenze di `milestone` o `to_markdown` nella funzione, e il
+`title` non è influenzato dalla memoria — misurato, non dedotto dall'architettura.
+
+Quindi la catena chiusa è **memoria → `plan.md`**, cioè un documento che legge un umano. La catena
+**memoria → codice generato** resta aperta. L'ho scritto così invece di lasciar intendere il
+peggio, che sarebbe stato facile e sbagliato.
+
+### Il falso negativo che mi ha regalato l'informazione migliore
+
+La prima misura diceva che il fatto seminato **non** entrava nel piano. Non era la catena a essere
+aperta: `recall_semantic(..., min_score=0.05)` e il fallback sui token del prompt **filtrano per
+rilevanza**, e il mio fatto non condivideva token con il prompt. Test che non esercita il ramo —
+trappola 12 dal lato di chi lo scrive, ennesima volta.
+
+Me ne sono accorto perché il risultato contraddiceva il codice che avevo appena letto. E rifacendo
+la misura con un fatto pertinente ho ottenuto sia la conferma sia una **proprietà mitigante che
+non conoscevo**: un fatto non finisce in un piano qualsiasi, solo in uno il cui prompt gli
+somiglia. Riduce la superficie da *"ogni piano futuro"* a *"i piani su quell'argomento"*.
+
+### La buona notizia, e a chi va detta
+
+**Il consumatore è arrivato prima dello scrittore non fidato.** Significa che lo schema si può
+ancora correggere a costo quasi nullo — è esattamente la finestra che `S-16` diceva di non
+sprecare, e in questo programma le finestre si chiudono in ore.
+
+Va a **GEMINI**, non a Grok: lo schema della memoria è `UJ-MEM-001`, suo. Servono tre cose — un
+campo di provenienza obbligatorio, una regola su chi può essere richiamato in un contesto di
+decisione (oggi basta il tag `job`, e `bin/uj memory add --tag job` accetta tag arbitrari), e che
+l'inserimento nel piano sia citato **come dato** invece che concatenato come testo.
+
+`tools/websearch.py` è ancora uno **stub** e non ha nessun percorso verso `remember()`:
+verificato. Finché resta così non c'è vulnerabilità attiva.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §27 · `TASKCLAUDE.md` §82.
+**Nessuna riga di `core/memory.py` o `core/planner.py` modificata.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5354,6 +5411,39 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  BB) 2026-08-19 — S-16 TERZA VERIFICA: IL CONSUMATORE E' ARRIVATO, ma non e' il
+     percorso del codice. VA A GEMINI (UJ-MEM-001), NON A GROK.
+     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §27 · TASKCLAUDE.md §82
+     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
+
+     CORREGGE la mia nota di sessione 3 ("il percorso non e' cablato") e quella di
+     sessione 5 ("meta' della catena"). Adesso:
+       core/nt_runner.py:135-138   SCRIVE  remember("job:... title=... status=...")
+       core/planner.py:152-167     LEGGE   recall_semantic(tag="job") e inserisce i
+                                           fatti VERBATIM nelle milestone del piano
+     Misurato: la milestone prodotta contiene il fatto seminato, e finisce in plan.md.
+
+     MA NON ARRIVA AL CODICE, e la differenza e' tutta la gravita'. Il messaggio che
+     il writer LLM manda al modello e', alla lettera:
+       user = f"Task title: {title}\nTask prompt:\n{prompt.strip()[:1500]}..."
+     SOLO title e prompt. Zero occorrenze di 'milestone'/'to_markdown' nella
+     funzione, e il title NON e' influenzato dalla memoria (misurato).
+     Catena chiusa: memoria -> plan.md (documento umano). Catena memoria -> codice
+     generato: APERTA.
+
+     PROPRIETA' MITIGANTE trovata sbagliando: la prima misura diceva che il fatto non
+     entrava. Non era la catena — recall_semantic(min_score=0.05) e il fallback sui
+     token del prompt FILTRANO PER RILEVANZA. Un fatto non finisce in un piano
+     qualsiasi, solo in uno il cui prompt gli somiglia.
+
+     >>> SERVE DA GEMINI, nello schema di UJ-MEM-001: (1) campo di provenienza
+     obbligatorio; (2) regola su chi puo' essere richiamato in un contesto di
+     decisione (oggi basta il tag "job", e `uj memory add --tag job` accetta tag
+     arbitrari); (3) inserimento nel piano CITATO COME DATO, non concatenato.
+     LA FINESTRA E' APERTA ADESSO: il consumatore e' arrivato prima dello scrittore
+     non fidato, quindi lo schema si corregge a costo quasi nullo.
+     tools/websearch.py e' ancora uno STUB e non ha percorsi verso remember().
 
   BA) 2026-08-19 — ORDINE DELLE DIECI CORREZIONI VERIFICATO. DUE POSIZIONI ERANO
      SBAGLIATE, ED ERANO MIE.

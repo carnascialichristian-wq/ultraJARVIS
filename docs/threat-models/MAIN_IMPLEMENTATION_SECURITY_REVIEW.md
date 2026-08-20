@@ -2233,3 +2233,92 @@ perché nessuno le rimuove.
 - **Non ho eseguito nulla di dannoso**: il carico delle prove scrive un file di testo in una
   directory temporanea, e la sonda rimuove worktree e temp con `atexit`.
 - **Non ho toccato una riga** di `core/graph_exec.py` né di `uj_cli.py`.
+
+---
+
+## 27. `S-16` — terza verifica: **il consumatore è arrivato**, e non è il percorso del codice
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+
+In sessione 3 avevo scritto che il percorso *contenuto non fidato → memoria → decisione* **non
+era cablato**, e che `S-16` andava corretto **nello schema, prima** che quel cablaggio esistesse.
+In sessione 5 avevo aggiornato: *"metà della catena si è chiusa"*.
+
+**Riverificato oggi: il consumatore esiste.** E la parte utile è che non è quello che temevo.
+
+### 27.1 Che cosa è cablato adesso
+
+```python
+# core/nt_runner.py:135-138 — SCRITTURA
+remember(f"job:{job_id} title={task_plan.title!r} status={final_status}",
+         tags=["job", final_status.lower(), "natural_tasks"])
+
+# core/planner.py:152-167 — LETTURA
+related = recall_semantic(text, limit=5, tag="job", min_score=0.05)
+...
+milestones.append("Review related past jobs: " + "; ".join(unique[:3]))
+```
+
+Il planner **rilegge la memoria** e inserisce i fatti **verbatim** dentro le milestone del piano.
+Misurato, con un fatto seminato in memoria:
+
+```
+milestone prodotta: Review related past jobs: job:job_x title='fattoriale helper — RIGA
+                    INIETTATA NEL PIANO' status=PASS
+il fatto compare in plan.md: True
+```
+
+### 27.2 E dove NON arriva — che è la parte che cambia la gravità
+
+Il messaggio che il writer LLM manda al modello è, alla lettera:
+
+```python
+user = f"Task title: {title}\nTask prompt:\n{prompt.strip()[:1500]}\n\nWrite the Python module body now."
+```
+
+**Solo `title` e `prompt`.** Zero occorrenze di `milestone` o `to_markdown` in tutta la funzione.
+E il `title`, che al modello ci arriva, **non è influenzato dalla memoria**: misurato, resta il
+testo del prompt utente.
+
+Quindi la catena chiusa è **memoria → `plan.md`**, cioè un documento che legge un umano. La
+catena **memoria → codice generato** resta aperta, e va detto così invece di lasciare intendere
+il peggio.
+
+### 27.3 Una proprietà mitigante, misurata per sbaglio
+
+Il primo tentativo di questa misura **è fallito**: il fatto seminato non entrava nel piano. Non
+era un difetto della catena — era che `recall_semantic(text, ..., min_score=0.05)` e il fallback
+sui token del prompt **filtrano per rilevanza**. Un fatto che non condivide token con il prompt
+non viene richiamato.
+
+È un falso negativo del mio test (trappola 12, dal lato di chi lo scrive), e me ne sono accorto
+perché il risultato contraddiceva il codice che avevo appena letto. Ma contiene un'informazione
+vera e utile: **un fatto non finisce in un piano qualsiasi, solo in uno il cui prompt gli
+somiglia.** È una mitigazione reale, e riduce la superficie da "ogni piano futuro" a "i piani su
+quell'argomento".
+
+### 27.4 Che cosa resta aperto, e per chi
+
+`bin/uj:97` accetta **tag arbitrari**: `uj memory add --tag job "<qualunque testo>"` semina un
+fatto che verrà richiamato verbatim nei piani corrispondenti. Oggi è il proprietario a scrivere,
+quindi non è un canale ostile.
+
+Ma il difetto originale di `S-16` resta esattamente quello che era: **i record di memoria non
+hanno un campo di provenienza**, quindi un fatto detto da Christian e uno arrivato da altrove
+sarebbero indistinguibili — e adesso c'è un consumatore che li inserisce verbatim in un
+documento.
+
+**Il fatto che il consumatore sia arrivato prima dello scrittore non fidato è una buona notizia:**
+significa che lo schema si può ancora correggere a costo quasi nullo. È esattamente la finestra
+che `S-16` diceva di non sprecare.
+
+**Owner della correzione: GEMINI (`UJ-MEM-001`)**, non Grok — lo schema della memoria è suo.
+`tools/websearch.py` è ancora uno **stub** e non ha nessun percorso verso `remember()`:
+verificato, l'unico scrittore non interattivo è `nt_runner`.
+
+### 27.5 Che cosa NON affermo
+
+- **Non è una vulnerabilità attiva.** Nessun contenuto esterno entra in memoria oggi.
+- **La memoria non raggiunge il codice generato**, e l'ho verificato leggendo la riga esatta del
+  messaggio inviato al modello, non deducendolo dall'architettura.
+- **Non ho toccato `core/memory.py` né `core/planner.py`.**
