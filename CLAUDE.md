@@ -5476,6 +5476,149 @@ non committare significa perderlo alla prossima sessione), aggiornato la memoria
 `scripts/integration-gate.sh` (SEL aggiunta) · `TASKCLAUDE.md` §89.
 **15 hash intatti, tests/contracts invariata a 140, runtime/index.ts non toccato.**
 
+## Sessione 7 — `UJ-CLAUDE-2026-08-20-07` — 2026-08-20
+
+**Richiesta di Christian:** *"manda un messaggio di cosa fare a grok, chatgpt, gemini e dimmi
+in percentuale a quanto siamo della pianificazione e del risultato finale e di ogni lavoro di
+ogni IA."*
+
+### Trappola 11, dodicesima volta che paga, e stavolta trova la cosa migliore della settimana
+
+`git fetch` con il `+`, come impone E30. Due rami mossi **dopo** la chiusura della sessione 6:
+`agent/uj-red-001-grok-continuity-20260820` (17:28 del 20) e
+`agent/uj-red-001-chatgpt-review-20260819-r2` (12:04 del 20). Nessuno dei due era nel
+RESUME_POINT, perché non esistevano quando l'ho scritto.
+
+Dentro il secondo ci sono due commit che valgono più di qualunque cosa io abbia prodotto ieri:
+
+```
+c46a967  ledger(RED): transition UJ-RED-001 to REVIEW
+df24fd6  fix(governance): allow reviewed specialist status in council gate
+```
+
+**ChatGPT ha applicato per la prima volta una transizione di stato al `BACKLOG.json`.** È
+l'anello mancante che avevo documentato tre volte in tre documenti e che nessuno aveva mai
+eseguito. Verificato confrontando i due `BACKLOG.json` invece di fidarmi del messaggio di
+commit: su quel ramo `UJ-RED-001` è davvero `REVIEW`, su `main` è ancora `READY`.
+
+**E il ramo non è su `main`.** Quindi, per il programma, non è ancora successo — è la stessa
+lezione della decisione n. 7 sul `cloud_bridge`: una decisione applicata su un ramo che nessuno
+mergia non è una decisione applicata.
+
+### Il fatto che rende il collo di bottiglia non più discutibile, e non è mio
+
+ChatGPT ha revisionato `UJ-RED-001` di Grok oggi. Ho letto il `ReviewResult` invece di
+riassumerlo: **cinque criteri su cinque a `PASS`**, outcome `PASS_WITH_ACTIONS`, unico finding
+di severità `INFO` e sulla riproducibilità di un comando, non sulla consegna.
+
+E nello stesso documento: `accepted_weight_before: 0` → `accepted_weight_after: 0`, con la
+motivazione *"Import the corrected packet only after UJ-RED-001 is transitioned from READY to
+REVIEW by the authorized integration flow."*
+
+**Un lavoro promosso su ogni singolo criterio vale zero perché manca un passaggio di stato.**
+Per quattro sessioni ho scritto che il deadlock del ledger era la causa vera e non la mia
+condotta; questa è la prima dimostrazione che non viene da me, non riguarda un mio task, e
+porta la firma del supervisore che quel gate lo possiede.
+
+### Il calcolo, ricalcolato dal `BACKLOG.json` e non ricopiato
+
+Ho scritto uno script che somma pesi, accettati e stati per owner, milestone e stato — invece
+di sommare a mente, che è il difetto per cui ho corretto quattro numeri in una sola sessione.
+
+**43 task, 340 unità, 26 accettate — 7,6%.** Le 26 sono `UJ-META-001` (21/21) e `UJ-META-002`
+(5/8), entrambe governance. **Di lavoro specialistico: zero, da tutti e quattro.**
+
+| IA | Task | Peso | Consegnato | Accettato |
+|---|---:|---:|---:|---:|
+| CHATGPT | 9 | 102 | 42 (41,2%) | **21 (20,6%)** |
+| CLAUDE | 8 | 76 | 68 (89,5%) | **0** |
+| GEMINI | 8 | 81 | 26 (32,1%) | **0** |
+| GROK | 8 | 73 | 13 (17,8%) | **0** |
+| Christian | 1 | 8 | 8 | 5 (62,5%) |
+
+Pianificazione (M0 ∪ M1, unione e non somma — sei task stanno in entrambe): **17 task, 177
+unità, 120 consegnate (67,8%), 26 accettate (14,7%)**. Resto (M2+): **26 task, 163 unità, zero
+e zero.**
+
+**«Consegnato» non è una mia impressione**: l'ho misurato enumerando su tutti i rami i
+`ResponsePacket` e i `ReviewResult` esistenti, e i pacchetti di evidenza in
+`docs/program/packets/`. Sono 5 packet reali (RUN-001 mio, CAP-001 e GGL-001 di Gemini,
+RED-001 di Grok, più uno in quarantena) e 8 review result.
+
+### Il dato nuovo, che nessuno aveva mai misurato e che riguarda Grok
+
+**I 122 file Python su `main` non sono coperti da nessun task del `BACKLOG.json`.** Cercato:
+zero riferimenti a `core/`, `tools/` o `bin/uj` in tutto il file. Il contributo più grande in
+volume del programma — l'unico codice che si esegue davvero — è **invisibile al ledger**.
+
+Non l'ho corretto, perché la baseline è di ChatGPT e sarebbe invasione di portafoglio. Ma
+l'ho scritto nel blocco per Grok, perché se un giorno qualcuno guarderà i numeri per capire
+chi ha fatto cosa, quel lavoro non comparirà, ed è giusto che lui possa dirlo prima che accada.
+
+E ha una conseguenza sul calcolo che dico esplicitamente invece di lasciarla dedurre: **il
+17,8% di Grok è la sua percentuale sul ledger, non la sua percentuale di lavoro.** Le due cose
+divergono più per lui che per chiunque altro.
+
+### Il dispatch
+
+`prompts/handoffs/CLAUDE-DISPATCH-20260820.md` — tre blocchi delimitati, incollabili
+integralmente e indipendenti l'uno dall'altro, perché ogni giro di HUMAN_BRIDGE lo paga
+Christian a mano e un messaggio che richiede di leggerne un altro costa un giro in più.
+
+A ciascuno ho scritto **prima cosa ha fatto bene**, misurato: a Grok che 90 tool promossi su 94
+non contengono un solo costrutto pericoloso (quindi `FIX-1` ha tenuto, verificato su ciò che è
+finito nel catalogo e non dedotto dall'esistenza del gate); a ChatGPT che ha applicato la
+transizione e che il controllo positivo `UJ-INT-006` importa a exit 0, cioè il macchinario
+funziona; a Gemini che il quarto invio di `UJ-CAP-001` passa il test dichiarato in anticipo —
+`UNKNOWN` da 1 a 79, date ISO da 0 a 28, zero capability `ACTIVE`, confidenza massima 0,5.
+
+### Tre correzioni a mie affermazioni, e stanno dentro il blocco di chi le aveva ricevute
+
+Non in una nota a piè di pagina: nel messaggio che quella IA leggerà.
+
+1. **A Grok:** gli avevo scritto che `UJ-SEC-001` era *"la cosa con più leva che puoi fare
+   oggi"*. Falso — fra i sei task in attesa di review è **l'ultimo** per quantità sbloccata.
+2. **A Gemini:** *"local ha zero occorrenze"* nel suo registro non è esatto. Compare 8 volte,
+   sempre come destinazione di fallback e mai come classe governata. Il difetto resta, la
+   formulazione era sbagliata.
+3. **A Gemini:** avevo scritto **due volte** che `tools/websearch.py` è uno stub. È falso, fa
+   una vera chiamata a DuckDuckGo. La conclusione di sicurezza reggeva — il contenuto web non
+   entra in memoria — ma **per un'altra ragione**: il cablaggio `search → remember` non esiste.
+   Una conclusione giusta appoggiata a una premessa falsa è pronta a diventare falsa il giorno
+   in cui la premessa cambia.
+
+### Riverifiche eseguite, non ricordate
+
+| Verifica | Esito |
+|---|---|
+| `sha256sum` piano canonico | `a3fcdfc9…a69a87` **coincide** |
+| `npx tsc -p packages/contracts --noEmit` / senza `--noEmit` | exit 0 / exit 0 |
+| suite contratti, 5 file | **140 pass, 0 fail** (28·9·36·37·30) |
+| `S-17` su `origin/main` | **aperto**, quinta verifica: default `openai` righe 12 e 109, `_call_openai` presente, `UJ_ALLOW_PAID_API` assente |
+| `S-19` su `origin/main` | **aperto**: guard di budget in `embed()` dentro `except Exception` |
+| `S-26` su `origin/main` | **aperto**: zero occorrenze di `scan_text`/`safety` in `core/graph_exec.py` |
+| Ultimo commit di Gemini, qualunque ramo | **2026-08-18 16:13** — due giorni fermo |
+| `writeFileSync` su `BACKLOG.json` in `scripts/` | **nessuna**, confermato al ref corrente |
+
+### Errori commessi in questa sessione
+
+Nessuno arrivato a un documento. Uno evitato per abitudine: stavo per sommare M0 e M1 come
+`117 + 86 = 203`, ma **sei task stanno in entrambe le milestone**, quindi il totale vero è
+l'unione — **177**. L'ho calcolato con un filtro invece che a mente perché la trappola 24 dice
+esattamente questo, e la cifra sbagliata sarebbe finita in un messaggio a Christian.
+
+Un secondo rischio evitato: `git rev-parse HEAD main origin/main` è **fallito** con *"ambiguous
+argument 'main'"* — in questo container non esiste un `main` locale. Non l'ho letto come un
+problema: è la condizione che rende impossibile l'errore E17. Ma è un caso che la mia stessa
+ricetta di avvio non prevede, e vale la pena saperlo prima di interpretarlo come un guasto.
+
+### Confini rispettati
+
+Nessun file di ChatGPT, Gemini o Grok modificato. Nessuna review alterata, nemmeno la mia.
+Nessun peso proposto o assegnato: `0/76` resta corretto. Nessun merge su `main`. Nessuna
+chiamata di rete a pagamento, in nessuna variante. Toccati solo `TASKCLAUDE.md`, `CLAUDE.md` e
+un file nuovo in `prompts/handoffs/`.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5741,6 +5884,31 @@ Sintesi operativa degli errori sopra, in forma di regole:
 
 # PARTE 8 — RESUME_POINT
 
+> ## ⚡⚡ AGGIORNAMENTO 2026-08-20 (SESSIONE 7) — QUESTO VIENE PRIMA DEL RIQUADRO SOTTO
+>
+> | Fatto nuovo, misurato il 20 | Valore |
+> |---|---|
+> | **ChatGPT ha applicato la PRIMA transizione di stato al `BACKLOG.json`** | commit `c46a967` su `agent/uj-red-001-chatgpt-review-20260819-r2`, `UJ-RED-001` `READY→REVIEW`. **NON è su `main`** |
+> | ChatGPT ha revisionato `UJ-RED-001` di Grok | **5 criteri su 5 `PASS`**, `PASS_WITH_ACTIONS`, e `accepted_weight` **0 → 0**. È la prova, non mia, che il deadlock è reale |
+> | Gemini | **ferma dal 2026-08-18 16:13**, due giorni. Tiene 29 unità mie in review |
+> | Programma | **43 task, 340 unità, 26 accettate = 7,6%** — e tutte e 26 sono governance |
+> | Pianificazione (M0 ∪ M1, **unione**, non 117+86) | **17 task, 177 unità, 120 consegnate (67,8%), 26 accettate (14,7%)** |
+> | Per IA (consegnato / accettato) | CHATGPT 41,2% / 20,6% · CLAUDE 89,5% / **0** · GEMINI 32,1% / **0** · GROK 17,8% / **0** |
+> | **I 122 file Python di Grok su `main` non sono in NESSUN task del `BACKLOG.json`** | zero riferimenti a `core/`, `tools/`, `bin/uj`. Il suo 17,8% è la percentuale sul ledger, non sul lavoro |
+> | `S-17`, `S-19`, `S-26` su `origin/main` | **tutti e tre ancora aperti**, riverificati |
+> | Suite, hash, typecheck, build | 140/140 · `a3fcdfc9…` · exit 0 · exit 0 |
+>
+> **Dispatch alle tre IA:** `prompts/handoffs/CLAUDE-DISPATCH-20260820.md` — tre blocchi
+> incollabili e indipendenti. Richieste in ordine di leva: **ChatGPT** mergia la transizione su
+> `main` + la generalizza + emette l'R4 che porta `UJ-RED-001` a 13/13 (sarebbe **la prima
+> unità specialistica accettata del programma**); **Gemini** revisiona `UJ-RUN-001` (**34 unità
+> in un giro**, la leva più alta); **Grok** applica `FIX-19a` per prima e poi revisiona
+> `UJ-SEC-001`.
+>
+> **Attenzione operativa:** in questo container **non esiste un `main` locale** —
+> `git rev-parse HEAD main origin/main` fallisce con *"ambiguous argument 'main'"*. Non è un
+> guasto: usa `origin/main` e basta.
+>
 > ## ⚡ STATO AL 2026-08-19, FINE SESSIONE 6 — LEGGI QUESTE 30 RIGHE PRIMA DELLE ALTRE 1000
 >
 > Il blocco qui sotto ha **48 punti accumulati in sei sessioni, in ordine non cronologico**, e
