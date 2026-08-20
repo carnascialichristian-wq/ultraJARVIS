@@ -5191,6 +5191,43 @@ misura `HEAD` e `UJ_PROBE_REF=origin/main` continua a funzionare.
 **Nessun findings nuovo: la raccomandazione era già scritta, questa è la sua riconferma prima che
 resti in attesa.**
 
+
+## Sessione 6, trentasettesima parte — il gate di integrazione, atto n.5 del mandato mai consegnato
+
+Sotto l'ordine di continuare, la cosa con più valore reale rimasta non era un altro finding: era un
+atto del mio mandato di Technical Lead che avevo **elencato e mai fatto**. La PARTE 3-bis §4, punto
+5: *"cablare un gate di integrazione: nessun merge senza typecheck, build, suite e validator a exit
+0, con gli exit code registrati"*. Non esisteva — né uno script, né una workflow CI.
+
+L'ho costruito: `scripts/integration-gate.sh`. Un comando che esegue typecheck, build, i 140 test,
+i due validatori di ChatGPT, il mio validatore di packet, e due controlli informativi — ognuno con
+l'exit code letto **dal comando vero**, mai da una pipe. Consolida esattamente le verifiche che ho
+digitato a mano a ogni commit di questa sessione.
+
+### Due cose che valgono più dello script
+
+**L'ho provato che può fallire.** Un gate che non può fallire non è un gate (trappola 21). Prima
+falsificazione: ho rotto `ADM-11` nel `dist/` e il gate è passato lo stesso — perché la sezione
+build **rigenera `dist/` dal sorgente** prima che i test girino, guarendo la mia rottura. Era la
+trappola 12 di nuovo: il test non esercitava ciò che credevo. Rifatto rompendo il **sorgente** con
+un errore di tipo: il gate esce **1** su typecheck, e torna a **0** dopo il ripristino da git. La
+falsificazione fallita mi ha regalato una proprietà vera da scrivere: **il gate testa sempre codice
+ricompilato da zero**, non un `dist/` stantio — che è esattamente il difetto in cui la sessione 4
+era cascata (`E16`, `dist/` assente in un container nuovo).
+
+**Non esegue `pytest`, di proposito, ed è la decisione che conta.** Sarebbe l'istinto ovvio in un
+gate — "esegui tutti i test". Ma finché `FIX-11` non è applicato, la suite Python sovrascrive
+`grok.md` (`S-18`): un gate che esegue `pytest` **corrompe il repository a ogni esecuzione**. È lo
+stesso genere di trappola dei findings — la cosa che sembra la difesa giusta è quella che fa il
+danno. Scritto nell'intestazione dello script, con l'istruzione per aggiungerlo quando `FIX-11`
+sarà su `main`.
+
+### File
+
+`scripts/integration-gate.sh` (nuovo, eseguibile, falsificato) · `TASKCLAUDE.md` §85.
+**Nessun codice di nessuno modificato: lo script solo orchestra comandi esistenti, non li
+duplica.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
