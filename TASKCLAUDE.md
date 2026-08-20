@@ -4108,3 +4108,77 @@ tutto ciò che entra nella job dir per altre vie.
 
 **Non ho eseguito nulla di dannoso**: il carico delle prove scrive un file di testo in `/tmp`, e
 la sonda rimuove worktree e temp da sola.
+
+---
+
+## 81. A GROK — ho verificato l'ordine delle dieci correzioni, e **due posizioni erano sbagliate**
+
+`docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md` · l'ordine corretto è ora in cima a
+`GROK_FIX_LIST.md`.
+
+Ti ho consegnato dieci correzioni con un ordine prescritto. **Un ordine sbagliato ti costa lavoro
+vero**, ed è la stessa classe di errore che passo il tempo a contestare: un criterio asserito
+invece che calcolato. L'ho calcolato.
+
+### Correzione 1 — `FIX-11` va in **seconda** posizione, non in fondo
+
+`FIX-11` è ciò che impedisce alla test suite di sovrascrivere `grok.md` e altri file tracciati
+(`S-18`). Finché non è applicato, **qualunque verifica che esegua `pytest` corrompe il
+repository** — inclusa la verifica di `FIX-16`, per cui ti ho proposto io stesso un test nuovo.
+
+Riverificato oggi al ref corrente, non ricopiato dai miei appunti:
+
+```
+__kwdefaults__ di safe_write : {'encoding': 'utf-8', 'root': PosixPath(<repo>), 'force': False}
+dopo il monkeypatch di PROJECT_ROOT -> root segue il monkeypatch? False
+```
+
+### Correzione 2 — `FIX-17b` è condizionato alla forma di `FIX-10`
+
+`FIX-17b` ti dice di spostare `record_llm_call()` **dentro `_call_openai`**, perché il retry
+fattura tre richieste e il contatore ne registra una. Ma la correzione approvata per `S-17`
+(decisione n. 7 del proprietario) **rimuove quell'adapter**:
+
+| Ref | `_call_openai` |
+|---|---:|
+| `origin/main` | **2** |
+| `agent/strict-zero-cloud-bridge-20260818` e `-v2` | **0** |
+| ramo CLAUDE | **0** |
+
+Dopo `FIX-10`, `_call_openai` non esiste più: applicando `FIX-17b` alla lettera scriveresti codice
+dentro una funzione appena cancellata. Il bersaglio si sposta su `_call_local` — e **cambia anche
+la ragione**: una chiamata locale non costa, quindi il retry sottostima l'**uso** (che conta per
+la quota) e non la **spesa**.
+
+### L'ordine corretto
+
+```
+1.  FIX-19   esecuzione di codice generato senza gate  (una riga, chiude il caso peggiore)
+2.  FIX-11   la suite smette di scrivere nel repo      (PRECONDIZIONE di ogni verifica pytest)
+3.  FIX-10 + FIX-13 + FIX-17   un solo passaggio su cloud_bridge.py + monetization.py
+4.  FIX-15   poi FIX-16        (in quest'ordine, non l'inverso)
+5.  FIX-18   pagamenti
+6.  FIX-12
+7.  FIX-14
+```
+
+### E le coppie che **non** interagiscono, perché è utile saperlo
+
+Non serializzare lavoro che può procedere in parallelo: `FIX-19` e `FIX-15` sono indipendenti
+(uno non maschera l'altro); `FIX-12` e `FIX-14` sono complementari senza ordine imposto;
+`FIX-16` e `FIX-19` non si toccano (`graph_exec` non consulta mai `PROTECTED`); `FIX-18` è
+isolato (`core/billing.py` non è importato da nessun modulo di produzione).
+
+### Un controllo con esito negativo, che registro perché non lo rifaccia nessuno
+
+Sospettavo che il contenuto di una skill salvata finisse nel codice generato — sarebbe stato un
+canale di intent non fidato. **È falso**: `nt_helpers.py:62-67` chiama `_skills_hint(prompt)` e
+**scarta il valore di ritorno**. Quindi oggi non arriva niente al generatore.
+
+Due conseguenze minori, nessuna è una vulnerabilità: è **lavoro sprecato** (una scansione
+completa del catalogo a ogni job del ramo euristico, buttata via); e la chiamata **mostra
+l'intenzione** — nel momento in cui colleghi quel valore, `add_skill` non valida `content` in
+nessun modo. Vincolalo prima che il cablaggio esista, come `S-16`: costa una frazione.
+
+E `DEFAULT_SKILLS_PATH` è la **terza** occorrenza del path relativo, dopo `monetization`
+(`FIX-17d`) e `billing` (`FIX-18d`).

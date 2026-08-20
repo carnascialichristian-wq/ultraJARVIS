@@ -4855,6 +4855,74 @@ che riguarda l'esecuzione di codice invece del costo o della scrittura di file.
 **Nessuna riga di codice di Grok modificata. Il carico delle prove scrive un file di testo in una
 directory temporanea: nessuna rete, nessun comando di sistema, nessuna scrittura fuori dai temp.**
 
+
+## Sessione 6, ventinovesima parte — ho verificato l'ordine che avevo prescritto, e due posizioni erano sbagliate
+
+Ho consegnato a Grok **dieci** correzioni con un ordine prescritto. Un ordine è un criterio, e i
+criteri di questo programma li ho passati due giorni a contestare quando erano asseriti invece che
+calcolati. Il mio non l'avevo calcolato: l'avevo composto a pezzi, una coppia alla volta, mentre
+scrivevo i findings.
+
+### Correzione 1 — `FIX-11` va in **seconda** posizione, non in fondo
+
+`FIX-11` è ciò che impedisce alla test suite di sovrascrivere `grok.md` e altri file tracciati.
+Finché non è applicato, **qualunque verifica che esegua `pytest` corrompe il repository** — e fra
+quelle c'è la verifica di `FIX-16`, per cui **ho proposto io stesso un test nuovo**. Avevo scritto
+una correzione la cui verifica danneggia il repository, e l'avevo messa dopo la correzione che
+avrebbe reso quella verifica sicura.
+
+Riverificato al ref corrente invece di ricopiarlo: `root` nei `__kwdefaults__` di `safe_write` è
+legato alla **definizione**, quindi il monkeypatch di `PROJECT_ROOT` nella fixture è un no-op.
+
+### Correzione 2 — `FIX-17b` è condizionato alla forma di `FIX-10`
+
+`FIX-17b` dice di spostare `record_llm_call()` dentro `_call_openai`. Ma la correzione approvata
+per `S-17` **rimuove quell'adapter**:
+
+| Ref | `_call_openai` | `record_llm_call` |
+|---|---:|---:|
+| `origin/main` | **2** | 4 |
+| i due rami `strict-zero` | **0** | 0 |
+| ramo CLAUDE | **0** | **4** |
+
+Dopo `FIX-10` il bersaglio non esiste più. Si sposta su `_call_local` — e cambia la ragione: una
+chiamata locale non costa, quindi il retry sottostima l'**uso**, non la **spesa**.
+
+**La tabella conferma anche una cosa che avevo scritto in sessione 5 e mai rimisurata:** il ramo
+CLAUDE è l'unico che ha insieme l'adapter rimosso *e* l'integrazione di budget. È quello da
+portare su `main`, e adesso è un numero e non un ricordo.
+
+### Il metodo, che è la parte riutilizzabile
+
+Ho mappato ogni correzione al file e alla funzione che tocca, cercato i file toccati da più di una
+— **tre gruppi** — e per ogni coppia chiesto: *applicando A per prima, B resta rilevabile e
+necessaria?* Le due correzioni sono uscite da lì, non da una rilettura.
+
+E ho scritto anche le coppie **indipendenti**, perché "non interagiscono" è un'informazione utile
+quanto il contrario: evita di serializzare lavoro che può procedere in parallelo.
+
+### Un controllo con esito negativo, registrato di proposito
+
+Sospettavo che il contenuto di una skill salvata finisse nel codice generato: sarebbe stato
+`TH-SF-03` del mio Skill Forge — intent non vincolato a una provenienza fidata — trovato nel
+codice di un altro. **È falso.** `nt_helpers.py:62-67` chiama `_skills_hint(prompt)` e **scarta il
+valore di ritorno**.
+
+Lo registro per due ragioni. La prima è che un sospetto verificato e caduto vale quanto uno
+confermato: la prossima sessione non lo rifà. La seconda è che **la chiamata mostra l'intenzione**
+— qualcuno voleva usare quel valore, e nel momento in cui lo collegherà il contenuto di una skill
+entrerà nel percorso del codice, dove `add_skill` non valida niente. Va vincolato prima che il
+cablaggio esista, come `S-16`.
+
+Di contorno: è anche lavoro sprecato — una scansione completa del catalogo a ogni job del ramo
+euristico, il cui risultato viene buttato. E `DEFAULT_SKILLS_PATH` è la **terza** occorrenza del
+path relativo dopo `monetization` e `billing`.
+
+### File
+
+`docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md` (nuovo, 5 sezioni + appendice) ·
+`GROK_FIX_LIST.md` (ordine corretto in cima, con le due motivazioni) · `TASKCLAUDE.md` §81.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5286,6 +5354,41 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  BA) 2026-08-19 — ORDINE DELLE DIECI CORREZIONI VERIFICATO. DUE POSIZIONI ERANO
+     SBAGLIATE, ED ERANO MIE.
+     docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md · ordine corretto in cima a
+     GROK_FIX_LIST.md · TASKCLAUDE.md §81.  GIA' FATTO, NON RIFARE.
+
+     1. FIX-11 VA IN SECONDA POSIZIONE, non in fondo. E' cio' che impedisce alla test
+        suite di sovrascrivere grok.md (S-18). Finche' non e' applicato, QUALUNQUE
+        verifica che esegua pytest corrompe il repository — inclusa quella di FIX-16,
+        per cui ho proposto IO un test nuovo. Riverificato: `root` nei __kwdefaults__
+        e' legato alla DEFINIZIONE, il monkeypatch della fixture e' un no-op.
+     2. FIX-17b E' CONDIZIONATO ALLA FORMA DI FIX-10. Dice di spostare
+        record_llm_call() dentro _call_openai, ma la correzione approvata per S-17
+        RIMUOVE quell'adapter. Misurato: _call_openai = 2 su main, 0 sui rami
+        strict-zero e 0 sul ramo CLAUDE. Dopo FIX-10 il bersaglio si sposta su
+        _call_local, e cambia la ragione: il retry sottostima l'USO, non la SPESA.
+
+     CONFERMA COLLATERALE, ora un numero e non un ricordo: il ramo CLAUDE e' l'UNICO
+     con _call_openai assente (0) E record_llm_call presente (4). E' quello da
+     portare su main; i due rami strict-zero hanno una base che precede embed().
+
+     ORDINE CORRETTO:
+       1 FIX-19 · 2 FIX-11 · 3 FIX-10+FIX-13+FIX-17 (un passaggio solo) ·
+       4 FIX-15 poi FIX-16 · 5 FIX-18 · 6 FIX-12 · 7 FIX-14
+     INDIPENDENTI (non serializzarle): FIX-19/FIX-15, FIX-12/FIX-14, FIX-16/FIX-19,
+     FIX-18 isolato.
+
+     CONTROLLO CON ESITO NEGATIVO, registrato di proposito: sospettavo che il
+     contenuto di una skill finisse nel codice generato (sarebbe stato TH-SF-03 nel
+     codice di un altro). E' FALSO: nt_helpers.py:62-67 chiama _skills_hint(prompt) e
+     SCARTA il valore di ritorno. Ma la chiamata mostra l'intenzione: quando qualcuno
+     la collega, add_skill non valida `content` in nessun modo -> vincolarlo PRIMA
+     del cablaggio, come S-16. Di contorno: e' anche lavoro sprecato (scansione
+     completa del catalogo buttata via a ogni job euristico) e DEFAULT_SKILLS_PATH e'
+     la TERZA occorrenza del path relativo dopo monetization e billing.
 
   AZ) 2026-08-19 — S-26 (NUOVO, HIGH): il gate di safety e' sulla COPIA, non
      sull'ESECUZIONE. E' la correzione da far applicare PER PRIMA.

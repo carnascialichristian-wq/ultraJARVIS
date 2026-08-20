@@ -280,10 +280,18 @@ chiude tutte e tre**, perché condividono il ponte. Misurato, senza chiamate rea
 Dettaglio con comandi di riproduzione: `docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
 (§19 le tre porte, §20 lo stato consolidato).
 Correzioni per Grok: `docs/threat-models/GROK_FIX_LIST.md` — **tabella di stato in cima**, restano
-**dieci**: `FIX-10`…`FIX-19`, e **`FIX-10` e `FIX-13` sono lo stesso ponte**. Ordine consigliato:
-**`FIX-19` per primo** (una riga, chiude l'esecuzione di codice generato senza gate) →
-`FIX-10`+`FIX-13`+`FIX-17` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-18` (pagamenti) →
-`FIX-11` → `FIX-12` → `FIX-14`.
+**dieci**: `FIX-10`…`FIX-19`. **L'ordine è verificato, non asserito**
+(`docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md`), e due posizioni sono state corrette:
+
+```
+1 FIX-19 · 2 FIX-11 · 3 FIX-10+FIX-13+FIX-17 (un passaggio solo) ·
+4 FIX-15 poi FIX-16 · 5 FIX-18 · 6 FIX-12 · 7 FIX-14
+```
+
+**`FIX-11` è in seconda posizione** perché finché non è applicato qualunque verifica con `pytest`
+sovrascrive `grok.md` e altri file tracciati. **`FIX-17b` va riletto dopo aver deciso la forma di
+`FIX-10`**: la correzione approvata per `S-17` rimuove `_call_openai`, cioè il bersaglio che
+`FIX-17b` nomina.
 
 ### Decisione n. 7 — APPROVATA dal proprietario
 

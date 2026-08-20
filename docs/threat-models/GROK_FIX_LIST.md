@@ -45,15 +45,37 @@
 > | **`FIX-18`** | **`S-25` il webhook di pagamento non verifica la firma** | **DA APPLICARE — HIGH, latente** |
 > | **`FIX-19`** | **`S-26` `execute_graph` esegue codice generato senza `scan_text`** | **DA APPLICARE — HIGH** |
 >
-> **Restano dieci, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
-> intervento solo. Ordine consigliato:
-> **`FIX-19` per primo** (esecuzione di codice generato senza gate: e' una riga e chiude il caso
-> peggiore) → `FIX-10`+`FIX-13`+`FIX-17` (costo) → `FIX-15`+`FIX-16` (scrittura) →
-> `FIX-18` (pagamenti) → `FIX-11` → `FIX-12` → `FIX-14`.
+> **Restano dieci.** L'ordine qui sotto è **verificato**, non asserito:
+> `docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md` — e due posizioni sono cambiate rispetto a
+> quanto avevo scritto prima, perché le ho controllate invece di ricopiarle.
 >
-> **`FIX-17` sta nel primo gruppo perché è la seconda metà dello stesso problema:** `FIX-10`
-> chiude il rubinetto acceso per default, `FIX-17` accende il contatore spento per default.
-> Applicarne uno solo lascia il sistema o senza tetto o senza misura.
+> ```
+> 1.  FIX-19   esecuzione di codice generato senza gate  (una riga, chiude il caso peggiore)
+> 2.  FIX-11   la suite smette di scrivere nel repo      (PRECONDIZIONE di ogni verifica pytest)
+> 3.  FIX-10 + FIX-13 + FIX-17   un solo passaggio su cloud_bridge.py + monetization.py
+>              -> rileggi FIX-17b DOPO aver deciso la forma di FIX-10
+> 4.  FIX-15   poi FIX-16        (in quest'ordine, non l'inverso)
+> 5.  FIX-18   pagamenti
+> 6.  FIX-12
+> 7.  FIX-14
+> ```
+>
+> **Le due che ho corretto, e perché contano:**
+> - **`FIX-11` va in seconda posizione, non in fondo.** È ciò che impedisce alla test suite di
+>   sovrascrivere `grok.md` e altri file tracciati (`S-18`). Finché non è applicato, **qualunque
+>   verifica che esegua `pytest` corrompe il repository** — compresa quella di `FIX-16`, per cui
+>   ho proposto io stesso un test nuovo. Riverificato oggi: `root` nei `__kwdefaults__` non segue
+>   il monkeypatch della fixture.
+> - **`FIX-17b` è condizionato alla forma di `FIX-10`.** Dice di spostare `record_llm_call()`
+>   dentro `_call_openai` — ma la correzione approvata per `S-17` **rimuove quell'adapter**.
+>   Misurato: `_call_openai` compare 2 volte su `main` e **0** sui rami con lo strict-zero. Dopo
+>   `FIX-10` il bersaglio si sposta su `_call_local`, e cambia anche la ragione: una chiamata
+>   locale non costa, quindi il retry sottostima l'**uso**, non la **spesa**.
+>
+> **`FIX-17` sta con `FIX-10` perché è la seconda metà dello stesso problema:** `FIX-10` chiude
+> il rubinetto acceso per default, `FIX-17` accende il contatore spento per default. Applicarne
+> uno solo lascia il sistema o senza tetto o senza misura — e i due toccano lo stesso file, quindi
+> vanno fatti in un passaggio solo.
 >
 > **`FIX-15` prima di `FIX-16`**, e il motivo è lo stesso di `FIX-1` prima di `FIX-2`: `FIX-16`
 > aggiunge tre file a `PROTECTED`, ma `PROTECTED` è controllata solo dalla `safe_write` di
