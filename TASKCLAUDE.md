@@ -4240,9 +4240,13 @@ Quello che serve nello schema di `UJ-MEM-001`:
 3. che l'inserimento nel piano sia **citato come dato**, non concatenato come testo: oggi è
    `"; ".join(unique[:3])` dentro una milestone.
 
-`tools/websearch.py` è ancora uno **stub** e non ha nessun percorso verso `remember()` —
-verificato, l'unico scrittore non interattivo è `core/nt_runner.py`. Finché resta così non c'è
-una vulnerabilità attiva.
+`tools/websearch.py` **non** raggiunge `remember()` — verificato, il suo output va solo a
+`cmd_search` che lo stampa; l'unico scrittore non interattivo della memoria è `core/nt_runner.py`.
+Finché resta così non c'è una vulnerabilità attiva. **Correzione a quanto scrivevo prima in questo
+stesso messaggio: `websearch` NON è più uno stub** — fa una vera chiamata a DuckDuckGo (`S-28`).
+Il canale memoria resta chiuso, ma il giorno in cui qualcuno collega l'output di `search()` a
+`remember()`, entra contenuto web davvero non fidato: è la ragione in più per mettere la
+provenienza nello schema **adesso**.
 
 ---
 

@@ -2313,8 +2313,10 @@ significa che lo schema si può ancora correggere a costo quasi nullo. È esatta
 che `S-16` diceva di non sprecare.
 
 **Owner della correzione: GEMINI (`UJ-MEM-001`)**, non Grok — lo schema della memoria è suo.
-`tools/websearch.py` è ancora uno **stub** e non ha nessun percorso verso `remember()`:
-verificato, l'unico scrittore non interattivo è `nt_runner`.
+`tools/websearch.py` **non** raggiunge `remember()`: verificato, il suo output va solo a
+`cmd_search` (che stampa), e l'unico scrittore non interattivo della memoria è `nt_runner`.
+(⚠️ **correzione a una mia affermazione**: `websearch` **non è più uno stub** — vedi `S-28`, §29.
+Il canale memoria resta comunque chiuso, ma non per la ragione che avevo scritto qui.)
 
 ### 27.5 Che cosa NON affermo
 
@@ -2396,3 +2398,89 @@ attuale è invisibile a chi legge e sparisce al primo refactor dell'header.
   quello che il modello restituisce. È scansionato alla generazione (`nt_helpers.py:49-51`) ma non
   all'esecuzione — di nuovo `S-26`.
 - **Non ho toccato `core/code_templates.py` né `core/nt_runner.py`.**
+
+---
+
+## 29. `S-28` — `websearch` non è più uno stub, e il registry lo chiama ancora così. **LOW** *(+ correzione a una mia affermazione)*
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+
+Ho scritto **due volte oggi** — in §27 e in `TASKCLAUDE.md` §82 — che `tools/websearch.py` è
+*"ancora uno stub"*. **È falso**, e l'ho scoperto con uno scan di costrutti pericolosi su tutti i
+94 tool. Correggo la mia affermazione qui e nei due punti dove l'ho fatta.
+
+### 29.1 Il fatto
+
+`tools/websearch.py:_ddg_search` fa una **vera chiamata di rete**:
+
+```python
+url = "https://html.duckduckgo.com/html/?q=" + urllib.parse.quote(query)
+with urllib.request.urlopen(req, timeout=8) as resp:
+    html = resp.read().decode("utf-8", errors="replace")
+```
+
+E nel registry è ancora dichiarato con la descrizione **`"Search the web (stub)"`**
+(`core/registry.py:23`) e, per il default `ToolSpec.safe = True`, **`safe=True`**. Quindi:
+
+- un tool che fa `EXTERNAL_READ` di rete è etichettato **`safe`** e passa `Registry.call`
+  (`FIX-7` lo lascia passare, perché il flag è `True`);
+- la sua descrizione **mente**: un lettore che filtri i tool per "stub" lo salterebbe.
+
+### 29.2 Impatto reale — misurato, ed è limitato
+
+- **Nessun SSRF:** l'host è fisso (`html.duckduckgo.com`); la query utente finisce **solo** nel
+  parametro `?q=`, non nell'host. Verificato leggendo la costruzione dell'URL.
+- **L'output non raggiunge la memoria:** `search()` è chiamato solo da `cmd_search`
+  (`uj_cli.py:19`), che **stampa** i risultati. Non c'è nessun percorso `search → remember`.
+  Verificato con `git grep`: gli unici file che citano sia `websearch` sia `memory` sono
+  `registry.py` (li elenca) e `uj_cli.py` (comandi separati), nessuna chiamata li collega.
+
+Quindi **la conclusione di `S-16` §27 regge** — il contenuto web non entra in memoria oggi — ma
+**non per la ragione che avevo scritto** (*"websearch è uno stub"*): regge perché il cablaggio
+`search → remember` non esiste. La correttezza della conclusione non dipendeva dalla premessa
+sbagliata, ma la premessa era comunque falsa e va corretta.
+
+### 29.3 Perché è comunque un finding, anche se LOW
+
+Il giorno in cui qualcuno collega l'output di `search()` a `remember()` — ed è un cablaggio
+naturale, "ricorda cosa hai trovato" — entra in memoria **contenuto web davvero non fidato**, e la
+catena di `S-16` si chiude con il caso peggiore invece che con i job locali. È la ragione in più
+per mettere la **provenienza** nello schema di `UJ-MEM-001` adesso.
+
+E l'etichetta `safe=True` con descrizione `(stub)` è la stessa classe di `S-01`: un flag che dice
+una cosa e il codice ne fa un'altra. Qui il flag non abilita un danno (la chiamata è a un host
+fisso), ma il **prossimo** tool di rete copiato da questo come modello erediterebbe `safe=True` per
+default senza che nessuno lo decida.
+
+### 29.4 Correzione proposta — `FIX-21`
+
+1. **Aggiornare la descrizione**: togliere `(stub)`, è falsa.
+2. **`safe=False` per i tool di rete**: `websearch.search` fa `EXTERNAL_READ`; come `email.send`
+   è `safe=False`, anche questo dovrebbe esserlo, così `Registry.call` richiede una decisione
+   esplicita.
+3. **classificarlo** nel `ToolManifest` come `EXTERNAL_READ` quando i contratti di admission
+   (`UJ-MCP-001`) verranno cablati sul registry Python.
+
+### 29.5 Il risultato positivo dello scan, che vale quanto il finding
+
+Ho scansionato **tutti e 94** i tool per costrutti pericolosi (`eval`, `exec`, `subprocess`,
+`os.system`, `pickle`, `__import__`, …). **Solo quattro** hanno un hit, e tre sono innocui o già
+noti:
+
+| Tool | Hit | Verdetto |
+|---|---|---|
+| `tools/automation.py` | `subprocess` | stub di automazione UI già noto (`S-06`), allowlist reale |
+| `tools/os_control.py` | `subprocess` | idem |
+| `tools/validate_helpers.py` | `compile(` | **falso positivo**: è `re.compile()`, innocuo |
+| `tools/websearch.py` | `urllib.request` | questo finding |
+
+**Novanta tool promossi su 94 non contengono un solo costrutto pericoloso.** È la prova pratica,
+non teorica, che la promozione (`FIX-1`, il gate di `S-12`) **non ha mai lasciato passare codice
+dannoso** in ciò che è finito nel catalogo. Lo scrivo perché una review che elenca solo i difetti
+darebbe l'impressione opposta.
+
+### 29.6 Che cosa NON affermo
+
+- **Non ho eseguito `websearch.search`**: non ho fatto nessuna chiamata di rete. Il fatto che
+  faccia una chiamata reale l'ho stabilito **leggendo** il codice, non eseguendolo.
+- **Non ho toccato `tools/websearch.py` né `core/registry.py`.**

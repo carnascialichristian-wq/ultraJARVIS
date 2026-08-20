@@ -5021,6 +5021,43 @@ controllo**, e quello si vede indipendentemente da quanti attacchi provo.
 **Payload benigni (scrivono un file marcatore in `/tmp`), nessuna rete, nessun comando di
 sistema, nessuna riga di codice di Grok modificata.**
 
+
+## Sessione 6, trentaduesima parte — uno scan di tutti i 94 tool, un risultato positivo e una mia svista
+
+Prima di registrare l'attesa ho fatto la cosa che chiude una caccia invece di lasciarla a metà:
+uno scan di costrutti pericolosi su **tutti** i moduli di `tools/` e sui quattro `core/` piccoli
+mai revisionati. Serviva a rispondere a una domanda che nessuno aveva verificato: **il gate di
+promozione ha mai lasciato passare qualcosa di dannoso nel catalogo?**
+
+### Il risultato è positivo, e conta quanto un finding
+
+**90 tool promossi su 94 non contengono un solo costrutto pericoloso** — niente `eval`, `exec`,
+`subprocess`, `os.system`, `pickle`. I quattro con un hit: `automation` e `os_control` (stub di
+automazione già noti, `S-06`), `validate_helpers` (un `re.compile()`, falso positivo mio), e
+`websearch`. È la prova **pratica** che `FIX-1` — il gate di `S-12` — ha tenuto: non l'ho dedotto
+dal fatto che il gate esiste, l'ho verificato su ciò che è finito nel catalogo. Una review che
+elenca solo difetti darebbe l'impressione opposta.
+
+### E la mia svista, che correggo dove l'ho commessa
+
+`websearch` mi ha fatto trovare un errore mio: **oggi ho scritto due volte** — nella §27 della
+review e in `TASKCLAUDE` §82 — che `tools/websearch.py` *"è ancora uno stub"*. È falso: fa una
+vera chiamata a DuckDuckGo. L'ho corretto nei due punti, non in silenzio.
+
+La parte che salva la faccia — e che registro perché è la lezione, non la scusa — è che **la
+conclusione di sicurezza reggeva comunque**: il contenuto web non entra in memoria, ma perché il
+cablaggio `search → remember` non esiste, **non** perché websearch sia uno stub. Avevo la
+conclusione giusta appoggiata a una premessa sbagliata. È esattamente il difetto che l'esperimento
+a variabile singola serve a smascherare: se non avessi scansionato i tool, la premessa falsa
+sarebbe rimasta lì a sostenere una conclusione vera, pronta a diventare falsa il giorno in cui il
+cablaggio arriva.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §29 (`S-28`, LOW) · `GROK_FIX_LIST.md` → `FIX-21` ·
+§27 e `TASKCLAUDE` §82 corretti. **Nessuna chiamata di rete eseguita: che websearch la faccia
+l'ho stabilito leggendo il codice.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5452,6 +5489,32 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  BD) 2026-08-19 — S-28 (NUOVO, LOW) + CORREZIONE A UNA MIA AFFERMAZIONE DI OGGI.
+     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §29 · GROK_FIX_LIST.md -> FIX-21
+     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
+
+     HO SCRITTO DUE VOLTE OGGI (§27 della review e TASKCLAUDE §82) che
+     tools/websearch.py "e' ancora uno stub". E' FALSO: _ddg_search fa una VERA
+     chiamata a html.duckduckgo.com (urllib.request.urlopen). Scoperto con uno scan
+     di costrutti pericolosi su tutti i 94 tool. Corretto nei due punti.
+     Nel registry e' ancora "Search the web (stub)" e, per il default
+     ToolSpec.safe=True, e' safe=True: un EXTERNAL_READ di rete etichettato safe.
+
+     IMPATTO LIMITATO, misurato: host fisso (nessun SSRF, la query va solo nel
+     parametro ?q=); l'output NON raggiunge remember() (va solo a cmd_search che
+     stampa). Quindi la conclusione di S-16 §27 REGGE — il contenuto web non entra in
+     memoria — MA NON PER LA RAGIONE CHE AVEVO SCRITTO (non "e' uno stub", ma "il
+     cablaggio search->remember non esiste"). La conclusione non dipendeva dalla
+     premessa sbagliata, ma la premessa era falsa e va corretta.
+
+     RISULTATO POSITIVO DELLO SCAN, che vale quanto il finding: 90 tool promossi su 94
+     non hanno UN SOLO costrutto pericoloso. Gli altri 4: automation/os_control
+     (subprocess, stub noti S-06), validate_helpers (re.compile, falso positivo),
+     websearch (questo). PROVA PRATICA che il gate di promozione (FIX-1) non ha mai
+     lasciato passare codice dannoso nel catalogo.
+
+     FIX-21 (LOW): togliere "(stub)" dalla descrizione, safe=False perche' e' rete.
 
   BC) 2026-08-19 — S-27 (NUOVO, MEDIUM): l'iniezione prompt -> codice generato e'
      contenuta SOLO PER CASO.

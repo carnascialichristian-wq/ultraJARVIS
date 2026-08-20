@@ -17,11 +17,11 @@
 
 > ## STATO DELLE CORREZIONI — riverificato su `origin/main` @ `27b767309090`, 2026-08-19
 >
-> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su venti sono
+> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su ventuno sono
 > chiuse — otto applicate e una superata — verificate da me eseguendo, non leggendo. Lavorare su
 > una di quelle è tempo perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
-> §20. Le sette più recenti (`FIX-14`…`FIX-20`) sono del 19 agosto e non sono ancora state
-> viste da nessuno: §21…§28 della stessa review. **`FIX-19` è quella da leggere per prima.**
+> §20. Le otto più recenti (`FIX-14`…`FIX-21`) sono del 19 agosto e non sono ancora state
+> viste da nessuno: §21…§29 della stessa review. **`FIX-19` è quella da leggere per prima.**
 >
 > | FIX | Finding | Stato al ref corrente |
 > |---|---|---|
@@ -45,8 +45,9 @@
 > | **`FIX-18`** | **`S-25` il webhook di pagamento non verifica la firma** | **DA APPLICARE — HIGH, latente** |
 > | **`FIX-19`** | **`S-26` `execute_graph` esegue codice generato senza `scan_text`** | **DA APPLICARE — HIGH** |
 > | **`FIX-20`** | **`S-27` il prompt e' interpolato grezzo nel sorgente generato** | **DA APPLICARE — MEDIUM** |
+> | **`FIX-21`** | **`S-28` `websearch` non e' piu' uno stub, descritto e safe come tale** | **DA APPLICARE — LOW** |
 >
-> **Restano undici** (`FIX-20` è a valle di `FIX-19`, MEDIUM). L'ordine qui sotto è **verificato**, non asserito:
+> **Restano dodici** (`FIX-20` MEDIUM, `FIX-21` LOW, entrambe non urgenti). L'ordine qui sotto è **verificato**, non asserito:
 > `docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md` — e due posizioni sono cambiate rispetto a
 > quanto avevo scritto prima, perché le ho controllate invece di ricopiarle.
 >
@@ -1407,3 +1408,34 @@ Anche con l'header ripulito, il ramo `UJ_WRITER_LLM` produce codice che il templ
 `python3 docs/threat-models/probes/S-27-template-injection-probe.py` — oggi i tre payload danno
 `compila: NO` per tre motivi diversi. Dopo la correzione devono dare `NO` per **un** motivo solo:
 il prompt è testo inerte, non può nemmeno tentare di chiudere la docstring.
+
+---
+
+## FIX-21 — `websearch` non è più uno stub, ma è descritto e marcato come tale · **LOW**
+
+**Finding:** `S-28`, §29 della review.
+
+`tools/websearch.py:_ddg_search` fa una **vera chiamata di rete** a `html.duckduckgo.com`
+(`urllib.request.urlopen`). Ma nel registry è dichiarato `"Search the web (stub)"` e — per il
+default `ToolSpec.safe = True` — è `safe=True`, quindi `Registry.call` lo lascia passare senza
+decisione esplicita.
+
+Impatto reale limitato, misurato: l'host è fisso (nessun SSRF), e l'output non raggiunge
+`remember()` — va solo a `cmd_search` che lo stampa. Ma la descrizione mente e l'etichetta è
+sbagliata.
+
+```python
+# core/registry.py:23 — prima
+ToolSpec("websearch.search", "Search the web (stub)", "tools.websearch", "search", tags=["search"]),
+# dopo
+ToolSpec("websearch.search", "Search the web via DuckDuckGo", "tools.websearch", "search",
+         safe=False, tags=["search", "network"]),
+```
+
+`safe=False` perché è `EXTERNAL_READ` di rete, come `email.send`. Quando i contratti di admission
+di `UJ-MCP-001` verranno cablati sul registry Python, va classificato `EXTERNAL_READ`.
+
+**Nota positiva, da non perdere:** ho scansionato tutti e 94 i tool per costrutti pericolosi.
+Solo quattro hanno un hit (due stub noti, un `re.compile()` innocuo, questo). **90 tool promossi
+su 94 non contengono un solo costrutto pericoloso** — la prova pratica che il gate di promozione
+(`FIX-1`) non ha mai lasciato passare codice dannoso nel catalogo.
