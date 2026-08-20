@@ -5058,6 +5058,41 @@ cablaggio arriva.
 §27 e `TASKCLAUDE` §82 corretti. **Nessuna chiamata di rete eseguita: che websearch la faccia
 l'ho stabilito leggendo il codice.**
 
+
+## Sessione 6, trentatreesima parte — una vista sola su tutti i 28 findings, e un mio conteggio sbagliato preso prima del commit
+
+Il documento di security review è cresciuto a **28 findings** scritti in quattro sessioni, e la
+sua sezione di stato consolidato (§20) ne copriva solo i primi 20. Chi applica le correzioni —
+Grok soprattutto — aveva bisogno di **una** vista autorevole su tutto, non di ricostruirla
+scorrendo 2.500 righe. L'ho costruita: §30, una tabella dei 28 con severità, stato, correzione e
+owner.
+
+### Il mio errore, e dove l'ho preso
+
+Ho scritto nel bilancio *"12 chiusi, 1 superato, 1 parziale, 14 aperti"*. **La tabella dice 10, 1,
+1, 16.** L'ho contato da un ragionamento invece che dalla tabella — è la trappola 24, la stessa
+per cui ho corretto numeri quattro volte in una sessione. Stavolta l'ha preso lo script di
+verifica che ho scritto per contarli: prima del commit, non dopo.
+
+Corretto a `10/1/1/16`, e ho aggiunto la cosa che rende il conteggio difendibile invece che
+imposto: **spiego perché differisce dalla §20.** Questa tabella classifica `S-08`
+(`advisors.safety` evadibile) come **aperto** e non chiuso, perché `FIX-9` copre un caso ma le due
+evasioni note restano. È una classificazione più severa, non un cambiamento di stato del codice, e
+l'ho scritto invece di lasciar sembrare che qualcosa fosse regredito.
+
+### Il bilancio, che è anche la conclusione della review
+
+**10 chiusi, 1 superato, 1 parziale, 16 aperti.** Dei 16 aperti: uno è di Gemini (`S-16`), uno è
+una decisione di Christian (`S-06`), quattordici sono di Grok con un ordine verificato. E il
+contrappeso misurato: 90 tool promossi su 94 sono puliti. **Il motore regge; sono i bordi a essere
+fragili** — otto dei quattordici aperti sono lo stesso difetto, un controllo collegato al punto
+sbagliato.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §30. **Nessun codice toccato: è consolidamento di
+documentazione.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5489,6 +5524,15 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  BE) 2026-08-19 — VISTA AUTOREVOLE SU TUTTI I 28 FINDINGS: §30 della security review.
+     Bilancio contato dalla tabella (non dedotto): 10 chiusi, 1 superato, 1 parziale,
+     16 APERTI. Dei 16: S-16 -> GEMINI, S-06 -> Christian (policy), 14 -> GROK.
+     Ordine dei fix di Grok VERIFICATO in FIX_ORDER_ANALYSIS_20260819.md.
+     La §20 (primi 20, "12 chiusi") e' superata da §30 dove divergono: §30 classifica
+     S-08 come APERTO (FIX-9 copre un caso, le 2 evasioni note restano). Non e' una
+     regressione, e' una classificazione piu' severa.
+     CONTRAPPESO misurato: 90 tool promossi su 94 sono puliti (FIX-1 ha tenuto).
 
   BD) 2026-08-19 — S-28 (NUOVO, LOW) + CORREZIONE A UNA MIA AFFERMAZIONE DI OGGI.
      MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §29 · GROK_FIX_LIST.md -> FIX-21

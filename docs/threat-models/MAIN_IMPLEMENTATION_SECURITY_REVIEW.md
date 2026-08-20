@@ -2484,3 +2484,76 @@ darebbe l'impressione opposta.
 - **Non ho eseguito `websearch.search`**: non ho fatto nessuna chiamata di rete. Il fatto che
   faccia una chiamata reale l'ho stabilito **leggendo** il codice, non eseguendolo.
 - **Non ho toccato `tools/websearch.py` né `core/registry.py`.**
+
+---
+
+## 30. Stato consolidato COMPLETO — tutti i 28 findings al 2026-08-19 sera
+
+La §20 copre i primi 20 findings; questa tabella è **l'unica vista autorevole su tutti e 28**.
+Ref di riferimento per gli aperti: `origin/main` @ `27b767309090`. Il dettaglio di ciascuno è
+nella sezione omonima; le nove chiuse hanno la verifica in §10-ter.
+
+| # | Finding | Sev | Stato | Correzione | Owner |
+|---|---|---|---|---|---|
+| S-01 | `ToolSpec.safe` mai letto | HIGH | **CHIUSO** | FIX-7 | — |
+| S-02 | `Registry.call` senza ammissione | HIGH | **PARZIALE** — gate sì, tetto/evento no | UJ-MCP-001 wiring | — |
+| S-03 | `email.send` manopole finte | HIGH | **CHIUSO** | FIX-8 | — |
+| S-04 | `core.natural_tasks` inimportabile | — | **CHIUSO** (moduli pubblicati) | — | — |
+| S-05 | pubblicazione parziale dei tool | — | **CHIUSO** | — | — |
+| S-06 | automazione UI nel catalogo | MEDIUM | **APERTO** — decisione di policy, non un bug | Christian | GROK |
+| S-07 | nessun evento `tool.*` | MEDIUM | **APERTO** — infrastruttura nuova | — | GROK |
+| S-08 | `advisors.safety` evadibile | MEDIUM | **APERTO** — 2/4 evasioni note | FIX-9 (parziale) | GROK |
+| S-09 | allowlist browser `lstrip` | HIGH | **CHIUSO** | FIX-5 | — |
+| S-10 | `safe_read` fuori root | HIGH | **CHIUSO** | FIX-3 | — |
+| S-11 | `force=True` via registry | HIGH | **CHIUSO** | FIX-4 | — |
+| S-12 | promozione senza gate | HIGH | **CHIUSO** | FIX-1 | — |
+| S-13 | tool promossi non compilano | MEDIUM | **SUPERATO** | FIX-2 | — |
+| S-14 | verdetto gate per sottostringa | HIGH | **CHIUSO** | FIX-6 | — |
+| S-15 | gate stub che dicono PASS | MEDIUM | **CHIUSO** | FIX-9 | — |
+| S-16 | memoria senza provenienza | MEDIUM | **APERTO** — consumatore arrivato (§27) | UJ-MEM-001 | **GEMINI** |
+| S-17 | `cloud_bridge` a pagamento di default | CRITICA | **APERTO su main** — fix su ramo CLAUDE | FIX-10 | GROK |
+| S-18 | la suite sovrascrive `grok.md` | HIGH | **APERTO** | FIX-11 | GROK |
+| S-19 | budget gate inghiottito in `embed()` | HIGH | **APERTO** | FIX-13 (stesso ponte di FIX-10) | GROK |
+| S-20 | promozione cabla `safe=True` | MEDIUM | **APERTO** | FIX-12 | GROK |
+| S-21 | `PRIVILEGED_KWARGS` denylist | MEDIUM | **APERTO, latente** | FIX-14 | GROK |
+| S-22 | due `safe_write`, quella di build non contiene | HIGH | **APERTO, latente** | FIX-15 | GROK |
+| S-23 | `PROTECTED` nomina il vecchio posto | MEDIUM | **APERTO** | FIX-16 | GROK |
+| S-24 | contatore spesa spento per default | HIGH | **APERTO** | FIX-17 (con FIX-10) | GROK |
+| S-25 | webhook pagamento non verifica firma | HIGH | **APERTO, latente** | FIX-18 | GROK |
+| S-26 | gate di safety sulla copia, non sull'esecuzione | HIGH | **APERTO** | FIX-19 *(primo)* | GROK |
+| S-27 | prompt interpolato grezzo nel sorgente | MEDIUM | **APERTO** | FIX-20 | GROK |
+| S-28 | `websearch` non più stub, etichettato tale | LOW | **APERTO** | FIX-21 | GROK |
+
+### 30.1 Il bilancio
+
+**Contato dalla tabella, non dedotto (trappola 24): 10 chiusi, 1 superato, 1 parziale, 16 aperti.**
+Dei 16 aperti:
+
+- **1 è di GEMINI** (`S-16`, lo schema di memoria) — e la finestra per correggerlo a costo quasi
+  nullo è aperta **adesso** (§27);
+- **1 è di Christian** (`S-06`, una decisione di policy, non un bug);
+- **14 sono di GROK**, e l'ordine per applicarli è in `FIX_ORDER_ANALYSIS_20260819.md`, verificato:
+  `FIX-19 → FIX-11 → FIX-10+FIX-13+FIX-17 → FIX-15+FIX-16 → FIX-18 → FIX-12 → FIX-14`, con
+  `FIX-20`/`FIX-21` a valle (MEDIUM/LOW).
+
+**Perché il conteggio dei chiusi differisce dalla §20** (che diceva *"12 chiusi"* sui primi 20):
+questa tabella ricontabilizza da zero e classifica `S-08` (`advisors.safety` evadibile) come
+**aperto**, non chiuso — il suo `FIX-9` copre il caso `use_real=False` ma le due evasioni note
+(`getattr(__builtins__,'ev'+'al')`, `subprocess.Popen`) restano. È una classificazione più severa
+e più onesta, non un cambiamento di stato del codice. Dove §20 e §30 divergono, **vale §30**,
+perché è la vista completa e più recente.
+
+### 30.2 Il filo che li lega, ed è la conclusione della review
+
+Dei 14 aperti, **otto sono un controllo che esiste ma è collegato al punto sbagliato**: lo scanner
+c'è ma non sull'esecuzione (`S-26`); la lista protetta c'è ma nomina il vecchio posto (`S-23`); il
+filtro dei kwarg è una denylist (`S-21`); la quota c'è ma è spenta (`S-24`); la firma si ispeziona
+ma non si verifica (`S-25`); `safe` è dichiarato ma sbagliato (`S-28`). Non è sciatteria: è un
+sistema giovane in cui le difese sono state aggiunte una alla volta, ciascuna dove serviva.
+
+La conseguenza operativa, ripetuta in ogni finding: **leggere il codice di un controllo non dice
+se protegge qualcosa.** L'unico modo è eseguirlo contro il caso che deve fermare — ed è perché
+ogni finding ha una sonda riproducibile, non una descrizione.
+
+E il contrappeso, misurato e non teorico (§29.5): **90 tool promossi su 94 sono privi di costrutti
+pericolosi.** Il motore regge; sono i bordi a essere fragili.
