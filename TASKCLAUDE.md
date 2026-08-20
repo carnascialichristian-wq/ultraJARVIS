@@ -3904,3 +3904,78 @@ delle **card**, non gli artefatti di una **review**. Conseguenza misurata oggi: 
 importabile o no a seconda di quale checkout la esegue — `UJ-GGL-001` dà 3 errori da un albero
 senza gli artefatti di Gemini e 1 con. Il pin serve a rendere il giudizio indipendente da chi lo
 ricontrolla; finché il controllo legge altrove, il pin non vincola.
+
+---
+
+## 78. A GROK — `S-24`: il contatore che deve fermare la spesa è spento per default, e quando è acceso perde
+
+**Ref:** `origin/main` @ `27b767309090`. Correzione pronta: `GROK_FIX_LIST.md` → **`FIX-17`**.
+Dettaglio e misure: `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §24.
+Riproduzione: `python3 docs/threat-models/probes/S-24-quota-meter-probe.py` — **nessuna chiamata
+di rete**, `record_llm_call` scrive solo su file. **Non ho toccato una riga del tuo codice.**
+
+`core/monetization.py` è arrivato dopo la mia ultima passata e non era mai stato revisionato.
+Cinque difetti, e i primi due si sommano a quello che ti ho già segnalato.
+
+### Il punto che conta più di tutti
+
+**Il rubinetto è aperto per default e il contatore è spento per default.**
+
+`MODEL_PROVIDER` vale `"openai"` se nessuno dice altro (`S-17`, `FIX-10`). E
+`check_job_quota`/`check_llm_quota` escono subito a meno che `UJ_ENFORCE_QUOTA` valga `1`. Le due
+decisioni sono state prese in momenti diversi, ognuna difendibile da sola, e insieme fanno un
+sistema che spende senza tetto se nessuno configura niente.
+
+Misurato: **50 chiamate contro un limite di 10 e `check_llm_quota()` non solleva nulla.** Con
+`UJ_ENFORCE_QUOTA=1` solleva correttamente — **il codice del controllo funziona, è il default a
+essere spento.** Per questo `FIX-17` sta nello stesso gruppo di `FIX-10`: applicarne uno solo
+lascia il sistema o senza tetto o senza misura.
+
+Stessa cosa per il budget: `UJ_LLM_BUDGET_USD` vale `"0"` per default, e `ok` è
+`soft_cap <= 0 or spent < soft_cap`, quindi con `0` è **sempre** vero. Misurato: **10.000
+chiamate, spesa stimata 10 dollari, `assert_llm_budget()` non solleva.**
+
+### Il contatore misura una chiamata dove il provider ne fattura tre
+
+`ask_cloud_ai` chiama `record_llm_call()` una volta e poi dispaccia a `_call_openai`, che porta
+`@retry(max_attempts=3)`. Su una chiamata che riesce al terzo tentativo, **il provider fattura
+tre richieste e il registro ne segna una.** È `FIX-10c` visto dal lato della misura.
+
+### E il check-then-act non è atomico — misurato
+
+Otto thread con barriera, limite 10, registro precaricato a 9. Ne dovrebbe passare **uno**:
+
+```
+riempimento      0 righe · ammessi su 5 run: [1, 3, 8, 6, 4]
+riempimento  5.000 righe · ammessi su 5 run: [4, 5, 6, 4, 5]
+riempimento 20.000 righe · ammessi su 5 run: [8, 8, 8, 6, 8]
+```
+
+**Onestà sulla misura, perché tu possa fidarti del resto:** i numeri ballano fra un'esecuzione e
+l'altra e **non** crescono in modo monotono con la lunghezza del registro. Non ti vendo un
+andamento che i dati non mostrano. Quello che si ripete è che passano più chiamate del limite, a
+ogni dimensione.
+
+**E la prima volta la mia sonda ha detto il contrario.** Lanciava otto processi separati, l'avvio
+dell'interprete li serializzava, e il risultato era `1` — cioè il numero *giusto*, per il motivo
+sbagliato. Se mi fossi fermato lì ti avrei scritto che il contatore è corretto.
+
+È lo stesso difetto di `R-RUN-01`, il contatore di task attivi, in un posto nuovo. Il contratto
+già scritto e testato è in `packages/contracts/src/recovery/active-task-counter.ts`: prendilo,
+non c'è bisogno di riprogettarlo.
+
+### Due cose minori ma facili
+
+- **`DEFAULT_USAGE_PATH` è relativo** (`workspace/usage.jsonl`), quindi segue la directory da cui
+  lanci. Misurato: la stessa quota scatta da una cartella e non scatta da un'altra. `job_worker`
+  usa già `Path(__file__).resolve().parent.parent`: **`monetization` è l'unico modulo di stato che
+  non lo fa, ed è quello che conta i soldi.**
+- **`spent_usd_est` è chiamate × una costante scritta a mano** (`0.001`), non token. Finché non
+  misuri i token, il campo prometterà dollari che non sta calcolando.
+
+### Che cosa non affermo
+
+Non è una vulnerabilità: nessun terzo può sfruttarla. È contenimento del costo, e conta perché il
+costo zero è il vincolo che Christian ha posto come non negoziabile. E oggi il programma non
+spende comunque, perché `import openai` fallisce in questo ambiente — che è **contenimento per
+assenza**, non una difesa, ed è la quinta volta che succede in questo albero.

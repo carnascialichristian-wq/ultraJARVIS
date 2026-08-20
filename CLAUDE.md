@@ -4627,6 +4627,99 @@ storia già pubblicata: l'errore resta visibile nel log, che è dove deve stare.
 altrui sporca l'albero"*; questa la estende: **anche misurare lo sporca, e lo sporca
 nell'indice, che è il posto in cui non si guarda.**
 
+**Seguito, poche ore dopo, e cambia la lezione.** Preparando il commit di `S-24` la guardia ha
+fermato una seconda volta: **21 file in stage invece di 7**. Non l'avevo rifatto a mano — era il
+mio **stesso script**, `scripts/audit-review-importability.mjs`, che dentro usa
+`git --work-tree=<W> checkout` per portare gli artefatti nei worktree di misura. **Ogni sua
+esecuzione reinquina l'indice.**
+
+Quindi la contromisura scritta qui non bastava: la trappola l'avevo registrata nel documento e
+lasciata **dentro il codice**. Corretto in `-C <worktree>` con il motivo nel commento, e
+verificato per esperimento — hash di `git status --porcelain` prima e dopo l'esecuzione:
+identico. **Una lezione registrata solo in prosa protegge solo chi la rilegge; questa girava da
+sola dieci volte al giorno.** Le due guardie hanno funzionato entrambe, ed è il motivo per cui
+vanno tenute tutte e due: la stampa dello stato nello stesso comando del commit, e il
+`git -C` nel codice.
+
+
+## Sessione 6, ventiseiesima parte — `S-24`: il rubinetto è aperto per default e il contatore è spento
+
+Coda dei doveri da reviewer vuota (fetch di tutti i ref: nessuna consegna nuova). Ho ripreso la
+caccia sul codice arrivato dopo la mia ultima passata, scegliendo per primo `core/monetization.py`
+— 139 righe, mai revisionate, ed è **il componente il cui mestiere è impedire che il programma
+spenda**. Dato il vincolo che Christian ha posto come non negoziabile, viene prima di tutto il
+resto.
+
+### Il risultato in una frase
+
+**`MODEL_PROVIDER` vale `openai` se nessuno dice altro, e le quote escono subito a meno che
+`UJ_ENFORCE_QUOTA` valga `1`.** Due decisioni prese in momenti diversi, ognuna difendibile da
+sola, che insieme fanno un sistema che spende senza tetto quando nessuno configura niente.
+
+Misurato: **50 chiamate contro un limite di 10 e nessuna eccezione**; con `UJ_ENFORCE_QUOTA=1`
+solleva correttamente. *Il codice del controllo funziona: è il suo default a essere spento.*
+Stessa cosa per il budget — `UJ_LLM_BUDGET_USD` vale `"0"`, e `ok` è
+`soft_cap <= 0 or spent < soft_cap`, quindi sempre vero: **10.000 chiamate, spesa stimata 10
+dollari, `assert_llm_budget()` non solleva.**
+
+### E il contatore misura una chiamata dove il provider ne fattura tre
+
+`ask_cloud_ai` registra il consumo una volta, poi dispaccia a `_call_openai`, che porta
+`@retry(max_attempts=3)`. È `FIX-10c` visto dal lato della misura invece che da quello della
+spesa: là il retry moltiplica l'addebito, qui lo rende invisibile.
+
+### `R-RUN-01`, di nuovo, e stavolta il limite che perde è quello sui soldi
+
+`record_llm_call` fa `summarize_usage()` — che rilegge e riparsa **tutto** il file — poi confronta,
+poi appende. Fra il controllo e l'incremento non c'è niente che escluda gli altri.
+
+Otto thread con barriera, limite 10, registro precaricato a 9, ne dovrebbe passare **uno**:
+`[1, 3, 8, 6, 4]` a registro vuoto, `[4, 5, 6, 4, 5]` con 5.000 righe di riempimento,
+`[8, 8, 8, 6, 8]` con 20.000.
+
+È esattamente la forma che ho chiuso in `UJ-RCV-001` con `AtomicActiveTaskCounter` e il test
+`T-DG-4b`: `leggi → fai altro → scrivi`. La regola l'avevo già scritta, e il contratto è già in
+`packages/contracts/src/recovery/active-task-counter.ts` — Grok non deve riprogettarlo, deve
+prenderlo.
+
+### Due volte la misura mi ha smentito, e la prima nella direzione peggiore
+
+**La prima sonda diceva che il contatore è corretto.** Lanciava otto **processi** separati, e
+l'avvio dell'interprete — 50-100 ms l'uno — li serializzava: la finestra di gara non veniva mai
+colpita e passava esattamente uno, cioè il numero **giusto per il motivo sbagliato**. È la
+trappola 12 dal lato di chi scrive il test, e se mi fossi fermato lì avrei scritto a Grok che il
+contatore va bene. Rifatta con thread e una `threading.Barrier`, la gara si manifesta subito.
+
+**La seconda smentita è stata su un'ipotesi mia.** Avevo previsto che l'ampiezza della gara
+crescesse con la lunghezza del registro, perché la lettura si allunga — e il primo esperimento
+sembrava confermarlo. Ma variava anche il **tier**, quindi anche il limite: le prime due righe
+mostravano "8 ammessi su 8" semplicemente perché erano **sotto** il limite. Non era una gara, era
+spazio libero. Rifatto isolando la variabile — distanza dal limite fissa a 9 su 10, cambia solo il
+riempimento — l'andamento **non** è monotono: a 5.000 righe è a volte più mite che a 0.
+
+L'ho scritto così nel documento e nel blocco per Grok, invece di tenere la versione che
+raccontava meglio. **Un andamento che i dati non mostrano è esattamente il tipo di numero per cui
+ho bocciato gli altri tre.**
+
+### Due difetti minori, e uno è di quelli che si vedono solo eseguendo
+
+`DEFAULT_USAGE_PATH = Path("workspace/usage.jsonl")` è **relativo**: segue la directory da cui
+lanci. Misurato: la stessa quota scatta da una cartella e non scatta da un'altra, perché lì il
+registro è vuoto. `core/job_worker.py` usa già un path ancorato al modulo — **`monetization` è
+l'unico modulo di stato che non lo fa, ed è quello che conta i soldi.**
+
+E `spent_usd_est` è chiamate × una costante scritta a mano, non token: un campo che promette
+dollari e conta invocazioni.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §24 · `GROK_FIX_LIST.md` → `FIX-17` (nel **primo**
+gruppo, insieme a `FIX-10`: uno chiude il rubinetto, l'altro accende il contatore, e applicarne
+uno solo lascia il sistema o senza tetto o senza misura) ·
+`docs/threat-models/probes/S-24-quota-meter-probe.py` · `TASKCLAUDE.md` §78.
+
+**Nessuna riga di codice di Grok modificata. Nessuna chiamata di rete, in nessuna variante.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -4867,7 +4960,10 @@ Sintesi operativa degli errori sopra, in forma di regole:
     artefatti dentro worktree di misura, ha prodotto un commit di **38 file invece di 4**, che
     riportava indietro contratti, card e il validatore di ChatGPT — e la suite sarebbe rimasta
     **verde**, perché anche i test erano stati riportati indietro insieme al resto. Contromisure,
-    entrambe necessarie, e la prima è **verificata per esperimento**, non dedotta:
+    entrambe necessarie — e serve cercare il pattern anche negli **script che hai già scritto**:
+    il mio `scripts/audit-review-importability.mjs` lo conteneva e reinquinava l'indice a ogni
+    esecuzione, fermato dalla guardia poche ore dopo aver registrato la trappola. La prima
+    contromisura è **verificata per esperimento**, non dedotta:
     `git -C <worktree> checkout <ref> -- <path>` porta il file nel worktree e **non tocca**
     l'indice principale, mentre `git --work-tree=<worktree> checkout …` lo tocca — provate
     entrambe di fila confrontando l'hash di `git status --porcelain` prima e dopo. E **stampare
@@ -5055,6 +5151,52 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AX) 2026-08-19 — S-24 (NUOVO, HIGH): il contatore della spesa e' spento per default.
+     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §24 · GROK_FIX_LIST.md -> FIX-17
+     docs/threat-models/probes/S-24-quota-meter-probe.py  (nessuna chiamata di rete)
+     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
+
+     core/monetization.py (139 righe) non era mai stato revisionato. CINQUE difetti:
+      1. LE DUE QUOTE SONO SPENTE PER DEFAULT: check_job_quota/check_llm_quota
+         escono subito se UJ_ENFORCE_QUOTA != "1". Misurato: 50 chiamate contro un
+         limite di 10 -> nessuna eccezione. Con UJ_ENFORCE_QUOTA=1 solleva: IL
+         CODICE DEL CONTROLLO FUNZIONA, E' IL DEFAULT A ESSERE SPENTO.
+      2. ANCHE IL TETTO E' SPENTO: UJ_LLM_BUDGET_USD default "0", e ok e'
+         "soft_cap <= 0 or spent < soft_cap" -> sempre vero. Misurato: 10.000
+         chiamate, $10 stimati, assert_llm_budget() non solleva.
+      3. IL CONTATORE MISURA 1 DOVE IL PROVIDER FATTURA 3: ask_cloud_ai chiama
+         record_llm_call() una volta e poi dispaccia a _call_openai, che porta
+         @retry(max_attempts=3). E' FIX-10c dal lato della misura.
+      4. CHECK-THEN-ACT NON ATOMICO: summarize_usage() rilegge tutto il file, poi
+         record_usage() appende. 8 thread con barriera, limite 10, precarico 9 (ne
+         dovrebbe passare UNO): [1,3,8,6,4] a registro vuoto, [4,5,6,4,5] con 5.000
+         righe, [8,8,8,6,8] con 20.000. E' R-RUN-01 in un posto nuovo: il contratto
+         corretto e' GIA' in packages/contracts/src/recovery/active-task-counter.ts.
+      5. DEFAULT_USAGE_PATH E' RELATIVO ("workspace/usage.jsonl"): segue la cwd.
+         Misurato: la stessa quota scatta da una cartella e non da un'altra.
+         job_worker usa gia' un path ancorato al modulo; monetization e' l'unico
+         modulo di stato che non lo fa, ed e' quello che conta i soldi.
+      (+ spent_usd_est e' chiamate x una costante scritta a mano, non token.)
+
+     IL PUNTO CHE CONTA: il rubinetto e' APERTO per default (S-17/FIX-10) e il
+     contatore e' SPENTO per default. Per questo FIX-17 sta nel PRIMO gruppo con
+     FIX-10: applicarne uno solo lascia il sistema o senza tetto o senza misura.
+
+     DUE VOLTE LA MISURA MI HA SMENTITO, e la prima nella direzione peggiore:
+      - la prima sonda lanciava 8 PROCESSI: l'avvio dell'interprete li serializzava
+        e passava esattamente UNO, cioe' il numero GIUSTO PER IL MOTIVO SBAGLIATO.
+        Fermandomi li' avrei scritto a Grok che il contatore va bene. Rifatta con
+        thread + threading.Barrier, la gara si manifesta subito;
+      - avevo previsto che l'ampiezza crescesse con la lunghezza del registro. Il
+        primo esperimento sembrava confermarlo ma variava ANCHE il tier, quindi il
+        limite: "8 ammessi su 8" era spazio libero, non una gara. Isolata la
+        variabile, l'andamento NON e' monotono. Scritto cosi' nel documento invece
+        di tenere la versione che raccontava meglio.
+
+     NON e' una vulnerabilita' (nessun terzo la sfrutta) e oggi non si spende
+     comunque perche' `import openai` fallisce: contenimento PER ASSENZA, quinta
+     volta in questo albero, non una difesa.
 
   AW) 2026-08-19 — QUATTRO REVIEW CONSEGNATE, TRE BLOCCATE DALLA STESSA RIGA.
      docs/program/reviews/CLAUDE-REVIEW-IMPORTABILITY-AUDIT-20260819.md

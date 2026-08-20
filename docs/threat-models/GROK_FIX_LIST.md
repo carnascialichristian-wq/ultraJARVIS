@@ -17,11 +17,11 @@
 
 > ## STATO DELLE CORREZIONI — riverificato su `origin/main` @ `27b767309090`, 2026-08-19
 >
-> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su sedici sono chiuse
-> — otto applicate e una superata — verificate da me eseguendo, non leggendo. Lavorare su una
-> di quelle è tempo perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §20.
-> Le tre più recenti (`FIX-14`, `FIX-15`, `FIX-16`) sono di oggi e non sono ancora state viste
-> da nessuno: §21, §22, §23 della stessa review.
+> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su diciassette sono
+> chiuse — otto applicate e una superata — verificate da me eseguendo, non leggendo. Lavorare su
+> una di quelle è tempo perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
+> §20. Le quattro più recenti (`FIX-14`…`FIX-17`) sono del 19 agosto e non sono ancora state
+> viste da nessuno: §21, §22, §23, §24 della stessa review.
 >
 > | FIX | Finding | Stato al ref corrente |
 > |---|---|---|
@@ -41,10 +41,16 @@
 > | **`FIX-14`** | **`S-21` `PRIVILEGED_KWARGS` è una denylist** | **DA APPLICARE — latente** |
 > | **`FIX-15`** | **`S-22` due `safe_write`, quella di build non contiene** | **DA APPLICARE** |
 > | **`FIX-16`** | **`S-23` `PROTECTED` nomina il vecchio posto del codice** | **DA APPLICARE** |
+> | **`FIX-17`** | **`S-24` il contatore della spesa è spento per default e perde** | **DA APPLICARE — HIGH** |
 >
-> **Restano sette, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
+> **Restano otto, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
 > intervento solo. Ordine consigliato:
-> `FIX-10`+`FIX-13` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-11` → `FIX-12` → `FIX-14`.
+> `FIX-10`+`FIX-13`+`FIX-17` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-11` → `FIX-12` →
+> `FIX-14`.
+>
+> **`FIX-17` sta nel primo gruppo perché è la seconda metà dello stesso problema:** `FIX-10`
+> chiude il rubinetto acceso per default, `FIX-17` accende il contatore spento per default.
+> Applicarne uno solo lascia il sistema o senza tetto o senza misura.
 >
 > **`FIX-15` prima di `FIX-16`**, e il motivo è lo stesso di `FIX-1` prima di `FIX-2`: `FIX-16`
 > aggiunge tre file a `PROTECTED`, ma `PROTECTED` è controllata solo dalla `safe_write` di
@@ -1029,3 +1035,99 @@ i tuoi fix invece di accreditarli.
 build usa quella di `core/reliability.py`, che non la guarda, allungare la lista **non cambia
 niente su quel percorso** — e lascia l'impressione che il buco sia chiuso. È la stessa forma di
 `FIX-1` prima di `FIX-2`.
+
+---
+
+## FIX-17 — il contatore che deve fermare la spesa è spento per default, e quando è acceso perde · **HIGH**
+
+**Finding:** `S-24`, §24 della review. **Ref:** `origin/main` @ `27b767309090`.
+**Riproduzione:** `python3 docs/threat-models/probes/S-24-quota-meter-probe.py`
+(nessuna chiamata di rete: `record_llm_call` scrive solo su file).
+
+`core/monetization.py` è arrivato dopo la mia ultima passata. Cinque difetti, e i primi due si
+sommano a `FIX-10`: **il rubinetto è aperto per default e il contatore è spento per default.**
+
+### FIX-17a — invertire i due default *(è quello che chiude il rischio)*
+
+```python
+# adesso — la quota esiste solo se qualcuno la chiede
+if os.getenv("UJ_ENFORCE_QUOTA", "").strip() != "1":
+    return
+
+# proposta — attiva salvo disattivazione esplicita, come la decisione n.7 sul provider
+if os.getenv("UJ_ENFORCE_QUOTA", "1").strip() == "0":
+    return
+```
+
+```python
+# adesso — con il default "0" il tetto e' SEMPRE soddisfatto
+soft_cap = float(os.environ.get("UJ_LLM_BUDGET_USD", "0") or 0)
+"ok": soft_cap <= 0 or spent < soft_cap,
+
+# proposta — un default numerico piccolo, e nessun ramo che disattiva il tetto per valore
+soft_cap = float(os.environ.get("UJ_LLM_BUDGET_USD", "1") or 1)
+"ok": spent < soft_cap,
+```
+
+Misurato oggi: 50 chiamate contro un limite di 10 non sollevano nulla; 10.000 chiamate con una
+spesa stimata di 10 dollari non fanno sollevare `assert_llm_budget()`.
+
+### FIX-17b — registrare il consumo per TENTATIVO, non per invocazione
+
+`ask_cloud_ai` chiama `record_llm_call()` **una volta**, poi dispaccia a `_call_openai`, che porta
+`@retry(max_attempts=3)`. **Il provider fattura fino a tre richieste e il contatore ne registra
+una.** Sposta la registrazione dentro la funzione decorata, così ogni tentativo si conta.
+
+È `FIX-10c` visto dal lato della misura: là il retry moltiplica l'addebito, qui lo rende invisibile.
+
+### FIX-17c — rendere atomico il check-then-act
+
+`record_llm_call` fa `summarize_usage()` (legge **tutto** il file) → confronta → `record_usage()`
+appende. Fra i due non c'è nulla che escluda gli altri. Otto thread con barriera, limite 10,
+registro a 9 — ne dovrebbe passare **uno**:
+
+```
+riempimento      0 righe · ammessi su 5 run: [1, 3, 8, 6, 4]
+riempimento  5.000 righe · ammessi su 5 run: [4, 5, 6, 4, 5]
+riempimento 20.000 righe · ammessi su 5 run: [8, 8, 8, 6, 8]
+```
+
+I numeri ballano fra un'esecuzione e l'altra e **non** crescono in modo monotono con la lunghezza
+del registro — non ti sto vendendo un andamento che i dati non mostrano. Quello che si ripete è
+che **passano più chiamate del limite, a ogni dimensione**.
+
+Correzione: contatore giornaliero in un file dedicato, aggiornato con `O_APPEND` + lock, oppure
+un update condizionale quando arriverà un DB. Il contratto è già scritto e testato in
+`packages/contracts/src/recovery/active-task-counter.ts` — è lo stesso difetto di `R-RUN-01`, il
+contatore di task attivi, in un posto nuovo.
+
+### FIX-17d — ancorare il registro al modulo
+
+```python
+# adesso — relativo, segue la directory di lavoro
+DEFAULT_USAGE_PATH = Path("workspace/usage.jsonl")
+
+# proposta — come fa gia' core/job_worker.py
+ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_USAGE_PATH = ROOT / "workspace" / "usage.jsonl"
+```
+
+Misurato: la stessa quota scatta da una directory e **non** scatta da un'altra, perché il registro
+è vuoto lì. `job_worker` lo fa già nel modo giusto: `monetization` è l'unico modulo di stato che
+non lo fa, ed è quello che conta i soldi.
+
+### FIX-17e — non chiamare "spesa" un conteggio di chiamate
+
+`spent_usd_est = calls × UJ_LLM_UNIT_COST_USD` (default `0.001`). Una chiamata con contesto lungo
+costa ordini di grandezza più di una corta. Finché non misuri i token, il campo va chiamato per
+quello che è.
+
+### Come verificare
+
+```bash
+python3 docs/threat-models/probes/S-24-quota-meter-probe.py
+```
+
+**Oggi** i blocchi A e B mostrano che i controlli non scattano e il blocco C che passano fino a 8
+chiamate dove ne dovrebbe passare una. **Dopo la correzione**: A e B devono sollevare senza
+impostare nessuna variabile, e C deve dare `1` in ogni run, a tutte e tre le dimensioni.

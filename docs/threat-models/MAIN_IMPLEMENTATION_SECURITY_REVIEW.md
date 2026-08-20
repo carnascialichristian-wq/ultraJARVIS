@@ -1866,3 +1866,145 @@ cui un gate viene spostato in un file nuovo. È lo stesso principio del test di 
   contengono gate, non sul conteggio.
 - **`core/reliability.py` è protetto**, e resta corretto: è lo stesso file di `S-22`, dove il
   difetto è cosa la funzione fa, non chi può riscriverla.
+
+---
+
+## 24. `S-24` — il contatore che dovrebbe fermare la spesa: spento per default, e quando è acceso perde. **HIGH**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+**Riproduzione:** `python3 docs/threat-models/probes/S-24-quota-meter-probe.py`
+(materializza da sé un worktree al ref; `record_llm_call` scrive solo su file, **nessuna
+chiamata di rete**).
+
+`core/monetization.py` è il componente il cui mestiere è impedire che il programma spenda. È
+arrivato dopo la mia ultima passata e non era mai stato revisionato. Ha **cinque** difetti, e i
+primi due si sommano al difetto peggiore già noto.
+
+### 24.1 Le due quote sono SPENTE per default
+
+```python
+def check_job_quota(...):
+    if os.getenv("UJ_ENFORCE_QUOTA", "").strip() != "1":
+        return                      # <-- esce subito
+```
+
+Misurato: **50 chiamate registrate contro un limite di 10, e `check_llm_quota()` non solleva
+nulla.** Impostando `UJ_ENFORCE_QUOTA=1` solleva correttamente — quindi il codice del controllo
+funziona, ed è il suo default a essere spento.
+
+**Sommato a `S-17` il quadro è questo:** il percorso a pagamento è acceso per default
+(`MODEL_PROVIDER="openai"`) e il limitatore è spento per default. Le due decisioni sono state
+prese in momenti diversi, ognuna difendibile da sola, e insieme fanno un sistema che spende
+senza tetto se nessuno configura niente. **È la stessa asimmetria di `S-17`, nel componente che
+esiste per impedirla.**
+
+### 24.2 Anche il tetto di budget è spento per default
+
+```python
+soft_cap = float(os.environ.get("UJ_LLM_BUDGET_USD", "0") or 0)
+...
+"ok": soft_cap <= 0 or spent < soft_cap,
+```
+
+Con il default `"0"`, `soft_cap <= 0` è vero e `ok` è **sempre** `True`. Misurato: **10.000
+chiamate, spesa stimata 10 dollari, `assert_llm_budget()` non solleva.**
+
+Un tetto il cui valore di default lo disattiva non è un tetto conservativo: è un tetto assente
+con l'aspetto di uno presente. L'undicesima occorrenza della forma, e qui il soggetto sono i soldi
+del proprietario.
+
+### 24.3 Il contatore misura **una** chiamata dove il provider ne fattura **tre**
+
+`ask_cloud_ai` registra il consumo *prima* di dispacciare:
+
+```python
+assert_llm_budget()
+record_llm_call(meta={"provider": PROVIDER})     # <-- UNA unità
+...
+return _call_openai(prompt, system=sys_prompt)
+```
+
+e `_call_openai` porta `@retry(max_attempts=3, delay=1.0, backoff=1.5, exceptions=(Exception,))`.
+
+**Su una chiamata che fallisce due volte e riesce alla terza, il provider fattura tre richieste
+e il contatore ne registra una.** Il rapporto di sottostima è esattamente il numero di tentativi.
+È lo stesso difetto di `FIX-10c` visto dal lato della misura invece che da quello della spesa: là
+il retry moltiplica l'addebito, qui lo rende invisibile.
+
+### 24.4 Il contatore non è atomico — misurato
+
+`record_llm_call` fa `check_llm_quota()` → `summarize_usage()` legge **tutto** il file → confronta
+→ e solo dopo `record_usage()` appende. Fra il controllo e l'incremento non c'è niente che escluda
+gli altri.
+
+Otto thread con barriera, limite `free` a 10, registro precaricato a 9 — ne dovrebbe passare
+**esattamente uno**:
+
+| Righe di riempimento | Lettura | Ammessi su 5 run | Oltre il limite |
+|---:|---:|---|---|
+| 0 | 0,1 ms | `[1, 3, 8, 6, 4]` | fino a **+7** |
+| 5.000 | 9,6 ms | `[4, 5, 6, 4, 5]` | fino a **+5** |
+| 20.000 | 30,5 ms | `[8, 8, 8, 6, 8]` | fino a **+7** |
+
+La distanza dal limite è **fissa** in tutte e tre le righe: cambia solo la lunghezza del registro,
+riempito con un evento che la quota non conta. **A tutte e tre le dimensioni passano più chiamate
+del limite.**
+
+**Onestà sulla misura:** l'esito varia da run a run e **non** cresce in modo monotono con la
+lunghezza del registro — a 5.000 righe è a volte più mite che a 0. Non affermo un andamento che i
+numeri non mostrano. Ciò che si ripete è il difetto, non la sua ampiezza.
+
+**È `R-RUN-01`, di nuovo.** Il contatore di task attivi non atomico che ho chiuso in `UJ-RCV-001`
+con `AtomicActiveTaskCounter` e il test `T-DG-4b`: stessa forma — `leggi → fai altro → scrivi` —
+stessa conseguenza, e stavolta il limite che perde è quello sulla spesa. La regola l'avevo già
+scritta: **fra il controllo del limite e l'incremento non deve esistere un'operazione che ceda il
+controllo.**
+
+### 24.5 Il registro dei consumi ha un path relativo
+
+```python
+DEFAULT_USAGE_PATH = Path("workspace/usage.jsonl")
+```
+
+Relativo, quindi risolto contro la **directory di lavoro corrente**. Misurato: 20 chiamate
+registrate da una directory fanno scattare la quota; lo stesso identico comando lanciato da
+un'altra directory **non la fa scattare**, perché il registro è vuoto lì.
+
+`core/job_worker.py` fa invece `ROOT = Path(__file__).resolve().parent.parent`, cioè un path
+assoluto ancorato al modulo. **`monetization` è l'unico modulo di stato che non lo fa**, ed è
+quello che conta i soldi. Non serve malizia: basta lanciare `uj` da un'altra cartella.
+
+### 24.6 Il costo è stimato a chiamate, non a token
+
+```python
+unit_cost = float(os.environ.get("UJ_LLM_UNIT_COST_USD", "0.001") or 0.001)
+spent = calls * unit_cost
+```
+
+Una chiamata con un contesto lungo costa ordini di grandezza più di una corta, e il modello lo
+ignora. Il numero che il tetto confronta non è la spesa: è il numero di chiamate moltiplicato per
+una costante scritta a mano. Va detto perché il campo si chiama `spent_usd_est` e verrà letto come
+una spesa.
+
+### 24.7 Correzione proposta — `FIX-17`
+
+Nell'ordine, e il primo è quello che chiude il rischio:
+
+1. **invertire i due default**: quote e tetto attivi salvo disattivazione esplicita, come la
+   decisione n. 7 ha fatto per il provider;
+2. **registrare il consumo per tentativo**, dentro `_call_openai`, non una volta per invocazione;
+3. **rendere atomico il check-then-act**: contatore giornaliero in un file dedicato aggiornato con
+   `O_APPEND` + lock, oppure un update condizionale quando arriverà un DB. Non serve inventarlo:
+   il contratto è già in `packages/contracts/src/recovery/active-task-counter.ts`;
+4. **ancorare `DEFAULT_USAGE_PATH`** al modulo, come fa `job_worker`;
+5. **rinominare `spent_usd_est`** in qualcosa che non prometta dollari finché non li misura.
+
+### 24.8 Che cosa NON affermo
+
+- **Non è una vulnerabilità**: nessun terzo può sfruttarla. È un difetto di contenimento del
+  costo, e conta perché il costo zero è il vincolo che il proprietario ha posto come non
+  negoziabile.
+- **Oggi non spende comunque**, perché `import openai` fallisce in questo ambiente. È il
+  contenimento per assenza già registrato in `S-17`, non una difesa.
+- **Non ho eseguito nessuna chiamata reale** e non ho installato `openai`.
+- **Non ho toccato una riga** di `core/monetization.py` né di `cloud_bridge.py`.

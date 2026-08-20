@@ -73,7 +73,10 @@ function auditOne(entry) {
     writeFileSync(join(work, "review-candidate.json"), raw);
     if (pinned && refs.length) {
       // SOLO i path citati, e solo se il commit è raggiungibile in questo repository
-      try { git(["--work-tree", work, "checkout", pinned, "--", ...refs], { stdio: "ignore" }); }
+      // `-C <worktree>`, NON `--work-tree=<worktree>`: la seconda forma scrive nell'INDICE
+      // del repository principale e ha gia' prodotto un commit di 38 file invece di 4 (E39).
+      // Verificato per esperimento: con `-C` l'indice principale resta intatto.
+      try { execFileSync("git", ["-C", work, "checkout", pinned, "--", ...refs], { stdio: "ignore" }); }
       catch { /* un artefatto assente diventa un errore del validatore, ed è giusto così */ }
     }
     let out = "", code = 0;

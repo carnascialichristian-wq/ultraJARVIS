@@ -238,8 +238,8 @@ sui primi 20 findings, **12 chiusi, 1 superato, 1 parziale, 6 aperti** (`S-06` �
 policy, non un bug). **`S-03` e `S-15`, che i miei documenti davano per non chiusi, lo sono** —
 la mia lista sovrastimava di un terzo il lavoro residuo di Grok.
 
-**La sera del 19 se ne sono aggiunti tre, cercando difetti NUOVI nelle 2.171 righe arrivate su
-`main` dopo la sessione 4.** I findings sono ora **23** e gli aperti **9**:
+**La sera del 19 se ne sono aggiunti quattro, cercando difetti NUOVI nel codice arrivato su
+`main` dopo la sessione 4.** I findings sono ora **24** e gli aperti **10**:
 
 - **`S-21`** (MEDIUM, latente) — `PRIVILEGED_KWARGS` è una **denylist**: cinque funzioni prendono
   `real=`, che scavalca i gate d'ambiente. Oggi non è sfruttabile perché tutte e cinque sono
@@ -249,8 +249,16 @@ la mia lista sovrastimava di un terzo il lavoro residuo di Grok.
   `guarded_write`. Attenzione: **`slugify` è sicuro**, non correggere quello.
 - **`S-23`** (MEDIUM) — `PROTECTED` nomina `core/natural_tasks.py`, che è un guscio di 26 righe:
   la logica sta in `nt_runner.py`, non protetto, e contiene `promote_job_to_tools`.
+- **`S-24`** (HIGH) — `core/monetization.py`, cioè il componente che deve impedire la spesa:
+  **le due quote e il tetto di budget sono spenti per default**, il contatore registra **una**
+  chiamata dove il retry ne fattura **tre**, il check-then-act non è atomico (misurato: fino a 8
+  ammesse dove ne dovrebbe passare 1), e il registro dei consumi ha un path **relativo**, quindi
+  cambiare cartella azzera la quota.
 
 **`FIX-15` va applicato PRIMA di `FIX-16`**, per la stessa ragione di `FIX-1` prima di `FIX-2`.
+**`FIX-17` va nello stesso gruppo di `FIX-10`:** uno chiude il rubinetto acceso per default,
+l'altro accende il contatore spento per default — applicarne uno solo lascia il sistema o senza
+tetto o senza misura.
 
 **E la terza porta a pagamento si è aperta:** `UJ_EMBEDDING=1` porta a una chiamata fatturabile
 via `core/memory.py`. Ora sono tre — planner, writer, embedding — e **`MODEL_PROVIDER=local` le
@@ -260,8 +268,9 @@ chiude tutte e tre**, perché condividono il ponte. Misurato, senza chiamate rea
 Dettaglio con comandi di riproduzione: `docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
 (§19 le tre porte, §20 lo stato consolidato).
 Correzioni per Grok: `docs/threat-models/GROK_FIX_LIST.md` — **tabella di stato in cima**, restano
-**sette**: `FIX-10`…`FIX-16`, e **`FIX-10` e `FIX-13` sono lo stesso ponte**. Ordine consigliato:
-`FIX-10`+`FIX-13` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-11` → `FIX-12` → `FIX-14`.
+**otto**: `FIX-10`…`FIX-17`, e **`FIX-10` e `FIX-13` sono lo stesso ponte**. Ordine consigliato:
+`FIX-10`+`FIX-13`+`FIX-17` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-11` → `FIX-12` →
+`FIX-14`.
 
 ### Decisione n. 7 — APPROVATA dal proprietario
 
