@@ -5331,6 +5331,58 @@ giusta. Un controllo di costo che passa perché nessuno ha ancora caricato `net`
 `scripts/integration-gate.sh` (RTE aggiunta) · `TASKCLAUDE.md` §87.
 **15 hash intatti, tests/contracts invariata a 140, runtime/index.ts non toccato.**
 
+
+## Sessione 6, quarantesima parte — il secondo contratto mancante: DEC (decomposizione), sette casi d'errore
+
+Continuando a costruire i cinque sottosistemi che la demo esercitava con logica `[demo]`, ne ho
+fatto un secondo per intero: la **decomposizione** (`DEC`), fedele al blueprint §16. È il
+meglio-specificato dei rimasti — sette casi d'errore nominati e una funzione pura — e ne avevo già
+implementato un pezzo (`DEC-E04`) come script in sessione precedente.
+
+### Che cosa ho costruito
+
+`packages/contracts/src/decomposition/decomposition.ts` — `TaskNode`, `Decomposition`,
+`validateDecomposition`, fedeli a §16.3/§16.5. Tutti e sette gli errori del §16.5:
+
+- `DEC-E01` ciclo nel DAG (ordinamento topologico) · `DEC-E02` somma dei pesi dei figli ≠ padre ·
+  `DEC-E03` `reviewer === owner` · `DEC-E04` criterio non falsificabile (la logica che avevo scritto
+  in `check-acceptance-criteria.mjs`, portata nel contratto) · `DEC-E05` depth/fan-out oltre i tetti
+  · `DEC-E06` capability fuori dall'indice chiuso · `DEC-E07` task irraggiungibile dalla radice.
+
+**Rifiuto in blocco**, come impone §16.5: `validateDecomposition` restituisce *tutte* le infrazioni,
+mai una decomposizione parzialmente accettata — una a metà lascia task orfani, ed è peggio di
+nessuna. 12 test in `tests/decomposition/`, tutti verdi, uno per ogni errore più il percorso felice,
+il rifiuto in blocco e la falsificabilità.
+
+### Scoping identico al contratto RTE
+
+Superficie **separata**: non esportata da `runtime/index.ts` (uno dei 15 hashati), test fuori da
+`tests/contracts/`, conteggio 140 invariato, 15 hash intatti a `b2b32733`. Verificato. Anticipo
+M2/M3, non una modifica alla review in corso.
+
+La demo §21 ora usa questo contratto vero per il **passo 1**: costruisce una `Decomposition` di
+quattro nodi e la **valida col contratto reale** invece di simulare. Restano tre sottosistemi
+demo-minimali: `SEL` (selezione), `FBK` (fallback), `CNF` (conflitto, già in parte coperto
+dall'`AtomicActiveTaskCounter` reale al caso N4).
+
+### Un conteggio stantio nella mia stessa demo, corretto
+
+Portando la decomposizione a 4 nodi, l'etichetta del passo 2 diceva ancora `3/3 ASSIGNED` — un
+numero fisso rimasto indietro (trappola 24, nel mio output). Sostituito con un conteggio dinamico
+`${assigned.length}/${assigned.length}`, così non può più scadere quando la decomposizione cambia.
+
+### Stato dei cinque contratti mancanti
+
+**RTE ✓ · DEC ✓ · restano SEL, FBK, CNF.** La demo ora poggia su contratti reali per 7 dei suoi 13
+controlli (passo 1 DEC, 5 kill, 6 idempotency, 8 ledger, N1 checkSpawn, N2 RTE, N4 counter).
+
+### File
+
+`packages/contracts/src/decomposition/` (nuovo) · `tests/decomposition/decomposition.test.mjs`
+(12 test) · `packages/contracts/demo/mission-demo.mjs` (passo 1 reale, etichetta passo 2 corretta)
+· `scripts/integration-gate.sh` (DEC aggiunta) · `TASKCLAUDE.md` §88.
+**15 hash intatti, tests/contracts invariata a 140, runtime/index.ts non toccato.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5764,6 +5816,18 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  BH) 2026-08-19 — COSTRUITO IL CONTRATTO DEC (decomposizione, §16), secondo dei 5.
+     packages/contracts/src/decomposition/ + tests/decomposition/ (12 test verdi)
+     GIA' FATTO, NON RIFARE. Fedele al blueprint §16.3/§16.5, non inventato.
+     validateDecomposition, RIFIUTO IN BLOCCO, tutti e 7 gli errori: DEC-E01 ciclo,
+     E02 pesi, E03 reviewer==owner, E04 criterio non falsificabile (portato da
+     check-acceptance-criteria.mjs), E05 depth/fan-out, E06 capability fuori indice,
+     E07 irraggiungibile. Superficie SEPARATA come RTE: non tocca i 15 hashati,
+     test fuori da tests/contracts/, 140 invariato, 15 hash intatti a b2b32733.
+     La demo §21 passo 1 ora VALIDA una Decomposition reale col contratto (era [demo]).
+     STATO 5 mancanti: RTE ok, DEC ok, restano SEL, FBK, CNF.
+     Corretto un conteggio stantio (3/3 -> dinamico) nell'etichetta del passo 2 demo.
 
   BG) 2026-08-19 — COSTRUITO IL CONTRATTO RTE (routing, §18), primo dei 5 mancanti.
      packages/contracts/src/routing/adapter-routing.ts + tests/routing/ (7 test verdi)

@@ -36,6 +36,7 @@ import {
 } from "../dist/runtime/index.js";
 import { AtomicActiveTaskCounter } from "../dist/recovery/index.js";
 import { admitAdapterRegistration } from "../dist/routing/index.js";
+import { validateDecomposition } from "../dist/decomposition/index.js";
 
 import net from "node:net";
 
@@ -96,24 +97,34 @@ function emit(type, payload) {
 
 // === PERCORSO FELICE — i 9 osservabili =======================================
 
-// 1) decomposizione [demo]: 3 nodi, contentHash stabile su due esecuzioni
-const decompose = (mission) => {
-  const nodes = ["read-input", "echo-transform", "write-and-verify"].map((name, i) => ({
-    id: `n${i + 1}`, name, contentHash: sha256(`${mission}|${name}`),
-  }));
-  return nodes;
-};
+// 1) decomposizione: 3 nodi, VALIDATI dal contratto DEC reale (blueprint §16)
 const MISSION = "produrre out/hello.txt contenente ok, e verificarlo";
-const nodesA = decompose(MISSION);
-const nodesB = decompose(MISSION);
-check(1, "decomposizione: 3 nodi, contentHash stabile su due esecuzioni",
-  nodesA.length === 3 && nodesA.every((n, i) => n.contentHash === nodesB[i].contentHash),
-  `${nodesA.length} nodi`);
+const crit = (id, text) => ({ id, text });
+const decompose = (mission) => ({
+  missionId: sha256(mission).slice(0, 12),
+  nodes: [
+    { taskId: "root", parentId: null, depth: 0, weight: 3, owner: "CLAUDE", reviewer: "GEMINI",
+      requiredCapabilities: ["echo"], acceptanceCriteria: [crit("c0", "`out/hello.txt` contains `ok`, exit code 0")], dependsOn: [] },
+    { taskId: "n1-read", parentId: "root", depth: 1, weight: 1, owner: "CLAUDE", reviewer: "GEMINI",
+      requiredCapabilities: ["echo"], acceptanceCriteria: [crit("c1", "input letto, `plan.md` scritto")], dependsOn: [] },
+    { taskId: "n2-echo", parentId: "root", depth: 1, weight: 1, owner: "CLAUDE", reviewer: "GEMINI",
+      requiredCapabilities: ["echo"], acceptanceCriteria: [crit("c2", "risultato di `echo@1` non vuoto")], dependsOn: ["n1-read"] },
+    { taskId: "n3-write", parentId: "root", depth: 1, weight: 1, owner: "CLAUDE", reviewer: "GEMINI",
+      requiredCapabilities: ["echo"], acceptanceCriteria: [crit("c3", "`out/hello.txt` verificato, exit code 0")], dependsOn: ["n2-echo"] },
+  ],
+});
+const DEC_CTX = { capabilityIndex: ["echo"], ceilings: { maxDepth: 3, maxFanOut: 5 } };
+const decA = decompose(MISSION);
+const decB = decompose(MISSION);
+const stable = sha256(JSON.stringify(decA.nodes)) === sha256(JSON.stringify(decB.nodes));
+const validated = validateDecomposition(decA, DEC_CTX).admitted === true;
+check(1, "decomposizione: DAG valido (contratto DEC) e stabile su due esecuzioni",
+  decA.nodes.length === 4 && stable && validated, `${decA.nodes.length} nodi, DEC ammette`);
 
 // 2) selezione [demo]: tutti ASSIGNED, nessuna stringa di vendor nell'input
 const VENDOR = /openai|anthropic|gpt-4|claude-|gemini|api\.stripe/i;
-const assigned = nodesA.map((n) => ({ ...n, state: "ASSIGNED" }));
-check(2, "selezione: 3/3 ASSIGNED, nessun vendor nell'input",
+const assigned = decA.nodes.map((n) => ({ ...n, state: "ASSIGNED" }));
+check(2, `selezione: ${assigned.length}/${assigned.length} ASSIGNED, nessun vendor nell'input`,
   assigned.every((n) => n.state === "ASSIGNED") && !VENDOR.test(MISSION));
 
 // 3) esecuzione nodo 1 con echo@1: eventi tool.invoked + tool.completed

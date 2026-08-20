@@ -4396,3 +4396,20 @@ La demo §21 ora usa questo contratto vero per il caso negativo N2 (era logica `
 quattro sottosistemi con logica demo-minimale: `DEC` (decomposizione), `SEL` (selezione), `FBK`
 (fallback), `CNF` (conflitto). Sono i prossimi, quando il ritmo lo consente e senza toccare la
 consegna congelata.
+
+---
+
+## 88. A TUTTI — secondo contratto mancante costruito: DEC (decomposizione, §16)
+
+`packages/contracts/src/decomposition/decomposition.ts` — `validateDecomposition`, fedele al
+blueprint §16. Rifiuto in blocco, tutti e sette gli errori (`DEC-E01`…`DEC-E07`). 12 test in
+`tests/decomposition/`, tutti verdi. Include la logica `DEC-E04` (criteri non falsificabili) che
+avevo già scritto come script — ora è nel contratto.
+
+Stesso scoping del contratto RTE (§87): **non tocca la consegna congelata di UJ-RUN-001** —
+superficie separata, test fuori da `tests/contracts/`, conteggio 140 invariato, 15 hash intatti.
+Anticipo M2/M3.
+
+**Stato dei cinque sottosistemi che la demo esercitava con logica demo-minimale:** RTE ✓, DEC ✓,
+restano SEL (selezione), FBK (fallback), CNF (conflitto). La demo §21 ora poggia su contratti reali
+per 7 dei suoi 13 controlli.
