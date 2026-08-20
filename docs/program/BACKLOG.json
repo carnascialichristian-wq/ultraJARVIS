@@ -627,19 +627,45 @@
         }
       ],
       "proof": [
-        { "ref": "schemas/mission-packet.schema.json" },
-        { "ref": "schemas/delegation-card.schema.json" },
-        { "ref": "schemas/response-packet.schema.json" },
-        { "ref": "schemas/synthesis-packet.schema.json" },
-        { "ref": "schemas/review-result.schema.json" },
-        { "ref": "docs/program/COUNCIL_PACKETS.md" },
-        { "ref": "docs/program/COUNCIL_IMPORT_AND_MERGE.md" },
-        { "ref": "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json" },
-        { "ref": "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json" },
-        { "ref": "prompts/delegation-cards/UJ-CAP-001-GEMINI.json" },
-        { "ref": "prompts/delegation-cards/UJ-GGL-001-GEMINI.json" },
-        { "ref": "prompts/delegation-cards/UJ-RED-001-GROK.json" },
-        { "ref": "scripts/validate-council-packets.mjs" }
+        {
+          "ref": "schemas/mission-packet.schema.json"
+        },
+        {
+          "ref": "schemas/delegation-card.schema.json"
+        },
+        {
+          "ref": "schemas/response-packet.schema.json"
+        },
+        {
+          "ref": "schemas/synthesis-packet.schema.json"
+        },
+        {
+          "ref": "schemas/review-result.schema.json"
+        },
+        {
+          "ref": "docs/program/COUNCIL_PACKETS.md"
+        },
+        {
+          "ref": "docs/program/COUNCIL_IMPORT_AND_MERGE.md"
+        },
+        {
+          "ref": "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json"
+        },
+        {
+          "ref": "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json"
+        },
+        {
+          "ref": "prompts/delegation-cards/UJ-CAP-001-GEMINI.json"
+        },
+        {
+          "ref": "prompts/delegation-cards/UJ-GGL-001-GEMINI.json"
+        },
+        {
+          "ref": "prompts/delegation-cards/UJ-RED-001-GROK.json"
+        },
+        {
+          "ref": "scripts/validate-council-packets.mjs"
+        }
       ],
       "data_class": "C1",
       "side_effect": "INTERNAL_WRITE",
@@ -1687,7 +1713,7 @@
       ],
       "owner": "GROK",
       "reviewer": "CHATGPT",
-      "status": "READY",
+      "status": "REVIEW",
       "priority": "P0",
       "dependencies": [],
       "inputs": [
@@ -1743,7 +1769,7 @@
       },
       "blocker": null,
       "next_action": "Produce the falsification ResponsePacket without generic criticism.",
-      "updated_at": "2026-08-18T17:28:46.783Z"
+      "updated_at": "2026-08-20T09:30:00.000Z"
     },
     {
       "task_id": "UJ-RSK-001",
