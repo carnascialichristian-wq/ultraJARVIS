@@ -17,11 +17,11 @@
 
 > ## STATO DELLE CORREZIONI — riverificato su `origin/main` @ `27b767309090`, 2026-08-19
 >
-> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su diciotto sono
+> **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su diciannove sono
 > chiuse — otto applicate e una superata — verificate da me eseguendo, non leggendo. Lavorare su
 > una di quelle è tempo perso. Dettaglio e comandi in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
-> §20. Le cinque più recenti (`FIX-14`…`FIX-18`) sono del 19 agosto e non sono ancora state
-> viste da nessuno: §21, §22, §23, §24, §25 della stessa review.
+> §20. Le sei più recenti (`FIX-14`…`FIX-19`) sono del 19 agosto e non sono ancora state viste
+> da nessuno: §21…§26 della stessa review. **`FIX-19` è quella da leggere per prima.**
 >
 > | FIX | Finding | Stato al ref corrente |
 > |---|---|---|
@@ -43,11 +43,13 @@
 > | **`FIX-16`** | **`S-23` `PROTECTED` nomina il vecchio posto del codice** | **DA APPLICARE** |
 > | **`FIX-17`** | **`S-24` il contatore della spesa è spento per default e perde** | **DA APPLICARE — HIGH** |
 > | **`FIX-18`** | **`S-25` il webhook di pagamento non verifica la firma** | **DA APPLICARE — HIGH, latente** |
+> | **`FIX-19`** | **`S-26` `execute_graph` esegue codice generato senza `scan_text`** | **DA APPLICARE — HIGH** |
 >
-> **Restano nove, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
+> **Restano dieci, e due sono lo stesso ponte.** `FIX-10` e `FIX-13` si chiudono con un
 > intervento solo. Ordine consigliato:
-> `FIX-10`+`FIX-13`+`FIX-17` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-18` (pagamenti) →
-> `FIX-11` → `FIX-12` → `FIX-14`.
+> **`FIX-19` per primo** (esecuzione di codice generato senza gate: e' una riga e chiude il caso
+> peggiore) → `FIX-10`+`FIX-13`+`FIX-17` (costo) → `FIX-15`+`FIX-16` (scrittura) →
+> `FIX-18` (pagamenti) → `FIX-11` → `FIX-12` → `FIX-14`.
 >
 > **`FIX-17` sta nel primo gruppo perché è la seconda metà dello stesso problema:** `FIX-10`
 > chiude il rubinetto acceso per default, `FIX-17` accende il contatore spento per default.
@@ -1242,3 +1244,97 @@ python3 docs/threat-models/probes/S-25-billing-webhook-probe.py
 **Oggi** accetta quattro contraffazioni su cinque. **Dopo la correzione** devono essere respinte
 tutte e cinque, e un test nuovo deve mostrare che una firma **calcolata correttamente** passa —
 altrimenti hai chiuso il webhook invece di autenticarlo.
+
+---
+
+## FIX-19 — il gate di safety è sulla copia, non sull'esecuzione · **HIGH** *(applicare per PRIMO)*
+
+**Finding:** `S-26`, §26 della review. **Ref:** `origin/main` @ `27b767309090`.
+**Riproduzione:** `python3 docs/threat-models/probes/S-26-graph-exec-probe.py`
+(tutto in directory temporanee, nessuna rete, nessun comando di sistema).
+
+### Il fatto, e comincio da quello che hai fatto bene
+
+`FIX-1` ha reso `promote_job_to_tools` un gate vero, e **funziona**: legge `tool.py`, chiama
+`scan_text`, rifiuta sugli hit. L'ho verificato.
+
+Ma quella funzione **copia** un file. La funzione che quel codice lo **esegue** è
+`core/graph_exec.execute_graph`, e lì il gate non c'è: zero occorrenze di `scan_text` o `safety`
+in tutto il file.
+
+| Punto | Operazione | `scan_text`? |
+|---|---|---|
+| `nt_helpers.py:48-53` | genera (corpo del writer LLM, solo con `UJ_WRITER_LLM=1`) | **sì** |
+| `nt_runner.py:250` | **copia** in `tools/` | **sì** |
+| `graph_exec.py:64` | **esegue** (`spec.loader.exec_module`) | **no** |
+
+Misurato: un modulo che contiene `eval(` e `rm -rf` — due dei pattern che il **tuo** scanner
+riconosce — viene caricato ed eseguito senza che nulla lo fermi. Interrogando `scan_text` sullo
+stesso testo: `['rm -rf', 'eval(']`. **Il gate esiste, è solo assente da quel percorso.**
+
+E il codice a livello di modulo gira dentro `exec_module`, cioè **prima** che `run()` venga
+chiamata: non basta controllare che cosa fa `run()`.
+
+### Ed è esposto direttamente dalla CLI
+
+`uj_cli.py:57` — `sub.add_parser("graph"); g.add_argument("job_dir")` → `execute_graph(args.job_dir)`.
+Una directory arbitraria, ogni `.py` elencato nel suo `deps.json`, nessun contenimento.
+Ed è anche automatico: `nt_runner.py:61-64` lo chiama a ogni job multi-file.
+
+### FIX-19a — la riga che chiude il caso peggiore
+
+```python
+# core/graph_exec.py, dentro _load_module, PRIMA di exec_module
+from advisors.safety import scan_text
+src = path.read_text(encoding="utf-8")
+hits = scan_text(src)
+if hits:
+    raise GraphError(f"refusing to execute {path.name}: dangerous patterns {hits}")
+```
+
+**Necessaria ma non sufficiente**, e te lo dico perché non ti basi solo su questa: lo scanner ha
+evasioni note — nel mio test di sessione 3 ne passavano 2 su 4 (`getattr(__builtins__,'ev'+'al')`
+e `subprocess.Popen`). È il minimo, non il contenimento.
+
+### FIX-19b — validare i nomi che arrivano da `deps.json`
+
+```python
+py_mods = [m for m in modules if m.endswith(".py") and m != "test_tool.py"]
+...
+path = job_dir / name          # `name` viene da un file dati, non validato
+```
+
+Il filtro guarda solo il suffisso: `../fuori.py` finisce per `.py` e passa. Misurato — un modulo
+**fuori dalla job dir** è stato caricato ed eseguito (`loaded: ['../fuori.py']`).
+
+```python
+if "/" in name or "\\" in name or ".." in Path(name).parts:
+    raise GraphError(f"invalid module name in deps.json: {name!r}")
+target = (job_dir / name).resolve()
+if not str(target).startswith(str(job_dir.resolve())):
+    raise GraphError(f"module escapes job dir: {name!r}")
+```
+
+### FIX-19c — contenere `job_dir` e ripulire l'ambiente
+
+`sys.path.insert(0, job_dir)` mette la job dir **in testa** e nessuno la toglie: dopo due job,
+`sys.path[:2]` sono due job dir. E `sys.modules[path.stem] = mod` registra il modulo con il nome
+nudo del file, quindi un `registry.py` generato prende il posto di quello vero per ogni `import`
+successivo nello stesso processo.
+
+Ripulisci in un `finally`, oppure carica con un nome qualificato (`f"ujjob_{job_id}_{stem}"`).
+
+### FIX-19d — conferma esplicita per `uj graph` fuori dalla radice dei job
+
+È l'unico punto in cui un umano sceglie di eseguire codice arbitrario: che la scelta sia esplicita.
+
+### Come verificare
+
+```bash
+python3 docs/threat-models/probes/S-26-graph-exec-probe.py
+```
+
+**Oggi** il blocco A esegue il modulo sospetto e il blocco C esegue un modulo fuori dalla job dir.
+**Dopo la correzione** entrambi devono diventare un `GraphError` esplicito, e il blocco B deve
+continuare a mostrare che lo scanner riconosce quel testo — se smette, hai rotto lo scanner invece
+di collegarlo.

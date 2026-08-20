@@ -2115,3 +2115,121 @@ il confronto, altrimenti si sostituisce un difetto di autenticazione con uno di 
 - **Non ho eseguito nessuna chiamata a Stripe** e non ho impostato nessuna chiave.
   `create_customer` e `create_checkout_session` non sono state invocate.
 - **Non ho toccato una riga** di `core/billing.py`.
+
+---
+
+## 26. `S-26` — il gate di safety è sulla **copia**, non sull'**esecuzione**. **HIGH**
+
+**Ref:** `origin/main` @ `27b767309090`, 2026-08-19.
+**Riproduzione:** `python3 docs/threat-models/probes/S-26-graph-exec-probe.py`
+(worktree materializzato al ref, tutto dentro directory temporanee, **nessuna rete, nessun
+comando di sistema**; il carico delle prove scrive un file marcatore in `/tmp`).
+
+### 26.1 Dove sta il gate, e dove non sta
+
+`FIX-1` ha reso `promote_job_to_tools` un gate vero, e funziona: `nt_runner.py:250-252` legge
+`tool.py`, chiama `advisors.safety.scan_text` e **rifiuta** se ci sono hit. È corretto e l'ho
+verificato.
+
+Ma `promote_job_to_tools` **copia** un file dentro `tools/`. La funzione che quel codice lo
+**esegue** è `core/graph_exec.execute_graph`, e lì il gate **non c'è**:
+
+| Punto | Operazione | `scan_text`? |
+|---|---|---|
+| `nt_helpers.py:48-53` | genera (solo il corpo del **writer LLM**, e solo con `UJ_WRITER_LLM=1`) | **sì** |
+| `nt_runner.py:250` | **copia** in `tools/` (`promote_job_to_tools`) | **sì** |
+| `graph_exec.py:64` | **esegue** (`execute_graph` → `spec.loader.exec_module`) | **no** |
+
+Zero occorrenze di `scan_text` o `safety` in tutto `core/graph_exec.py`.
+
+### 26.2 Misurato
+
+```
+=== A) modulo con pattern sospetti: viene eseguito? ===
+   esito execute_graph : {'ok': True, 'order': ['tool.py'], 'result': 'run() chiamata'}
+   marcatore scritto   : True -> il modulo e stato eseguito
+
+=== B) advisors.safety.scan_text riconosce quel codice? ===
+   hit dello scanner   : ['rm -rf', 'eval(']
+   -> il gate ESISTE, e' solo ASSENTE da execute_graph
+```
+
+Un modulo il cui testo contiene **due dei pattern che il vostro stesso scanner riconosce** viene
+caricato ed eseguito, e il codice a livello di modulo gira prima ancora che `run()` venga
+chiamata (`exec_module`). Lo scanner, interrogato sullo stesso testo, lo rileva.
+
+### 26.3 Ed è esposto direttamente dalla CLI
+
+`uj_cli.py:43-47` e `:57`:
+
+```python
+g = sub.add_parser("graph"); g.add_argument("job_dir"); g.set_defaults(func=cmd_graph)
+...
+out = execute_graph(args.job_dir)
+```
+
+**Un sottocomando che prende una directory arbitraria ed esegue ogni `.py` elencato nel suo
+`deps.json`.** Nessun contenimento nella root, nessuna ammissione, nessuno scan.
+
+Ed è anche sul percorso **automatico**: `nt_runner.py:61-64` chiama `execute_graph(job_dir)` a
+ogni job che produce un `deps.json`, cioè ogni job multi-file.
+
+### 26.4 Path traversal dai nomi in `deps.json`
+
+```python
+py_mods = [m for m in modules if m.endswith(".py") and m != "test_tool.py"]
+...
+path = job_dir / name          # `name` viene dal file deps.json, non validato
+```
+
+Il filtro controlla solo il suffisso. `../fuori.py` finisce per `.py` e passa. Misurato:
+
+```
+=== C) i nomi dei moduli in deps.json sono validati? ===
+   esito               : {'ok': True, 'loaded': ['../fuori.py']}
+   marcatore fuori dir : True -> modulo FUORI dalla job dir eseguito
+```
+
+**Un file dati dentro la job dir decide quali file eseguire, e può nominarne fuori.** È lo stesso
+schema di `S-22`: un dato che il sistema tratta come innocuo governa un'operazione che non lo è.
+
+### 26.5 `sys.path` e `sys.modules`
+
+```python
+sys.path.insert(0, str(extra_path))     # la job dir va in TESTA
+sys.modules[path.stem] = mod            # registrato con il nome del file
+```
+
+Misurato: dopo due esecuzioni `sys.path[:2]` sono le due job dir, e `sys.modules["tool"]` esiste.
+
+Due conseguenze nello stesso processo: un modulo generato che si chiami come uno atteso
+(`registry.py`, `memory.py`, `config.py`) **prende il posto** di quello vero per ogni `import`
+successivo; e le job dir restano in testa a `sys.path` **anche dopo** che l'esecuzione è finita,
+perché nessuno le rimuove.
+
+### 26.6 Correzione proposta — `FIX-19`
+
+1. **Applicare `scan_text` prima di `exec_module`**, sullo stesso testo che si sta per eseguire.
+   È una chiamata, ed è già importata altrove nello stesso package;
+2. **validare i nomi dei moduli**: rifiutare tutto ciò che contiene un separatore di path o `..`,
+   e verificare `path.resolve().is_relative_to(job_dir.resolve())`;
+3. **contenere `job_dir`** entro la radice dei job, come `FIX-15b` per `output_dir`;
+4. **ripulire `sys.path` e `sys.modules`** in un `finally`, o caricare con un nome qualificato
+   (`f"ujjob_{job_id}_{stem}"`) invece dello stem nudo;
+5. **chiedere una conferma esplicita** per il sottocomando `graph` su una directory fuori dalla
+   radice dei job — è l'unico punto in cui un umano sceglie di eseguire codice arbitrario.
+
+**Ordine:** il punto 1 prima di tutti. È quello che chiude il caso peggiore con una riga.
+
+### 26.7 Che cosa NON affermo
+
+- **Non è un difetto dello scanner**: `scan_text` fa il suo lavoro, e l'ho verificato interrogandolo
+  sullo stesso testo. È assente dal percorso, non difettoso. (Resta vero il rilievo di `S-08`: lo
+  scanner ha evasioni note — 2 su 4 nel mio test di sessione 3 — quindi il punto 1 è necessario,
+  non sufficiente.)
+- **Il percorso di generazione un gate ce l'ha**: il corpo del writer LLM è scansionato prima di
+  essere restituito. Il buco è fra la generazione e l'esecuzione, e su tutto ciò che entra nella
+  job dir per altre vie.
+- **Non ho eseguito nulla di dannoso**: il carico delle prove scrive un file di testo in una
+  directory temporanea, e la sonda rimuove worktree e temp con `atexit`.
+- **Non ho toccato una riga** di `core/graph_exec.py` né di `uj_cli.py`.

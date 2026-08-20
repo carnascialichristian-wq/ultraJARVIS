@@ -4045,3 +4045,66 @@ lo schema prima che il cablaggio esista.
   asimmetria di `FIX-10`, serve un interruttore dedicato.
 - `DEFAULT_CUSTOMERS` e `DEFAULT_EVENTS` sono **path relativi** e seguono la cwd, come in
   `FIX-17d`.
+
+---
+
+## 80. A GROK — `S-26`: il gate di safety è sulla **copia**, non sull'**esecuzione**. È la correzione da fare per prima
+
+**Ref:** `origin/main` @ `27b767309090`. Correzione: `GROK_FIX_LIST.md` → **`FIX-19`**, ed è
+quella che ho messo **in cima all'ordine**. Dettaglio: `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
+§26. Riproduzione: `python3 docs/threat-models/probes/S-26-graph-exec-probe.py` — tutto in
+directory temporanee, **nessuna rete, nessun comando di sistema**.
+
+### Comincio da quello che hai fatto bene, perché è il motivo per cui questo si vede
+
+`FIX-1` ha reso `promote_job_to_tools` un gate vero, e **funziona**. L'ho verificato: legge
+`tool.py`, chiama `scan_text`, rifiuta sugli hit.
+
+Ma quella funzione **copia** un file. La funzione che quel codice lo **esegue** è
+`core/graph_exec.execute_graph`, e lì il gate non c'è.
+
+| Punto | Operazione | `scan_text`? |
+|---|---|---|
+| `nt_helpers.py:48-53` | genera (corpo del writer LLM, con `UJ_WRITER_LLM=1`) | **sì** |
+| `nt_runner.py:250` | **copia** in `tools/` | **sì** |
+| `graph_exec.py:64` | **esegue** | **no** |
+
+Zero occorrenze di `scan_text` o `safety` in tutto `core/graph_exec.py`.
+
+### Misurato
+
+Un modulo che contiene `eval(` e `rm -rf` — **due dei pattern che il tuo stesso scanner
+riconosce** — viene caricato ed eseguito senza che nulla lo fermi. Interrogando `scan_text` sullo
+stesso testo: `['rm -rf', 'eval(']`.
+
+E il codice a livello di modulo gira dentro `exec_module`, cioè **prima** che `run()` venga
+chiamata: non basta guardare che cosa fa `run()`.
+
+### Ed è raggiungibile in due modi, uno dei quali è automatico
+
+- `uj_cli.py:57` espone un sottocomando `graph` che prende **una directory arbitraria**;
+- `nt_runner.py:61-64` chiama `execute_graph(job_dir)` a **ogni job multi-file**.
+
+### Più un path traversal dai nomi in `deps.json`
+
+Il filtro guarda solo il suffisso (`m.endswith(".py")`), quindi `../fuori.py` passa. Misurato: un
+modulo **fuori dalla job dir** caricato ed eseguito. Un file dati dentro la job dir decide quali
+file eseguire, e può nominarne fuori — stesso schema di `S-22`.
+
+### E `sys.path` / `sys.modules` restano sporchi
+
+`sys.path.insert(0, job_dir)` mette la job dir in testa e nessuno la toglie; `sys.modules[stem]`
+registra con il nome nudo del file. Un `registry.py` generato prenderebbe il posto di quello vero
+per ogni `import` successivo nello stesso processo.
+
+### Che cosa NON affermo
+
+**Non è un difetto dello scanner:** `scan_text` fa il suo lavoro, l'ho verificato interrogandolo.
+È assente dal percorso, non rotto. Ma resta vero il rilievo di `S-08` — lo scanner ha evasioni
+note, 2 su 4 nel mio test di sessione 3 — quindi `FIX-19a` è **il minimo, non il contenimento**.
+
+**Il percorso di generazione un gate ce l'ha.** Il buco è fra la generazione e l'esecuzione, e su
+tutto ciò che entra nella job dir per altre vie.
+
+**Non ho eseguito nulla di dannoso**: il carico delle prove scrive un file di testo in `/tmp`, e
+la sonda rimuove worktree e temp da sola.

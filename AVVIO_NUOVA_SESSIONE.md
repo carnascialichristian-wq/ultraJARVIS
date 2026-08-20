@@ -238,8 +238,8 @@ sui primi 20 findings, **12 chiusi, 1 superato, 1 parziale, 6 aperti** (`S-06` �
 policy, non un bug). **`S-03` e `S-15`, che i miei documenti davano per non chiusi, lo sono** —
 la mia lista sovrastimava di un terzo il lavoro residuo di Grok.
 
-**La sera del 19 se ne sono aggiunti cinque, cercando difetti NUOVI nel codice arrivato su
-`main` dopo la sessione 4.** I findings sono ora **25** e gli aperti **11**:
+**La sera del 19 se ne sono aggiunti sei, cercando difetti NUOVI nel codice arrivato su
+`main` dopo la sessione 4.** I findings sono ora **26** e gli aperti **12**:
 
 - **`S-21`** (MEDIUM, latente) — `PRIVILEGED_KWARGS` è una **denylist**: cinque funzioni prendono
   `real=`, che scavalca i gate d'ambiente. Oggi non è sfruttabile perché tutte e cinque sono
@@ -249,6 +249,12 @@ la mia lista sovrastimava di un terzo il lavoro residuo di Grok.
   `guarded_write`. Attenzione: **`slugify` è sicuro**, non correggere quello.
 - **`S-23`** (MEDIUM) — `PROTECTED` nomina `core/natural_tasks.py`, che è un guscio di 26 righe:
   la logica sta in `nt_runner.py`, non protetto, e contiene `promote_job_to_tools`.
+- **`S-26`** (HIGH) — **il gate di safety è sulla copia, non sull'esecuzione.**
+  `promote_job_to_tools` scansiona (`FIX-1`, funziona); `execute_graph`, che il codice lo
+  **esegue**, non ha nessun gate. Misurato: un modulo con `eval(` e `rm -rf` viene eseguito, e lo
+  scanner interrogato sullo stesso testo lo riconosce. Esposto da `uj_cli.py graph <dir>` e
+  chiamato a **ogni job multi-file**. Più path traversal dai nomi in `deps.json`.
+  **È la correzione da far applicare per prima** (`FIX-19`).
 - **`S-25`** (HIGH, latente) — `core/billing.py`: il webhook di pagamento **non verifica la
   firma, la ispeziona**. Il segreto non entra in nessun calcolo (`hmac`: zero occorrenze) e
   quattro contraffazioni su cinque sono accettate, inclusa quella **senza header di firma**.
@@ -274,7 +280,8 @@ chiude tutte e tre**, perché condividono il ponte. Misurato, senza chiamate rea
 Dettaglio con comandi di riproduzione: `docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`
 (§19 le tre porte, §20 lo stato consolidato).
 Correzioni per Grok: `docs/threat-models/GROK_FIX_LIST.md` — **tabella di stato in cima**, restano
-**nove**: `FIX-10`…`FIX-18`, e **`FIX-10` e `FIX-13` sono lo stesso ponte**. Ordine consigliato:
+**dieci**: `FIX-10`…`FIX-19`, e **`FIX-10` e `FIX-13` sono lo stesso ponte**. Ordine consigliato:
+**`FIX-19` per primo** (una riga, chiude l'esecuzione di codice generato senza gate) →
 `FIX-10`+`FIX-13`+`FIX-17` (costo) → `FIX-15`+`FIX-16` (scrittura) → `FIX-18` (pagamenti) →
 `FIX-11` → `FIX-12` → `FIX-14`.
 

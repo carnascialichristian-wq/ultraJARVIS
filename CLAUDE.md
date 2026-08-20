@@ -4793,6 +4793,68 @@ e costa una frazione.
 **Nessuna chiamata a Stripe, nessuna chiave impostata**: la sonda non invoca `create_customer` né
 `create_checkout_session`, che sono le uniche due funzioni del file che contatterebbero la rete.
 
+
+## Sessione 6, ventottesima parte — `S-26`: il gate è sulla copia, non sull'esecuzione
+
+Ultimo modulo non revisionato del gruppo arrivato dopo la sessione 4: `core/graph_exec.py`, 84
+righe. Esecuzione di un grafo di dipendenze, cioè **runtime** — il mio perimetro esatto.
+
+### Il risultato in una frase
+
+**`promote_job_to_tools` ha un gate e funziona; `execute_graph` non ce l'ha.** E la prima
+funzione *copia* un file, la seconda lo *esegue*.
+
+| Punto | Operazione | `scan_text`? |
+|---|---|---|
+| `nt_helpers.py:48-53` | genera (corpo del writer LLM, con `UJ_WRITER_LLM=1`) | **sì** |
+| `nt_runner.py:250` | **copia** in `tools/` | **sì** |
+| `graph_exec.py:64` | **esegue** (`spec.loader.exec_module`) | **no** |
+
+Misurato: un modulo che contiene `eval(` e `rm -rf` — due dei pattern che il loro stesso scanner
+riconosce — viene caricato ed eseguito senza che nulla lo fermi; interrogando `scan_text` sullo
+stesso testo, `['rm -rf', 'eval(']`. **Il gate esiste, è solo assente dal percorso.**
+
+E il codice a livello di modulo gira dentro `exec_module`, cioè **prima** che `run()` venga
+chiamata: controllare che cosa fa `run()` non basterebbe comunque.
+
+### Raggiungibile in due modi, e uno è automatico
+
+`uj_cli.py:57` espone un sottocomando `graph` che prende **una directory arbitraria**; e
+`nt_runner.py:61-64` chiama `execute_graph(job_dir)` a **ogni job multi-file**. Non è una
+funzione di libreria dimenticata: è cablata su entrambi i lati.
+
+### Due difetti aggiuntivi trovati sullo stesso file
+
+**Path traversal dai nomi in `deps.json`.** Il filtro guarda solo il suffisso, quindi
+`../fuori.py` passa. Misurato: un modulo **fuori dalla job dir** caricato ed eseguito. È lo stesso
+schema di `S-22` — un file dati che il sistema tratta come innocuo governa un'operazione che non
+lo è.
+
+**`sys.path` e `sys.modules` restano sporchi.** La job dir va in testa a `sys.path` e nessuno la
+toglie; `sys.modules[stem]` registra con il nome nudo del file, quindi un `registry.py` generato
+prenderebbe il posto di quello vero per ogni `import` successivo nello stesso processo.
+
+### Ho scritto contro la mia stessa correzione
+
+`FIX-19a` è una riga — chiamare `scan_text` prima di `exec_module` — e chiude il caso peggiore.
+Ma l'ho marcata esplicitamente **necessaria e non sufficiente**, perché `S-08` dice che lo
+scanner ha evasioni note: nel mio test di sessione 3 ne passavano 2 su 4. Consegnare una
+correzione senza quel limite significherebbe far credere a Grok di aver chiuso il problema.
+
+### Perché è la correzione da fare per prima
+
+L'ho messa in cima all'ordine di `GROK_FIX_LIST.md`, davanti anche a `FIX-10`. Motivo: è **una
+riga**, chiude l'esecuzione non validata di codice generato, ed è l'unico finding di questa serie
+che riguarda l'esecuzione di codice invece del costo o della scrittura di file.
+
+### File
+
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §26 · `GROK_FIX_LIST.md` → `FIX-19` (primo dell'ordine) ·
+`docs/threat-models/probes/S-26-graph-exec-probe.py` · `TASKCLAUDE.md` §80.
+
+**Nessuna riga di codice di Grok modificata. Il carico delle prove scrive un file di testo in una
+directory temporanea: nessuna rete, nessun comando di sistema, nessuna scrittura fuori dai temp.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -5224,6 +5286,41 @@ FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
               S-16 (memoria senza provenienza, è di Gemini non di Grok).
 
 SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
+
+  AZ) 2026-08-19 — S-26 (NUOVO, HIGH): il gate di safety e' sulla COPIA, non
+     sull'ESECUZIONE. E' la correzione da far applicare PER PRIMA.
+     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §26 · GROK_FIX_LIST.md -> FIX-19
+     docs/threat-models/probes/S-26-graph-exec-probe.py
+     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
+
+     promote_job_to_tools ha un gate e FUNZIONA (FIX-1, verificato). Ma quella
+     funzione COPIA un file; core/graph_exec.execute_graph lo ESEGUE, e li' il gate
+     non c'e': ZERO occorrenze di scan_text o safety in tutto il file.
+       nt_helpers.py:48-53  genera (corpo writer LLM, con UJ_WRITER_LLM=1)  -> SI
+       nt_runner.py:250     COPIA in tools/                                 -> SI
+       graph_exec.py:64     ESEGUE (spec.loader.exec_module)                -> NO
+     MISURATO: un modulo con `eval(` e `rm -rf` — due pattern che il LORO scanner
+     riconosce — viene caricato ed eseguito. Interrogando scan_text sullo stesso
+     testo: ['rm -rf', 'eval(']. IL GATE ESISTE, E' SOLO ASSENTE DAL PERCORSO.
+     E il codice a livello di modulo gira dentro exec_module, PRIMA che run() venga
+     chiamata: controllare run() non basterebbe.
+
+     RAGGIUNGIBILE IN DUE MODI, uno automatico:
+       uj_cli.py:57       sottocomando `graph` con una DIRECTORY ARBITRARIA
+       nt_runner.py:61-64 chiamato a OGNI job multi-file
+
+     PIU' DUE DIFETTI SULLO STESSO FILE:
+       - PATH TRAVERSAL da deps.json: il filtro guarda solo il suffisso, quindi
+         "../fuori.py" passa. Misurato: modulo FUORI dalla job dir eseguito.
+         Stesso schema di S-22.
+       - sys.path.insert(0, job_dir) e sys.modules[stem]=mod restano sporchi: un
+         registry.py generato prenderebbe il posto di quello vero per ogni import
+         successivo nello stesso processo.
+
+     HO SCRITTO CONTRO LA MIA STESSA CORREZIONE: FIX-19a e' una riga e chiude il
+     caso peggiore, ma e' NECESSARIA E NON SUFFICIENTE — S-08 dice che lo scanner
+     ha evasioni note (2 su 4 nel test di sessione 3). Senza quel limite Grok
+     crederebbe di aver chiuso il problema.
 
   AY) 2026-08-19 — S-25 (NUOVO, HIGH latente): il webhook di pagamento ISPEZIONA
      la firma invece di verificarla.
