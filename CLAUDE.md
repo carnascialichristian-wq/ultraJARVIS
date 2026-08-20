@@ -5422,7 +5422,7 @@ Sintesi operativa degli errori sopra, in forma di regole:
 
 > ## ⚡ STATO AL 2026-08-19, FINE SESSIONE 6 — LEGGI QUESTE 30 RIGHE PRIMA DELLE ALTRE 1000
 >
-> Il blocco qui sotto ha **37 punti accumulati in sei sessioni, in ordine non cronologico**, e
+> Il blocco qui sotto ha **48 punti accumulati in sei sessioni, in ordine non cronologico**, e
 > **diversi sono superati da punti successivi**. Non sono stati cancellati — servono a capire
 > come ci siamo arrivati — ma **questo riquadro è ciò che è vero adesso**. Se un punto più in
 > basso contraddice questo riquadro, **vince il riquadro**.
@@ -5437,6 +5437,8 @@ Sintesi operativa degli errori sopra, in forma di regole:
 > | Mio portafoglio accettato | **0 / 76** — corretto, nessun reviewer si è espresso |
 > | Programma | **26 / 340 accettate**, e tutte e 26 sono task meta di ChatGPT |
 > | Pacchetti di evidenza | **7 su 8** — l'ottavo (`UJ-REV-002`) non può averne uno |
+> | Security review su `main` | **campagna COMPLETA**: 29 findings, vista autorevole in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` **§30** — 10 chiusi, 1 superato, 1 parziale, 17 aperti (15 Grok, 1 Gemini `S-16`, 1 Christian `S-06`) |
+> | Correzioni per Grok | `GROK_FIX_LIST.md`: ordine **verificato** in `FIX_ORDER_ANALYSIS_20260819.md` — `FIX-19` per primo. 90 tool su 94 puliti: `FIX-1` ha tenuto |
 >
 > **I miei otto task, stato reale.** Attenzione a una distinzione che è costata sei giri:
 > `REVIEW` qui sotto è lo stato **proposto dal packet** e l'ammissibilità della consegna; nel
