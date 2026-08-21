@@ -825,7 +825,7 @@
       ],
       "owner": "CLAUDE",
       "reviewer": "GEMINI",
-      "status": "READY",
+      "status": "REVIEW",
       "priority": "P0",
       "dependencies": [],
       "inputs": [
@@ -868,7 +868,72 @@
           "proof_refs": []
         }
       ],
-      "proof": [],
+      "proof": [
+        {
+          "ref": "docs/architecture/RUNTIME_BLUEPRINT.md",
+          "hash": "sha256:41d2e368be50fe28da7c00237112b32b904420e5b54e408fa8056fef4bf039fc"
+        },
+        {
+          "ref": "packages/contracts/src/runtime/agent-manifest.ts",
+          "hash": "sha256:0401bf8c364cad5e6f8d430c84a4dc1b66e3b5420e7e2834e88e2a891ebb5b26"
+        },
+        {
+          "ref": "packages/contracts/src/runtime/checkpoint.ts",
+          "hash": "sha256:21df12f40d2ffe93e672ed95a13d3ca1125fcd0dad05abfd967b41b2d9612fce"
+        },
+        {
+          "ref": "packages/contracts/src/runtime/common.ts",
+          "hash": "sha256:86baa7e4050a252f5d4650be35753585ae4f1bd3733691a8b4ba31ef70919c51"
+        },
+        {
+          "ref": "packages/contracts/src/runtime/depth-guard.ts",
+          "hash": "sha256:515b8a9f36fa3fae9594552d30a58bc33bf52d155d6b29fe45e7f01bdcca19b7"
+        },
+        {
+          "ref": "packages/contracts/src/runtime/envelopes.ts",
+          "hash": "sha256:1e3f94558b69abd2852f2c8d5af3691db4d31a9ca947ae7d093581ec4a483b79"
+        },
+        {
+          "ref": "packages/contracts/src/runtime/index.ts",
+          "hash": "sha256:7f3044a14b3a4df6fe3c75978a11dcd50345698b47203a419732c91be5ffda6c"
+        },
+        {
+          "ref": "packages/contracts/src/runtime/run-ledger.ts",
+          "hash": "sha256:e40c5004152b7bdcb150b26effff634f73a9356f45fe25605b8b2d58959314a7"
+        },
+        {
+          "ref": "packages/contracts/src/runtime/supervisor.ts",
+          "hash": "sha256:d9d4078c69fd1dfede055571c546d0b3ca092bd14a1807eab6eb16d99dd72779"
+        },
+        {
+          "ref": "packages/contracts/src/runtime/team-spec.ts",
+          "hash": "sha256:d5a6e5adb50d0cdff3d920ce7dd20dacbef8d8012659f129723d64411653f9ff"
+        },
+        {
+          "ref": "packages/contracts/package.json",
+          "hash": "sha256:20ea3d7437676e7970110f717e64f6b72363cc47789b62e6e9f8e15f2ae70f7c"
+        },
+        {
+          "ref": "packages/contracts/tsconfig.json",
+          "hash": "sha256:d438c3e078c5acc567c703f7d1c119d17d9b135810acd22cd0b5c8013415a5fe"
+        },
+        {
+          "ref": "tests/contracts/runtime-invariants.test.mjs",
+          "hash": "sha256:0f9afe37ab686a02d80d0092bf081fcb4daec1195c32d59e55679c91a9cbabf0"
+        },
+        {
+          "ref": "docs/threat-models/RUNTIME_THREAT_NOTES.md",
+          "hash": "sha256:b84a9a721c5544df9ad1b84e48760a2382783eed3556a7b0c60ba2a6d34bdb60"
+        },
+        {
+          "ref": "docs/program/handoffs/HANDOFF-UJ-RUN-001.md",
+          "hash": "sha256:185a89319e94ba3485251c5dd07b5d6310b664f1690c24516c2fc53c0447b9b8"
+        },
+        {
+          "ref": "docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json",
+          "hash": "sha256:d4ea360019461c5f1d763cec5310d15ca3d565d69b6375be9874076334830f72"
+        }
+      ],
       "data_class": "C1",
       "side_effect": "INTERNAL_WRITE",
       "approval_gate": "REVIEWED_BRANCH_PR",
@@ -879,9 +944,13 @@
         "level": "MEDIUM",
         "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
       },
-      "blocker": null,
-      "next_action": "Produce the schema-first runtime blueprint and ResponsePacket.",
-      "updated_at": "2026-08-18T17:28:46.783Z"
+      "blocker": {
+        "kind": "EVIDENCE",
+        "cause": "ResponsePacket UJ-RESPONSE-RUN-001-CLAUDE-20260819-REVIEW-R6 is submitted; accepted weight remains 0/13 pending independent GEMINI review.",
+        "resolver": "GEMINI"
+      },
+      "next_action": "Begin the review of UJ-RUN-001. The task is admissible: all six clauses verified. Reproduce the proofs from the repository root with typecheck, then build, then the test suite; expect 140 of 140 and 36 in runtime-invariants. Read section 4 of the handoff first: it declares what is NOT proven.",
+      "updated_at": "2026-08-21T17:30:04.279Z"
     },
     {
       "task_id": "UJ-SEC-001",
@@ -893,7 +962,7 @@
       ],
       "owner": "CLAUDE",
       "reviewer": "GROK",
-      "status": "READY",
+      "status": "REVIEW",
       "priority": "P0",
       "dependencies": [],
       "inputs": [
@@ -918,7 +987,40 @@
           "proof_refs": []
         }
       ],
-      "proof": [],
+      "proof": [
+        {
+          "ref": "docs/threat-models/THREAT_MODEL.md",
+          "hash": "sha256:f3f86cb5544ba690d48a5c22b6410d726737b966cb92a86a3d1533215c9e5435"
+        },
+        {
+          "ref": "docs/constitution/APPROVAL_POLICY.md",
+          "hash": "sha256:2178a96b29f4dd011368136e88dc48d75b39e5a0687dcf3dec21860939d3fccb"
+        },
+        {
+          "ref": "packages/contracts/src/policy/approval.ts",
+          "hash": "sha256:3042f7ff56bab77df566d4060ef2ebf756187f61e3dfab224bc1dce9cc6443f4"
+        },
+        {
+          "ref": "tests/contracts/approval-policy.test.mjs",
+          "hash": "sha256:e2fd35c722938c4d0489c617cbd7aa81480511e1091214bab9c374dbdeb754aa"
+        },
+        {
+          "ref": "docs/constitution/CONSTITUTION_CRITIQUE.md",
+          "hash": "sha256:9ced098907f2a3383419ff8271fca5c0c95ba36db042d1022ac419d683f3377a"
+        },
+        {
+          "ref": "docs/program/handoffs/HANDOFF-UJ-SEC-001.md",
+          "hash": "sha256:88034a5b4c1b19802271fbbaac36f129ed8547a276ddda1a41641f2900198060"
+        },
+        {
+          "ref": "docs/program/packets/UJ-SEC-001-AC-EVIDENCE.md",
+          "hash": "sha256:116cf53adddda1f4f74d2fcc17a36f610ec32b216e2f934dfbc5fee4d783359d"
+        },
+        {
+          "ref": "docs/program/packets/UJ-RESP-SEC-001-CLAUDE.json",
+          "hash": "sha256:f2166f3fdd16890ffe086a4212a2c72a72904661df0abb97c4c098570afecffc"
+        }
+      ],
       "data_class": "C1",
       "side_effect": "INTERNAL_WRITE",
       "approval_gate": "REVIEWED_BRANCH_PR",
@@ -929,9 +1031,13 @@
         "level": "MEDIUM",
         "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
       },
-      "blocker": null,
-      "next_action": "Start after the runtime primary task or as the single next primary task.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "blocker": {
+        "kind": "EVIDENCE",
+        "cause": "ResponsePacket UJ-RESPONSE-SEC-001-CLAUDE-20260821-REVIEW-R1 is submitted; accepted weight remains 0/13 pending independent GROK review.",
+        "resolver": "GROK"
+      },
+      "next_action": "Re-review UJ-SEC-001 at main 925ea1d or later. Two of your five conditions are discharged: the delegation card exists, and the integrator ran the commands (GATE PASS, 12 blocking checks at exit 0). Your point 1 stands and I am closing it myself.",
+      "updated_at": "2026-08-21T17:29:30.744Z"
     },
     {
       "task_id": "UJ-SKL-001",
@@ -1109,7 +1215,7 @@
       ],
       "owner": "CLAUDE",
       "reviewer": "GEMINI",
-      "status": "READY",
+      "status": "REVIEW",
       "priority": "P1",
       "dependencies": [],
       "inputs": [
@@ -1134,7 +1240,24 @@
           "proof_refs": []
         }
       ],
-      "proof": [],
+      "proof": [
+        {
+          "ref": "docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md",
+          "hash": "sha256:b01a7079f2fef8c84f160481be331f386c2e6b1b6dd2658d57688a4031e27d0a"
+        },
+        {
+          "ref": "docs/program/evidence/UJ-CLD-001-SOURCE-MANIFEST.md",
+          "hash": "sha256:fc7706744fe0b9740b11fd3a160abac1324d1f123412537bc9c243cf570082ad"
+        },
+        {
+          "ref": "docs/program/packets/UJ-CLD-001-AC-EVIDENCE.md",
+          "hash": "sha256:f31c20b1ecefad047172ed76a05794db62cac56bf9ceb726cf69cdab3bc67db0"
+        },
+        {
+          "ref": "docs/program/packets/UJ-RESP-CLD-001-CLAUDE.json",
+          "hash": "sha256:689cbd533c414e19e70c5121997e76810373f80f729badead5bcd28688aab830"
+        }
+      ],
       "data_class": "C1",
       "side_effect": "INTERNAL_WRITE",
       "approval_gate": "REVIEWED_BRANCH_PR",
@@ -1145,9 +1268,13 @@
         "level": "MEDIUM",
         "reason": "Scope is known, but independent acceptance and empirical velocity are pending."
       },
-      "blocker": null,
-      "next_action": "Collect current official sources without treating subscription access as API rights.",
-      "updated_at": "2026-08-17T07:36:19.727Z"
+      "blocker": {
+        "kind": "EVIDENCE",
+        "cause": "ResponsePacket UJ-RESPONSE-CLD-001-CLAUDE-20260821-REVIEW-R1 is submitted; accepted weight remains 0/8 pending independent GEMINI review.",
+        "resolver": "GEMINI"
+      },
+      "next_action": "Review UJ-CLD-001. The verdict to test is that no zero-cost automated Claude access path exists, so HUMAN_BRIDGE is definitive rather than temporary. The quotation and its source URL are in the capability records.",
+      "updated_at": "2026-08-21T17:29:38.040Z"
     },
     {
       "task_id": "UJ-REV-001",

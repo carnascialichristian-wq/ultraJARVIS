@@ -1,0 +1,215 @@
+{
+  "schema_version": "ultrajarvis.response-packet/v1",
+  "response_id": "UJ-RESPONSE-CLD-001-CLAUDE-20260821-REVIEW-R1",
+  "created_at": "2026-08-21T17:35:00Z",
+  "card_id": "UJ-CARD-CLD-001-CLAUDE",
+  "mission_id": "UJ-MISSION-M0-COUNCIL-001",
+  "ai_id": "CLAUDE",
+  "product": "Claude Code in a remote execution environment; no metered API used",
+  "source_commit_sha": "7d027edce8cd4ebf7934c53a9e539a910435bf1e",
+  "capabilities_actually_used": [
+    {
+      "capability": "Repository read and write at a pinned commit",
+      "access_path": "git in the session container",
+      "mode": "MANUAL_TOOL"
+    },
+    {
+      "capability": "Local command execution (node, tsc, python3, git)",
+      "access_path": "session shell",
+      "mode": "MANUAL_TOOL"
+    }
+  ],
+  "task_id": "UJ-CLD-001",
+  "status": "REVIEW",
+  "executive_delta": "REVIEW, accepted weight 0/8 unchanged. This is the first ResponsePacket for UJ-CLD-001: it could not exist before because CHATGPT had not issued the delegation card, which he did on 2026-08-21. The task answered its question and the answer constrains the whole programme: there is no zero-cost automated access path to Claude. The Agent SDK route requires an API key, which is metered and therefore barred by Article 5; automating the claude.ai consumer interface is barred by the consumer terms. The only available path is HUMAN_BRIDGE, and for Claude that is the definitive mode while the budget is zero, not a temporary workaround. AC-01 is met by the artifacts; AC-02 needs GEMINI and she has not reviewed.",
+  "facts": [
+    {
+      "claim": "Anthropic's own documentation states that third party developers may not offer claude.ai login or rate limits for their products, including agents built on the Claude Agent SDK, and directs them to API key authentication instead.",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "code.claude.com/docs/en/agent-sdk/overview, read 2026-08-17",
+      "verified_at": "2026-08-17T00:00:00Z"
+    },
+    {
+      "claim": "Consequence for the programme: ultraJARVIS as an autonomous application on the Agent SDK is PAID_ONLY_DISABLED because it requires an API key, which is pay-per-token and therefore barred by Article 5.",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md",
+      "verified_at": "2026-08-21T17:35:00Z"
+    },
+    {
+      "claim": "ultraJARVIS automating the claude.ai user interface is UNAVAILABLE: the consumer terms forbid access through automated or non-human means.",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md",
+      "verified_at": "2026-08-21T17:35:00Z"
+    },
+    {
+      "claim": "The gate of section 6.2 applied to CAP-CLD-002 returns four negative conditions out of ten, which is a definitive verdict rather than a provisional one.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md",
+      "verified_at": "2026-08-21T17:35:00Z"
+    },
+    {
+      "claim": "Official documentation URLs move in real time: the Agent SDK URL recorded one day earlier produced two consecutive redirects, docs.claude.com to platform.claude.com to code.claude.com, and two further URLs of the twenty in the manifest were already dead. Three unstable URLs out of twenty within 24 hours.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "docs/program/evidence/UJ-CLD-001-SOURCE-MANIFEST.md",
+      "verified_at": "2026-08-17T00:00:00Z"
+    },
+    {
+      "claim": "The QuotaCounter.source field defined in the runtime contracts with values PROVIDER_COUNTER, OBSERVED_THRESHOLD and UNKNOWN turned out to be necessary rather than defensive: Claude does not expose remaining quota programmatically, only through an interactive command, so UNKNOWN is a state the contract must be able to represent.",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "packages/contracts/src/runtime/",
+      "verified_at": "2026-08-21T17:35:00Z"
+    },
+    {
+      "claim": "An operational control for the owner: in Claude Code, reaching the usage limit offers to enable API credits at standard API rates. That is the only way this programme can generate a charge, and the answer is always no unless Christian decides otherwise explicitly and on the record. Reaching the limit is a legitimate BLOCKED, not a problem to be solved by spending.",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md",
+      "verified_at": "2026-08-21T17:35:00Z"
+    }
+  ],
+  "assumptions": [
+    {
+      "statement": "The capability records reflect the state of the official sources on the date they were read, not a permanent guarantee.",
+      "validation": "Three of twenty URLs proved unstable within 24 hours, which is the empirical reason section 4.1 point 5 forbids freezing URLs and limits in code.",
+      "expiry": "Any re-read of the sources supersedes the dated records."
+    },
+    {
+      "statement": "HUMAN_BRIDGE remains the definitive access mode for Claude while the budget is zero.",
+      "validation": "Follows from the two barred paths; it changes only if Anthropic changes its terms or Christian authorises spending.",
+      "expiry": "None while Article 5 stands."
+    }
+  ],
+  "decisions_proposed": [
+    {
+      "decision_id": "DEC-CLD-001-HUMAN-BRIDGE-DEFINITIVE",
+      "proposal": "Record HUMAN_BRIDGE as the definitive access mode for Claude rather than a temporary fallback, and stop treating automated Claude access as a blocked item awaiting verification: it has been verified and it does not exist at zero cost.",
+      "owner": "Christian",
+      "gate": "owner acknowledgement"
+    },
+    {
+      "decision_id": "DEC-CLD-001-NO-CREDIT-ENABLEMENT",
+      "proposal": "Standing rule: the offer to enable API credits on reaching the Claude Code limit is always declined. Hitting the limit is recorded as BLOCKED.",
+      "owner": "Christian",
+      "gate": "owner approval"
+    }
+  ],
+  "artifacts": [
+    {
+      "ref": "docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md",
+      "sha256": "b01a7079f2fef8c84f160481be331f386c2e6b1b6dd2658d57688a4031e27d0a",
+      "media_type": "text/markdown",
+      "data_class": "C1",
+      "summary": "Capability records built by reading the primary sources directly rather than citing from memory, with the section 6.2 gate applied to each."
+    },
+    {
+      "ref": "docs/program/evidence/UJ-CLD-001-SOURCE-MANIFEST.md",
+      "sha256": "fc7706744fe0b9740b11fd3a160abac1324d1f123412537bc9c243cf570082ad",
+      "media_type": "text/markdown",
+      "data_class": "C1",
+      "summary": "Twenty candidate official sources with reachability measured on the date of reading, including the three that proved unstable."
+    },
+    {
+      "ref": "docs/program/packets/UJ-CLD-001-AC-EVIDENCE.md",
+      "sha256": "f31c20b1ecefad047172ed76a05794db62cac56bf9ceb726cf69cdab3bc67db0",
+      "media_type": "text/markdown",
+      "data_class": "C1",
+      "summary": "Per-criterion evidence mapping for AC-01 and AC-02."
+    }
+  ],
+  "verification": {
+    "checks_run": [
+      "Direct read of the primary Anthropic sources listed in the manifest, 2026-08-17",
+      "Reachability check of the twenty manifest URLs",
+      "Section 6.2 gate applied to CAP-CLD-002",
+      "bash scripts/integration-gate.sh at main 925ea1d",
+      "sha256sum of each artifact listed above, recomputed at 7d027ed"
+    ],
+    "passed": [
+      "The quoted restriction is present verbatim in the official Agent SDK documentation",
+      "18 of 20 manifest URLs returned 200; the 2 dead ones are recorded as dead rather than dropped",
+      "CAP-CLD-002 fails four of ten gate conditions, a definitive negative",
+      "integration gate: GATE PASS, 12 blocking checks at exit 0",
+      "every artifact hash recomputed from the worktree"
+    ],
+    "failed": [],
+    "not_run": [
+      "S-10 of the source manifest requires an authenticated login and is therefore a HUMAN_BRIDGE item for Christian, not something this session could execute. It is the one unit of the eight that no amount of work here can close.",
+      "GEMINI's independent review, which is what AC-02 requires."
+    ]
+  },
+  "side_effects": [
+    {
+      "classification": "INTERNAL_WRITE",
+      "description": "Evidence artifacts committed to the CLAUDE working branch and integrated into main under the owner's explicit authorisation of 2026-08-21. No network write, no account action, no ledger value changed.",
+      "approval_ref": "Christian, 2026-08-21",
+      "idempotency_key": "UJ-IDEMP-CLD-001-CLAUDE-RESPONSE-R1",
+      "proof_ref": "docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md"
+    }
+  ],
+  "risks": [
+    {
+      "risk_id": "R-001",
+      "event": "[R-CLD-01] The capability records go stale without anyone noticing, because official documentation URLs move faster than the programme re-reads them.",
+      "severity": "MEDIUM",
+      "trigger": "Anthropic reorganises its documentation domain again.",
+      "mitigation": "Never freeze URLs or limits in code; re-read before citing. Section 4.1 point 5 already requires this.",
+      "owner": "CLAUDE"
+    },
+    {
+      "risk_id": "R-002",
+      "event": "[R-CLD-02] A future session reads the presence of a Claude Agent SDK in the ecosystem as permission to build on it, and designs around an access path that does not exist at zero cost.",
+      "severity": "HIGH",
+      "trigger": "Any design work that assumes programmatic Claude access.",
+      "mitigation": "The verdict is recorded as definitive rather than provisional, with the quotation attached.",
+      "owner": "CLAUDE"
+    },
+    {
+      "risk_id": "R-003",
+      "event": "[R-CLD-03] The single remaining unit needs an authenticated login that only the owner can perform, so the task cannot reach 8/8 through agent work alone.",
+      "severity": "LOW",
+      "trigger": "Attempting to close S-10 without Christian.",
+      "mitigation": "Recorded as a HUMAN_BRIDGE item rather than as agent work in progress.",
+      "owner": "Christian"
+    }
+  ],
+  "task_ledger_delta": [
+    {
+      "task_id": "UJ-CLD-001",
+      "previous_status": "READY",
+      "proposed_status": "REVIEW",
+      "weight": 8,
+      "accepted_weight_before": 0,
+      "proposed_accepted_weight": 0,
+      "proof_refs": [
+        "docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md",
+        "docs/program/evidence/UJ-CLD-001-SOURCE-MANIFEST.md",
+        "docs/program/packets/UJ-CLD-001-AC-EVIDENCE.md"
+      ]
+    }
+  ],
+  "remaining_work": {
+    "weight": 8,
+    "blockers": [
+      "GEMINI has not reviewed. AC-02 requires her evidence-backed PASS or PASS_WITH_ACTIONS.",
+      "S-10 of the source manifest requires an authenticated login and is a HUMAN_BRIDGE item for Christian."
+    ],
+    "next_action": "GEMINI reviews UJ-CLD-001 against AC-01 and AC-02 at main 925ea1d or later, and issues an importable ReviewResult."
+  },
+  "confidence": {
+    "level": "HIGH",
+    "reason": "The central finding is a verbatim quotation from the vendor's own documentation, read directly rather than recalled, and the conclusion it forces was confirmed independently by the contract design it validated."
+  },
+  "policy_attestation": {
+    "no_secret_values": true,
+    "no_paid_api": true,
+    "no_billing_enabled": true,
+    "no_consumer_ui_automation": true,
+    "no_heavy_local_inference": true,
+    "within_data_class": true,
+    "within_side_effect_limit": true
+  },
+  "handoff": {
+    "target": "GEMINI",
+    "next_action": "Review UJ-CLD-001. The verdict to test is that no zero-cost automated Claude access path exists, so HUMAN_BRIDGE is definitive rather than temporary. The quotation and its source URL are in the capability records.",
+    "resume_point": "All artifacts are on main @ 925ea1d. Verification command: bash scripts/integration-gate.sh"
+  }
+}
