@@ -33,8 +33,9 @@ PROTECTED = {
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
-def _resolve(path: Union[str, Path], root: Path = PROJECT_ROOT) -> Path:
+def _resolve(path: Union[str, Path], root: Path | None = None) -> Path:
     """Resolve a path relative to the project root and normalise it."""
+    root = root if root is not None else PROJECT_ROOT
     p = Path(path)
     if not p.is_absolute():
         p = (root / p).resolve()
@@ -43,8 +44,9 @@ def _resolve(path: Union[str, Path], root: Path = PROJECT_ROOT) -> Path:
     return p
 
 
-def _is_protected(path: Path, root: Path = PROJECT_ROOT) -> bool:
+def _is_protected(path: Path, root: Path | None = None) -> bool:
     """Return True if the path is in the protected set."""
+    root = root if root is not None else PROJECT_ROOT
     try:
         rel = path.relative_to(root)
     except ValueError:
@@ -61,7 +63,7 @@ def safe_read(
     path: Union[str, Path],
     *,
     encoding: str = "utf-8",
-    root: Path = PROJECT_ROOT,
+    root: Path | None = None,
 ) -> str:
     """
     Read a text file if it is inside the project and not binary.
@@ -69,6 +71,7 @@ def safe_read(
     Raises:
         FileNotFoundError, PermissionError, ValueError
     """
+    root = root if root is not None else PROJECT_ROOT
     target = _resolve(path, root)
     # Must stay inside project root (same containment as safe_write)
     try:
@@ -90,7 +93,7 @@ def safe_write(
     content: str,
     *,
     encoding: str = "utf-8",
-    root: Path = PROJECT_ROOT,
+    root: Path | None = None,
     force: bool = False,
 ) -> Path:
     """
@@ -102,6 +105,7 @@ def safe_write(
 
     Returns the resolved path that was written.
     """
+    root = root if root is not None else PROJECT_ROOT
     target = _resolve(path, root)
     # Must stay inside project root
     try:
@@ -126,7 +130,7 @@ def safe_write(
 def safe_list(
     directory: Union[str, Path] = ".",
     *,
-    root: Path = PROJECT_ROOT,
+    root: Path | None = None,
     pattern: str = "**/*",
 ) -> List[str]:
     """
@@ -134,6 +138,7 @@ def safe_list(
 
     Returns an empty list if the directory does not exist.
     """
+    root = root if root is not None else PROJECT_ROOT
     target = _resolve(directory, root)
     if not target.exists() or not target.is_dir():
         return []
@@ -147,6 +152,7 @@ def safe_list(
     return results
 
 
-def is_protected(path: Union[str, Path], root: Path = PROJECT_ROOT) -> bool:
+def is_protected(path: Union[str, Path], root: Path | None = None) -> bool:
     """Public helper to check protection status."""
+    root = root if root is not None else PROJECT_ROOT
     return _is_protected(_resolve(path, root), root)

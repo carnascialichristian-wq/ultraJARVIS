@@ -49,6 +49,13 @@ def _load_module(path: Path, *, extra_path: Path | None = None):
         sp = str(extra_path)
         if sp not in sys.path:
             sys.path.insert(0, sp)
+    # FIX-19a / S-26: safety scan before execution. Necessary but not
+    # sufficient (scanner has known evasions per S-08 / FIX-9).
+    from advisors.safety import scan_text
+    src = path.read_text(encoding="utf-8")
+    hits = scan_text(src)
+    if hits:
+        raise GraphError(f"refusing to execute {path.name}: dangerous patterns {hits}")
     spec = importlib.util.spec_from_file_location(path.stem, path)
     if spec is None or spec.loader is None:
         raise GraphError(f"cannot load {path}")
@@ -62,7 +69,7 @@ def _load_module(path: Path, *, extra_path: Path | None = None):
 
 
 def execute_graph(job_dir: str | Path, *, entry: str = "tool.py") -> Dict[str, Any]:
-    job_dir = Path(job_dir)
+    job_dir = Path(job_dir).resolve()
     deps = load_deps(job_dir)
     modules = deps.get("modules") or []
     edges = deps.get("edges") or []
@@ -70,7 +77,14 @@ def execute_graph(job_dir: str | Path, *, entry: str = "tool.py") -> Dict[str, A
     order = topological_order(py_mods, edges)
     loaded = {}
     for name in order:
-        path = job_dir / name
+        # FIX-19b / S-26: module names from deps.json must stay inside job_dir.
+        if "/" in name or "\\" in name or ".." in Path(name).parts:
+            raise GraphError(f"invalid module name in deps.json: {name!r}")
+        path = (job_dir / name).resolve()
+        try:
+            path.relative_to(job_dir)
+        except ValueError:
+            raise GraphError(f"module escapes job dir: {name!r}") from None
         if not path.is_file():
             raise GraphError(f"missing module file: {name}")
         loaded[name] = _load_module(path, extra_path=job_dir)
@@ -78,7 +92,12 @@ def execute_graph(job_dir: str | Path, *, entry: str = "tool.py") -> Dict[str, A
     if entry in loaded and hasattr(loaded[entry], "run"):
         result = loaded[entry].run()
     elif (job_dir / entry).is_file():
-        mod = _load_module(job_dir / entry, extra_path=job_dir)
+        entry_path = (job_dir / entry).resolve()
+        try:
+            entry_path.relative_to(job_dir)
+        except ValueError:
+            raise GraphError(f"entry escapes job dir: {entry!r}") from None
+        mod = _load_module(entry_path, extra_path=job_dir)
         if hasattr(mod, "run"):
             result = mod.run()
     return {"ok": True, "order": order, "result": result, "loaded": list(loaded.keys())}

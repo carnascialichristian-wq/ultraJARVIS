@@ -8,8 +8,10 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-DEFAULT_USAGE_PATH = Path("workspace/usage.jsonl")
-DEFAULT_BUDGET_PATH = Path("workspace/llm_budget.json")
+# Anchor to module so cwd changes do not create a silent empty register (FIX-17d).
+_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_USAGE_PATH = _ROOT / "workspace" / "usage.jsonl"
+DEFAULT_BUDGET_PATH = _ROOT / "workspace" / "llm_budget.json"
 
 
 def record_usage(
@@ -85,8 +87,8 @@ class QuotaExceeded(Exception):
 
 
 def check_job_quota(*, usage_path: Optional[Path] = None) -> None:
-    """Opt-in via UJ_ENFORCE_QUOTA=1."""
-    if os.getenv("UJ_ENFORCE_QUOTA", "").strip() != "1":
+    """Enforce by default; set UJ_ENFORCE_QUOTA=0 to disable (FIX-17a)."""
+    if os.getenv("UJ_ENFORCE_QUOTA", "1").strip() == "0":
         return
     tier = current_tier()
     limit = float(tier.get("jobs_per_day") or 0)
@@ -99,7 +101,7 @@ def check_job_quota(*, usage_path: Optional[Path] = None) -> None:
 
 
 def check_llm_quota(*, usage_path: Optional[Path] = None) -> None:
-    if os.getenv("UJ_ENFORCE_QUOTA", "").strip() != "1":
+    if os.getenv("UJ_ENFORCE_QUOTA", "1").strip() == "0":
         return
     tier = current_tier()
     limit = float(tier.get("llm_calls_per_day") or 0)
@@ -117,7 +119,8 @@ def record_llm_call(*, units: float = 1.0, meta: Optional[dict] = None) -> dict:
 
 
 def get_llm_budget() -> Dict[str, Any]:
-    soft_cap = float(os.environ.get("UJ_LLM_BUDGET_USD", "0") or 0)
+    # FIX-17a: positive default so the budget branch is never always-true.
+    soft_cap = float(os.environ.get("UJ_LLM_BUDGET_USD", "1") or 1)
     s = summarize_usage(since_ts=_day_start_ts())
     calls = float((s.get("events") or {}).get("llm_call") or 0)
     unit_cost = float(os.environ.get("UJ_LLM_UNIT_COST_USD", "0.001") or 0.001)
@@ -126,7 +129,7 @@ def get_llm_budget() -> Dict[str, Any]:
         "calls_today": calls,
         "spent_usd_est": round(spent, 6),
         "soft_cap_usd": soft_cap,
-        "ok": soft_cap <= 0 or spent < soft_cap,
+        "ok": spent < soft_cap,
         "tier": current_tier()["id"],
     }
 
