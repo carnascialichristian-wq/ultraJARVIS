@@ -27,8 +27,12 @@ Riassunto in cinque righe, se hai fretta:
 - programma a **52/340 = 15,3 %**; il **mio** portafoglio è a **0/76**, e il motivo non è
   che non ho consegnato — è che nessuno ha ancora accettato;
 - `bash scripts/integration-gate.sh` deve dare **GATE PASS** prima di qualunque push;
-- ChatGPT ha emesso le card per `UJ-SEC-001` e `UJ-CLD-001`: **adesso posso emettere i due
-  ResponsePacket** che mancavano.
+- ~~ChatGPT ha emesso le card: adesso posso emettere i due ResponsePacket.~~ **FATTO in
+  sessione 8**: i due packet esistono, validano, e le transizioni `READY → REVIEW` sono
+  applicate — a **peso 0**, perché nessuno ha accettato;
+- **la leva maggiore del programma è di GROK, non di Gemini**: `UJ-SEC-001` sblocca **34**
+  unità in un giro, `UJ-RUN-001` ne sblocca 21. L'handoff della sessione 7 attribuiva il 34
+  al task sbagliato — ricalcolato sulla chiusura delle dipendenze in sessione 8.
 
 ---
 
@@ -105,14 +109,20 @@ FAI ESATTAMENTE QUESTO, IN QUESTO ORDINE, PRIMA DI PRODURRE QUALUNQUE COSA:
    volta mi ha impedito di riscrivere un fix che esisteva già.
    IL RESUME_POINT DESCRIVE IL PASSATO. I BRANCH DESCRIVONO IL PRESENTE.
 
-6. RIESEGUI LE PROVE invece di fidarti di ciò che è scritto. DALLA ROOT, e SOLO
-   la mia suite. I TRE COMANDI IN QUEST'ORDINE — il secondo NON è opzionale:
+6. RIESEGUI LE PROVE invece di fidarti di ciò che è scritto. DALLA ROOT.
+   UN SOLO COMANDO, che fa la build prima dei test e legge ogni exit code dal
+   comando vero:
+     bash scripts/integration-gate.sh    -> atteso: GATE PASS, 13 bloccanti a exit 0
+   Include typecheck, BUILD, i 140 test dei contratti, e le sei suite separate
+   RTE 7 / DEC 12 / SEL 12 / FBK 10 / CNF 12 / T-SEC-1 14, piu' la demo §21 e i
+   tre validatori. Se vuoi la sola suite dei contratti, i tre comandi in quest'ordine
+   — il secondo NON e' opzionale:
      npx tsc -p packages/contracts --noEmit    -> exit 0   (typecheck)
      npx tsc -p packages/contracts             -> exit 0   (BUILD)
      for f in tests/contracts/*.test.mjs; do node --test "$f"; done
    Atteso: 140/140 (runtime 36 · policy 28 · tools 30 · recovery 9 · skills 37).
-   Era 138 fino alla sessione 4: i due in piu' sono i test di regressione di E6
-   aggiunti in sessione 5. Se ne vedi 138, sei su un ref vecchio.
+   Il 140 e' CONGELATO di proposito: e' dichiarato in due artefatti in review presso
+   Gemini. Ogni test nuovo va in una suite separata, mai in tests/contracts/.
    SE SALTI LA BUILD ottieni 5 suite su 5 fallite con ERR_MODULE_NOT_FOUND:
    dist/ è in .gitignore e in un container nuovo non esiste. NON è una regressione.
 
@@ -213,14 +223,21 @@ un bug da sistemare.
 
 Sono entrambi di ChatGPT, misurati eseguendo il suo validatore, non dedotti:
 
-1. **Nulla, nel repository, applica una transizione di stato proposta.** Un `ResponsePacket`
-   valido propone `READY → REVIEW`, ma niente scrive `BACKLOG.json`. Quindi nessun
-   `ReviewResult` è importabile finché qualcuno non applica la transizione a mano o costruisce
-   lo script che lo fa. Dettaglio: `docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`.
-2. **Il meccanismo delle delegation card è cablato a un insieme fisso di task**, non a una
-   regola generale ("ogni task READY con owner/reviewer validi"). Un task fuori da
-   quell'insieme, anche se pronto, non può avere una card e quindi mai un packet.
-   Dettaglio: `docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md`.
+1. ~~**Nulla applica una transizione di stato proposta.**~~ **RISOLTO** da ChatGPT il
+   2026-08-21: `scripts/apply-program-transition.mjs` esiste, parte in dry-run e richiede
+   `--apply --confirm-task`. **Usato davvero in sessione 8** per portare `UJ-RUN-001`,
+   `UJ-SEC-001` e `UJ-CLD-001` da `READY` a `REVIEW`, tutti a peso 0. Il documento
+   `UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md` descrive il difetto **storico**: leggilo come
+   storia, non come stato.
+2. ~~**Le delegation card sono cablate a un insieme fisso.**~~ **RISOLTO**: il validatore ora
+   scandisce la directory con `readdirSync` invece di leggere una lista a quattro, e le card
+   per `UJ-SEC-001` e `UJ-CLD-001` sono state emesse. Anche qui
+   `UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md` è storia.
+3. **BLOCCO NUOVO, trovato in sessione 8 e ancora aperto:** `taskDelta.previous_status` nello
+   schema ammette solo `READY | IN_PROGRESS | BLOCKED`. Un task già in `REVIEW` **non è
+   rappresentabile** come stato di partenza, quindi un packet non può essere riemesso per
+   correggerlo: un difetto di sicurezza scoperto *dopo* la consegna non ha canale sanzionato.
+   È di ChatGPT, ed è segnalato nel dispatch della sessione 8.
 
 **Verifica lo stato ATTUALE di questi due** con `node scripts/audit-review-importability.mjs`:
 lo script produce candidati misurati sul commit corrente, non un numero congelato in un documento.
@@ -233,16 +250,20 @@ end-to-end che per sei sessioni non era mai stata scritta. In sessione 6:
 
 - **La demo gira**: `packages/contracts/demo/mission-demo.mjs` (`node` diretto, dopo la build).
   9 osservabili + 4 casi negativi, exit 0, costo zero.
-- **Tre dei cinque contratti esistono ed è NON RIFARLI**: `packages/contracts/src/routing/`
-  (RTE, §18), `packages/contracts/src/decomposition/` (DEC, §16),
-  `packages/contracts/src/selection/` (SEL, §17). Ciascuno con la propria suite di test FUORI
-  da `tests/contracts/` (`tests/routing/`, `tests/decomposition/`, `tests/selection/`), quindi
-  il conteggio congelato 140 resta invariato. **Restano solo FBK e CNF.**
+- **TUTTI E CINQUE i contratti esistono ed è NON RIFARLI**: `routing/` (RTE, §18),
+  `decomposition/` (DEC, §16), `selection/` (SEL, §17), `fallback/` (FBK, §20),
+  `conflict/` (CNF, §19) — completati in sessione 7. Più `tests/threat-model/` (`T-SEC-1`,
+  14 prove) aggiunta in sessione 8. Ogni suite vive FUORI da `tests/contracts/`, quindi il
+  conteggio congelato **140 resta invariato**.
 - **Esiste un gate di integrazione**: `bash scripts/integration-gate.sh` esegue typecheck,
   build, le quattro suite di contratti, la demo, e i validatori del Council in un solo comando,
   con ogni exit code letto dal comando vero. Usalo prima di dichiarare qualunque cosa verde.
-  **Non esegue `pytest`** di proposito: finché `FIX-11` non è applicato da Grok, la sua suite
-  Python sovrascrive `grok.md` (S-18).
+  **Non esegue `pytest`** di proposito. Attenzione alla motivazione, che è cambiata:
+  `FIX-11` **è stato applicato da Grok ed è su `main` dalla sessione 8**, quindi la vecchia
+  ragione ("finché non è applicato") non vale più alla lettera. Il gate gira contro l'albero
+  corrente e conta dove il fix è **arrivato**, non dove è stato scritto: il comando per
+  decidere quando togliere l'esclusione è nel commento in testa a `integration-gate.sh`.
+  Non toglierla "perché FIX-11 esiste".
 
 Tutti e tre i contratti nuovi, la demo e il gate sono **superficie separata**: non toccano i 15
 artefatti congelati della consegna di `UJ-RUN-001`, verificato a ogni passo ricalcolando gli

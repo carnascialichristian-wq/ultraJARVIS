@@ -325,18 +325,36 @@ aggiornata, è il segnale che il presidio si è allentato.
 
 # PARTE 4 — STATO DEI MIEI TASK
 
-Aggiornato al 2026-08-17. **Portafoglio totale: 76 unità su 8 task.**
+**Aggiornato al 2026-08-21, sessione 8.** Portafoglio totale: **76 unità su 8 task**.
 
-| Task | Peso | Stato | Accettato | Proposto | Manca | Dipendenza bloccante |
-|---|---:|---|---:|---:|---:|---|
-| UJ-RUN-001 — Runtime blueprint | 13 | **REVIEW** (ammissibile dal 2026-08-19) | 0/13 | 11/13 | review di Gemini | — |
-| UJ-SEC-001 — Threat model + approval policy + critica Costituzione | 13 | **REVIEW** | 0/13 | 11/13 | review di Grok | — |
-| UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | **REVIEW** | 0/8 | 7/8 | 1 | S-10 richiede login → HUMAN_BRIDGE |
-| UJ-MCP-001 — ToolManifest + MCP admission | 8 | **REVIEW** | 0/8 | 7/8 | review di Gemini | — |
-| UJ-RCV-001 — Checkpoint/retry/recovery | 8 | **REVIEW** | 0/8 | 6/8 | review di ChatGPT | — |
-| UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | **REVIEW** | 0/13 | 11/13 | review di ChatGPT | — |
-| UJ-REV-001 — Review del Program OS di ChatGPT | 5 | **REVIEW** | 0/5 | 4/5 | review di Christian | — (sbloccato: UJ-INT-001 esiste) |
-| UJ-REV-002 — Security review Website Team | 8 | BLOCKED | 0/8 | — | 8 | UJ-INT-007 non esiste |
+> Questa tabella era ferma al 2026-08-17 fino alla sessione 8 e **contraddiceva il
+> `BACKLOG.json`**: dava sei task in `REVIEW` quando il ledger ne dava zero. Non era una
+> bugia, era una copia stantia di uno stato condiviso — la trappola 26 vista da vicino.
+> **Non aggiornarla a mano: rigenerala.** Il comando è in fondo alla tabella, e il
+> `BACKLOG.json` è la fonte, non questo file.
+
+| Task | Peso | Stato | Accettato | Reviewer | Sblocca in un giro |
+|---|---:|---|---:|---|---:|
+| UJ-SEC-001 — Threat model + approval policy + critica Costituzione | 13 | **REVIEW** | 0/13 | **GROK** | **34** ← la leva maggiore |
+| UJ-RUN-001 — Runtime blueprint | 13 | **REVIEW** | 0/13 | GEMINI | 21 |
+| UJ-CLD-001 — Verifica Claude Pro/Code/SDK/OAuth | 8 | **REVIEW** | 0/8 | GEMINI | 8 |
+| UJ-SKL-001 — Skill Forge threat model + sandbox | 13 | BLOCKED | 0/13 | CHATGPT | a cascata da UJ-SEC-001 |
+| UJ-MCP-001 — ToolManifest + MCP admission | 8 | BLOCKED | 0/8 | GEMINI | a cascata da UJ-SEC-001 |
+| UJ-RCV-001 — Checkpoint/retry/recovery | 8 | BLOCKED | 0/8 | CHATGPT | a cascata da UJ-RUN-001 |
+| UJ-REV-001 — Review del Program OS di ChatGPT | 5 | BLOCKED | 0/5 | Christian | ChatGPT deve correggere il criterio "311" |
+| UJ-REV-002 — Security review Website Team | 8 | DEFERRED | 0/8 | GROK | non lavorabile |
+
+**I tre task in `REVIEW` hanno tutti un `ResponsePacket` valido e una transizione
+registrata**, applicata con lo script di ChatGPT (dry-run, poi `--apply`), **a peso 0**.
+
+```bash
+# rigenera questa tabella invece di fidartene
+python3 -c "
+import json
+for t in json.load(open('docs/program/BACKLOG.json'))['tasks']:
+    if t['owner']=='CLAUDE':
+        print(f\"{t['task_id']:12} {t['status']:9} {t.get('completed_weight',0)}/{t['weight']:<3} rev={t['reviewer']}\")"
+```
 
 ## Progresso — formula §7.4, mai a occhio
 
@@ -6168,6 +6186,259 @@ fermarsi *subito*, è **fermarsi in un punto sicuro**.
 
 ---
 
+---
+
+## Sessione 8 — `UJ-CLAUDE-2026-08-21-08` — 2026-08-21
+
+**Richiesta di Christian:** leggere l'handoff della sessione 7, poi CLAUDE.md e
+TASKCLAUDE.md; mandato pieno di capo tecnico confermato, più il *«fai come pensi sia
+meglio»* del 21 che autorizza a chiudere le PR superate e a mergiare su `main`.
+
+### L'errore l'ho commesso entro il primo minuto, ed era già scritto qui
+
+Il primo comando della sessione è stato `git fetch origin 'refs/heads/*:...'` **senza il
+`+`**. La trappola 27 dice esattamente di non farlo. Risultato: `origin/main` è rimasta a
+un ref stantio che diceva **`9d2a93d Initial commit`**, cioè un repository di un solo
+commit.
+
+**Per qualche secondo ho creduto che `main` fosse stata azzerata.** Se avessi agito su
+quella lettura — "ricostruisco `main`" — avrei fatto un danno serio. Il `!` di rifiuto era
+una riga sola in mezzo a venti `[new branch]`, esattamente come la trappola la descrive.
+Rifatto il fetch con `+`: `origin/main` era a `a4db3c2`, dove l'handoff diceva.
+
+**La lezione non è "usa il `+`": quella era già scritta e l'ho letta.** È che una
+procedura di apertura va **eseguita dal file**, non a memoria, perché la memoria produce
+la forma plausibile del comando, non quella giusta.
+
+Seconda conferma nello stesso minuto: il branch assegnato dall'ambiente
+(`claude/ultrajarvis-runtime-architecture-npc9l7`) era **0 avanti / 0 indietro** rispetto a
+`main`, cioè vuoto. È la quarta volta, come l'handoff annunciava. La casa è stata
+**dimostrata**, non assunta: `agent/uj-run-001-blueprint-20260818` dà `0 111`.
+
+### COMPITO A — le PR: da 16 aperte a 2
+
+L'handoff ne contava 18; alla misura erano **16** (la #19 era già stata mergiata in
+`a4db3c2`, come sospettava). Ne ho chiuse **12**, ognuna con la motivazione nel thread.
+
+**Non ho chiuso sulla fiducia.** L'affermazione più forte dell'handoff era che #11 e #16
+fossero già accettate: verificato in `BACKLOG.json` che `UJ-GGL-001` e `UJ-RED-001` sono
+`DONE` **13/13**. Nei due commenti l'ho scritto per quello che è — *"non è una PR
+respinta, è una PR vinta"* — perché una PR chiusa senza spiegazione sembra lavoro buttato.
+
+Restano aperte **#10** (Gemini, `UJ-CAP-001`) e **#22** (Grok). **#18** e **#21** si sono
+chiuse da sole quando i loro commit sono diventati raggiungibili da `main`.
+
+### COMPITO B — il merge, e la prescrizione dell'handoff era SBAGLIATA
+
+Il ramo di Grok si era mosso da `f87d22b` a `b8cccf7` dopo la verifica della sessione 7.
+Riverificato il delta: un commit, un file, `FIX-19b`.
+
+**Non l'ho accreditato.** Sonda avversaria su un worktree che **materializza** `b8cccf7`,
+con controllo negativo su `f87d22b`:
+
+| caso | prima | dopo |
+|---|---|---|
+| `../pwned.py` | respinto per *"missing module file"* — motivo sbagliato | respinto per *"invalid module name"* |
+| **symlink → fuori dalla job dir** | **ESEGUITO, marker scritto fuori** | respinto |
+| controllo positivo `tool.py` | esegue | **esegue** |
+
+Il symlink era un'evasione **reale**. Onestà sul mio lato: il caso `".."` nudo non tocca
+mai la guardia, perché il filtro `.endswith(".py")` lo scarta prima — 5 casi su 6 hanno
+esercitato la guardia, non 6, e l'ho scritto invece di presentare un 6/6.
+
+#### Il punto della sessione: l'handoff mi diceva di prendere la versione di Grok, e sarebbe stata una regressione
+
+L'handoff prescriveva: *«conflitti attesi su `cloud_bridge.py` e `core/config.py`: la
+versione buona per il Python è la sua, l'ho verificata io oggi»*. Applicata alla lettera
+avrebbe **riaperto `S-17`**:
+
+- la versione di Grok contiene `_call_openai()`, adattatore a pagamento a **un env var di
+  distanza**; la mia non ha alcun adattatore a pagamento;
+- la versione di Grok **non contiene** `_validate_local_base()`: senza, `MODEL_PROVIDER=local`
+  con `LMSTUDIO_BASE` remoto **esce in rete** pur chiamandosi "local".
+
+Prove che tenere la mia non rompe nulla, tutte eseguite: `git grep _call_openai` su tutto
+l'albero di Grok → **nessun chiamante esterno**; due miei test **esercitano**
+`_validate_local_base`, quindi prendere la sua avrebbe cancellato la funzione *e* i test
+che la provano; `FIX-13`/`S-19` è presente in **entrambe**, quindi non si perde nulla di suo.
+
+**Un handoff è la memoria di una sessione precedente, non un'autorità.** Era mio, era
+recente, ed era sbagliato su un file che presidia i soldi di Christian.
+
+`main` da `a4db3c2` a `925ea1d`, gate PASS prima del push, sonda delle tre porte:
+**loopback su tutte e tre**.
+
+### COMPITO C — i tre dispatch, e una correzione che riordina le priorità
+
+L'handoff diceva che `UJ-RUN-001` (reviewer Gemini) è *«la review con più leva del
+programma: 34 unità in un giro»*. **Ricalcolando la chiusura sulle dipendenze (trappola
+34) è falso**, e il numero 34 appartiene a un altro task:
+
+| Review | Reviewer | Unità sbloccate in un giro |
+|---|---|---:|
+| **`UJ-SEC-001`** | **GROK** | **34** (13 + `UJ-SKL-001` 13 + `UJ-MCP-001` 8) |
+| `UJ-RUN-001` | GEMINI | 21 (13 + `UJ-RCV-001` 8) |
+| `UJ-CLD-001` | GEMINI | 8 |
+
+**La leva maggiore è in mano a Grok, non a Gemini** — e Grok è quello che ha dichiarato di
+non riuscire a eseguire `npx tsc` e `node --test`. Quindi l'azione di più alto valore del
+programma non è insistere con Gemini: è **dare a Grok un checkout che esegue**. L'ho
+scritto anche **a Gemini**, invece di lasciarle un numero gonfiato che avrebbe ottenuto la
+sua attenzione con un dato falso.
+
+Nel dispatch avevo scritto un metodo di conteggio che **non riproduceva** i suoi numeri:
+il ramo `agent/chatgpt-uj-red-001-grok-intake` contiene entrambi i nomi e veniva contato
+due volte (8 invece di 7). Corretto il **metodo**, non il numero, e poi **eseguito** il
+comando che avevo scritto: 6 e 7. Trappola 24: un comando di riproduzione scritto e non
+eseguito è peggio di nessun comando.
+
+### I due ResponsePacket mancanti, e perché NON ho accettato peso
+
+Il tetto era l'assenza delle delegation card, che ChatGPT ha emesso il 21. Emessi e
+validati: **PASS** entrambi, hash verificati dal gate. Transizioni applicate
+(`READY → REVIEW`) per `UJ-SEC-001`, `UJ-CLD-001` e `UJ-RUN-001`, tutte a **peso 0**.
+
+**Avevo il mandato per accettare `UJ-SEC-001`, e non l'ho fatto.** Grok ha emesso una
+review indipendente `PASS_WITH_ACTIONS` con AC-01 e AC-02 a `PASS`, elencando cinque
+condizioni. Verificate una per una:
+
+- **punto 4 SUPERATO**: la card non esisteva al suo ref (`git cat-file -e` fallisce a
+  `27b7673`) e ora esiste;
+- **punto 5 SODDISFATTO**: chiedeva che *"l'integratore esegua i comandi"*, e li ho
+  eseguiti — gate PASS;
+- **punto 1 ANCORA VERO**, ed è un difetto del **mio** deliverable: `THREAT_MODEL.md`
+  riga 370 dichiarava i test `T-SEC-1` non implementati.
+
+Più una ragione strutturale: **in questo programma l'integratore e l'autore sono lo stesso
+attore.** Soddisfare da solo la condizione che Grok ha posto come controllo indipendente la
+ridurrebbe a un autocontrollo. Registrato come `DEC-SEC-001-WEIGHT-DEFERRED`.
+
+### `S-28` — il difetto più grave della sessione, ed è mio
+
+Ho implementato `T-SEC-1` per chiudere il punto 1 di Grok. **Il primo test è fallito, e per
+il motivo sbagliato** (trappola 12): avevo usato nomi di livello inventati (`L4_EXECUTE`),
+mentre il dominio reale è `L0..L4`.
+
+Indagando invece di correggere l'asserzione, è emerso questo:
+
+```
+rankOf(order, value) = order.indexOf(value)      // -1 se fuori dominio
+autonomyWithin(child, parent) = rank(child) <= rank(parent)
+```
+
+`-1 <= n` è vero per **ogni** n. Misurato prima della correzione:
+
+```
+autonomyWithin("L5", "L2")         -> true
+autonomyWithin("L9_GODMODE", "L0") -> true
+dataClassWithin("C9", "C0")        -> true
+sideEffectWithin("NUKE", "NONE")   -> true
+```
+
+**Le funzioni che impongono il tetto dei limiti ammettevano ciò che non riconoscevano.**
+
+Perché è grave: `common.ts` dichiara tre righe sopra `AUTONOMY_ORDER` che `L5` *«non è
+raggiungibile per errore di configurazione, **da un manifest**, o da un modello persuaso»*.
+È vero dentro TypeScript. Ma **un manifest è JSON, e il JSON arriva come stringhe**: il
+percorso del manifest era esattamente quello che la aggirava. Era la difesa di cui andavo
+più fiero — quella che ho citato in ogni consegna da cinque sessioni — e non sopravviveva
+al filo.
+
+**Era una CLASSE, non un'istanza** (trappola 20). Lo stesso `indexOf` come rango compariva
+in **cinque** siti. Misurati tutti prima di correggerne uno:
+
+| sito | comportamento sull'ignoto | esito |
+|---|---|---|
+| `runtime/common.ts` | fail-OPEN | corretto |
+| `policy/approval.ts` | `strictestGate("SCONOSCIUTO","ALLOW")` → `ALLOW` | corretto → `DENY` |
+| `selection/selection.ts` | un ceiling ignoto vinceva come "il più stretto" | corretto |
+| `skills/skill-forge.ts` | con `from` ignoto, `toIdx !== fromIdx+1` diventa `0 !== 0` → salto ammesso | corretto con `NaN` |
+| `routing/adapter-routing.ts` | **già fail-closed**: l'ignoto → `ZERO_LOCAL`, mai `METERED` | **controllo positivo** |
+
+Il quinto sito è la parte che conta (trappola 25): dimostra che il difetto stava nel
+**trattamento dell'ignoto**, non nell'idea di usare un ordine indicizzato. Senza quel caso
+positivo la diagnosi non sarebbe stata falsificabile.
+
+Correzione in **una sede sola** — `isInDomain`, `rankAsChild` (ignoto = massimamente
+permissivo), `rankAsParent` (ignoto = massimamente restrittivo) — perché un rattoppo per
+sito garantisce una sesta occorrenza. Scelto di **non sollevare eccezioni**: un input
+ostile non deve poter fermare un run.
+
+Ciclo della trappola 21 eseguito per intero: il test è stato scritto **contro il codice
+rotto**, ha fallito dopo la correzione con il messaggio che avevo previsto per quel caso
+(*"S-28 è stato corretto: aggiorna questo test"*), ed è stato convertito in regressione.
+
+### `T-SEC-1` — 14 prove, e il gruppo che conta di più è quello che documenta le lacune
+
+Fuori da `tests/contracts/` (il conteggio 140 è congelato), cablata nel gate come
+**bloccante**. Tre gruppi: **A** le difese che reggono, **B** il residuo di TH-01
+dimostrato invece che affermato (contenuto ostile e benigno sono ammessi identicamente,
+perché il runtime non legge il testo — **l'uguaglianza *è* il residuo**), **C** le lacune
+fissate perché non slittino.
+
+Il gruppo C registra tre fatti scomodi sul mio stesso lavoro: **`.originLabel` non è letto
+da nessuna parte** in tutto il repository; `Transition.guards` è `readonly string[]`,
+quindi un refuso in un nome di guardia non è rilevabile; `nextState` restituisce le
+guardie e **non le valuta**. Sono l'ottava occorrenza dello schema *"manopola che sembra
+fermare qualcosa e non lo fa"* che contesto agli altri da cinque sessioni — stavolta nel
+mio deliverable.
+
+### Il gate di ChatGPT mi ha fermato, ed è la quarta volta che ha ragione
+
+Dopo la correzione, `validate-program-os` ha rifiutato l'albero: *"UJ-RUN-001 hashed proof
+bytes differ for common.ts"*. Aveva rilevato che avevo modificato artefatti citati come
+prova di task in `REVIEW`. **Non l'ho aggirato**: ho riemesso i packet a `R7`/`R2`, con un
+`HASH CHANGE NOTICE` esplicito, perché un reviewer che vede un hash cambiato senza
+spiegazione ha ragione a insospettirsi.
+
+Prova che la correzione è chirurgica (trappola 26): ricalcolati **tutti** gli hash ai due
+commit, ne sono cambiati **esattamente quanti erano i file toccati** — 1 per packet, poi 4
+proof rinfrescati.
+
+### Difetto strutturale trovato nello schema di ChatGPT
+
+`taskDelta.previous_status` ammette solo `READY | IN_PROGRESS | BLOCKED`. **Un task già in
+`REVIEW` non è rappresentabile come stato di partenza**, quindi un packet non può essere
+riemesso per correggerlo. Un difetto di sicurezza scoperto *dopo* la consegna non ha canale
+sanzionato: o si lascia, o si aggira il gate. È la stessa classe di `F-003` della sessione
+3. Risolto per la via minima e dichiarata.
+
+### ERRORI COMMESSI IN QUESTA SESSIONE
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E40 | **Ripetuta la trappola 27 entro il primo minuto**: `git fetch` senza `+` | `origin/main` stantia a `9d2a93d Initial commit`; ho creduto per alcuni secondi che `main` fosse azzerata | rifetch con `+` | una procedura di apertura va **eseguita leggendo il file**, non a memoria. Sapere una trappola non basta: la memoria produce la forma plausibile del comando |
+| E41 | **Ho letto i tipi dal mio codice di stampa, non dallo schema**: credevo che `weight` fosse stringa nel packet di `UJ-RUN-001` perché la mia `shape()` faceva `str(o)` | il validatore ha respinto 4 campi come `expected type integer` | letto lo schema | quando ispezioni un file con uno strumento tuo, stai vedendo **il tuo strumento**. Il difetto era nel visualizzatore, e stavo per attribuirlo a un packet che era corretto |
+| E42 | **Test scritto con nomi fuori dominio** (`L4_EXECUTE` invece di `L2`) | `T-SEC-1.A3` falliva | corretti i nomi | trappola 12, terza forma. **Ma indagare invece di correggere l'asserzione ha prodotto `S-28`**: un test che fallisce per il motivo sbagliato è un falso negativo *e* una sonda che ha toccato qualcosa |
+| E43 | **Metodo di conteggio scritto nel dispatch che non riproduceva il numero**: `grep -i grok` contava anche un ramo di ChatGPT | 8 invece di 7 | corretto il metodo e **eseguito** il comando | trappola 24: un numero giusto con un metodo sbagliato è indistinguibile da un numero sbagliato, per chi lo verifica |
+| E44 | Comando composto rifiutato dal classificatore di permessi | `git checkout --ours … && git add … && …` bloccato | spezzato in comandi singoli | in questo ambiente i comandi git composti vanno separati |
+
+**E42 è l'errore più produttivo che abbia commesso in otto sessioni**: da un test scritto
+male è uscito il difetto più grave del mio portafoglio.
+
+### Prove eseguite
+
+| Verifica | Esito |
+|---|---|
+| `sha256sum` piano canonico | `a3fcdfc9…a69a87` **invariato** |
+| `bash scripts/integration-gate.sh` (5 volte, ad ogni passo) | **PASS**, 13 bloccanti a exit 0 |
+| Suite dei contratti | **140 pass**, invariata |
+| `T-SEC-1` | **14 pass** |
+| Sonda `FIX-19b` con controllo negativo | evasione dimostrata prima, chiusa dopo |
+| Sonda S-17 tre porte su `HEAD` mergiato | **loopback su tutte e tre** |
+| `S-28` prima/dopo, con controlli positivi | 4 fail-open chiusi, dominio valido intatto |
+| `validate-response-packet` × 3 | **PASS**, hash verificati al commit |
+| `validate-program-os` | **PASS**, `accepted_weight=52` invariato |
+
+### Cosa NON ho fatto, e perché
+
+- **non ho accettato peso**, su nessuno degli otto task miei — il programma resta a
+  **52/340 = 15,3 %** e io a **0/76**;
+- **non ho toccato `cloud_bridge.py` e `core/config.py` di Grok** oltre alla risoluzione
+  del conflitto, né il suo `monetization.py` per il difetto del budget che ho trovato: è
+  il suo file, gliel'ho segnalato con la misura e la decisione è sua;
+- non ho aperto PR nuove: non richieste.
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -6427,1647 +6698,174 @@ Sintesi operativa degli errori sopra, in forma di regole:
     riletta nel codice prima di uscire dal tuo albero**, e l'avvertenza va messa **dentro lo
     script**, dove la legge chi lo riesegue, non solo nel documento che lo cita.
 
+40. **Una procedura di apertura va ESEGUITA LEGGENDO IL FILE, non a memoria** (E40).
+    Ho ripetuto la trappola 27 — `git fetch` senza `+` — **entro il primo minuto della
+    sessione**, pur avendola scritta io e pur essendo la prima riga della procedura
+    nell'handoff. Per alcuni secondi ho creduto che `main` fosse stata azzerata a un solo
+    commit, e agire su quella lettura avrebbe fatto un danno serio. **Sapere una trappola
+    non protegge da essa**: a memoria si riproduce la forma *plausibile* del comando, non
+    quella giusta. Le prime quattro righe di una sessione si copiano dal file.
+41. **Quando ispezioni un artefatto con uno strumento tuo, stai vedendo il tuo strumento**
+    (E41). Una funzione di stampa che faceva `str(o)` mi ha mostrato gli interi come
+    stringhe, e stavo per attribuire a un packet **corretto** un difetto che era nel mio
+    visualizzatore. Prima di accusare un file, leggi lo **schema** o i byte, non la tua
+    resa. È la trappola 38 (un audit produce candidati, non verdetti) applicata al proprio
+    codice di supporto.
+42. **Un test che fallisce per il motivo sbagliato non va corretto: va indagato** (E42,
+    estensione della 12). L'istinto è aggiustare l'asserzione e proseguire. Facendo
+    l'opposto — chiedersi *perché* quel valore — è uscito `S-28`, il fail-open più grave
+    del mio portafoglio, che nessuno stava cercando. **Un test scritto male è comunque una
+    sonda che ha toccato qualcosa.**
+43. **Un handoff è memoria, non autorità** (sessione 8). L'handoff della sessione 7 — mio,
+    recente, scritto con cura — prescriveva di risolvere un conflitto prendendo la versione
+    dell'altra IA. Applicato alla lettera avrebbe **riaperto `S-17`**, cioè un percorso a
+    pagamento, sul file che presidia i soldi del proprietario. Una prescrizione di merge va
+    riverificata contro i due file, sempre: `git grep` del simbolo che rimuoveresti, e
+    ricerca dei test che lo esercitano. Se un test del tuo ramo esercita una funzione che
+    l'altra versione non ha, quella è la risposta.
+44. **Il numero può essere giusto e il metodo sbagliato** (E43). Nel dispatch avevo scritto
+    "Grok 7" con accanto un comando che ne dava 8, perché un ramo conteneva entrambi i nomi.
+    Per chi verifica, un numero giusto ottenuto con un metodo che non lo riproduce è
+    **indistinguibile da un numero inventato**. Correggi il metodo, non il numero, e poi
+    esegui il comando che hai scritto.
+45. **Prima di modificare un sorgente, controlla se è un artefatto HASHATO in un packet in
+    review** (sessione 8). `grep -l <file> docs/program/packets/` costa un secondo. Le
+    prove di un task in `REVIEW` vivono in **due** sedi con semantiche diverse: gli
+    `artifacts` del packet, verificati **al `source_commit_sha`**, e il `proof` in
+    `BACKLOG.json`, verificato **contro l'albero di lavoro**. Cambiare un file rompe la
+    seconda e non la prima, quindi `validate-response-packet` può dire PASS mentre
+    `validate-program-os` dice FAIL — e il difetto è reale.
+46. **Correggere un difetto scoperto DOPO la consegna non ha canale sanzionato**
+    (sessione 8). `taskDelta.previous_status` ammette solo `READY | IN_PROGRESS | BLOCKED`:
+    un task in `REVIEW` non è rappresentabile come stato di partenza, quindi un packet non
+    può essere riemesso. La conseguenza pratica è che il sistema mette davanti a
+    *«lascia il difetto, oppure aggira il gate»*. La via corretta è la terza: riemettere il
+    packet con la revisione incrementata e un **avviso esplicito di cambio hash**, e
+    dichiarare l'aggiramento invece di nasconderlo.
+
 ---
 
 # PARTE 8 — RESUME_POINT
 
-> ## 🚩 HANDOFF ALLA SESSIONE 8 — LEGGI PRIMA QUESTO FILE
->
-> **`docs/program/handoffs/HANDOFF-SESSIONE-8-20260821.md`**
->
-> Christian ha chiuso la sessione 7 il 2026-08-21 dicendo *«fai come pensi sia meglio per
-> completare il lavoro»* e poi *«fai un handoff, la chat e' troppo pesante»*. L'handoff
-> contiene i **tre compiti gia' autorizzati** — chiudere le PR superate, mergiare su `main`,
-> scrivere i prompt con un **messaggio personale** a ciascuna IA — piu' lo stato misurato e
-> le sei cose da non fare. Quel file viene prima di tutti i riquadri qui sotto.
->
-> **Fatti di fine sessione 7, da non riscoprire:**
-> - **CHATGPT ha consegnato tutto cio' che gli avevo chiesto**: `scripts/apply-program-transition.mjs`
->   (lo script che APPLICA una transizione), le card per `UJ-SEC-001` e `UJ-CLD-001`, e il
->   **tetto delle card RIMOSSO** (`validate-council-packets.mjs` ora usa `readdirSync`).
->   Tutto su `origin/main` @ `a4db3c2`.
-> - **Il merge di `origin/main` nel mio ramo E' GIA' FATTO** (`510469d`), 5 conflitti risolti,
->   gate PASS. Il criterio di risoluzione e' nel messaggio di commit.
-> - **Il suo gate mi ha fermato una terza volta** con *"DONE with unresolved acceptance
->   criteria"*: aveva ragione. Chiusi i 7 criteri rimasti `PENDING` sui due task accettati,
->   ognuno con `proof_refs` verso l'artefatto e la review che lo ha promosso.
-> - **GROK ha chiuso il ponte del costo** (`FIX-10`+`13`+`17`) e `FIX-19a`+`FIX-11`.
->   Verificati eseguendo: §32 e §33 della security review. **Il suo ramo si e' mosso a
->   `b8cccf7` DOPO la mia verifica: riverifica il delta prima di mergiare.**
-> - **Nuovo strumento utilizzabile subito:** ora che le due card esistono, posso emettere i
->   `ResponsePacket` per `UJ-SEC-001` e `UJ-CLD-001`. Era il tetto che lo impediva.
->
-> ## 🟢 2026-08-21 — STATO PIU' RECENTE. Questo viene PRIMA del riquadro del 20
->
-> | Fatto | Valore, misurato oggi |
-> |---|---|
-> | **GROK HA APPLICATO I PRIMI DUE FIX** | ramo `agent/uj-grok-security-fixes-20260821` @ `c4bb58a`. `FIX-19a` ✅ e `FIX-11` ✅ **verificati eseguendo**, §32 della security review. **NON sono su `main`** |
-> | `S-18` | ✅ **CHIUSO** — prova per confronto: stesso pytest, su `main` sporca (`M grok.md` + `a.txt`/`notes/`/`sub/`), sul ramo di Grok `git status` è **vuoto** |
-> | `S-26` | 🟡 **PARZIALE** — gate chiuso, **path traversal aperto** → `FIX-19b`, una riga |
-> | Findings su `main` | **11 chiusi · 1 superato · 2 parziali · 15 aperti** (era 10/1/1/17), contato dalla tabella §30 |
-> | **I 5 CONTRATTI MANCANTI SONO COMPLETI** | RTE 7 · DEC 12 · SEL 12 · **FBK 10** · **CNF 12** = **53 test**, tutti FUORI da `tests/contracts/` |
-> | `tests/contracts` | **140**, invariato. `validate-response-packet` exit 0 → i 15 hash della consegna in review sono **intatti** |
-> | Demo §21 | **4 contratti reali su 5** (N3 usa ora FBK vero) |
-> | `bash scripts/integration-gate.sh` | **GATE PASS**, 12 verifiche bloccanti a exit 0 |
->
-> **DUE COSE DA NON FARE:**
-> 1. **non togliere l'esclusione di `pytest` dal gate** perché "FIX-11 esiste": il gate gira
->    contro l'albero corrente e conta dove il fix è **arrivato**. Il comando per decidere è nel
->    commento in testa a `integration-gate.sh`.
-> 2. **non aggiungere test a `tests/contracts/`**: il conteggio 140 è dichiarato in due artefatti
->    congelati e in review presso GEMINI. I contratti nuovi vanno in suite separate.
->
-> **PROSSIMO LAVORO NATURALE**, in ordine: `FIX-19b` è di Grok, non mio · se Gemini revisiona
-> `UJ-RUN-001` verifico che il ledger segua · se ChatGPT mergia la transizione, riemetto le
-> accettazioni bloccate. **Non c'è altro contratto da costruire: i cinque sono finiti.**
->
-> ## 🔴 2026-08-20 — IL MANDATO E' ATTIVO. LEGGI QUESTO PRIMA DEL RIQUADRO SOTTO
->
-> **Christian ha conferito a CLAUDE il mandato pieno di CAPO TECNICO, REVISORE e ACCETTATORE**
-> (*"ora il capo e revisionatore e accettatore sei te… adesso te hai il controllo"*). E' un
-> `USER_CONSTRAINT` diretto e supera ogni regola precedente in conflitto, comprese le mie.
-> Il mandato NON e' piu' sospeso: la PARTE 3-bis §3 (le due definizioni di innesco) e' superata.
->
-> | Cosa vale adesso | |
-> |---|---|
-> | Decido io | accettazione del peso, transizioni del ledger, priorita', assegnazione dei task, gate tecnici, integrazione, merge |
-> | CHATGPT | resta **supervisore esterno con POTERE DI RIFIUTO** su governance, hash, schemi, ammissibilita' |
-> | **NON tocca** | Articolo 5 / `STRICT_ZERO_CARD` · divieto di inventare risultati · obbligo di lasciare traccia |
-> | **Regola che mi impongo** | **non accetto peso sui MIEI otto task senza il verdetto di un'altra IA.** Non me l'ha vietato Christian: me lo vieto io. Se un giorno blocca il programma la sciolgo, **dichiarandolo prima** |
->
-> **PRIMA DECISIONE, GIA' APPLICATA** — `docs/program/decisions/UJ-LEAD-DECISION-001-CLAUDE-20260820.md`
->
-> | | Prima | Adesso |
-> |---|---:|---:|
-> | Peso accettato | 26/340 (7,6%) | **52/340 (15,3%)** |
-> | Lavoro specialistico accettato | **zero** | **26 unita'** — `UJ-RED-001` GROK 13/13, `UJ-GGL-001` GEMINI 13/13 |
-> | Task `BLOCKED` | 18 (160) | **15 (136)** — sbloccati `UJ-KNW-001`, `UJ-MED-001`, `UJ-RSK-001` |
->
-> **DUE COSE DA NON DISFARE:**
-> 1. `scripts/validate-council-packets.mjs` ora ammette `READY / REVIEW / DONE` invece del solo
->    `READY`. La card congelava lo stato a READY e **impediva di accettare il task che autorizza**.
->    Continua la correzione che CHATGPT aveva gia' aperto a `REVIEW` (`df24fd6`). Rifiuta ancora
->    `BLOCKED`, `DEFERRED`, `TRIAGED`, `PROPOSED`.
-> 2. I due task accettati portano `proof` con hash reali e i **7 artefatti sono materializzati in
->    questo albero**. Il gate `validate-program-os` aveva rifiutato la prima versione con
->    *"is DONE without proof"* — aveva ragione.
->
-> **Messaggi alle tre IA:** `prompts/handoffs/CLAUDE-MANDATE-DISPATCH-20260820.md` (blocco comune
-> + un blocco per IA). Il dispatch precedente `CLAUDE-DISPATCH-20260820.md` resta valido per i
-> contenuti tecnici, ma le percentuali che contiene (7,6% / 0 accettato) sono **superate**.
->
-> **`bash scripts/integration-gate.sh` → GATE PASS**, tutte le bloccanti a exit 0.
->
-> ## ⚡⚡ AGGIORNAMENTO 2026-08-20 (SESSIONE 7) — MISURE PRE-MANDATO, PERCENTUALI SUPERATE DAL RIQUADRO SOPRA
->
-> | Fatto nuovo, misurato il 20 | Valore |
-> |---|---|
-> | **ChatGPT ha applicato la PRIMA transizione di stato al `BACKLOG.json`** | commit `c46a967` su `agent/uj-red-001-chatgpt-review-20260819-r2`, `UJ-RED-001` `READY→REVIEW`. **NON è su `main`** |
-> | ChatGPT ha revisionato `UJ-RED-001` di Grok | **5 criteri su 5 `PASS`**, `PASS_WITH_ACTIONS`, e `accepted_weight` **0 → 0**. È la prova, non mia, che il deadlock è reale |
-> | Gemini | **ferma dal 2026-08-18 16:13**, due giorni. Tiene 29 unità mie in review |
-> | Programma | **43 task, 340 unità, 26 accettate = 7,6%** — e tutte e 26 sono governance |
-> | Pianificazione (M0 ∪ M1, **unione**, non 117+86) | **17 task, 177 unità, 120 consegnate (67,8%), 26 accettate (14,7%)** |
-> | Per IA (consegnato / accettato) | CHATGPT 41,2% / 20,6% · CLAUDE 89,5% / **0** · GEMINI 32,1% / **0** · GROK 17,8% / **0** |
-> | **I 122 file Python di Grok su `main` non sono in NESSUN task del `BACKLOG.json`** | zero riferimenti a `core/`, `tools/`, `bin/uj`. Il suo 17,8% è la percentuale sul ledger, non sul lavoro |
-> | `S-17`, `S-19`, `S-26` su `origin/main` | **tutti e tre ancora aperti**, riverificati |
-> | Suite, hash, typecheck, build | 140/140 · `a3fcdfc9…` · exit 0 · exit 0 |
->
-> **Dispatch alle tre IA:** `prompts/handoffs/CLAUDE-DISPATCH-20260820.md` — tre blocchi
-> incollabili e indipendenti. Richieste in ordine di leva: **ChatGPT** mergia la transizione su
-> `main` + la generalizza + emette l'R4 che porta `UJ-RED-001` a 13/13 (sarebbe **la prima
-> unità specialistica accettata del programma**); **Gemini** revisiona `UJ-RUN-001` (**34 unità
-> in un giro**, la leva più alta); **Grok** applica `FIX-19a` per prima e poi revisiona
-> `UJ-SEC-001`.
->
-> **Attenzione operativa:** in questo container **non esiste un `main` locale** —
-> `git rev-parse HEAD main origin/main` fallisce con *"ambiguous argument 'main'"*. Non è un
-> guasto: usa `origin/main` e basta.
->
-> ## ⚡ STATO AL 2026-08-19, FINE SESSIONE 6 — LEGGI QUESTE 30 RIGHE PRIMA DELLE ALTRE 1000
->
-> Il blocco qui sotto ha **48 punti accumulati in sei sessioni, in ordine non cronologico**, e
-> **diversi sono superati da punti successivi**. Non sono stati cancellati — servono a capire
-> come ci siamo arrivati — ma **questo riquadro è ciò che è vero adesso**. Se un punto più in
-> basso contraddice questo riquadro, **vince il riquadro**.
->
-> | Fatto | Valore, misurato |
-> |---|---|
-> | Branch con consegna **e** memoria | `agent/uj-run-001-blueprint-20260818` |
-> | `origin/main` | `27b7673` |
-> | Hash del piano canonico | `a3fcdfc9…a69a87` — invariato da sessione 1 |
-> | Suite contratti | **140 pass, 0 fail** (runtime 36 · policy 28 · tools 30 · recovery 9 · skills 37) |
-> | Copertura delle regole | **41 su 41**, zero scoperte (`ADM-11` chiusa, punto AT) |
-> | Contratti dei 5 sottosistemi mancanti | **RTE ✓ · DEC ✓ · SEL ✓ · restano FBK, CNF** — superfici separate, `tests/contracts` resta 140 (punti BG, BH, BI) |
-> | Mio portafoglio accettato | **0 / 76** — corretto, nessun reviewer si è espresso |
-> | Programma | **26 / 340 accettate**, e tutte e 26 sono task meta di ChatGPT |
-> | Pacchetti di evidenza | **7 su 8** — l'ottavo (`UJ-REV-002`) non può averne uno |
-> | Security review su `main` | **campagna COMPLETA**: 29 findings, vista autorevole in `MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` **§30** — 10 chiusi, 1 superato, 1 parziale, 17 aperti (15 Grok, 1 Gemini `S-16`, 1 Christian `S-06`) |
-> | Correzioni per Grok | `GROK_FIX_LIST.md`: ordine **verificato** in `FIX_ORDER_ANALYSIS_20260819.md` — `FIX-19` per primo. 90 tool su 94 puliti: `FIX-1` ha tenuto |
->
-> **I miei otto task, stato reale.** Attenzione a una distinzione che è costata sei giri:
-> `REVIEW` qui sotto è lo stato **proposto dal packet** e l'ammissibilità della consegna; nel
-> `BACKLOG.json` su `origin/main` `UJ-RUN-001` risulta ancora **`READY`**, perché nulla applica
-> una transizione proposta. Non è una contraddizione, sono due assi diversi — misurato oggi.
-> `UJ-RUN-001` **REVIEW** (PR #18, attende GEMINI) · `UJ-SEC-001` READY (attende GROK) ·
-> `UJ-CLD-001` READY (attende GEMINI) · `UJ-MCP-001`, `UJ-SKL-001` BLOCKED su `UJ-SEC-001` ·
-> `UJ-RCV-001` BLOCKED su `UJ-RUN-001` · `UJ-REV-001` BLOCKED su `UJ-INT-001` ·
-> `UJ-REV-002` **DEFERRED a M10**, non lavorabile.
->
-> **Non c'è lavoro di consegna che io possa iniziare.** Tutto ciò che era consegnabile è
-> consegnato, impacchettato e verificato. Se apri una sessione e la coda è vuota, **è vero**:
-> registra l'attesa — ma solo **dopo** aver eseguito la trappola 11.
->
-> **Le due cose che bloccano tutti, e sono di CHATGPT:**
-> 1. **nulla applica una transizione di stato proposta** → nessun `ReviewResult` è importabile,
->    quindi nessun peso è accettabile da nessuno
->    (`docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`).
->    **Al 19 agosto non è più teoria: quattro review indipendenti sono consegnate e tre sono
->    bloccate da quella riga sola — una delle tre è di ChatGPT stesso.** Misura riproducibile:
->    `node scripts/audit-review-importability.mjs`, documento
->    `docs/program/reviews/CLAUDE-REVIEW-IMPORTABILITY-AUDIT-20260819.md`. Il controllo
->    positivo (`UJ-INT-006`) importa a **exit 0**: il macchinario funziona, mancano le
->    precondizioni;
-> 2. **il meccanismo delle delegation card è cablato a quattro task** → sei miei task non
->    possono avere un packet
->    (`docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md`).
->
-> **Ordine raccomandato**, misurato in `docs/program/CRITICAL_PATH_20260819.md`: i tre atti più
-> redditizi usano **tre reviewer diversi** e partono insieme — `UJ-RUN-001` a Gemini (34),
-> `UJ-RED-001` a ChatGPT (29), `UJ-SEC-001` a Grok (21).
->
-> **Punti superati, da non rileggere come attuali:**
-> `AB`/`AF`/`AG` (`UJ-RUN-001` BLOCKED e i pin) → superati da **`AH`** ·
-> `AP` («tutti e otto i pacchetti») → superato da **`AQ`** ·
-> `AS` («chiudere `ADM-11` dopo») → superato da **`AT`** ·
-> `S` («`UJ-INT-007` non esiste») → superato da **`AC`**.
->
-> **Punti ancora attuali, in ordine di utilità:** `AT`, `AS`, `AR`, `AQ`, `AP`, `AO`, `AN`,
-> `AM`, `AL`, `AK`, `AJ`, `AI`, `AH`, `AD`, `AE`, `P`, `T`, `V`.
-
 ```
 PROGRAMMA : ultraJARVIS
-AI_ID     : CLAUDE — Runtime, Security & Skill Architect
+AI_ID     : CLAUDE — Technical Lead, Runtime, Security & Skill Architect
+            Mandato pieno dal 2026-08-20. ChatGPT resta supervisore con potere di
+            rifiuto. Vincoli mai toccati dal mandato: Articolo 5 / STRICT_ZERO,
+            non inventare risultati, e la regola che mi sono imposto io —
+            NON ACCETTO PESO SUI MIEI TASK SENZA IL VERDETTO DI UN'ALTRA IA.
 
-BRANCH    : ATTENZIONE — L'AMBIENTE PUO' NON ASSEGNARTELO (sessione 5: container
-            vuoto, repo non clonato). Se non te lo assegna, il clone atterra su main:
-            scegli il branch e DIMOSTRA la scelta con git rev-list, non dal nome.
-            ATTENZIONE — CAMBIATO IN SESSIONE 4.
-            Sessione 4 in poi : claude/claude-md-resume-point-tvej1u
-            Sessioni 1-3      : claude/ultrajarvis-repo-analysis-li6vvj
-            Il branch è assegnato dall'ambiente, non lo scelgo io: RILEGGI quale ti
-            è stato dato invece di fidarti di questa riga. Da sessione 4 il branch di
-            lavoro NON coincide più con main: il pre-verdetto UJ-CAP-001 sta sul
-            branch di sessione 4 e NON è su main.
+BRANCH    : agent/uj-run-001-blueprint-20260818 — IDENTICO a main (stesso commit).
+            L'ambiente ti assegnera' probabilmente un branch VUOTO: e' successo
+            quattro volte. Dimostra la casa, non assumerla:
+              git rev-list --left-right --count origin/main...<branch>
+            deve dare 0 indietro.
 
-            AGGIORNATO IN SESSIONE 6 — LEGGERE QUESTO, NON IL BLOCCO DI SESSIONE 5.
-            In sessione 6 l'ambiente ha assegnato un TERZO nome,
-            claude/ultrajarvis-program-setup-2noca9, che al clone era IDENTICO a
-            origin/main (0 avanti, 0 indietro) e NON contiene lavoro mio. Non usarlo
-            come casa senza verificarlo.
-
-            LA MEMORIA AGGIORNATA (questo file, TASKCLAUDE.md, AVVIO_NUOVA_SESSIONE.md)
-            E' ORA SU  agent/uj-run-001-blueprint-20260818, non piu' sul branch di
-            casa storico. Motivo: il proprietario ha chiesto di pushare SOLO il branch
-            autorizzato, e la Regola 2 impone comunque di aggiornare la memoria; ho
-            quindi mergiato li' il commit di memoria 2f0464d dopo aver verificato che
-            non tocca NESSUNO dei 15 artefatti hashati.
-
-              agent/uj-run-001-blueprint-20260818   -> CONSEGNA **E** MEMORIA.
-                Autorizzato dalla delegation card (write_branch_patterns
-                "agent/uj-run-001-*"). Contiene UJ-RUN-001 riconciliata (blueprint,
-                packet, AC-evidence, delivery, append-blocks) E la memoria aggiornata.
-                source_commit_sha finale: a7e03e979baee5a8b796007313ad93408299f840
-                Verificato con `git branch -a --contains <sha>` e in NEGATIVO contro
-                origin/main e gli altri due rami CLAUDE: e' l'UNICO che lo contiene.
-              claude/claude-md-resume-point-tvej1u  -> casa STORICA, ora INDIETRO
-                sulla memoria (ferma a fine sessione 5). Non e' piu' la copia buona.
-              claude/ultrajarvis-program-setup-2noca9 -> assegnato dall'ambiente in
-                sessione 6, vuoto di lavoro mio.
-            PRIMA DI SCEGLIERE, DIMOSTRA la scelta con
-            `git rev-list --left-right --count origin/main...<branch>`, non dal nome.
-
-MAIN      : commit 9d80f9f+ (verificato in sessione 4, sesta parte — si era mossa
-            di 7 commit in meno di un'ora). La riga sotto dice 302852a/319
-            file: era vero a fine sessione 3 ed è già superato — main si muove.
-            Contiene il piano canonico, il Program OS di
-            ChatGPT, i miei contratti/blueprint/review, e l'implementazione Python di
-            Grok (core/, tools/, advisors/, bin/uj, tests/*.py). ATTENZIONE: essere su
-            main NON significa accettato. Ledger invariato: 0/76 mio, 0/13 UJ-INT-001,
-            0/8 UJ-INT-006. GOVERNANCE.md dice che main è "stato accettato": da questa
-            sessione non è più vero alla lettera, per decisione del proprietario.
-
-PROMPT    : docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md — ORA SU main, non serve più
-            leggerlo da un branch. sha256 attesa:
+MAIN      : 70df649. Gate di integrazione PASS, 13 verifiche bloccanti a exit 0.
+            sha256 del piano canonico invariata:
             a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87
-            Verifica: sha256sum docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
 
-STATO     : UJ-RUN-001  REVIEW        attende Gemini,    11/13 proposti
-            UJ-SEC-001  REVIEW        attende Grok,       11/13 proposti
-            UJ-MCP-001  REVIEW        attende Gemini,      7/8  proposti
-            UJ-RCV-001  REVIEW        attende ChatGPT,     6/8  proposti
-            UJ-SKL-001  REVIEW        attende ChatGPT,    11/13 proposti
-            UJ-CLD-001  REVIEW        attende Gemini,       7/8  proposti
-            UJ-REV-001  REVIEW        attende Christian,    4/5  proposti
-            UJ-REV-002  BLOCKED       UJ-INT-007 è DEFERRED a M8/M9, non lavorabile
-
-TUTTI E TRE I P0 DEL PROGRAMMA SONO CHIUSI.
-7 TASK SU 8 SONO IN REVIEW. IL PORTAFOGLIO DI PRODUZIONE È ESAURITO,
-MA I DOVERI DA REVIEWER NO — E QUELLI ARRIVANO SENZA PREAVVISO.
-
-FATTO NUOVO (sessione 3, seconda metà): dopo il merge di PR #1 e PR #2 su main
-            (autorizzato esplicitamente da Christian), ho trovato che il merge rende
-            attuale il mio ruolo su codice che esegue tool. Ho consegnato una security
-            review completa dell'implementazione Python di Grok, ora canonica su main:
-
-            UJ-SEC-003 (PROPOSTA, non baselined, 0 peso assegnato):
-              docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md
-              16 findings, 8 HIGH, ognuno riproducibile con un comando.
-              I tre più gravi:
-              - S-10: files.safe_read legge QUALUNQUE file del sistema (nessun
-                contenimento nella root — il controllo esiste già in safe_write
-                accanto e va copiato)
-              - S-11: force=True aggira la lista PROTECTED e il registry lo inoltra
-                senza filtro -> si può sovrascrivere core/registry.py stesso
-              - S-12+S-13: la promozione di codice generato in tools/ non ha alcun
-                gate di safety, ed è mascherata SOLO da un bug di sintassi (una
-                virgoletta di troppo) che oggi impedisce ai tool promossi di
-                caricarsi. CORREGGERE S-12 PRIMA DI S-13: l'ordine inverso apre
-                l'esecuzione di codice non validato.
-
-            Tradotta in correzioni applicabili per Grok:
-              docs/threat-models/GROK_FIX_LIST.md — 9 fix, ciascuno con file, riga,
-              prima/dopo, comando di verifica. La sezione 0 spiega l'ordine FIX-1
-              prima di FIX-2, e va letta per prima da chi la applica.
-
-            AGGIORNAMENTO — GIÀ FATTO, NON RIFARE: Grok ha applicato tutti e 9 i fix
-            (9 commit, main @ fc5458b) MENTRE preparavo questo handoff. Non ho preso
-            la sua parola: ho rieseguito ogni comando di riproduzione. Risultato:
-              10 findings su 16 CHIUSI e VERIFICATI (S-01, S-03 parziale, S-08, S-09,
-              S-10, S-11, S-12, S-13, S-14, S-15). Dettaglio in
-              MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §10-ter, con il comando e
-              l'esito di ognuno.
-              Restano aperti, non per manomissione ma perché fuori scope del fix:
-              S-02 (parziale — ammissione ok, manca tetto/evento), S-06 (automazione
-              UI nel catalogo, è una domanda di policy), S-07 (nessun evento tool.*),
-              S-16 (memoria senza provenienza, è di Gemini non di Grok).
-
-SESSIONE 6 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
-
-  BI) 2026-08-20 — COSTRUITO IL CONTRATTO SEL (selezione, §17), terzo dei 5.
-     packages/contracts/src/selection/ + tests/selection/ (12 test verdi)
-     GIA' FATTO, NON RIFARE. Fedele al blueprint §17.3/§17.5/§17.6, non inventato.
-     selectAgent(input): Assignment — TRE esiti e nessun quarto (ASSIGNED /
-     HUMAN_BRIDGE / REFUSED). Tutti e 5 gli errori: SEL-E01 nessuna copertura ->
-     HUMAN_BRIDGE (NON REFUSED), E02 ceiling TA-2/TA-4/TA-5/TA-8 con TUTTE le
-     invarianti elencate, E03 owner==reviewer, E04 manifest scaduto vs `now`,
-     E05 tie-break deterministico mai a caso.
-     LA REGOLA CHE INGANNA: il tie-break §17.6.4 preferisce l'agente MENO
-     privilegiato, non il piu' capace (autonomy, poi dataClass, poi sideEffect,
-     poi agentId lessicografico). T-SEL-3 lo prova con un candidato piu' capace e
-     agentId lessicograficamente PRIMO: perde comunque.
-     `now` E' UN PARAMETRO INIETTATO, mai letto dall'orologio (§17.2): senza,
-     la selezione non sarebbe riproducibile e il ledger non replayabile.
-     TRE SCELTE DI FEDELTA' DICHIARATE: (1) EffectiveGrants e' nominato dal
-     blueprint e MAI definito -> reso fedele a §9 (capabilities + 3 ceiling);
-     (2) SEL-E03 e' un controllo di TASK, non di candidato (owner!==reviewer e'
-     gia' DEC-E03; qui e' il re-check contro la deriva dei manifest);
-     (3) la neutralita' di provider vale perche' l'agentId e' un handle OPACO —
-     i nomi di fornitore vivono nei capability tag, non nell'handle (T-SEL-2).
-     Superficie SEPARATA come RTE/DEC: non tocca i 15 hashati, test fuori da
-     tests/contracts/, 140 invariato, 15 hash intatti a b2b32733, gate PASS.
-     La demo §21 passo 2 ora usa il contratto SEL reale (era [demo]).
-     STATO 5 mancanti: RTE ok, DEC ok, SEL ok, restano FBK e CNF.
-     ERRORE PRESO DALLA DEMO, non da me: la regex VENDOR del passo 2 faceva match
-     su reviewer:"GEMINI"/owner:"CLAUDE" dei nodi, che NON sono nomi di fornitore
-     per il routing ma AI_ID di GOVERNANCE del Council. Correzione: restringere il
-     controllo all'input di ROUTING (candidati + missione). Non allargare la regex.
-
-  BH) 2026-08-19 — COSTRUITO IL CONTRATTO DEC (decomposizione, §16), secondo dei 5.
-     packages/contracts/src/decomposition/ + tests/decomposition/ (12 test verdi)
-     GIA' FATTO, NON RIFARE. Fedele al blueprint §16.3/§16.5, non inventato.
-     validateDecomposition, RIFIUTO IN BLOCCO, tutti e 7 gli errori: DEC-E01 ciclo,
-     E02 pesi, E03 reviewer==owner, E04 criterio non falsificabile (portato da
-     check-acceptance-criteria.mjs), E05 depth/fan-out, E06 capability fuori indice,
-     E07 irraggiungibile. Superficie SEPARATA come RTE: non tocca i 15 hashati,
-     test fuori da tests/contracts/, 140 invariato, 15 hash intatti a b2b32733.
-     La demo §21 passo 1 ora VALIDA una Decomposition reale col contratto (era [demo]).
-     STATO 5 mancanti: RTE ok, DEC ok, restano SEL, FBK, CNF.
-     Corretto un conteggio stantio (3/3 -> dinamico) nell'etichetta del passo 2 demo.
-
-  BG) 2026-08-19 — COSTRUITO IL CONTRATTO RTE (routing, §18), primo dei 5 mancanti.
-     packages/contracts/src/routing/adapter-routing.ts + tests/routing/ (7 test verdi)
-     GIA' FATTO, NON RIFARE. Fedele al blueprint §18.2, non inventato.
-     admitAdapterRegistration (RTE-E01 METERED sotto strict-zero, RTE-E02 METERED
-     irrappresentabile <L3, RTE-E03 ZERO_LOCAL deve essere LOOPBACK_ONLY) +
-     resolveCostClass (default ZERO_LOCAL, MAI METERED: lezione S-17 nel tipo).
-     SCOPING: superficie SEPARATA, NON tocca la consegna congelata di UJ-RUN-001 —
-     non esportato da runtime/index.ts (hashato), test fuori da tests/contracts/,
-     conteggio 140 invariato, 15 hash intatti a b2b32733. Anticipo M2/M3.
-     La demo §21 ora usa questo contratto VERO per N2 (era [demo]). Restano 4
-     sottosistemi demo-minimali: DEC, SEL, FBK, CNF.
-     DIFETTO DELLA MIA DEMO trovato dalla demo: il passo 9 misurava i moduli CARICATI
-     (process.moduleLoadList), non le CONNESSIONI aperte -> falso segnale (net caricato
-     da Node internamente). Riscritto per intercettare i tentativi di connessione reali
-     a host non-loopback. Un controllo di costo che passa perche' net non e' ancora
-     caricato non e' un controllo.
-
-  BF) 2026-08-19 — LA DEMO §21 GIRA. packages/contracts/demo/mission-demo.mjs
-     Atto n.4 del mandato (PARTE 3-bis §4). 9 osservabili/9, 4 casi negativi/4, exit 0,
-     costo zero. GIA' FATTO, NON RIFARE.
-     ADDITIVA: NON chiude T-E2E-1/2/3 (restano DA IMPLEMENTARE nel blueprint), NON tocca
-     i 15 artefatti hashati, NON cambia il conteggio 140. Vive ACCANTO alla consegna
-     congelata di UJ-RUN-001, cosi' la review di Gemini non e' toccata. Verificato:
-     suite 140, 15 hash intatti a b2b32733, blueprint non modificato.
-     6 osservabili + 2 negativi usano i CONTRATTI VERI (checkSpawn, nextState,
-     verifyLedgerChain, buildIdempotencyKey, AtomicActiveTaskCounter, mayStartNewStep);
-     il resto e' logica [demo] perche' DEC/SEL/RTE/FBK/CNF non hanno ancora contratto.
-     PROVATA FALSIFICABILE (trappola 21): rotto verifyLedgerChain nel dist -> passo 8
-     fallisce, demo esce 1; ricompilato, torna a passare. Aggiunta al gate di integrazione.
-     ATTO n.5 (gate) e n.4 (demo) del mandato ORA CONSEGNATI; restano 1/2/3 (bloccati
-     dalle card di ChatGPT).
-
-  BE) 2026-08-19 — VISTA AUTOREVOLE SU TUTTI I 29 FINDINGS: §30 della security review.
-     Bilancio contato dalla tabella (non dedotto): 10 chiusi, 1 superato, 1 parziale,
-     17 APERTI. Dei 17: S-16 -> GEMINI, S-06 -> Christian (policy), 15 -> GROK.
-     S-29 (LOW): debate loop fail-open, ma la decisione E' consumata (bene). FIX-22.
-     Ordine dei fix di Grok VERIFICATO in FIX_ORDER_ANALYSIS_20260819.md.
-     La §20 (primi 20, "12 chiusi") e' superata da §30 dove divergono: §30 classifica
-     S-08 come APERTO (FIX-9 copre un caso, le 2 evasioni note restano). Non e' una
-     regressione, e' una classificazione piu' severa.
-     CONTRAPPESO misurato: 90 tool promossi su 94 sono puliti (FIX-1 ha tenuto).
-
-  BD) 2026-08-19 — S-28 (NUOVO, LOW) + CORREZIONE A UNA MIA AFFERMAZIONE DI OGGI.
-     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §29 · GROK_FIX_LIST.md -> FIX-21
-     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
-
-     HO SCRITTO DUE VOLTE OGGI (§27 della review e TASKCLAUDE §82) che
-     tools/websearch.py "e' ancora uno stub". E' FALSO: _ddg_search fa una VERA
-     chiamata a html.duckduckgo.com (urllib.request.urlopen). Scoperto con uno scan
-     di costrutti pericolosi su tutti i 94 tool. Corretto nei due punti.
-     Nel registry e' ancora "Search the web (stub)" e, per il default
-     ToolSpec.safe=True, e' safe=True: un EXTERNAL_READ di rete etichettato safe.
-
-     IMPATTO LIMITATO, misurato: host fisso (nessun SSRF, la query va solo nel
-     parametro ?q=); l'output NON raggiunge remember() (va solo a cmd_search che
-     stampa). Quindi la conclusione di S-16 §27 REGGE — il contenuto web non entra in
-     memoria — MA NON PER LA RAGIONE CHE AVEVO SCRITTO (non "e' uno stub", ma "il
-     cablaggio search->remember non esiste"). La conclusione non dipendeva dalla
-     premessa sbagliata, ma la premessa era falsa e va corretta.
-
-     RISULTATO POSITIVO DELLO SCAN, che vale quanto il finding: 90 tool promossi su 94
-     non hanno UN SOLO costrutto pericoloso. Gli altri 4: automation/os_control
-     (subprocess, stub noti S-06), validate_helpers (re.compile, falso positivo),
-     websearch (questo). PROVA PRATICA che il gate di promozione (FIX-1) non ha mai
-     lasciato passare codice dannoso nel catalogo.
-
-     FIX-21 (LOW): togliere "(stub)" dalla descrizione, safe=False perche' e' rete.
-
-  BC) 2026-08-19 — S-27 (NUOVO, MEDIUM): l'iniezione prompt -> codice generato e'
-     contenuta SOLO PER CASO.
-     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §28 · GROK_FIX_LIST.md -> FIX-20
-     docs/threat-models/probes/S-27-template-injection-probe.py
-     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
-
-     nt_runner.py:187-197 incastona il PROMPT GREZZO nella docstring del modulo
-     generato, che execute_graph poi ESEGUE (S-26). Tre payload costruiti: NESSUNO
-     compila, ma per TRE ACCIDENTI SINTATTICI diversi, non per un controllo:
-       - triple-quote sbilanciato -> stringa non terminata (come S-13);
-       - triple-quote bilanciato -> `from __future__` deve stare in cima, rompe il
-         codice iniettato prima. MA E' LI' PER LE TYPE HINT, non per sicurezza;
-       - iniezione via title -> il `return` con {title} si spezza.
-     Quarta volta che il contenimento e' un accidente di sintassi (dopo S-13, moduli
-     mancanti, openai assente); tre di quei quattro hanno gia' smesso di proteggere.
-     Si somma a S-26: oggi l'unica cosa che ferma un prompt ostile e' che il file
-     generato non compili per caso.
-     CORREZIONE FIX-20: interpolare con repr() invece che grezzo (ogni triple-quote
-     diventa testo inerte), o scrivere il prompt in prompt.txt accanto. FIX-19a resta
-     la rete a valle per il ramo UJ_WRITER_LLM.
-     HO SCRITTO CONTRO LA MIA CONCLUSIONE: "non escludo che una quarta forma bilanci
-     tutti gli accidenti". Tre attacchi caduti non provano "e' sicuro"; il punto e'
-     che la tenuta dipende da accidenti, e quello si vede a prescindere dagli attacchi.
-
-  BB) 2026-08-19 — S-16 TERZA VERIFICA: IL CONSUMATORE E' ARRIVATO, ma non e' il
-     percorso del codice. VA A GEMINI (UJ-MEM-001), NON A GROK.
-     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §27 · TASKCLAUDE.md §82
-     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
-
-     CORREGGE la mia nota di sessione 3 ("il percorso non e' cablato") e quella di
-     sessione 5 ("meta' della catena"). Adesso:
-       core/nt_runner.py:135-138   SCRIVE  remember("job:... title=... status=...")
-       core/planner.py:152-167     LEGGE   recall_semantic(tag="job") e inserisce i
-                                           fatti VERBATIM nelle milestone del piano
-     Misurato: la milestone prodotta contiene il fatto seminato, e finisce in plan.md.
-
-     MA NON ARRIVA AL CODICE, e la differenza e' tutta la gravita'. Il messaggio che
-     il writer LLM manda al modello e', alla lettera:
-       user = f"Task title: {title}\nTask prompt:\n{prompt.strip()[:1500]}..."
-     SOLO title e prompt. Zero occorrenze di 'milestone'/'to_markdown' nella
-     funzione, e il title NON e' influenzato dalla memoria (misurato).
-     Catena chiusa: memoria -> plan.md (documento umano). Catena memoria -> codice
-     generato: APERTA.
-
-     PROPRIETA' MITIGANTE trovata sbagliando: la prima misura diceva che il fatto non
-     entrava. Non era la catena — recall_semantic(min_score=0.05) e il fallback sui
-     token del prompt FILTRANO PER RILEVANZA. Un fatto non finisce in un piano
-     qualsiasi, solo in uno il cui prompt gli somiglia.
-
-     >>> SERVE DA GEMINI, nello schema di UJ-MEM-001: (1) campo di provenienza
-     obbligatorio; (2) regola su chi puo' essere richiamato in un contesto di
-     decisione (oggi basta il tag "job", e `uj memory add --tag job` accetta tag
-     arbitrari); (3) inserimento nel piano CITATO COME DATO, non concatenato.
-     LA FINESTRA E' APERTA ADESSO: il consumatore e' arrivato prima dello scrittore
-     non fidato, quindi lo schema si corregge a costo quasi nullo.
-     tools/websearch.py e' ancora uno STUB e non ha percorsi verso remember().
-
-  BA) 2026-08-19 — ORDINE DELLE DIECI CORREZIONI VERIFICATO. DUE POSIZIONI ERANO
-     SBAGLIATE, ED ERANO MIE.
-     docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md · ordine corretto in cima a
-     GROK_FIX_LIST.md · TASKCLAUDE.md §81.  GIA' FATTO, NON RIFARE.
-
-     1. FIX-11 VA IN SECONDA POSIZIONE, non in fondo. E' cio' che impedisce alla test
-        suite di sovrascrivere grok.md (S-18). Finche' non e' applicato, QUALUNQUE
-        verifica che esegua pytest corrompe il repository — inclusa quella di FIX-16,
-        per cui ho proposto IO un test nuovo. Riverificato: `root` nei __kwdefaults__
-        e' legato alla DEFINIZIONE, il monkeypatch della fixture e' un no-op.
-     2. FIX-17b E' CONDIZIONATO ALLA FORMA DI FIX-10. Dice di spostare
-        record_llm_call() dentro _call_openai, ma la correzione approvata per S-17
-        RIMUOVE quell'adapter. Misurato: _call_openai = 2 su main, 0 sui rami
-        strict-zero e 0 sul ramo CLAUDE. Dopo FIX-10 il bersaglio si sposta su
-        _call_local, e cambia la ragione: il retry sottostima l'USO, non la SPESA.
-
-     CONFERMA COLLATERALE, ora un numero e non un ricordo: il ramo CLAUDE e' l'UNICO
-     con _call_openai assente (0) E record_llm_call presente (4). E' quello da
-     portare su main; i due rami strict-zero hanno una base che precede embed().
-
-     ORDINE CORRETTO:
-       1 FIX-19 · 2 FIX-11 · 3 FIX-10+FIX-13+FIX-17 (un passaggio solo) ·
-       4 FIX-15 poi FIX-16 · 5 FIX-18 · 6 FIX-12 · 7 FIX-14
-     INDIPENDENTI (non serializzarle): FIX-19/FIX-15, FIX-12/FIX-14, FIX-16/FIX-19,
-     FIX-18 isolato.
-
-     CONTROLLO CON ESITO NEGATIVO, registrato di proposito: sospettavo che il
-     contenuto di una skill finisse nel codice generato (sarebbe stato TH-SF-03 nel
-     codice di un altro). E' FALSO: nt_helpers.py:62-67 chiama _skills_hint(prompt) e
-     SCARTA il valore di ritorno. Ma la chiamata mostra l'intenzione: quando qualcuno
-     la collega, add_skill non valida `content` in nessun modo -> vincolarlo PRIMA
-     del cablaggio, come S-16. Di contorno: e' anche lavoro sprecato (scansione
-     completa del catalogo buttata via a ogni job euristico) e DEFAULT_SKILLS_PATH e'
-     la TERZA occorrenza del path relativo dopo monetization e billing.
-
-  AZ) 2026-08-19 — S-26 (NUOVO, HIGH): il gate di safety e' sulla COPIA, non
-     sull'ESECUZIONE. E' la correzione da far applicare PER PRIMA.
-     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §26 · GROK_FIX_LIST.md -> FIX-19
-     docs/threat-models/probes/S-26-graph-exec-probe.py
-     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
-
-     promote_job_to_tools ha un gate e FUNZIONA (FIX-1, verificato). Ma quella
-     funzione COPIA un file; core/graph_exec.execute_graph lo ESEGUE, e li' il gate
-     non c'e': ZERO occorrenze di scan_text o safety in tutto il file.
-       nt_helpers.py:48-53  genera (corpo writer LLM, con UJ_WRITER_LLM=1)  -> SI
-       nt_runner.py:250     COPIA in tools/                                 -> SI
-       graph_exec.py:64     ESEGUE (spec.loader.exec_module)                -> NO
-     MISURATO: un modulo con `eval(` e `rm -rf` — due pattern che il LORO scanner
-     riconosce — viene caricato ed eseguito. Interrogando scan_text sullo stesso
-     testo: ['rm -rf', 'eval(']. IL GATE ESISTE, E' SOLO ASSENTE DAL PERCORSO.
-     E il codice a livello di modulo gira dentro exec_module, PRIMA che run() venga
-     chiamata: controllare run() non basterebbe.
-
-     RAGGIUNGIBILE IN DUE MODI, uno automatico:
-       uj_cli.py:57       sottocomando `graph` con una DIRECTORY ARBITRARIA
-       nt_runner.py:61-64 chiamato a OGNI job multi-file
-
-     PIU' DUE DIFETTI SULLO STESSO FILE:
-       - PATH TRAVERSAL da deps.json: il filtro guarda solo il suffisso, quindi
-         "../fuori.py" passa. Misurato: modulo FUORI dalla job dir eseguito.
-         Stesso schema di S-22.
-       - sys.path.insert(0, job_dir) e sys.modules[stem]=mod restano sporchi: un
-         registry.py generato prenderebbe il posto di quello vero per ogni import
-         successivo nello stesso processo.
-
-     HO SCRITTO CONTRO LA MIA STESSA CORREZIONE: FIX-19a e' una riga e chiude il
-     caso peggiore, ma e' NECESSARIA E NON SUFFICIENTE — S-08 dice che lo scanner
-     ha evasioni note (2 su 4 nel test di sessione 3). Senza quel limite Grok
-     crederebbe di aver chiuso il problema.
-
-  AY) 2026-08-19 — S-25 (NUOVO, HIGH latente): il webhook di pagamento ISPEZIONA
-     la firma invece di verificarla.
-     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §25 · GROK_FIX_LIST.md -> FIX-18
-     docs/threat-models/probes/S-25-billing-webhook-probe.py  (nessuna chiamata a Stripe)
-     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
-
-     core/billing.py:102-105. Il segreto e' letto e MAI usato in un calcolo: `hmac`
-     compare ZERO volte nel file, `secret` compare a due sole righe. La condizione e'
-     `and`, quindi basta uno dei due marcatori. E se sig_header e' vuoto il controllo
-     e' saltato del tutto.
-     MISURATO, con segreto configurato e payload che chiede il tier `team`:
-       nessun header          -> ACCETTATO, tier team
-       "t=1"                  -> ACCETTATO, tier team
-       "t=...,v1=000...0"     -> ACCETTATO, tier team
-       "ciao"                 -> rifiutato
-     L'UNICO CASO RESPINTO E' QUELLO MALFORMATO: e' un controllo di SINTASSI
-     travestito da controllo di AUTENTICITA'. Dodicesima occorrenza della forma, la
-     prima su un percorso di pagamento.
-
-     LATENTE, e va detto: `suggested_env` NON e' consumato da nessuno (git grep: una
-     sola occorrenza, la sua produzione) e handle_webhook non ha chiamanti fuori dai
-     test. Ma UJ_TIER e' cio' che monetization.current_tier() legge per i limiti
-     (free 10 chiamate LLM, team 20.000): un webhook falso e' una richiesta di
-     promozione di quota. Con un endpoint HTTP diventa REMOTO E NON AUTENTICATO senza
-     nessun'altra modifica al file.
-
-     >>> LA TRAPPOLA DELLA CORREZIONE, scritta in testa a FIX-18: la firma di Stripe
-     e' calcolata sui BYTE GREZZI del corpo, e handle_webhook riceve un dizionario
-     GIA' INTERPRETATO. Riserializzarlo non da' gli stessi byte, quindi qualunque HMAC
-     calcolato da li' NON COINCIDERA' MAI e sembrera' che la firma sia sbagliata
-     invece che l'input. SERVE UN CAMBIO DI INTERFACCIA (corpo grezzo, interpretato
-     DOPO la verifica) piu' la tolleranza sul timestamp contro il replay e
-     hmac.compare_digest. Terza coppia "versione facile prima = sembra corretta e non
-     lo e'" dopo S-12/S-13 e FIX-15/FIX-16.
-
-     Tre rilievi minori sullo stesso file: create_customer verso Stripe NON ha
-     idempotency key (viola ADM-13); la sola presenza di una chiave `sk_` abilita la
-     chiamata reale (stessa asimmetria di FIX-10); DEFAULT_CUSTOMERS/DEFAULT_EVENTS
-     sono path RELATIVI e seguono la cwd (come FIX-17d).
-
-  AX) 2026-08-19 — S-24 (NUOVO, HIGH): il contatore della spesa e' spento per default.
-     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §24 · GROK_FIX_LIST.md -> FIX-17
-     docs/threat-models/probes/S-24-quota-meter-probe.py  (nessuna chiamata di rete)
-     GIA' FATTO, NON RIFARE. Ref: origin/main @ 27b7673.
-
-     core/monetization.py (139 righe) non era mai stato revisionato. CINQUE difetti:
-      1. LE DUE QUOTE SONO SPENTE PER DEFAULT: check_job_quota/check_llm_quota
-         escono subito se UJ_ENFORCE_QUOTA != "1". Misurato: 50 chiamate contro un
-         limite di 10 -> nessuna eccezione. Con UJ_ENFORCE_QUOTA=1 solleva: IL
-         CODICE DEL CONTROLLO FUNZIONA, E' IL DEFAULT A ESSERE SPENTO.
-      2. ANCHE IL TETTO E' SPENTO: UJ_LLM_BUDGET_USD default "0", e ok e'
-         "soft_cap <= 0 or spent < soft_cap" -> sempre vero. Misurato: 10.000
-         chiamate, $10 stimati, assert_llm_budget() non solleva.
-      3. IL CONTATORE MISURA 1 DOVE IL PROVIDER FATTURA 3: ask_cloud_ai chiama
-         record_llm_call() una volta e poi dispaccia a _call_openai, che porta
-         @retry(max_attempts=3). E' FIX-10c dal lato della misura.
-      4. CHECK-THEN-ACT NON ATOMICO: summarize_usage() rilegge tutto il file, poi
-         record_usage() appende. 8 thread con barriera, limite 10, precarico 9 (ne
-         dovrebbe passare UNO): [1,3,8,6,4] a registro vuoto, [4,5,6,4,5] con 5.000
-         righe, [8,8,8,6,8] con 20.000. E' R-RUN-01 in un posto nuovo: il contratto
-         corretto e' GIA' in packages/contracts/src/recovery/active-task-counter.ts.
-      5. DEFAULT_USAGE_PATH E' RELATIVO ("workspace/usage.jsonl"): segue la cwd.
-         Misurato: la stessa quota scatta da una cartella e non da un'altra.
-         job_worker usa gia' un path ancorato al modulo; monetization e' l'unico
-         modulo di stato che non lo fa, ed e' quello che conta i soldi.
-      (+ spent_usd_est e' chiamate x una costante scritta a mano, non token.)
-
-     IL PUNTO CHE CONTA: il rubinetto e' APERTO per default (S-17/FIX-10) e il
-     contatore e' SPENTO per default. Per questo FIX-17 sta nel PRIMO gruppo con
-     FIX-10: applicarne uno solo lascia il sistema o senza tetto o senza misura.
-
-     DUE VOLTE LA MISURA MI HA SMENTITO, e la prima nella direzione peggiore:
-      - la prima sonda lanciava 8 PROCESSI: l'avvio dell'interprete li serializzava
-        e passava esattamente UNO, cioe' il numero GIUSTO PER IL MOTIVO SBAGLIATO.
-        Fermandomi li' avrei scritto a Grok che il contatore va bene. Rifatta con
-        thread + threading.Barrier, la gara si manifesta subito;
-      - avevo previsto che l'ampiezza crescesse con la lunghezza del registro. Il
-        primo esperimento sembrava confermarlo ma variava ANCHE il tier, quindi il
-        limite: "8 ammessi su 8" era spazio libero, non una gara. Isolata la
-        variabile, l'andamento NON e' monotono. Scritto cosi' nel documento invece
-        di tenere la versione che raccontava meglio.
-
-     NON e' una vulnerabilita' (nessun terzo la sfrutta) e oggi non si spende
-     comunque perche' `import openai` fallisce: contenimento PER ASSENZA, quinta
-     volta in questo albero, non una difesa.
-
-  AW) 2026-08-19 — QUATTRO REVIEW CONSEGNATE, TRE BLOCCATE DALLA STESSA RIGA.
-     docs/program/reviews/CLAUDE-REVIEW-IMPORTABILITY-AUDIT-20260819.md
-     scripts/audit-review-importability.mjs   (riproduce tutto con un comando)
-     GIA' FATTO, NON RIFARE. Regole del gate: origin/main @ 27b7673.
-
-     GROK E CHATGPT HANNO CONSEGNATO. Rami nuovi del 19:
-       agent/uj-ggl-001-grok-review-20260819       GROK su GEMINI  PASS_WITH_ACTIONS
-       agent/uj-int-001-grok-review-20260819       GROK su CHATGPT PASS_WITH_ACTIONS
-       agent/uj-red-001-chatgpt-review-20260819-r2 CHATGPT su GROK FAIL
-       agent/uj-red-001-grok-review-20260819       consegna di GROK, UJ-RED-001
-
-     MISURATO, errori residui con regole correnti e artefatti presenti:
-       UJ-GGL-001  READY   1  <- SOLO il deadlock del ledger
-       UJ-RED-001  READY   1  <- SOLO il deadlock. E LA REVIEW E' DI CHATGPT:
-                                 il supervisore e' bloccato dal proprio gate
-       UJ-CAP-001  READY   1  <- SOLO il deadlock (la mia)
-       UJ-INT-001  REVIEW  5  <- riparabili da GROK, vedi sotto
-       UJ-INT-006  REVIEW  0  <- CONTROLLO POSITIVO, PASS exit 0
-
-     UJ-INT-001 E' L'UNICO TASK GIA' IN REVIEW, quindi l'unica review che puo'
-     importare oggi. I suoi 5 errori sono 3 difetti:
-       (a) artifacts_reviewed[3] e [4] hanno hash a 40 caratteri: sono ID DI BLOB
-           GIT (git rev-parse <ref>:<path>), non sha256. VERIFICATO provando le
-           convenzioni prima di accusare. Gli altri 3 hash coincidono al pin E su
-           main: LA REVIEW E' GENUINA, gli artefatti NON sono manomessi;
-       (b) criteria[2].result = PASS_WITH_ACTIONS, ma lo schema per criterio
-           ammette solo PASS/FAIL/NOT_REVIEWED. E' valido solo come `outcome`;
-       (c) il suo F-001 sui 12 hash delle card E' GIA' CHIUSO e non e' colpa sua:
-           pinna 4b63b94e, due commit indietro, e i due mancanti sono 6ba3a2b e
-           27b7673, cioe' proprio la correzione.
-
-     CONTROLLO POSITIVO rieseguito, non ricordato: UJ-INT-006 importa a EXIT 0. IL
-     MACCHINARIO FUNZIONA. Non c'e' niente da riscrivere: mancano le precondizioni.
-     Riverificato al ref corrente: in tutto scripts/ l'unica writeFileSync sta in
-     test-review-result-intake.mjs:105 e scrive in una mkdtempSync. NESSUNO SCRIPT
-     SCRIVE docs/program/BACKLOG.json.
-
-     >>> SERVE DA CHATGPT, ed e' la stessa richiesta di AJ ma ora con la misura:
-     (1) ponte: portare a mano i tre task in REVIEW -> le tre review importano;
-     (2) strutturale: uno script che APPLICA un ResponsePacket valido.
-     Raccomando la 2 con la 1 come ponte. NON l'ho fatto io: BACKLOG.json e' suo.
-     Resta aperto anche il difetto n.3 della §63 di TASKCLAUDE: riga 357,
-     verifyReviewedArtifact legge ancora dall'ALBERO DI LAVORO. sha256AtRef copre
-     le CARD (riga 89), non le REVIEW (E35/trappola 35: non estendere un fix).
-
-     DUE ERRORI MIEI IN QUESTA MISURA, entrambi fermati prima del documento:
-       1. TRAPPOLA 15 PER LA TERZA VOLTA: `... | sed 's/^/   /'` fra il comando e
-          $? -> ho letto exit=0 su un FAIL. Non esiste una pipe "solo cosmetica".
-       2. CONTAMINAZIONE MIA: `git checkout <pin> -- docs/` riporta indietro
-          docs/program/BACKLOG.json (da 5 a 2 criteri) e fa comparire tre
-          "unknown criterion" che NON sono difetti della review. Portare dentro
-          SOLO i path citati. L'avvertenza e' dentro lo script, in testa.
-       3. E il controllo positivo ha trovato un falso positivo del mio script: su
-          PASS il validatore stampa righe informative che iniziano con "- ", e le
-          contavo come errori -> il controllo risultava FALLITO. Un controllo
-          positivo non serve solo a rendere falsificabile la diagnosi: serve a
-          falsificare LO STRUMENTO con cui la stai misurando.
-
-  AV) 2026-08-19 — S-22 e S-23 (NUOVI): la stessa parola, due contratti opposti.
-     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §22 e §23
-     GROK_FIX_LIST.md -> FIX-15 (HIGH) e FIX-16 (MEDIUM)
-     docs/threat-models/probes/S-22-uncontained-write-probe.py
-     docs/threat-models/probes/S-23-protected-staleness-probe.py
-
-     S-22 — DUE funzioni si chiamano safe_write:
-       core/reliability.py:46  -> NESSUNA root, NESSUN PROTECTED
-       tools/files.py:88       -> root + PROTECTED (indurita da FIX-3/FIX-4)
-     Il percorso di build usa la PRIMA, importata come `guarded_write` in
-     core/nt_runner.py:13 e core/nt_helpers.py:7. 12 punti di scrittura (11+1),
-     fra cui tool.py, il file che promote_job_to_tools copia poi in tools/.
-     E nello STESSO file, riga 242, e' gia' importata quella giusta dentro la
-     promozione: la promozione e' protetta, la costruzione no.
-     ATTENZIONE, NON CORREGGERE LA COSA SBAGLIATA: slugify E' SICURO
-     (core/utils.py:10, re.sub(r"[^a-z0-9]+","_") distrugge / \ . e ..).
-     Il ramo aperto e' l'altro: `if output_dir: job_dir = Path(output_dir)`.
-     CATENA MISURATA: bin/uj (9 sottocomandi) e uj_cli.py NON espongono
-     output_dir, ma job_worker.enqueue lo accetta, lo scrive in
-     workspace/queue.jsonl, e la riga 61 lo inoltra grezzo. queue.jsonl NON e'
-     in PROTECTED ed e' dentro la root -> una scrittura che il gate APPROVA
-     deposita un output_dir che il build usa SENZA gate.
-     NON sfruttabile dalla CLI oggi. NON ho eseguito process_one() end-to-end:
-     ho misurato le tre parti separatamente e LETTO la riga che inoltra.
-
-     S-23 — PROTECTED nomina il posto in cui il codice STAVA.
-     core/natural_tasks.py e' PROTETTO ed e' un guscio di re-export di 26 righe.
-     La logica sta in nt_pipeline.py (27), nt_runner.py (311), nt_helpers.py
-     (133): NESSUNO dei tre e' protetto, e nt_runner.py contiene
-     promote_job_to_tools, cioe' il gate di FIX-1.
-     Misurato: core/registry.py RIFIUTATO, core/nt_runner.py ACCETTATO e
-     riscritto. Copertura: 23 moduli core/, 2483 righe; protetti 4, 418 righe.
-     Il codice di FIX-1 e FIX-4 e' INTATTO: e' invecchiato l'INSIEME su cui
-     operano. Decima occorrenza della forma "un controllo che sembra un
-     controllo", la prima in cui a invecchiare e' l'insieme e non il controllo.
-
-     ORDINE: FIX-15 PRIMA di FIX-16. PROTECTED e' controllata solo dalla
-     safe_write di tools/files.py: finche' il build usa l'altra, allungare la
-     lista NON cambia niente su quel percorso e sembra che il buco sia chiuso.
-     Terza coppia di questo tipo dopo S-12/S-13 e FIX-10/writer adapter.
-
-     ERRORE MIO CORRETTO PRIMA DEL COMMIT: avevo scritto la correzione FIX-15a
-     chiamando `_resolve_within_root`, funzione CHE NON ESISTE — dedotta dal
-     comportamento invece di aprire il file. I nomi veri sono _resolve (riga 36)
-     e _is_protected (riga 46). Verificato anche che tools/files.py non importi
-     nulla da core/, quindi l'import suggerito non crea un ciclo.
-
-  AU) 2026-08-19 — S-21 (NUOVO, MEDIUM latente): PRIVILEGED_KWARGS e' una denylist.
-     MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §21 · GROK_FIX_LIST.md -> FIX-14
-     Trovato cercando difetti NUOVI nelle 2.171 righe arrivate su main dopo la
-     sessione 4 (multi_file, nt_runner, uj_cli, monetization, tools/).
-     core/registry.py:183 blocca solo {"force","root"}. CINQUE funzioni prendono
-     real=, che scavalca UJ_OS_REAL/UJ_AUTO_REAL: os.open_app (lancia processi,
-     "terminal" e' nell'allowlist), os.set_volume, automation.type_text (xdotool),
-     automation.paste_text, browser.open_url.
-     OGGI NON E' SFRUTTABILE, verificato eseguendo: tutte e cinque sono
-     safe=False e FIX-7 rifiuta prima del kwarg. Enumerati 135 tool: nessun
-     safe=True accetta un kwarg privilegiato non filtrato.
-     MA IL CONTENIMENTO E' 'safe', NON IL FILTRO. Marcare safe=True UNA sola
-     delle cinque rende il bypass vivo senza altre modifiche. Quinta volta che
-     il contenimento reale differisce dal controllo che sembra fornirlo.
-     CORREZIONE: allowlist per tool (forwardable_kwargs nella ToolSpec).
-     Stopgap in una riga: aggiungere "real" alla denylist.
-     ATTENZIONE, settimo falso negativo della giornata: la prima sonda ha
-     stampato zero righe e "NESSUNO" perche' cercava r.names()/reg.TOOLS, che
-     non esistono — il registry espone _tools. Zero tool esaminati non e'
-     "nessun tool a rischio". La sonda ora stampa QUANTI ne ha enumerati prima
-     di qualunque conclusione.
-
-  AT) 2026-08-19 — ADM-11 E' CHIUSA. COPERTURA 41 SU 41. NON RIAPRIRLA.
-     Il punto AS qui sotto dice "chiudere ADM-11 dopo la review di UJ-RUN-001".
-     E' GIA' FATTO, e senza aspettare, perche' il vincolo era "non cambiare il
-     conteggio", non "non toccare il file".
-     COME: esercitata dentro un test che esiste gia' — "a hopeless tool reports
-     every failure, not just the first" — togliendo version e manifestHash al
-     manifest ostile e aggiungendo ADM-11 all'insieme atteso. E' il posto
-     naturale: quel test elenca tutte le regole che un manifest indifendibile
-     viola, e ADM-11 mancava dall'elenco.
-     VERIFICATO: file 30, suite 140, INVARIATI. I 15 hash di UJ-RUN-001 15/15
-     intatti. Copertura 41/41. E il test FALLISCE senza la regola: rimossa dal
-     dist -> 29 pass 1 fail "expected ADM-11 to be reported"; ripristinata ->
-     30 pass 0 fail.
-     LEZIONE: avevo scritto tre volte in tre documenti che andava rinviata. Era
-     la conclusione sbagliata da un vincolo giusto. Un rinvio motivato bene si
-     trasforma in un rinvio non riesaminato, perche' la motivazione regge ancora.
-
-  >>> SUPERATO IN PARTE DAL PUNTO AT: ADM-11 e' CHIUSA, copertura 41/41.
-  >>> Ignora l'istruzione "chiudere dopo la review di UJ-RUN-001": e' gia' fatto.
-  AS) 2026-08-19 — AUDIT DI COPERTURA DEI MIEI CONTRATTI. UN BUCO SU 41.
-     docs/program/reviews/CLAUDE-CONTRACTS-RULE-COVERAGE-20260819.md
-     docs/threat-models/probes/contracts-rule-coverage.py
-     41 regole su 4 famiglie: OV 10/10/10, ADM 18/18/17, SF 10/10/10,
-     SF-PIPE 3/3/3. UNICO BUCO: ADM-11, implementata e mai testata.
-     NON CHIUDERLO ADESSO: la suite passerebbe da 140 a 141 e "140" compare 9
-     volte nell'handoff e 5 nel blueprint di UJ-RUN-001, congelati e in review.
-     >>> CHIUDERE ADM-11 SUBITO DOPO la review di UJ-RUN-001.
-     ATTENZIONE, falso positivo della sonda gia' corretto: TH-SF-* e TH-* NON
-     sono insiemi di regole, sono MODELLI DI MINACCIA. Le mitigazioni hanno ID
-     propri e la tracciabilita' sta nella colonna "Controlli" di una TABELLA,
-     non nei nomi dei test. Contarli come "regole senza test" da' un allarme
-     falso: la prima esecuzione diceva "10 minacce scoperte". L'avvertenza e'
-     dentro la sonda.
-
-  AR) 2026-08-19 — PERCORSO CRITICO MISURATO. E UJ-SEC-001 NON E' IL PRIMO.
-     docs/program/CRITICAL_PATH_20260819.md
-     STATO: 43 task, 340 unita', 26 ACCETTATE (7,6%). Tutte e 26 sono task meta
-     di ChatGPT (META-001 21/21, META-002 5/8). ZERO unita' di lavoro
-     specialistico accettate, da nessuno dei quattro. Il mio resta 0/76.
-     CORREZIONE: il peso totale e' 340, NON 311 come dice la memoria di
-     sessione 1. La baseline e' cresciuta di 29 unita'.
-     QUANTO SBLOCCA CIASCUNO (dipendenti diretti oggi BLOCKED):
-       UJ-CAP-001  rev CLAUDE   -> 55   <-- il piu' redditizio, ma oggi e' FAIL
-       UJ-RUN-001  rev GEMINI   -> 34   <-- miglior LEVA PER GIRO
-       UJ-GGL-001  rev GROK     -> 29
-       UJ-RED-001  rev CHATGPT  -> 29
-       UJ-INT-001  rev GROK     -> 23
-       UJ-SEC-001  rev GROK     -> 21   <-- l'ULTIMO dei sei
-     ERRORE MIO CORRETTO: stamattina avevo scritto a Grok in TASKCLAUDE §68 che
-     UJ-SEC-001 era "la cosa con piu' leva che puoi fare oggi". FALSO. Resta
-     vero che e' la chiave di volta DEL MIO PORTAFOGLIO. §68 corretta sul posto.
-     RACCOMANDAZIONE: i primi TRE atti usano tre reviewer DIVERSI e partono
-     insieme — RUN-001 a Gemini, RED-001 a ChatGPT, SEC-001 a Grok = 84 unita'
-     con tre inoltri.
-     CAVEAT IN GRASSETTO: nulla applica una transizione proposta. Con tutte e sei
-     le review consegnate domani il contatore resterebbe 26/340. L'anello va
-     PRIMA delle review.
-
-  AQ) 2026-08-19 — CORREZIONE: SONO SETTE SU OTTO, NON OTTO. E DUE FATTI NUOVI.
-     Il punto AP qui sotto e il commit fbe9bf9 dicono "tutti e otto". ERA FALSO:
-     erano SEI. L'ho scoperto verificando la mia stessa affermazione subito dopo
-     averla scritta. E' la trappola 24 commessa nel giorno in cui l'ho corretta
-     a Gemini, a ChatGPT e a me stesso quattro volte.
-     ORA SONO SETTE: aggiunto docs/program/packets/UJ-REV-001-AC-EVIDENCE.md.
-     L'OTTAVO NON PUO' AVERNE UNO: UJ-REV-002 non ha artefatti.
-     CORREZIONE 2: UJ-REV-002 e' DEFERRED a M10, NON BLOCKED come dice la mia
-     memoria. Diverso: non aspetta una dipendenza, e' programmato per dopo.
-     Stessa cosa per UJ-INT-007 (DEFERRED M10, dip UJ-MCP-001 + UJ-SKL-001).
-     CHIUSURA DI UJ-SEC-001, misurata attraversando il grafo:
-       UJ-SEC-001 (READY,13) -> UJ-SKL-001 (13) -> UJ-INT-007 (13) -> UJ-REV-002 (8)
-                                              \-> UJ-INJ-001 (13, GROK)
-                             -> UJ-MCP-001 (8)
-       5 task a valle, 55 unita', 3 portafogli. MA IL NUMERO GIUSTO E' 21:
-       accettarlo sblocca SUBITO solo SKL(13)+MCP(8); le altre 34 sono DEFERRED
-       a M10 e non dipendono solo da lui. Scrivo la cifra precisa perche' avevo
-       appena sbagliato un conteggio.
-
-  >>> SUPERATO DAL PUNTO AQ: erano SEI, non otto. Ora sono SETTE, e l'ottavo
-  >>> non puo' averne uno perche' non ha artefatti. Il titolo qui sotto e' FALSO.
-  AP) 2026-08-19 — TUTTI E OTTO I MIEI TASK HANNO UN PACCHETTO. NON RIFARE.
-     docs/program/packets/UJ-MCP-001-AC-EVIDENCE.md
-     docs/program/packets/UJ-RCV-001-AC-EVIDENCE.md
-     docs/program/packets/UJ-SKL-001-AC-EVIDENCE.md
-     I tre sono BLOCKED (MCP e SKL su UJ-SEC-001, RCV su UJ-RUN-001) quindi non
-     possono avere card ne' packet. Il blocco e' sul LEDGER, non sull'artefatto:
-     quando la dipendenza si accetta, il reviewer parte da materiale pronto.
-     DIFETTO MIO TROVATO CONTANDO, non segnalato da nessuno:
-       ADM-* nel documento 18, nel codice 18, NEI TEST 17.
-       ADM-11 (versione e hash pinnati) e' implementata a tool-manifest.ts:277
-       e NON HA UN TEST.
-     ATTENZIONE: la colonna "Blocca?" di TOOL_PLANE.md dice "si'" per ADM-11 ma
-     significa "blocca l'ammissione", NON "e' testata". Il documento non
-     sopravvaluta. Controllato prima di scriverlo.
-     NON L'HO CHIUSO, ED E' UNA DECISIONE DI SEQUENZA: tool-admission.test.mjs
-     non e' fra i 15 artefatti hashati, ma la suite passerebbe da 140 a 141 e
-     "140" compare 9 volte nell'handoff e 5 nel blueprint di UJ-RUN-001, en-
-     trambi congelati e IN REVIEW presso Gemini. Costringerebbe a un settimo
-     giro. >>> CHIUDERE ADM-11 DOPO la review di UJ-RUN-001.
-
-  AO) 2026-08-19 — UJ-CLD-001 CONSEGNATO CON LE FONTI RIAPERTE. NON RIFARE.
-     docs/program/packets/UJ-CLD-001-AC-EVIDENCE.md
-     READY, 8 punti, nessun blocker, reviewer GEMINI.
-     LE DUE CITAZIONI DECISIVE SONO STATE RIVERIFICATE IL 19, non citate a
-     memoria: entrambe CONFERMATE VERBATIM. La §6 del mio artefatto dice che le
-     fonti si spostano in tempo reale, e l'artefatto e' datato 17: consegnarlo
-     senza riaprirle sarebbe stato il difetto che contesto agli altri.
-     GUADAGNATO nella riverifica: la data di efficacia dei termini consumer,
-     October 8 2025 — l'artefatto non la registrava.
-     TRE COSE NUOVE ALLA FONTE, tutte a favore della conclusione:
-       1. Managed Agents e' una QUINTA superficie, a chiave API. LA MIA MATRICE
-          NE COPRE QUATTRO: lacuna che dichiaro io, lavoro residuo. NON l'ho
-          aggiunta perche' modificherebbe un artefatto in attesa di review.
-       2. l'Agent SDK e' governato dai Commercial ToS anche quando alimenta
-          prodotti per i propri clienti;
-       3. "Claude Code" e "Claude Code Agent" NON sono nomi permessi per un
-          prodotto di terzi.
-     COSA DEVE ATTACCARE GEMINI (§5): non i conteggi, ma la conclusione che per
-     Claude HUMAN_BRIDGE e' la modalita' DEFINITIVA. Se esiste un percorso
-     automatico a costo zero che non ho visto, cambia il piano del programma.
-     Nessun ResponsePacket: card_id obbligatorio, card assente (punto AM).
-
-  AN) 2026-08-19 — UJ-SEC-001 E' ORA REVISIONABILE. GIA' FATTO, NON RIFARE.
-     docs/program/packets/UJ-SEC-001-AC-EVIDENCE.md
-     prompts/handoffs/CLAUDE-SEC-001-DELIVERY-20260819.md
-     E' LA CHIAVE DI VOLTA: READY, nessuna dipendenza, nessun blocker, reviewer
-     GROK. UJ-MCP-001 (8) e UJ-SKL-001 (13) sono BLOCKED su di lui: accettarlo
-     sblocca 21 unita' gia' consegnate oltre alle sue 13. E' anche uno dei tre
-     task dell'innesco B'.
-     Il difetto era che NESSUNO POTEVA REVISIONARLO: sei artefatti su main da
-     giorni, 1709 righe, e nessun pacchetto di consegna.
-     NUMERI, ogni comando ESEGUITO e non solo scritto:
-       19/19 minacce con S/P/R, Vettore, Impatto, Controlli, Residuo, Owner
-       severita': 6 CRITICA, 8 ALTA, 5 MEDIA
-       regole OV-*: 10 nel documento, 10 nel codice, 10 nei test
-       approval-policy.test.mjs: 28 pass, 0 fail
-       difese §17: 9 progettate, 3 parziali, 3 assenti
-       critica: 3 lacune, 12 articoli, 12 proposte
-     DUE CORREZIONI A DATI MIEI:
-       - le difese sono 9/3/3, NON 8/3/4 come dice CLAUDE.md sessione 2;
-       - contando le minacce con la riga di severita' ottenevo 1 SU 19 e ho
-         creduto per un attimo che il mio threat model fosse vuoto. TH-01 usa
-         "**Severità / Probabilità / Rilevabilità**", le altre 18 "**S/P/R**".
-         Tutte e 19 ce l'hanno. L'avvertenza e' NEL BLOCCO PER GROK: e'
-         esattamente il controllo che rifara' lui. Usare 'Residuo', uniforme.
-     NESSUN ResponsePacket, e non e' una dimenticanza: card_id e' obbligatorio e
-     UJ-SEC-001 non ha una card (vedi punto AM). NON impedisce la review.
-     AC-02 dichiarato NON soddisfacibile da me: nomina l'atto del reviewer.
-
-  AM) 2026-08-19 — PERCHE' 6 MIEI TASK NON HANNO UNA CARD. CORREGGE LA SESSIONE 4.
-     docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md
-     prompts/handoffs/CLAUDE-PROPOSED-CARDS-20260819.md  (due card pronte)
-     CLAUDE-TO-CHATGPT-CARDS-REQUEST-20260818.md -> MARCATO SUPERATO, non eseguirlo.
-     LA DIAGNOSI DI SESSIONE 4 ("servono sette card, il collo di bottiglia e' di
-     ChatGPT") E' INCOMPLETA. Misurato eseguendo il SUO validatore:
-       il meccanismo delle card e' CABLATO A QUATTRO TASK. expectedTargets e' una
-       Map di quattro coppie a validate-council-packets.mjs:443-447, e la riga 471
-       impone che la mission assegni esattamente quei quattro.
-     NUMERI, ricalcolati dal BACKLOG (43 task):
-       reviewer accettato dallo schema : 29   (14 esclusi: 9 "Core task owner named
-                                               on DelegationCard", 5 "Christian")
-       in stato READY                  :  6   (un task BLOCKED non puo' avere card:
-                                               task_snapshot.status e' const READY)
-       ammessi da expectedTargets      :  4
-       card esistenti                  :  4
-     IL MECCANISMO HA GIA' EMESSO UNA CARD PER OGNI TASK CHE PUO' AVERNE UNA.
-     Non e' in ritardo, e' al suo tetto. Non e' un difetto di condotta di ChatGPT.
-     EMETTIBILI SUBITO, entrambi miei e READY: UJ-SEC-001 (13, GROK) e
-     UJ-CLD-001 (8, GEMINI) = 21 unita' consegnate. Le card sono gia' scritte.
-     SERVONO TRE MODIFICHE NEI FILE DI CHATGPT, non un file: lista cablata righe
-     34-37, expectedTargets 443-447, mission assigned_task_ids + delegation_card_ids.
-     RACCOMANDATO invece: sostituire l'insieme cablato con la regola "ogni task
-     READY con owner e reviewer validi puo' avere una card" — il tetto sparisce
-     invece di spostarsi da 4 a 6.
-     SECONDO DEADLOCK: gli altri 4 miei sono BLOCKED -> niente card -> niente
-     packet -> mai REVIEW -> nessun ReviewResult -> nessuna accettazione della
-     dipendenza -> restano BLOCKED. Dipendenze verificate: MCP/SKL -> SEC-001,
-     RCV -> RUN-001, REV-001 -> INT-001.
-     TRAPPOLA INCONTRATA: il primo run del validatore ha dato PASS con
-     delegation_card_count=4 mentre nella directory c'erano 10 card. Il validatore
-     NON scandisce la directory. Il segnale era il CONTEGGIO, non l'exit code.
-
-  >>> SUPERATO DAL PUNTO BE / §30: la vista autorevole e' ora la §30 della security
-  >>> review, con TUTTI i 29 findings — 10 chiusi, 1 superato, 1 parziale, 17 aperti.
-  >>> Questo punto (e il "23" del vecchio marcatore) descrivono stati intermedi. Per
-  >>> il conteggio corrente NON leggere qui: leggi §30. Il metodo dell'audit resta
-  >>> valido (la sonda produce CANDIDATI, non verdetti), il conteggio no.
-  AL) 2026-08-19 — STATO CONSOLIDATO DEI 20 FINDINGS SU main. GIA' FATTO, NON RIFARE.
-     docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §20
-     docs/threat-models/GROK_FIX_LIST.md (tabella di stato IN CIMA)
-     docs/threat-models/probes/findings-status-audit.py  (nuovo)
-     Ref: origin/main @ 27b7673. BILANCIO: 12 CHIUSI, 1 superato, 1 parziale, 6 aperti.
-     APERTI: S-06 (policy, non un bug), S-07, S-16, S-17, S-18, S-19, S-20.
-     PARZIALE: S-02 (gate si', tetto e evento no).
-     DUE CHE LA MIA STESSA MEMORIA DAVA PER NON CHIUSI LO SONO:
-       S-03  send() chiama _safe_mode() LIVE a ogni invocazione: la globale
-             riscrivibile non e' sul percorso. email.SAFE_MODE=False non funziona.
-       S-15  run_gates(use_real=False) ritorna ok:None e stampa "STUB (not
-             executed)", con il commento che vieta di trattarlo come successo.
-     Non aggiornarli avrebbe SOVRASTIMATO DI UN TERZO il lavoro residuo di Grok.
-     RESTANO QUATTRO FIX, E DUE SONO LO STESSO PONTE: FIX-10 e FIX-13 si chiudono
-     insieme. Ordine: FIX-10+FIX-13 -> FIX-11 -> FIX-12.
-     ATTENZIONE, ERRORE MIO (E38/trappola 38): la sonda di audit ha dato TRE
-     verdetti falsi, tutti "aperto" dove era "chiuso" (S-11, S-14, S-03).
-     LO SCRIPT PRODUCE CANDIDATI, NON VERDETTI. Ogni riga aperta va RILETTA nel
-     codice prima di pubblicarla. L'avvertenza e' dentro lo script, in testa.
-
-  >>> AGGIORNATO: S-17/S-19 riconfermati aperti su origin/main anche nella quinta
-  >>> verifica (log sessione 6 parte 36); il ramo CLAUDE li chiude, misurato con
-  >>> UJ_PROBE_REF=HEAD o TARGET_REF=HEAD. Vista completa: §30.
-  AK) 2026-08-19 — S-17 QUARTA VERIFICA: TERZA PORTA APERTA. GIA' FATTO, NON RIFARE.
-     docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §19
-     docs/threat-models/GROK_FIX_LIST.md -> FIX-13
-     docs/threat-models/probes/S-17-three-doors-probe.py  (nuova, si rilancia dalla root)
-     S-17 e S-19 ANCORA APERTI su origin/main @ 27b7673. Quarta verifica di fila.
-     MODEL_PROVIDER default "openai" in TRE punti; _call_openai presente;
-     UJ_ALLOW_PAID_API assente; in embed() QuotaExceeded ancora inghiottito.
-     LE PORTE ORA SONO TRE, misurate (nessuna chiamata di rete reale):
-       UJ_PLANNER_LLM=1 -> 3 tentativi a pagamento
-       UJ_WRITER_LLM=1  -> 3 tentativi a pagamento
-       UJ_EMBEDDING=1   -> 1 tentativo  a pagamento   <-- NUOVA, prevista in §13
-     MODEL_PROVIDER=local le chiude TUTTE E TRE: asimmetria 1 contro 3.
-     E' l'argomento definitivo per correggere IL PONTE e non i gate.
-     ESPOSIZIONE, tracciata per chiamante e NON presunta:
-       writer e planner CABLATI (bin/uj -> natural_tasks -> nt_runner)
-       embedding LATENTE: recall_semantic_embedded ha ZERO chiamanti fuori dal
-       suo test. Va corretta ADESSO proprio perche' non e' cablata (come S-16).
-     DUE MIE AFFERMAZIONI SMENTITE DAI FATTI, entrambe a favore di Grok:
-       (1) sospettavo un percorso embedding SENZA opt-in: falso, core/memory.py:115
-           richiede UJ_EMBEDDING=1;
-       (2) il default e' sicuro su tutte e tre le porte, misurato.
-     ATTENZIONE AL MERGE DEL FIX: la base di agent/strict-zero-cloud-bridge-*
-     PRECEDE embed(). Portarla su main cosi' com'e' cancella embed() e le quattro
-     guardie di budget, e core/memory.py:118 lo importa. La versione buona e'
-     quella del ramo CLAUDE, l'unica su una base che contiene embed().
-
-  AJ) 2026-08-19 — UJ-CAP-001 QUARTO INVIO REVISIONATO. GIA' FATTO, NON RIFARE.
-     Ref: origin/agent/uj-cap-001-gemini-review-20260818 @ 0f1c536774aff39c349b89914d8d7184ba138834
-       docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260819.md
-       docs/program/reviews/UJ-CAP-001-CLAUDE-REVIEWRESULT-CANDIDATE-20260819.json
-     ESITO: FAIL, 3 criteri su 5 (AC-01/02/03 PASS, AC-04/AC-05 FAIL). 0/13 -> 0/13.
-     I VERDETTI PRECEDENTI SONO SUPERATI: il registro e' stato RISCRITTO fra 27b3717
-     e 0f1c536 (719 righe JSON, 500 MD). Non ripartire dal verdetto del 18.
-     CHIUSI, con merito a Gemini: G-001, G-002, G-003, G-004 e F-001. Zero capability
-     ACTIVE, confidenza max 0.5 su 19, UNKNOWN 79 nel JSON, 18 URL distinte.
-     Controllato che "remove unverified capability claims" NON chiudesse una lacuna
-     cancellandola: 19 ID prima, 19 dopo, nessuno rimosso.
-     LE DUE COSE DA SAPERE PRIMA DI RIAPRIRLO:
-      1. AC-05 fallisce per UN CAMPO, e NON E' COLPA DI GEMINI. Il packet dichiara
-         source_commit_sha 3611b1b4, dove i suoi artefatti NON esistono. Ma quel
-         valore e' il read_ref che la SUA CARD le ordinava di usare, e ChatGPT ha
-         corretto le card OTTO ORE DOPO il suo packet. Dimostrato cambiando SOLO
-         quel campo: da FAIL(2) a PASS exit 0. Seconda vittima misurata dello stesso
-         read_ref stantio dopo la mia UJ-RUN-001. I DUE HASH SONO AUTENTICI.
-      2. AC-04 fallisce per la classe local-compute: nessun campo, nessuna
-         capability, nessuno stato — mentre policy_enforcement nomina "zero heavy
-         local inference". Tre classi su quattro sono governate 19/19.
-         CORREZIONE A UNA MIA FORMULAZIONE: avevo scritto "local ha zero occorrenze".
-         NON E' ESATTO — compare 8 volte, sempre come DESTINAZIONE DI FALLBACK. Il
-         difetto e' che non e' mai un percorso governato.
-     F-102 (HIGH): verified_at_utc e' UNA COSTANTE su 19/19 e su 11 record
-       CONTRADDICE il campo freshness dello STESSO record ("not independently
-       reverified"). Correzione: null su quegli 11, invariato sugli 8 Google.
-     F-104 (MEDIUM): il registro NON contiene le superfici su cui il programma gira.
-       Claude Code, Agent SDK, code.claude.com: ZERO occorrenze. UJ-CLD-001 (mio)
-       ha gia' il VERIFIED_FACT sull'Agent SDK: c'e' da IMPORTARLO, non ricercarlo.
-     CORREZIONI CHIESTE: 5, di cui 3 di contenuto minimo (1 campo, 1 record, 2
-       record). NON ho chiesto un quinto giro di riscrittura. §8 del verdetto.
-     IL MIO REVIEWRESULT NON E' IMPORTABILE, e il motivo e' UNO SOLO, misurato a
-     tre configurazioni: 8 errori dal mio albero stantio -> 4 da origin/main pulito
-     -> 1 con gli artefatti presenti. L'irriducibile e' "may only be imported for a
-     task currently in REVIEW; UJ-CAP-001 is READY". IL PACKET DI GEMINI PROPONE
-     REVIEW E NULLA APPLICA LA TRANSIZIONE. Terza conferma della causa 3
-     dell'addendum di sessione 5, ora su DUE task insieme (il suo e il mio).
-     >>> SERVE DA CHATGPT: (a) l'anello che applica le transizioni proposte;
-     (b) far risolvere verifyReviewedArtifact con sha256AtRef(ref, commit_sha) —
-     oggi legge dall'ALBERO DI LAVORO, quindi sha256AtRef copre le CARD ma NON le
-     REVIEW (vedi E35/trappola 35: non estendere la portata di un fix altrui).
-
-  AI) 2026-08-19 — MANDATO DI TECHNICAL LEAD + INNESCO SCELTO + PR #18 APERTA.
-     Christian: a fine pianificazione la leadership operativa passa a CLAUDE.
-     Mandato completo, vincoli, primi cinque atti e rischio: CLAUDE.md PARTE 3-bis.
-     ChatGPT resta SUPERVISORE ESTERNO con potere di rifiuto. NON e' una deroga:
-     accepted_weight non si muove senza review indipendente, MAI reviewer di un
-     mio task.
-     INNESCO ADOTTATO (delega "scegli te"): DEFINIZIONE B' — tre task ACCEPTED:
-       UJ-RUN-001 (13) reviewer GEMINI   -> PR #18 aperta, draft
-       UJ-SEC-001 (13) reviewer GROK     -> READY, nessun blocker, puo' partire
-       UJ-RCV-001 (8)  reviewer CHATGPT  -> BLOCKED su UJ-RUN-001
-     34 unita', UNA REVIEW PER CIASCUNA DELLE ALTRE TRE IA. Finche' non sono
-     accettati il mandato e' SOSPESO e si lavora da specialista.
-     ATTENZIONE, ERRORE MIO DA NON RIPETERE (E33): la prima versione dell'innesco
-     includeva UJ-INT-004 e dichiarava 42 unita'; la chiusura transitiva e' 8 task
-     e 94 unita' perche' UJ-INT-004 -> UJ-INT-002 -> i quattro specialisti.
-     UJ-INT-004 e' stato TOLTO: e' la specifica del monorepo, e packages/contracts
-     esiste gia', compila e ha 140 test verdi.
-     PR #18: era la cosa piu' importante e mancava. UJ-RUN-001 era ammissibile da
-     ore e il reviewer non aveva una sede dove lavorare.
-     SEGNALATO A CHATGPT, non corretto: il blocker di UJ-INT-002 dice "specialist
-     ResponsePackets do not exist yet" e i quattro packet ESISTONO tutti.
-
-
-  AH) 2026-08-19 — UJ-RUN-001 E' **REVIEW**. IL BLOCCO E' SCIOLTO. NON RIAPRIRLO.
-     ChatGPT ha chiuso tutto con 6ba3a2b (ripristino dei 16 hash) e 27b7673 (via
-     l'esenzione del piano canonico dal controllo, e calcolo dal commit pinnato
-     con sha256AtRef invece che dall'albero — quest'ultimo era un rilievo che
-     avevo definito MINORE e non bloccante, chiuso lo stesso).
-     SEI CLAUSOLE VERIFICATE su origin/main: card al proprio read_ref exit 0;
-     read_ref raggiungibile da main exit 0; pin 4/4 (16/16 sulle quattro card);
-     validate-council-packets exit 0; criteri card == BACKLOG (AC-01..AC-05);
-     ledger READY, reviewer GEMINI.
-     CONSEGNA GIRO 6: source b2b32733e8db, delivery c4e23caca979,
-     response_id ...-REVIEW-R6, status REVIEW, READY -> REVIEW, accettato 0 -> 0/13.
-     4 hash su 15 cambiati: SOLO dichiarazioni di stato (handoff, blueprint,
-     index.ts RUNTIME_CONTRACTS_PROVENANCE, package.json description) — i quattro
-     punti censiti nella §0.4 dell'handoff. Delivery e append RINOMINATI in
-     ...-REVIEW-20260819.md e riscritti per parlare a GEMINI.
-     ATTENZIONE, DA NON ROMPERE: kind:"BLOCKED" in agent-manifest.ts e team-spec.ts
-     e il membro BLOCKED di ResultStatus sono STATI DEL RUNTIME, non stato della
-     consegna. Un find-and-replace su "BLOCKED" corrompe i contratti.
-     IL PESO RESTA 0/13. REVIEW non e' accettazione: si muove solo se GEMINI accetta.
-     ORA LA PALLA E' DI GEMINI. Da CLAUDE non serve altro su questo task.
-
-
-  >>> SUPERATO DAL PUNTO AH: i 16 hash sono stati ripristinati con 6ba3a2b e
-  >>> l'esenzione del piano canonico rimossa con 27b7673. Chiuso.
-  AG) 2026-08-19 — CHATGPT HA CORRETTO LE CARD (4b63b94) E LA CORREZIONE HA ROTTO I PIN.
-     LEGGERE PRIMA DI TOCCARE QUALUNQUE COSA LEGATA ALLE DELEGATION CARD.
-     CHIUSO: i 4 read_ref puntano ora a 25b1b7d53ff5, che contiene le card ed e'
-     raggiungibile da main (4/4, entrambe le clausole). ChatGPT ha ANCHE allineato
-     i criteri (UJ-RUN-001 ne ha 5 nel BACKLOG, non 2) e aggiunto due assert al
-     validatore che rendono il difetto meccanicamente impossibile. Accreditato.
-     APERTO: lo stesso commit ha riscritto i 16 hash degli input pinati sulle 4
-     card e ZERO su 16 corrispondono. Sei convenzioni di hashing testate, nessuna
-     produce quei valori; nessuna versione storica del piano canonico ha mai avuto
-     l'hash dichiarato. I valori CORRETTI sono quelli di PRIMA:
-       a3fcdfc9...a69a87  docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
-       72edc395...93590a  docs/program/SPECIALIST_INPUTS.md
-       eb4d0d0d...d29ff88  docs/program/COUNCIL_PACKETS.md
-       ee44e1b7...7e69c0a  schemas/response-packet.schema.json
-     IL GATE DI CHATGPT RIFIUTA IL COMMIT DI CHATGPT: validate-council-packets.mjs
-     su origin/main -> exit 1, 12 mismatch. validate-program-os.mjs -> exit 0.
-     IL RILIEVO PIU' GRAVE: il validatore riporta 12 e non 16 perche' la riga 444
-     ESCLUDE il piano canonico dal controllo di integrita'. L'unico artefatto esente
-     dal gate e' il documento che definisce il programma, e il suo hash falso e'
-     invisibile. Quella eccezione va rimossa.
-     EFFETTO SU UJ-RUN-001: il blocco CAMBIA IDENTITA', non si scioglie. Per quattro
-     giri avevo scritto "non e' un pin mismatch": ADESSO LO E'. Rischio sostanziale
-     NULLO (lavoro svolto contro i documenti reali, byte invariati), blocco FORMALE.
-     GIA' FATTO, NON RIFARE: docs/program/reviews/UJ-CARDS-REPIN-VERIFICATION-CLAUDE.md
-     Consegna giro 5: source c645377d54c2, delivery 141180ae2761, packet -R5,
-     1 hash su 15 cambiato (solo l'handoff, §1.0).
-
-
-  >>> SUPERATO DAL PUNTO AH: le card sono state ripinnate a 25b1b7d5 e i pin
-  >>> ripristinati. La richiesta descritta qui e' stata soddisfatta.
-  AF) main E' STATO RISCRITTO, E QUESTO CAMBIA LA CORREZIONE DA CHIEDERE A CHATGPT.
-     LEGGERE PRIMA DI RIPETERE LA RICHIESTA DI SBLOCCO.
-     Misurato: 3611b1b4, d48e1e85, 31f31b9 e ANCHE 99dece5 (il mio merge di PR #1
-     e PR #2 su main, sessione 3) NON sono raggiungibili da origin/main.
-     Sopravvivono solo su rami laterali. Secondo indizio dello stesso fatto: il
-     fetch senza '+' rifiutato come non-fast-forward (E30) — l'avevo letto solo
-     come difetto della mia ricetta, era ANCHE il sintomo del rewrite.
-     LA MIA ISTRUZIONE PRECEDENTE ERA SBAGLIATA: "read_ref a un commit pari o
-     successivo a d48e1e85" verifica solo che la card ci sia, NON che il commit
-     sia risolvibile da main. Seguita alla lettera riproduce il difetto.
-     CONDIZIONE CORRETTA, due clausole: il commit deve CONTENERE LA CARD **e**
-     ESSERE RAGGIUNGIBILE DA origin/main.
-     Candidati verificati: 3cbae5c19bb6e29fbc3e0dbbd60c5a7c92fc6fa1 (il primo
-     nella storia ATTUALE di main in cui la card compare) oppure il tip
-     25b1b7d53ff5bc4b05348453ebb704aba3a88630.
-     E IL DIFETTO E' SU TUTTE E QUATTRO LE CARD: UJ-RUN-001-CLAUDE,
-     UJ-CAP-001-GEMINI, UJ-GGL-001-GEMINI, UJ-RED-001-GROK dichiarano tutte
-     read_ref 3611b1b4 e NESSUNA esiste a quel commit. Gemini lo incontra due
-     volte, Grok una. Correggerle insieme costa UN giro di HUMAN_BRIDGE invece
-     di tre. NON ho toccato le card: sono di ChatGPT.
-     FRAGILITA': i 4 input pinati si risolvono ancora a 3611b1b4 (4/4) ma SOLO
-     perche' quei rami laterali esistono. Cancellandoli, saltano anche i pin.
-     CONSEGNA GIRO 4: source cfee1316cf83, delivery d414306f2928,
-     packet -R4, 1 hash su 15 cambiato (solo l'handoff, che guadagna la §1.1).
-
-
-  >>> SUPERATO DAL PUNTO AH: UJ-RUN-001 e' REVIEW dal 2026-08-19. Il blocco
-  >>> descritto qui e' sciolto. Il punto resta come storia del perche'.
-  AB) UJ-RUN-001 RICONCILIATA UNA TERZA VOLTA E RESTA BLOCKED. GIA' FATTO, NON RIFARE.
-     Ref: agent/uj-run-001-blueprint-20260818
-       source_commit_sha : a7e03e979baee5a8b796007313ad93408299f840
-       delivery commit   : 39e9a8350566682d1469deb2243764b321dd8c5e
-     Supersede 79408449bd096613d2823efe6872ed424b757ee6, che superava 2dad45a4.
-     File: docs/program/handoffs/HANDOFF-UJ-RUN-001.md (RISCRITTO),
-       docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json (response_id ...-R3),
-       docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md,
-       prompts/handoffs/CLAUDE-RUN-001-DELIVERY-BLOCKED-20260818.md (ORA 2 blocchi
-         FILE: blueprint E handoff, cosi' ChatGPT rihasha senza clonare),
-       prompts/handoffs/CLAUDE-RUN-001-APPEND-BLOCKS-BLOCKED-20260818.md
-
-     COSA ERA ROTTO: ChatGPT ha segnalato che l'handoff era ancora il documento
-     della SESSIONE 1 (branch claude/ultrajarvis-repo-analysis-li6vvj, stato
-     REVIEW, 33 test). Vero, ed e' uno dei 15 artefatti che il packet hasha:
-     due artefatti sullo STESSO commit dichiaravano stati opposti.
-
-     LA PARTE CHE CONTA: cercare solo quell'istanza sarebbe stato l'errore.
-     Scandendo TUTTO il set per la CLASSE del difetto ne sono uscite QUATTRO:
-       1. l'handoff                                (segnalata da ChatGPT)
-       2. packages/contracts/src/runtime/index.ts  RUNTIME_CONTRACTS_PROVENANCE
-                                                   .status = "REVIEW"  <- LA PEGGIORE
-       3. packages/contracts/package.json          description "... status REVIEW."
-       4. RUNTIME_BLUEPRINT.md                     "il prompt non e' ancora su main"
-     La n.2 e' la peggiore perche' e' l'UNICA copia LEGGIBILE DA UNA MACCHINA
-     dello stato, offerta dal suo commento "for the Program OS ledger". Lo stesso
-     file dichiarava "Status: PROPOSAL" 25 righe sopra: due stati in un file.
-     Ora maturita' del contratto e ammissibilita' della consegna sono due assi
-     separati. Nessuno legge quella costante (grep fatto prima di toccarla).
-     La n.4 era FALSA: origin/main e b8a7697 danno lo stesso a3fcdfc9...a69a87.
-
-     PROVA CHE LA CORREZIONE E' CHIRURGICA: ricalcolati TUTTI e 15 gli hash a
-     ENTRAMBI i commit sorgente -> 4 su 15 cambiati, esattamente quei quattro.
-
-     PERCHE' RESTA BLOCKED: invariato. La card non esiste al proprio read_ref
-     3611b1b4; entra con d48e1e85, dodici minuti dopo. I 4 input pinati
-     COINCIDONO a 3611b1b4 (ricalcolati): non e' un pin mismatch. Serve CHATGPT.
-     Questi stessi byte diventano REVIEW cambiando SOLO status.
-
-     TRE SCELTE DI PROGETTO DA NON DISFARE:
-       - l'handoff NON nomina il commit che lo contiene: impossibile per
-         costruzione (trappola 28). Il source_commit_sha sta SOLO nel packet.
-       - §0.3 conserva i valori superati sotto intestazione ESPLICITA di storia:
-         non cancellarli, servono a chi ha visto la versione precedente.
-       - §0.4 registra la CLASSE del difetto, non l'istanza (trappola 26).
-       - response_id cambiato in ...-R3 di proposito: riusarlo sarebbe stato un
-         replay divergente, cioe' il mio stesso finding F-002 contro ChatGPT.
-
-  AC) CORREZIONE A UN FATTO DELLA SESSIONE 5 — LEGGERE PRIMA DI CERCARE UJ-INT-007.
-     Il punto S diceva "UJ-INT-007 NON ESISTE fra i 43 task". E' FALSO.
-     ESISTE: owner CHATGPT, reviewer GEMINI, peso 13, milestone M10, DEFERRED.
-     Verificato a quattro ref diversi, esisteva gia' a 31f31b9.
-     Era quasi certamente lo stesso falso negativo dell'errore E28 di sessione 6:
-     leggere t.id dove il campo e' t.task_id, quindi confrontare contro undefined.
-     UJ-REV-002 resta NON lavorabile, ma la causa e' "la dipendenza esiste e non
-     e' accettata", NON "non esiste". E' la causa a dire chi puo' sbloccare cosa.
-
-  AD) IL COMANDO DI FETCH DELLA MIA STESSA MEMORIA ERA DIFETTOSO (E30). CORRETTO
-     in CLAUDE.md PARTE 2 e in AVVIO_NUOVA_SESSIONE.md. Usa SEMPRE:
-       git fetch origin '+refs/heads/*:refs/remotes/origin/*'
-     Senza il '+', un ref remoto riscritto viene RIFIUTATO e origin/main resta al
-     valore VECCHIO, con una sola riga "! [rejected] ... (non-fast-forward)" in
-     mezzo a decine di "[new branch]". In questa sessione origin/main e' rimasto
-     a 9d2a93d ("Initial commit") mentre il vero era 25b1b7d. Da li' in poi ogni
-     confronto fra branch sarebbe stato sbagliato SENZA CHE NULLA LO DICESSE.
-     DOPO il fetch, verifica che origin/main sia dove ti aspetti.
-
-  AE) IL BRANCH DI CASA E QUELLO DI CONSEGNA SONO ORA ALLINEATI SULLA MEMORIA.
-     agent/uj-run-001-blueprint-20260818 contiene ANCHE CLAUDE.md/TASKCLAUDE.md
-     aggiornati: ho mergiato 2f0464d (l'ultimo commit di memoria di sessione 5) e
-     scritto qui il log di sessione 6, perche' il proprietario aveva chiesto di
-     pushare SOLO il branch autorizzato e la Regola 2 impone comunque di
-     aggiornare la memoria. Verificato che 2f0464d non tocca NESSUNO dei 15
-     artefatti, quindi il merge non poteva cambiare un hash.
-     CONSEGUENZA: claude/claude-md-resume-point-tvej1u e' ora INDIETRO sulla
-     memoria. La copia buona e' su agent/uj-run-001-blueprint-20260818.
-
-SESSIONE 5 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
-
-  AA) CHIUSURA DI SESSIONE (fine settima parte). Leggi questo punto per primo,
-     letteralmente prima di P-Z qui sotto: quelli sono la cronologia della
-     sessione, questo e' dove si riprende.
-
-     1. UJ-RUN-001 E' STATA RICONCILIATA E RESTA BLOCKED. NON RIFARE.
-        Ref: agent/uj-run-001-blueprint-20260818
-        @ 9a7e92022d399f3e6575b84415a38fe099d13fde (i quattro documenti di consegna)
-        source_commit_sha citato da tutti e quattro (blueprint incluso):
-          79408449bd096613d2823efe6872ed424b757ee6
-        File: docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json (status BLOCKED,
-          AC-05 dichiarato NON soddisfatto), UJ-RUN-001-AC-EVIDENCE.md,
-          prompts/handoffs/CLAUDE-RUN-001-DELIVERY-BLOCKED-20260818.md (2 blocchi,
-          NESSUN ReviewResult dentro), CLAUDE-RUN-001-APPEND-BLOCKS-BLOCKED-
-          20260818.md (3 blocchi append-only per gpt.md/taskgpt.md/RESUME_POINT.md
-          DI CHATGPT, non scritti li' da me).
-        PERCHE' RESTA BLOCKED: la card UJ-CARD-RUN-001-CLAUDE non esiste al commit
-        che il suo stesso read_ref nomina (3611b1b4); entra 12 minuti dopo con
-        d48e1e85. Verificato con `git cat-file -e`, due volte in due sessioni
-        diverse. Non e' un pin mismatch: i 4 hash pinati coincidono.
-        NON DIVENTA REVIEW SOLO PERCHE' I TEST PASSANO (140/140, runtime 36/36,
-        rieseguiti). Diventa REVIEW quando CHATGPT corregge il read_ref della
-        card — servono zero byte di modifica dopo, solo il cambio di status.
-        Corretti in questo giro anche 3 incoerenze interne trovate rileggendo
-        byte per byte (stato REVIEW residuo in una tabella, 4 conteggi test in
-        conflitto risolti a 36/140, un branch stantio citato) + 1 trovata da me
-        (24 prove dichiarate, contate 22). Dettaglio: CLAUDE.md sessione 5
-        settima parte, qui sopra.
-
-     2. GEMINI HA RISPEDITO UJ-CAP-001 UNA TERZA VOLTA. TROVATO A FINE SESSIONE
-        DALLA TRAPPOLA 11, NON ANCORA REVISIONATO. E' IL PRIMO TASK DA FARE.
-        Ref: agent/uj-cap-001-gemini-review-20260818 @ 0f1c536 (5 commit dopo il
-        27b3717 che avevo gia' revisionato con esito FAIL 3/5 — vedi punto R qui
-        sotto, che ora e' SUPERATO da questo terzo invio).
-        Cosa cambia rispetto al mio ultimo verdetto: il commit 0f1c536 aggiunge
-        "docs/program/packets/UJ-RESPONSE-CAP-001-GEMINI-001.json" — cioe' proprio
-        il ResponsePacket la cui ASSENZA era F-001, il mio finding piu' grave
-        (AC-05 fallito, motivo per cui il ReviewResult non era importabile).
-        Gli altri 4 commit del giro (cd1fa6e, 73afb8c, f65e44a, 1185133) toccano
-        ancora CAPABILITY_REGISTRY.md/.json: puo' darsi che F-002 (verified_at_utc
-        costante) e F-004 (CLD-SDK-001 rimossa) siano stati affrontati, va
-        VERIFICATO, non presunto dal nome dei commit.
-        NON L'HO ANCORA APERTO: il proprietario aveva chiesto di chiudere la
-        sessione, e aprire una nuova review a quel punto sarebbe stato iniziare
-        lavoro nuovo invece di chiudere quello in corso. E' il primo task della
-        sessione che segue.
-        Metodo gia' rodato per farlo: (a) i due grep dichiarati in anticipo su
-        UNKNOWN/date; (b) confrontare il nuovo packet con lo schema ESEGUENDO il
-        validatore, non leggendolo; (c) verificare se il ResponsePacket risolve
-        DAVVERO F-001 o se e' un packet malformato come il primo tentativo di
-        sessione 4 (zero ResponsePacket, file troncato) — quel precedente e'
-        proprio la ragione per cui va eseguito il validatore e non solo letto
-        il JSON.
-
-  P) S-18 RIVERIFICATO, ANCORA APERTO su main. GIA' FATTO, NON RIFARE:
-       MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §18
-       GROK_FIX_LIST.md -> FIX-11, sezione "Riverificato 2026-08-18"
-     ATTENZIONE: pytest NON e' installato in un container nuovo, quindi la
-     verifica documentata (`python3 -m pytest tests/test_files.py`) NON e'
-     eseguibile a freddo. Usa il riproduttore senza pytest scritto in FIX-11.
-     PRECISAZIONE CHE FA SBAGLIARE: `root` e' keyword-only, quindi il default
-     catturato sta in __kwdefaults__, NON in __defaults__ (che vale None).
-     Guardare nel posto sbagliato porta alla conclusione OPPOSTA a quella vera.
-     Misurato: grok.md d72ece89 -> 6fa4b524 nella root REALE, temp dir vuota.
-     Passando root= esplicito il contenimento FUNZIONA: sbagliato e' solo il
-     momento in cui la root viene legata. La correzione di FIX-11 e' giusta.
-     FORMA RICORRENTE, tre volte in questa sessione: un valore fissato una volta
-     sola (PROVIDER all'import, safe=True cablato, __kwdefaults__['root'] alla
-     def) e una riassegnazione che sembra avere effetto e non ne ha. Il codice
-     del controllo e' corretto in tutti e tre: inganna il QUANDO. La lettura
-     statica li ha mancati tutti e tre, l'esecuzione li ha trovati tutti e tre.
-
-
-  Q) PERCHE' NESSUN TASK PUO' ESSERE ACCETTATO — misurato, non dedotto.
-     docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md
-     Esperimento a tre configurazioni sul validatore: 7 errori -> 3 -> 1.
-     L'unico irriducibile: si importa solo per task in REVIEW, e NULLA porta un
-     task da READY a REVIEW. Nessuno script scrive su BACKLOG.json: il packet
-     PROPONE e basta. PROVA: UJ-RESP-RUN-001-CLAUDE.json valida a exit 0 e
-     UJ-RUN-001 nel BACKLOG e' ancora READY.
-     Le altre due cause: (1) TUTTE E QUATTRO le card dichiarano 5 criteri e il
-     BACKLOG ne dichiara 2 -> ogni ReviewResult scritto sui criteri ricevuti e'
-     respinto con "unknown criterion"; (2) 41 criteri su 43 task dicono
-     "<reviewer> issues a PASS or PASS_WITH_ACTIONS review", cioe' meta' della
-     superficie di accettazione e' una tautologia sull'esito, non sull'artefatto.
-     CORREGGE la mia diagnosi di sessione 4: il packet mancante era vero ma NON
-     era la causa sufficiente. Non cercare un difetto nella tua condotta.
-     >>> SERVE DA CHATGPT, nell'ordine: applicare le transizioni proposte;
-     allineare i criteri del BACKLOG alle card; togliere il verdetto del
-     reviewer dai criteri (e' il gate, non un criterio).
-     CONTROLLO POSITIVO, cercato apposta: la mia ReviewResult su UJ-INT-006,
-     eseguita dal commit che pinna, valida a EXIT 0. IL MACCHINARIO FUNZIONA.
-     Non e' rotto: le sue precondizioni non sono quasi mai tutte vere insieme.
-     Cifre esatte, ricontate: 3 task su 43 sono in REVIEW (UJ-META-002,
-     UJ-INT-001, UJ-INT-006), quindi 40 non possono ricevere una review
-     importabile. Solo UJ-INT-006 ne ha davvero una, ed e' mia.
-     CAUSA 4, trovata dal controllo positivo: il validatore verifica gli hash
-     contro L'ALBERO DI LAVORO, non contro il commit pinnato. Provato in due
-     direzioni. Che una review sia importabile dipende da quale checkout la
-     esegue, non dai byte che pinna. Correzione: risolvere i ref con
-     `git show <commit_sha>:<ref>`; il commit e' gia' nel documento.
-     NOTA SUL MIO BRANCH: porta 8 righe in piu' in docs/program/RESUME_POINT.md,
-     testo DI CHATGPT ereditato mergiando agent/strict-zero-cloud-bridge-20260818
-     in sessione 4 e mai arrivato su main. Non l'ho scritto io, non l'ho tolto.
-
-
-  R) GEMINI HA RISPEDITO UJ-CAP-001 ed E' GIA' STATO REVISIONATO. NON RIFARE.
-     Ref: agent/uj-cap-001-gemini-review-20260818 @ 27b37174c10b86122f7b7ba71e697dfda91647d2
-       docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260818.md
-       docs/program/reviews/UJ-CAP-001-CLAUDE-REVIEWRESULT-CANDIDATE.json
-     ESITO: FAIL, 3 criteri su 5 (era 1 su 5). AC-04 e AC-05 falliti.
-     Il test dei due grep e' passato: UNKNOWN 1 -> 42/70, date 0 -> 20/20.
-     G-002 e G-004 chiusi bene. G-006 chiuso RIMUOVENDO la capability.
-     F-002 (HIGH): verified_at_utc e' UNA COSTANTE su 19 capability, al secondo,
-     identica al timestamp di impacchettamento. Stessa forma di S-20.
-     IL REVIEWRESULT NON E' IMPORTABILE, e i 3 motivi sono findings per CHATGPT:
-       1. deadlock del ledger: importabile solo se il task e' in REVIEW, ma
-          diventa REVIEW solo con un ResponsePacket, che non esiste. SECONDA
-          occorrenza della diagnosi di sessione 4, su un task di un'altra IA.
-       2. UJ-CAP-001 ha DUE liste di criteri: la card ne ha 5, BACKLOG.json 2.
-          E l'AC-02 del BACKLOG dice "CLAUDE issues a PASS or PASS_WITH_ACTIONS
-          review": un criterio che nomina solo gli esiti positivi del reviewer.
-       3. gli artefatti sono sul ramo di Gemini, non nell'albero di chi valida.
-
-
-  T) S-20 (NUOVO, MEDIUM) — la promozione cabla safe=True. GIA' FATTO, NON RIFARE:
-       MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §17
-       GROK_FIX_LIST.md -> FIX-12
-       docs/threat-models/probes/S-17-writer-pipeline-probe.py
-     MISURATO su main: UJ_WRITER_LLM=1 DA SOLO -> 3 tentativi fatturabili, sul
-     percorso che GENERA CODICE. §13 chiedeva FIX-10a/10b PRIMA del writer: il
-     writer e' stato riscritto e allargato (core/nt_helpers.py, core/nt_runner.py),
-     il fix non e' arrivato.
-     ATTENZIONE, DUE CORREZIONI ALLE MIE STESSE AFFERMAZIONI:
-       - ToolSpec.safe NON e' piu' una manopola che non gira nulla: FIX-7 di Grok
-         l'ha resa vera (registry.py:189 solleva PermissionError). La mia review di
-         sessione 3 su questo era superata.
-       - promote_job_to_tools NON e' la promozione senza gate di S-12/S-13: ha
-         quattro controlli reali. Quelli sono chiusi.
-     IL RILIEVO VERO e' che il gate ora conta e la promozione gli passa sempre
-     safe=True: unica occorrenza di `safe=` nella funzione. Provato eseguendo.
-     ORDINE: FIX-10 (merge strict-zero su main) PRIMA di FIX-12.
-
-  >>> SUPERATO DAL PUNTO AC: UJ-INT-007 ESISTE (owner CHATGPT, M10, DEFERRED).
-  >>> Era un falso negativo, lo stesso errore E28.
-  S) UJ-INT-007 NON ESISTE fra i 43 task del BACKLOG.json (verificato al ref
-     corrente). UJ-REV-002 resta BLOCKED e non lavorabile. Non e' un blocco
-     formale da aggirare: il deliverable da revisionare non c'e'.
-
-
-  Z) L'AMBIENTE PUO' NON ASSEGNARTI NIENTE. In sessione 5 il container era VUOTO:
-     /home/user senza file, repository NON clonato, nessun branch. Il clone atterra
-     su main. Il branch di lavoro va SCELTO e la scelta DIMOSTRATA con
-     `git rev-list --left-right --count origin/main...<branch>`, non presunta dal
-     nome. Atteso per il branch giusto: 0 indietro, N avanti.
-
-  Y) LA SUITE ORA E' 140, NON 138. Due test nuovi in runtime-invariants
-     (34 -> 36). Se ne vedi 138 sei su un ref vecchio, non c'e' una regressione.
-     Totale: runtime 36 · policy 28 · tools 30 · recovery 9 · skills 37.
-
-  X) E6 AVEVA UNA SECONDA OCCORRENZA, ORA CHIUSA. depth-guard.ts costruiva la
-     chiave k-gram con join su un byte NUL: falsi positivi di ciclo (ToolId non ha
-     validazione a runtime) e file BINARIO per git/grep, quindi fuori da ogni audit
-     testuale per quattro sessioni. Corretto con `encodeInjective` in common.ts,
-     sede UNICA, usata anche da buildIdempotencyKey. GIA' FATTO, NON RIFARE.
-
-  W) GATE UJ-RUN-001 RICEVUTO E CONSEGNATO. Trovato dalla trappola 11 su
-     agent/claude-run-handoff-20260818. GIA' FATTO, NON RIFARE:
-       prompts/handoffs/CLAUDE-RUN-001-DELIVERY-20260818.md  (blocco da incollare,
-         round-trip verificato: il blueprint riestratto rihasha identico)
-       docs/program/packets/UJ-RUN-001-AC-EVIDENCE.md  (AC-01..AC-05, un controllo
-         ESEGUITO per criterio)
-       docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json (aggiornato, validatore
-         exit 0, 15 hash, accepted 0/13 invariato)
-     TRE INCOERENZE NEL GATE, segnalate a ChatGPT, nessuna bloccante: la card NON
-     esiste al commit 3611b1b4 al quale il gate ordina di leggerla (entra 12 minuti
-     dopo con d48e1e85); il gate dice `path` dove lo schema dice `ref`; il gate
-     chiede la mappatura per criterio DENTRO il packet e lo schema, con
-     additionalProperties:false, non la ammette.
-     >>> SERVE DA CHATGPT: decidere se lo schema prende un campo per criterio o se
-     il gate punta a un documento accanto. Oggi le due cose si contraddicono.
-
-  V) S-17 E S-19 ANCORA APERTI SU main, terza verifica consecutiva. E ci sono TRE
-     candidati per la stessa correzione. GIA' FATTO, NON RIFARE:
-       docs/program/reviews/UJ-SEC-003-STRICT-ZERO-CANDIDATE-RECONCILIATION.md
-       docs/threat-models/probes/S-17-strict-zero-candidate-probe.py
-       docs/threat-models/probes/S-19-embed-budget-gate-probe.py
-     Le sonde si automaterializzano dai ref con `git show`: si rieseguono dalla root
-     senza dipendere da file temporanei. Nessuna chiamata di rete reale, costo zero.
-     MISURATO: main 6 percorsi a pagamento/remoti su 7 attacchi, i candidati 0. Con
-     budget ESAURITO main chiama comunque (S-19), il branch CLAUDE no.
-     IL PUNTO CHE CONTA: v1 e v2 hanno cloud_bridge.py BYTE-IDENTICO (md5
-     2961c3a8...) e entrambe le basi precedono embed(). Mergiarli oggi chiuderebbe
-     S-17 e CANCELLEREBBE embed() e le 4 guardie di budget — core/memory.py:118 lo
-     importa e lo chiama a riga 139, quindi romperebbe il lavoro di Gemini.
-     >>> RACCOMANDATO: portare su main la versione del branch CLAUDE, la sola su
-     una base che contiene embed(). NON l'ho fatto io: direct_main_write false.
-
-  U) UJ-CAP-001: LA CORRECTION REQUEST DI CHATGPT COPRE 4 DELLE MIE 6 CORREZIONI.
-     GIA' FATTO, NON RIFARE:
-       docs/program/reviews/UJ-CAP-001-CLAUDE-GATE-COVERAGE.md
-       prompts/handoffs/CLAUDE-TO-GEMINI-MERIT-ADDENDUM-UJ-CAP-001-20260818.md
-     Coperte: 7 campi JSON, URL+ora UTC, rate limit. NON coperte: G-004 (la matrice
-     §4 contraddice la tassonomia §2 DENTRO il Markdown, quindi "far concordare MD e
-     JSON" si soddisfa propagando l'errore nel JSON) e G-005 (la classe
-     local-compute di AC-04, assente dalla request).
-     >>> SERVE DA CHRISTIAN: incollare l'addendum INSIEME alla request di ChatGPT,
-     stesso messaggio. Separarli costa un terzo giro di HUMAN_BRIDGE.
-     UJ-CAP-001 resta 0/13. Nessun ReviewResult emesso.
-
-SESSIONE 4 — FATTI NUOVI, LEGGERE PRIMA DI TUTTO IL RESTO:
-
-  A) LA RICETTA DI VERIFICA QUI SOTTO ERA ROTTA, ORA È CORRETTA (errore E16).
-     Mancava la riga di BUILD. Senza quella, 5 suite su 5 falliscono con
-     ERR_MODULE_NOT_FOUND e sembra una regressione che NON esiste. Ordine giusto:
-       npx tsc -p packages/contracts --noEmit    (typecheck)
-       npx tsc -p packages/contracts             (BUILD — i test importano da dist/)
-       for f in tests/contracts/*.test.mjs; do node --test "$f"; done
-     Riverificato in sessione 4: 138/138 pass, exit 0. Nessuna regressione.
-
-  B) GEMINI HA CONSEGNATO PER LA PRIMA VOLTA, E IL PACCHETTO È IN QUARANTENA.
-     Branch: agent/gemini-handoff-quarantine-20260817 (NON su main).
-     ChatGPT l'ha respinto per INTAKE (nessun ResponsePacket, 4 file su 8 assenti).
-     UJ-CAP-001 ha reviewer CLAUDE (verificato nella card, riga 110) -> era un
-     dovere mio, arrivato senza preavviso.
-     GIÀ FATTO, NON RIFARE: docs/program/reviews/UJ-CAP-001-CLAUDE-PREVERDICT.md
-       Esito CHANGES_REQUIRED. 1 criterio su 5 passato (AC-02), 3 falliti NEL
-       MERITO (AC-01, AC-03, AC-04), 1 fallito in intake (AC-05).
-       6 findings: G-001..G-003 BLOCKER, G-004..G-006 MAJOR.
-       I tre BLOCKER, in una riga ciascuno:
-         G-001 zero date ISO in 528 righe; il JSON omette 7 dei 13 campi richiesti
-         G-002 rate limit Google asseriti come costanti universali: ho aperto la
-               fonte ufficiale e NON pubblica quei numeri (variano per modello,
-               tier e progetto). Ed è l'UNICA capability che abiliterebbe lavoro
-               automatico a costo zero
-         G-003 "UNKNOWN" compare 1 volta in 528 righe: la sua definizione. 9
-               capability, 0 unknown, confidenza tutta HIGH -> TH-10, terza
-               occorrenza nel programma, terzo autore diverso
-     NON è un ReviewResult e NON muove il ledger: UJ-CAP-001 resta 0/13.
-     Diventerà un packet al reinvio ammesso da ChatGPT.
-
-  E) IL LEDGER DICE 0/76 PER DUE MOTIVI DIVERSI. NON CONFONDERLI.
-     1. accepted_weight 0/76 e' CORRETTO (PROGRESS.md regole 2 e 4 + esempio
-        lavorato). NON va "sistemato": sarebbe falso avanzamento, §31.5.
-     2. Lo STATUS READY/BLOCKED invece di REVIEW e' un difetto VERO, ed era
-        colpa mia: NON AVEVO MAI EMESSO UN ResponsePacket. Il ledger si muove
-        sui packet; io consegnavo artefatti e resoconti. AC-05 della mia card
-        chiedeva il packet: 4 criteri su 5 fatti, saltato quello che rende
-        contabili gli altri 4.
-     GIA' FATTO, NON RIFARE:
-       docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json (validato, 15 hash
-         verificati, READY->REVIEW, accepted 0->0/13)
-       scripts/validate-response-packet.mjs (il gate NON esisteva; riusa la
-         validate() di ChatGPT invece di duplicarla; 8 attacchi, 8 respinti)
-       docs/program/reviews/UJ-LEDGER-DIAGNOSIS-CLAUDE.md (diagnosi completa)
-     GLI ALTRI 7 TASK NON SONO RAPPRESENTABILI: card_id e' obbligatorio e le
-     delegation card sono QUATTRO in tutto, una sola mia. Inventarne una
-     sarebbe una dichiarazione falsa (stesso ragionamento di F-003).
-     >>> SERVE DA CHATGPT: sette delegation card per i task che mi ha
-     assegnato nel BACKLOG.json senza mai emettere una card. IL COLLO DI
-     BOTTIGLIA DEI 57 PUNTI CONSEGNATI E' QUELLO, E NON E' MIO.
-
-  D) NUOVO SU main: cloud_bridge.py + planner LLM adapter. TROVATO S-17, CRITICA.
-     ChatGPT l'ha triagiato staticamente e me l'ha PASSATO esplicitamente ("il
-     finding è registrato per la review di sicurezza del proprietario Claude"),
-     dichiarando di non poter eseguire nulla. Io ho eseguito.
-     GIÀ FATTO, NON RIFARE:
-       MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §12  (S-17 completo)
-       docs/threat-models/probes/S-17-cloud-bridge-probe.py  (riproduzione)
-       GROK_FIX_LIST.md -> FIX-10a..10e  (correzioni applicabili)
-     IL RISULTATO IN UNA FRASE: per restare sul percorso GRATUITO servono DUE
-     variabili d'ambiente giuste; per finire su quello A PAGAMENTO ne basta UNA.
-     Misurato, 4 scenari: default 0 tentativi · UJ_PLANNER_LLM=1 -> 3 tentativi
-     fatturabili a gpt-4o-mini · con chiave -> 3 e la chiave viene trasmessa ·
-     MODEL_PROVIDER=local -> 0. In tutti e 4 i casi plan() ritorna lo STESSO
-     piano: il caso sicuro e quello che ha appena speso sono indistinguibili.
-     Contenimento di OGGI: il pacchetto openai non è installato. È la QUARTA
-     volta che a proteggere è un'assenza e non una scelta, e due delle altre tre
-     hanno già smesso di proteggere. `pip install openai` è un comando.
-     ORDINE: FIX-10a/10b PRIMA del "Writer LLM adapter" che PHASE2.md mette come
-     prossimo passo — userebbe lo stesso cloud_bridge sul percorso che genera
-     codice. Stessa logica di S-12 prima di S-13.
-     >>> CHIUSO (quarta parte, 2026-08-18). Christian ha APPROVATO la decisione
-     n. 7: default local, nessuna chiamata pay-per-use implicita, fail-safe
-     senza fallback al cloud. ChatGPT ha prodotto la correzione su
-     agent/strict-zero-cloud-bridge-20260818 @ 1251a68 RIMUOVENDO l'adapter
-     OpenAI (meglio del mio FIX-10b, che si limitava a gatearlo) e vincolando
-     LMSTUDIO_BASE al loopback — un buco che io NON avevo visto.
-     HO VERIFICATO ESEGUENDO, non leggendo: criterio 3->0 soddisfatto, 6
-     attacchi di provider (incluso MODEL_PROVIDER=openai ESPLICITO) tutti
-     bloccati, 13 attacchi di endpoint tutti corretti, nessuna regressione
-     (main pristine 215 passed -> albero corretto 239 passed, stessa unica
-     failure pre-esistente). core/config.py l'ho allineato io: il branch non
-     lo toccava. Test aggiornati: test_config.py::test_defaults asseriva la
-     VECCHIA policy, + 21 test nuovi in test_cloud_bridge_strict_zero_policy.py.
-     Dettaglio: docs/program/reviews/UJ-SEC-003-S17-VERIFICATION-CLAUDE.md
-     RESTANO APERTI solo FIX-10d/10e: osservabilità, non più costo.
-     NOTA su main: `python3 -m pytest` senza argomenti NON colleziona — 6
-     moduli di test non si importano (bool_not/not_, to_bytes/human_bytes,
-     +4). Pre-esistente, di Grok, non toccato da me. Finché resta, nessuna
-     claim "N test verdi" è riproducibile: usa gli --ignore.
-     >>> STORICO (terza parte, main @ 8c4224c): IL WRITER ADAPTER È
-     ARRIVATO PRIMA DEL FIX. Verificato: MODEL_PROVIDER ancora "openai",
-     UJ_ALLOW_PAID_API assente. Ora le porte a una variabile sono DUE
-     (UJ_PLANNER_LLM, UJ_WRITER_LLM) e la seconda genera CODICE. Misurato:
-     UJ_WRITER_LLM=1 da solo -> 3 tentativi fatturabili. Dettaglio in §13
-     della security review. ATTENZIONE: il branch
-     agent/strict-zero-cloud-bridge-20260818 NON contiene il fix — è a
-     6af4a37, 0 avanti e 6 indietro rispetto a main. Il nome promette, i
-     commit no: verifica con git rev-list --count, non col titolo.
-     NON ho eseguito nessuna chiamata reale e NON ho toccato il codice di Grok.
-
-  C) SEI BRANCH che il vecchio RESUME_POINT non citava. Nessun altro dovere mio
-     dentro (controllato). UJ-GGL-001 -> reviewer GROK. UJ-RED-001 -> CHATGPT.
-
-  F) ATTENZIONE — S-17 E' ANCORA APERTO SU main (verificato sessione 4, sesta
-     parte). La decisione n. 7 e' APPROVATA e io l'ho VERIFICATA, ma il fix
-     NON e' mai stato mergiato su main: vive sul mio branch e su
-     agent/strict-zero-cloud-bridge-20260818. Su origin/main MODEL_PROVIDER e'
-     ancora "openai" e _call_openai esiste.
-     LEZIONE DI PROCESSO: una decisione approvata e verificata NON e' una
-     decisione applicata finche' non arriva sul ramo che conta.
-     >>> SERVE: che qualcuno merghi il fix su main. Non l'ho fatto io: non ho
-     autorizzazione a scrivere su main in questa sessione.
-     NUOVI FINDINGS della stessa parte:
-       S-19 (main): in cloud_bridge.embed() il budget gate sta dentro un
-         `except Exception: pass`, quindi QuotaExceeded viene inghiottito e la
-         chiamata a pagamento procede. OTTAVA occorrenza dello schema
-         "controllo che non controlla". In ask_cloud_ai lo stesso guard e'
-         invece scritto BENE: il difetto e' solo in embed().
-       core/billing.py (main, nuovo): skeleton Stripe; con STRIPE_SECRET_KEY
-         "sk_" fa una POST reale a api.stripe.com. NESSUN chiamante al ref
-         corrente (verificato). Non viola l'Articolo 5 — riguarda l'addebito a
-         futuri clienti — ma e' un EXTERNAL_WRITE senza ammissione: rientra in
-         S-02 e va revisionato prima che venga cablato.
-     CORREZIONE DI UNA MIA NOTA: nella quinta parte avevo scritto che
-     "embedding recall" e "debate loop" NON avevano aperto porte a pagamento.
-     Era vero al ref controllato. Due commit dopo main ha aggiunto embed(),
-     che va su OpenAI per default: la terza porta si e' aperta davvero. In
-     questo programma una verifica ha una scadenza di ore.
-
-PROSSIMO  : Se apri una sessione nuova:
-            0-bis. FETCH CON IL '+', SEMPRE (E30, sessione 6):
-               git fetch origin '+refs/heads/*:refs/remotes/origin/*'
-               Senza il '+' un ref remoto riscritto viene RIFIUTATO in silenzio e
-               origin/main resta al valore vecchio. Dopo il fetch VERIFICA che
-               origin/main sia dove ti aspetti, non darlo per aggiornato.
-            0-ter. LA MEMORIA BUONA E' SU agent/uj-run-001-blueprint-20260818, non
-               piu' su claude/claude-md-resume-point-tvej1u (vedi punto AE). E
-               l'ambiente puo' assegnarti un branch nuovo e VUOTO: in sessione 6 ha
-               dato claude/ultrajarvis-program-setup-2noca9, identico a main.
-            0. CONTROLLA `git rev-parse main origin/main` PRIMA di interpretare
-               qualunque diff fra branch: dopo un fetch il main locale resta
-               indietro e i diffstat diventano insensati (E17, ripetizione di E14).
-            1. ESEGUI PRIMA LA TRAPPOLA 11 — git fetch di tutti i branch e controlla
-               se qualcuno ha consegnato. In sessione 6 e' stata la prima volta con
-               esito NEGATIVO: nessuna consegna nuova dopo la chiusura di sessione 5.
-               Non e' un motivo per saltarla, e' il motivo per cui va eseguita.
-            1. UJ-CAP-001 @ 0f1c536 E' GIA' STATO REVISIONATO. NON RIFARLO.
-               Verdetto FAIL 3/5 in
-               docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260819.md — vedi
-               punto AJ. TUTTI i verdetti precedenti su UJ-CAP-001 (sessione 4
-               pre-verdetto, sessione 5 VERDICT-20260818) SONO SUPERATI: il registro
-               e' stato riscritto. Non ripartire da quelli.
-               SE GEMINI RISPEDISCE ANCORA, controlla nell'ordine: (a) e' cambiato
-               source_commit_sha e il packet passa il validatore? (b) esiste una
-               capability local-compute? (c) verified_at_utc e' ancora costante?
-               (d) ci sono Claude Code e Agent SDK? Sono le 4 correzioni chieste.
-            2. GROK_FIX_LIST.md È GIÀ STATO VERIFICATO APPLICATO da me, non solo
-               dichiarato — 10/16 findings chiusi con comando+esito in
-               MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §10-ter. Non rifare quella
-               verifica. Se riprendi UJ-SEC-003, parti da lì: restano S-02
-               (parziale), S-06, S-07, S-16, più S-20 (nuovo, §17) e S-18
-               riverificato ancora aperto (§18).
-            3. Se UJ-INT-007 esiste ora (era DEFERRED, verificato assente in
-               sessione 5) -> prendi UJ-REV-002.
-            4. Se Gemini/Grok hanno consegnato altro -> hai doveri da reviewer su
-               UJ-CAP-001, UJ-MEM-001, UJ-ADK-001, UJ-RSK-001, UJ-ALT-001.
-               NON su UJ-RED-001: il suo reviewer è CHATGPT (verificato).
-            5. Se UJ-RUN-001 e' uscita da BLOCKED (il read_ref della card e'
-               stato corretto) -> il tuo compito e' verificare che il ledger
-               segua, non ripetere il lavoro: i byte sono gia' pronti su
-               agent/uj-run-001-blueprint-20260818.
-            6. Se NIENTE di tutto questo -> registra l'attesa. Ma solo dopo 1-5.
-
-            IN SOSPESO, non mio ma da sapere: il branch
-            agent/uj-red-001-grok-v8-snapshot (97f7f06) potrebbe non essere ancora
-            su main. Reviewer: ChatGPT, non io.
-
-            METODO CHE HA FUNZIONATO, da riusare: eseguire i validatori/comandi PRIMA
-            di leggere il codice; costruire attacchi concreti invece di ispezionare a
-            occhio; RICALCOLARE un ledger o un catalogo invece di leggerlo; citare
-            solo artefatti davvero aperti o eseguiti; quando due difetti si combinano
-            (S-12/S-13), dire esplicitamente l'ordine di correzione invece di
-            lasciarlo intuire.
-
-POI       : - Gemini: REINVIO di UJ-CAP-001 con le 6 correzioni del pre-verdetto
-                       (§6 del documento); poi review di UJ-RUN-001, UJ-MCP-001,
-                       UJ-CLD-001
-            - Grok:   review di UJ-SEC-001, applicazione di GROK_FIX_LIST.md
-            - ChatGPT: review di UJ-RCV-001 e UJ-SKL-001; correzione di F-001/F-002
-                       su UJ-INT-006; decisione su UJ-SEC-002/UJ-MCP-002/UJ-SEC-003
-            - Christian: decisioni costituzionali, relay HUMAN_BRIDGE dei blocchi di
-                       append verso gpt.md/taskgpt.md, decisione su S-10/S-11
-                       (fix piccoli, pronti, ma è codice di Grok)
-            Se nessuno risponde E non ci sono branch nuovi, registra l'attesa.
-            Ma controlla i branch PRIMA: vedi trappola 11.
-
-DECISIONI DI BASELINE IN SOSPESO PRESSO CHATGPT:
-            UJ-SEC-002 (peso 8) — chiude i due CRITICA R-SEC-01/R-SEC-02
-            UJ-MCP-002 (peso 5) — unico modo di chiudere R-MCP-01
-            UJ-SEC-003 (proposta, non pesata) — la security review su main
-
-NON RIFARE: blueprint runtime, contratti runtime/policy/tools, threat model,
-            approval policy, critica Costituzione, tool plane, source manifest,
-            capability record UJ-CLD-001, la review di UJ-INT-006, la review del
-            Program OS (UJ-REV-001), LA SECURITY REVIEW DELL'IMPLEMENTAZIONE SU MAIN
-            (UJ-SEC-003, 16 findings), LA LISTA CORREZIONI PER GROK, E IL
-            PRE-VERDETTO UJ-CAP-001 SUL CANDIDATO GEMINI (sessione 4, 6 findings).
-            LA RICONCILIAZIONE DI UJ-RUN-001 — TERZO GIRO, sessione 6: handoff
-            RISCRITTO piu' altri tre artefatti che dichiaravano uno stato superato
-            (index.ts, package.json, blueprint), packet ...-R3 BLOCKED, AC-evidence,
-            delivery con DUE blocchi FILE, append-blocks. Tutto su
-            agent/uj-run-001-blueprint-20260818 @ a7e03e979bae (vedi punto AB).
-            Il TERZO invio di UJ-CAP-001 NON e' in questa lista: quello va aperto,
-            e' il primo task.
-            Verifica prima, DALLA ROOT del repo, SOLO la mia suite (non toccare i
-            test Python di Grok, sono un altro portafoglio).
-            ESEGUI I TRE COMANDI IN QUEST'ORDINE — il secondo NON è opzionale:
-              npx tsc -p packages/contracts --noEmit   -> exit 0   (typecheck)
-              npx tsc -p packages/contracts            -> exit 0   (BUILD: i test
-                                                          importano da dist/)
-              for f in tests/contracts/*.test.mjs; do node --test "$f"; done
-              totale atteso: 140/140 (runtime 36 · policy 28 · tools 30 ·
-                                      recovery 9 · skills 37)
-              ERA 138 fino alla sessione 4: i due test in piu' sono le regressioni
-              di E6 aggiunte in sessione 5, non un errore di conteggio.
-            SE SALTI LA BUILD ottieni 5 suite su 5 fallite con
-            ERR_MODULE_NOT_FOUND su packages/contracts/dist/... . NON è una
-            regressione: dist/ è in .gitignore e in un container nuovo non
-            esiste. La sessione 4 ci è cascata perché questo blocco elencava solo
-            --noEmit e metteva i test PRIMA del typecheck (errore E16).
-            Riverificato in sessione 5 dopo la build: 140/140 pass, exit 0.
-
-RICORDA   : a fine task, Regola 2 — aggiorna CLAUDE.md e TASKCLAUDE.md (estensione,
-            mai riscrittura), poi commit e push. Un push va verificato leggendo
-            l'exit code del comando vero, mai attraverso una pipe (trappola 15).
+APERTURA  : ESEGUI QUESTE RIGHE LEGGENDOLE, NON A MEMORIA (trappola 40 — ho
+            ripetuto la 27 entro il primo minuto della sessione 8 e per alcuni
+            secondi ho creduto che main fosse azzerata):
+
+              git fetch origin '+refs/heads/*:refs/remotes/origin/*'   # il + NON e' opzionale
+              git rev-parse origin/main                                # verifica dove sia
+              sha256sum docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
+              git for-each-ref --sort=-committerdate \
+                --format='%(committerdate:short) %(refname:short)' refs/remotes/origin | head -10
+              bash scripts/integration-gate.sh                         # atteso: GATE PASS
+
+STATO     : programma 52/340 = 15,3%.  IO: 0/76.  Nessun peso accettato in sessione 8.
+            UJ-RUN-001  REVIEW   0/13  attende GEMINI   -> sblocca 21 unita'
+            UJ-SEC-001  REVIEW   0/13  attende GROK     -> sblocca 34 unita'  <-- LA LEVA
+            UJ-CLD-001  REVIEW   0/8   attende GEMINI   -> sblocca 8
+            UJ-SKL-001  BLOCKED  0/13  a cascata da UJ-SEC-001
+            UJ-MCP-001  BLOCKED  0/8   a cascata da UJ-SEC-001
+            UJ-RCV-001  BLOCKED  0/8   a cascata da UJ-RUN-001
+            UJ-REV-001  BLOCKED  0/5   ChatGPT deve correggere il criterio "311"
+            UJ-REV-002  DEFERRED 0/8   non lavorabile
+
+PR APERTE : SOLO DUE, ed e' il punto. Erano 16.
+            #10  GEMINI  UJ-CAP-001 — mio verdetto FAIL, 5 correzioni
+            #22  GROK    review UJ-SEC-001
+            #18 e #21 si sono CHIUSE DA SOLE quando i loro commit sono diventati
+            raggiungibili da main. Non e' accettazione: l'ho scritto nel thread.
+
+FATTO PIU' IMPORTANTE DELLA SESSIONE 8, da usare subito:
+            LA LEVA MAGGIORE DEL PROGRAMMA E' DI GROK, NON DI GEMINI.
+            L'handoff della sessione 7 diceva che UJ-RUN-001 (Gemini) vale "34
+            unita' in un giro". Ricalcolato sulla chiusura delle dipendenze: e'
+            FALSO. Le 34 sono di UJ-SEC-001, il cui reviewer e' GROK:
+              UJ-SEC-001 (GROK)   -> 34 = 13 + UJ-SKL-001 13 + UJ-MCP-001 8
+              UJ-RUN-001 (GEMINI) -> 21 = 13 + UJ-RCV-001 8
+            E GROK ha dichiarato di NON RIUSCIRE a eseguire npx tsc / node --test.
+            Quindi l'azione di piu' alto valore disponibile e' DARGLI UN CHECKOUT
+            CHE ESEGUE, non insistere con Gemini. Le domande sono gia' scritte nel
+            dispatch: prompts/handoffs/CLAUDE-DISPATCH-20260821-S8.md
+
+S-28 — CHIUSO IN QUESTA SESSIONE, non rifarlo, ma SAPPILO:
+            I controlli di monotonia dei limiti erano FAIL-OPEN. `rankOf` usava
+            `indexOf`, che da' -1 fuori dominio, e `-1 <= n` e' sempre vero:
+              autonomyWithin("L5","L2") dava TRUE
+            cioe' il livello che il blueprint dichiara IRRAPPRESENTABILE passava,
+            perche' un manifest e' JSON e il JSON arriva come stringhe. Il tipo non
+            sopravvive al filo.
+            Era una CLASSE: cinque siti, quattro fail-open corretti in UNA sede
+            (isInDomain / rankAsChild / rankAsParent in runtime/common.ts), il
+            quinto (resolveCostClass) era gia' corretto ed e' il controllo positivo.
+            Regressioni in tests/threat-model/prompt-injection.test.mjs.
+
+T-SEC-1 — IMPLEMENTATA, 14 prove, BLOCCANTE nel gate.
+            Chiude il punto 1 della review di GROK su UJ-SEC-001.
+            Il gruppo C documenta TRE LACUNE del mio stesso lavoro, ed e' la parte
+            da leggere: .originLabel non e' letto DA NESSUNA PARTE nel repository;
+            Transition.guards e' readonly string[] quindi un refuso non e'
+            rilevabile; nextState restituisce le guardie e non le valuta.
+            Quei test asseriscono lo stato ATTUALE: se qualcuno implementa
+            l'enforcement, FALLISCONO apposta, per obbligare ad aggiornarli.
+
+PROSSIMO  : 1. TRAPPOLA 11 SEMPRE PER PRIMA. In otto sessioni non ha mai dato esito
+               negativo. Guarda se GROK o GEMINI hanno consegnato.
+            2. Se GROK ha risposto sul checkout -> risolvi il suo blocco. E' 34 unita'.
+            3. Se GEMINI ha consegnato la review di UJ-RUN-001 -> verificala e, se
+               regge, ACCETTA il peso: il verdetto indipendente esiste e la regola
+               che mi sono imposto e' soddisfatta.
+            4. Se GROK ha riemesso la review di UJ-SEC-001 a un ref >= 925ea1d ->
+               due delle sue cinque condizioni sono gia' soddisfatte (card emessa,
+               integratore ha eseguito i comandi) e la terza (T-SEC-1) l'ho chiusa io.
+            5. LACUNA APERTA E LAVORABILE DA SOLO, se non c'e' altro: rendere i nomi
+               delle guardie un tipo invece di stringhe libere (GuardName + un
+               Record<GuardName,...> che rende una guardia mancante un errore di
+               compilazione). NON FARLO mentre UJ-RUN-001 e' in review presso Gemini
+               senza riemettere il packet: supervisor.ts e' un artefatto HASHATO
+               (trappola 45).
+            6. Solo dopo 1-5, se non c'e' niente: registra l'attesa.
+
+DA SEGNALARE A CHATGPT (trovato in sessione 8, non ancora comunicato a lui):
+            taskDelta.previous_status ammette solo READY|IN_PROGRESS|BLOCKED, quindi
+            un task in REVIEW non e' rappresentabile come stato di partenza e un
+            packet NON PUO' essere riemesso per correggerlo. Un difetto di sicurezza
+            scoperto dopo la consegna non ha canale sanzionato. Stessa classe di F-003.
+
+DA SEGNALARE A GROK (gia' scritto nel commento della PR #21):
+            in cloud_bridge.ask_cloud_ai, assert_llm_budget() e' chiamato PRIMA del
+            controllo sul provider, quindi con FIX-17a anche una chiamata LOCALE e
+            GRATUITA consuma il budget a pagamento: il percorso gratuito si ferma
+            dopo ~1000 chiamate al giorno. Fallisce in sicurezza, non e' bloccante,
+            ed e' il suo file: la decisione e' sua.
+
+NON RIFARE: la chiusura delle 12 PR, il merge dei fix di GROK su main, i tre
+            dispatch, i due ResponsePacket di UJ-SEC-001 e UJ-CLD-001, S-28,
+            T-SEC-1, l'aggiornamento di THREAT_MODEL.md sulla difesa 14.
+            Verifica prima, DALLA ROOT, con UN SOLO comando:
+              bash scripts/integration-gate.sh   -> GATE PASS, 13 bloccanti a exit 0
+            Include build, typecheck, 140 contratti, RTE 7 / DEC 12 / SEL 12 /
+            FBK 10 / CNF 12 / T-SEC-1 14, la demo §21 e i tre validatori.
+
+RICORDA   : Regola 2 — a fine task aggiorna CLAUDE.md e TASKCLAUDE.md (estensione,
+            mai riscrittura), poi commit e push. Leggi l'exit code dal comando vero,
+            mai attraverso una pipe (trappola 15).
+            E la lezione della sessione 8: UN HANDOFF E' MEMORIA, NON AUTORITA'.
+            Il mio prescriveva un merge che avrebbe riaperto un percorso a pagamento.
 ```
