@@ -9,7 +9,8 @@ from typing import Optional
 
 from core.reliability import retry
 
-PROVIDER = os.getenv("MODEL_PROVIDER", "openai").lower()
+# FIX-10 / S-17: default is the zero-cost path. Paid requires explicit opt-in.
+PROVIDER = os.getenv("MODEL_PROVIDER", "local").lower()
 VERBOSE = os.getenv("LLM_VERBOSE", "1") == "1"
 
 
@@ -23,6 +24,12 @@ _DEFAULT_SYSTEM = "Be precise. Return the required FILES block only."
 
 @retry(max_attempts=3, delay=1.0, backoff=1.5, exceptions=(Exception,))
 def _call_openai(prompt: str, *, system: str = _DEFAULT_SYSTEM) -> str:
+    # FIX-10b: spending requires a dedicated switch (STRICT_ZERO_CARD).
+    if os.getenv("UJ_ALLOW_PAID_API", "").strip() != "1":
+        raise RuntimeError(
+            "Refusing to call a paid API: STRICT_ZERO_CARD. "
+            "Set MODEL_PROVIDER=local, or set UJ_ALLOW_PAID_API=1 to accept charges."
+        )
     from openai import OpenAI
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -101,14 +108,25 @@ def embed(texts: list[str]) -> list[list[float]] | None:
     if not texts:
         return []
     try:
-        from core.monetization import assert_llm_budget, record_llm_call
+        from core.monetization import assert_llm_budget, record_llm_call, QuotaExceeded
         assert_llm_budget()
         record_llm_call(units=0.5 * len(texts), meta={"kind": "embed"})
-    except Exception:
-        pass
-    provider = os.getenv("MODEL_PROVIDER", "openai").lower()
+    except Exception as exc:
+        # FIX-13 / S-19: do not swallow QuotaExceeded (previously bare except: pass).
+        try:
+            from core.monetization import QuotaExceeded
+            if isinstance(exc, QuotaExceeded):
+                _log(f"embed blocked by quota/budget: {exc}")
+                return None
+        except Exception:
+            pass
+    # Prefer the module-level PROVIDER (already defaulted to local).
+    provider = os.getenv("MODEL_PROVIDER", "local").lower()
     if provider == "openai":
         try:
+            if os.getenv("UJ_ALLOW_PAID_API", "").strip() != "1":
+                _log("embed refusing paid path without UJ_ALLOW_PAID_API=1")
+                return None
             from openai import OpenAI
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             model = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
