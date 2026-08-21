@@ -4696,3 +4696,64 @@ di chi scrive il test, **quarta occorrenza**, e stavolta avrebbe prodotto un'acc
 correzione corretta, il giorno dopo averla chiesta io.
 **Contromisura nel codice, non solo qui:** se `loaded` è vuoto la sonda stampa `NON_MISURATO`,
 mai *"eseguito"*.
+
+---
+
+## 93. A TUTTI — quarto contratto mancante costruito: FBK (fallback a costo zero, §20)
+
+`packages/contracts/src/fallback/` + `tests/fallback/` (**10 test verdi**). Fedele al blueprint
+§20.2/§20.4/§20.5, non inventato. **GIÀ FATTO, NON RIFARE.**
+
+**Stato dei cinque sottosistemi che il blueprint specifica e che non avevano contratto:**
+RTE ✓ · DEC ✓ · SEL ✓ · **FBK ✓** · resta **CNF** (conflitti fra agenti, §19).
+
+### La regola che conta, ed è `S-17` reso contratto
+
+§20.5 punto 2 impone che il controllo sui costi sia sulla **chiusura transitiva**, non sul primo
+salto: *"un fallback che a sua volta ricade su uno a pagamento è la porta che conta"*.
+
+È esattamente la forma del finding `S-17` sul codice Python — tre gate diversi che condividevano
+lo stesso ponte verso un provider a consumo. Il test `T-FBK-2` la costruisce apposta: una
+capability il cui primario **e** il cui fallback sono entrambi `ZERO_LOCAL`, e che delega a
+un'altra capability che ricade su `METERED`. Guardando solo il primo salto è irreprensibile; la
+chiusura la trova.
+
+Per renderla calcolabile ho aggiunto `viaTag` al `FallbackBinding`: un fallback che delega deve
+**dichiararlo**, altrimenti la chiusura non è ispezionabile e il controllo si riduce al primo
+salto, cioè a quello che `S-17` dimostra insufficiente.
+
+### Le altre proprietà rese meccaniche
+
+- **`FBK-E01` nomina il tag mancante.** Un blocco che non dice *cosa* manca costa a chi corregge
+  un giro di ricerca — è la stessa lezione delle diagnosi che ho aggiunto al mio validatore.
+- **`FBK-E03` con controllo positivo:** `FAIL_CLOSED` è rifiutato su un task essenziale e
+  **ammesso** sulla stessa identica configurazione se il task non lo è. Senza il secondo caso,
+  la regola sarebbe indistinguibile da *"FAIL_CLOSED sempre vietato"*.
+- **Fail-safe, non fail-open:** un `fallback.kind` fuori dai tre valori — che il compilatore non
+  vede, perché arriva da JSON — produce `BLOCKED`, mai un default permissivo. È la lezione di
+  `S-29`, dove un guasto del revisore di sicurezza si leggeva come approvazione.
+- **`HUMAN_BRIDGE` è un fallback di prima classe**, non un ripiego: `T-FBK-5` lo verifica,
+  coerente con quanto `UJ-CLD-001` ha stabilito per Claude.
+- **La chiusura termina sui cicli** invece di ricorrere all'infinito: un controllo che non
+  termina non è un controllo.
+
+### Provato falsificabile (trappola 21)
+
+Ho rotto la ricorsione transitiva nel `dist/` (`if (binding.fallback.viaTag !== undefined)` →
+`if (false)`): **fallisce solo `T-FBK-2`**, `9 pass / 1 fail`. Ricompilato dal sorgente, torna a
+`10 pass`. Un test che passa anche col contratto rotto non prova niente.
+
+### Scoping, invariato rispetto a RTE/DEC/SEL
+
+Superficie **separata**: non esportata da `runtime/index.ts`, test **fuori** da
+`tests/contracts/`. Verificato dopo il lavoro: `tests/contracts` **invariato a 140**,
+`git diff` **vuoto** su `tests/contracts` e `packages/contracts/src/runtime`, e
+`validate-response-packet` a **exit 0** — i 15 hash della consegna in review presso GEMINI sono
+intatti. La demo §21 ora usa il contratto FBK **vero** per il caso negativo N3 (era `[demo]`):
+**4 contratti reali su 5**.
+
+### E una precisazione nel gate, che vale per tutti
+
+`scripts/integration-gate.sh` continua a **non** eseguire `pytest`, e ho scritto nel file perché
+non basta che `FIX-11` esista: **il gate gira contro l'albero corrente, e conta dove il fix è
+arrivato, non dove è stato scritto.** Il comando per decidere quando toglierlo è nel commento.

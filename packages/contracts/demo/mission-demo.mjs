@@ -40,6 +40,7 @@ import { AtomicActiveTaskCounter } from "../dist/recovery/index.js";
 import { admitAdapterRegistration } from "../dist/routing/index.js";
 import { validateDecomposition } from "../dist/decomposition/index.js";
 import { selectAgent } from "../dist/selection/index.js";
+import { admitTaskFallbacks } from "../dist/fallback/index.js";
 
 import net from "node:net";
 
@@ -228,15 +229,32 @@ const r2 = admitAdapterRegistration(
 neg("N2 adapter METERED a L2 -> rifiuto alla registrazione (RTE-E02, contratto vero)",
   r2.admitted === false && r2.violations.some((v) => v.rule === "RTE-E02"));
 
-// N3) una capability senza fallback -> BLOCKED prima della coda [demo]
-const enqueueIfRoutable = (cap) => {
-  // [demo] regola FBK minimale: una capability senza fallback non entra in coda
-  if (!cap.fallback) return { queued: false, error: "FBK-E01", status: "BLOCKED" };
-  return { queued: true };
+// N3) una capability senza fallback -> BLOCKED prima della coda.
+// Usa il contratto FBK reale (src/fallback/capability-fallback.ts, blueprint §20), non piu' [demo].
+// Il task chiede due capability: una ha un binding a costo zero, l'altra no.
+const taskN3 = {
+  taskId: "UJ-DEMO-N3",
+  parentId: null,
+  depth: 1,
+  weight: 3,
+  owner: "CLAUDE",
+  reviewer: "GEMINI",
+  requiredCapabilities: ["cap.echo", "cap.embed"],
+  acceptanceCriteria: [{ criterionId: "AC-01", text: "`node --test` returns exit code 0." }],
+  dependsOn: [],
 };
-const r3 = enqueueIfRoutable({ id: "cap.embed", fallback: null });
-neg("N3 capability senza fallback -> FBK-E01, task BLOCKED prima della coda [demo]",
-  r3.queued === false && r3.error === "FBK-E01" && r3.status === "BLOCKED");
+const r3 = admitTaskFallbacks(
+  taskN3,
+  [{
+    tag: "cap.echo",
+    primary: { adapterId: "local@1", costClass: "ZERO_LOCAL" },
+    fallback: { kind: "ZERO_LOCAL", detail: "loopback" },
+  }],
+  { essential: true },
+);
+neg("N3 capability senza fallback -> FBK-E01 col tag nominato, task BLOCKED (contratto vero)",
+  r3.outcome === "BLOCKED_NO_FALLBACK" &&
+  r3.violations.some((v) => v.rule === "FBK-E01" && v.tag === "cap.embed"));
 
 // N4) due claim concorrenti sullo stesso nodo -> esattamente un vincitore (contratto vero)
 const claim = new AtomicActiveTaskCounter(1); // un solo slot = un solo claim vincente

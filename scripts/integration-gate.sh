@@ -10,9 +10,17 @@
 # con l'output redirezionato su file.
 #
 # ATTENZIONE — NON esegue `pytest` di Grok, DI PROPOSITO. Finche' FIX-11 non e'
-# applicato, la test suite Python sovrascrive grok.md e altri file tracciati (S-18):
-# eseguirla in un gate corromperebbe il repository. Quando FIX-11 sara' su main,
-# aggiungere qui la sezione Python con --ignore per i moduli non importabili.
+# applicato SU MAIN, la test suite Python sovrascrive grok.md e altri file tracciati
+# (S-18): eseguirla in un gate corromperebbe il repository.
+#
+# STATO AL 2026-08-21: FIX-11 ESISTE ed e' verificato — ramo
+# agent/uj-grok-security-fixes-20260821 @ c4bb58a, prova in
+# MAIN_IMPLEMENTATION_SECURITY_REVIEW.md §32.3 — ma NON e' ancora su main. Quindi
+# l'esclusione resta necessaria. Non toglierla perche' "il fix esiste": il gate gira
+# contro l'albero corrente, e conta dove il fix e' ARRIVATO, non dove e' stato scritto.
+# Comando per decidere: `git log origin/main --oneline -- tools/files.py | head -1`
+# deve mostrare il commit di FIX-11. Solo allora aggiungere qui la sezione Python,
+# con --ignore per i sei moduli non importabili.
 #
 # Uso:  bash scripts/integration-gate.sh
 # Exit: 0 se tutte le verifiche BLOCCANTI passano, 1 altrimenti.
@@ -99,6 +107,16 @@ done
 NAMES+=("SEL suite ($tot_sel pass)"); CODES+=("$sel_rc"); BLOCKING+=("1")
 if [ "$sel_rc" -eq 0 ]; then printf '  [ ok ] %-38s %s pass\n' "SEL suite (selection)" "$tot_sel";
 else fail=1; printf '  [FAIL] %-38s (BLOCCANTE)\n' "SEL suite (selection)"; fi
+
+echo "-- B1e) contratto FBK (fallback, blueprint §20) --"
+tot_fbk=0; fbk_rc=0
+for f in tests/fallback/*.test.mjs; do
+  node --test "$f" > "$LOG_DIR/fbk" 2>&1 || fbk_rc=1
+  p=$(grep -E '^# pass ' "$LOG_DIR/fbk" | awk '{print $3}'); tot_fbk=$((tot_fbk + ${p:-0}))
+done
+NAMES+=("FBK suite ($tot_fbk pass)"); CODES+=("$fbk_rc"); BLOCKING+=("1")
+if [ "$fbk_rc" -eq 0 ]; then printf '  [ ok ] %-38s %s pass\n' "FBK suite (fallback)" "$tot_fbk";
+else fail=1; printf '  [FAIL] %-38s (BLOCCANTE)\n' "FBK suite (fallback)"; fi
 
 echo "-- B2) demo end-to-end §21 di UJ-RUN-001 --"
 run 1 "demo end-to-end (mission-demo)"  node packages/contracts/demo/mission-demo.mjs

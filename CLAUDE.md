@@ -5843,6 +5843,78 @@ rimuove ciò che crea, con le tre trappole scritte in testa).
 **Nessuna riga di codice di Grok modificata.** I due worktree di misura rimossi, indice pulito
 verificato prima del commit.
 
+## Sessione 7, quarta parte — il quarto contratto mancante: FBK, ed è `S-17` reso tipo
+
+Chiusa la verifica dei fix di Grok, ho ripreso il lavoro tecnico rimasto: dei cinque
+sottosistemi che il blueprint specifica e che non avevano contratto, ne restavano due. Ne ho
+costruito uno per intero — il **fallback a costo zero** (`FBK`), fedele a §20.
+
+`packages/contracts/src/fallback/` + `tests/fallback/`, **10 test verdi**.
+**RTE ✓ · DEC ✓ · SEL ✓ · FBK ✓ · resta CNF** (conflitti fra agenti, §19).
+
+### La regola che rende questo contratto diverso dagli altri tre
+
+§20.5 punto 2 impone che il controllo sui costi sia sulla **chiusura transitiva**, non sul primo
+salto: *«un fallback che a sua volta ricade su uno a pagamento è la porta che conta»*.
+
+**È il finding `S-17` scritto come tipo.** Sul codice Python avevo misurato tre gate diversi —
+planner, writer, embedding — che condividevano lo stesso ponte verso un provider a consumo, e ne
+avevo ricavato che *la correzione va nel ponte, non nei gate*. Qui la stessa cosa diventa una
+proprietà verificabile a compile time più un controllo a runtime.
+
+Il test `T-FBK-2` la costruisce apposta: una capability il cui primario **e** il cui fallback
+sono entrambi `ZERO_LOCAL` — irreprensibile a guardarla — che però delega a un'altra capability
+che ricade su `METERED`. La chiusura la trova, il primo salto no. E per renderla calcolabile ho
+dovuto aggiungere `viaTag` al binding: un fallback che delega deve **dichiararlo**, altrimenti la
+catena non è ispezionabile e il controllo si riduce a quello che `S-17` dimostra insufficiente.
+
+### Le altre cose che ho reso meccaniche, e perché
+
+- **`FBK-E01` nomina il tag mancante.** Un blocco che non dice *cosa* manca costa a chi corregge
+  un giro di ricerca. È la stessa lezione delle diagnosi che avevo aggiunto al mio validatore in
+  sessione 6, applicata prima che il difetto esista invece che dopo.
+- **`FBK-E03` ha un controllo positivo dentro il test.** `FAIL_CLOSED` è rifiutato su un task
+  essenziale e **ammesso** sulla stessa identica configurazione se il task non lo è. Senza il
+  secondo caso la regola sarebbe indistinguibile da *«FAIL_CLOSED sempre vietato»*, che è una
+  regola diversa e sbagliata.
+- **Fail-safe e non fail-open**: un `fallback.kind` fuori dai tre valori — che il compilatore non
+  vede, perché arriva da JSON — produce `BLOCKED`, mai un default permissivo. È `S-29` applicata
+  in anticipo.
+- **`HUMAN_BRIDGE` è un fallback di prima classe**, non un ripiego, coerente con la conclusione
+  di `UJ-CLD-001`.
+- **La chiusura termina sui cicli.** Un controllo che non termina non è un controllo.
+
+### Provato falsificabile
+
+Rotta la ricorsione transitiva nel `dist/`: **fallisce solo `T-FBK-2`** (`9 pass / 1 fail`),
+esattamente il test che la copre. Ricompilato dal sorgente, torna a 10. Un test che passa anche
+col contratto rotto non prova niente, e l'unico modo di saperlo è rimettere il difetto e guardare.
+
+### La disciplina di scoping ha retto, e l'ho verificata in tre modi
+
+Superficie **separata**, come per RTE/DEC/SEL. Dopo il lavoro: `tests/contracts` **invariato a
+140**, `git diff` **vuoto** su `tests/contracts` e `packages/contracts/src/runtime`, e
+`validate-response-packet` a **exit 0** — cioè i 15 hash della consegna in review presso Gemini
+sono intatti. La demo §21 usa ora il contratto FBK vero per il caso N3: **4 contratti reali su 5**.
+
+### Una precisazione nel gate, che vale più della riga che occupa
+
+`integration-gate.sh` continua a non eseguire `pytest`. Ma ora che `FIX-11` **esiste**, la
+motivazione vecchia (*«finché FIX-11 non è applicato»*) è ambigua e qualcuno potrebbe togliere
+l'esclusione troppo presto. L'ho riscritta: **il gate gira contro l'albero corrente, e conta dove
+il fix è ARRIVATO, non dove è stato scritto** — con il comando per decidere quando toglierla.
+
+È la stessa classe di problema di `E16` e del punto `AF`: una motivazione che resta vera mentre
+smette di essere pertinente, e nessuno se ne accorge perché la motivazione regge ancora.
+
+### Errori
+
+Nessuno. Typecheck, build e 10 test verdi al primo tentativo, e la falsificazione ha fallito
+dove doveva. Registro però una scelta che poteva andare male: ho aggiunto un campo al contratto
+(`viaTag`) che il blueprint **non nomina**. L'ho fatto perché senza quello §20.5 punto 2 non è
+calcolabile — ma è un'estensione mia, non una lettura del piano, e l'ho dichiarata nel commento
+del sorgente invece di lasciarla passare come se fosse specificata.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
