@@ -90,11 +90,56 @@ directory under the repository; it does not change `BACKLOG.json` or publish.
 | Validator PASS + `FAIL` | Valid negative review | preserve findings; move only through allowed remediation path |
 | Validator FAIL | Invalid/stale/mismatched candidate | quarantine it; do not alter ledger; ask reviewer for corrected evidence |
 
+## Applying an admitted transition
+
+Validation and mutation are separate operations. Preview a ResponsePacket
+transition with:
+
+```bash
+node scripts/apply-program-transition.mjs \
+  --response-packet <repository-relative-packet.json>
+```
+
+Preview a ReviewResult transition with:
+
+```bash
+node scripts/apply-program-transition.mjs \
+  --review-result <repository-relative-review.json> \
+  --expected-commit <REVIEWED_COMMIT_SHA>
+```
+
+Dry-run is the default and writes nothing. After reviewing the printed task,
+state, weight, and released dependencies, a local integrator may apply exactly
+that task with both explicit flags:
+
+```bash
+node scripts/apply-program-transition.mjs \
+  --review-result <repository-relative-review.json> \
+  --expected-commit <REVIEWED_COMMIT_SHA> \
+  --apply --confirm-task <TASK_ID>
+```
+
+The script validates the input first, verifies reviewed artifact bytes at the
+pinned commit, writes `BACKLOG.json` and `STATUS.md` through temporary files,
+and rolls both files back if either Program OS or Council validation fails. It
+does not commit, push, comment, review, merge, close a PR, or write to GitHub.
+
+Regression coverage:
+
+```bash
+node scripts/test-program-transition.mjs
+```
+
+The test proves that dry-run writes zero ledger files, accepts valid
+ResponsePacket and non-accepting ReviewResult previews, and rejects a stale
+packet plus an unconfirmed write attempt.
+
 ## Security and continuity
 
 - Do not commit secret values, browser data, token values, or private reasoning.
 - Do not accept an artifact hash from a remote link without verifying local
   bytes on the reviewed ref.
 - Do not use this tool to turn a human-bridge response into automatic approval.
+- `--apply` is a local ledger mutation, not evidence that GitHub changed.
 - Append the outcome, hash, error (if any), current weight, and next action to
   both `gpt.md` and `taskgpt.md` at the end of the session.
