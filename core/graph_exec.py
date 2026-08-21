@@ -49,6 +49,13 @@ def _load_module(path: Path, *, extra_path: Path | None = None):
         sp = str(extra_path)
         if sp not in sys.path:
             sys.path.insert(0, sp)
+    # FIX-19a / S-26: safety scan before execution. Necessary but not
+    # sufficient (scanner has known evasions per S-08 / FIX-9).
+    from advisors.safety import scan_text
+    src = path.read_text(encoding="utf-8")
+    hits = scan_text(src)
+    if hits:
+        raise GraphError(f"refusing to execute {path.name}: dangerous patterns {hits}")
     spec = importlib.util.spec_from_file_location(path.stem, path)
     if spec is None or spec.loader is None:
         raise GraphError(f"cannot load {path}")
