@@ -70,6 +70,8 @@ const requiredArtifacts = [
   "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
   "prompts/delegation-cards/UJ-GGL-001-GEMINI.json",
   "prompts/delegation-cards/UJ-RED-001-GROK.json",
+  "prompts/delegation-cards/UJ-SEC-001-CLAUDE.json",
+  "prompts/delegation-cards/UJ-CLD-001-CLAUDE.json",
   "docs/adrs/README.md",
   "docs/adrs/ADR_TEMPLATE.md",
   "docs/program/CONFLICTS_AND_ASSUMPTIONS.md",
@@ -80,7 +82,11 @@ const requiredArtifacts = [
   "docs/program/RESUME_POINT.md",
   "scripts/validate-program-os.mjs",
   "scripts/validate-council-packets.mjs",
-  "scripts/test-review-result-intake.mjs"
+  "scripts/test-review-result-intake.mjs",
+  "scripts/validate-response-packet.mjs",
+  "scripts/apply-program-transition.mjs",
+  "scripts/test-program-transition.mjs",
+  "scripts/test-delegation-card-discovery.mjs"
 ];
 
 for (const artifact of requiredArtifacts) read(artifact);
@@ -150,6 +156,19 @@ if (backlog) {
     assert(task.completed_weight <= task.weight, `${task.task_id} accepted weight exceeds total weight.`);
     assert(task.remaining_weight === task.weight - task.completed_weight, `${task.task_id} remaining-weight arithmetic is invalid.`);
     assert(Array.isArray(task.acceptance_criteria) && task.acceptance_criteria.length > 0, `${task.task_id} has no acceptance criteria.`);
+    for (const criterion of task.acceptance_criteria ?? []) {
+      assert(["PENDING", "PASSED", "FAILED", "NOT_APPLICABLE"].includes(criterion.state), `${task.task_id}/${criterion.criterion_id} has invalid criterion state ${criterion.state}.`);
+    }
+
+    for (const proof of task.proof ?? []) {
+      if (!proof.hash?.startsWith("sha256:") || proof.ref.startsWith("http") || proof.ref.startsWith("agent/")) continue;
+      const proofPath = resolve(root, proof.ref);
+      assert(existsSync(proofPath), `${task.task_id} hashed proof path is missing: ${proof.ref}.`);
+      if (existsSync(proofPath)) {
+        const actualHash = `sha256:${createHash("sha256").update(readFileSync(proofPath)).digest("hex")}`;
+        assert(actualHash === proof.hash, `${task.task_id} hashed proof bytes differ for ${proof.ref}.`);
+      }
+    }
 
     for (const dependency of task.dependencies ?? []) {
       assert(taskIdSet.has(dependency), `${task.task_id} has unknown dependency ${dependency}.`);
@@ -159,6 +178,10 @@ if (backlog) {
     if (task.status === "DONE") {
       assert(task.completed_weight === task.weight, `${task.task_id} is DONE without full accepted weight.`);
       assert((task.proof ?? []).length > 0, `${task.task_id} is DONE without proof.`);
+      assert(task.acceptance_criteria.every((criterion) => ["PASSED", "NOT_APPLICABLE"].includes(criterion.state)), `${task.task_id} is DONE with unresolved acceptance criteria.`);
+      if (!task.task_id.startsWith("UJ-META-")) {
+        assert((task.proof ?? []).some((proof) => proof.ref.startsWith("docs/program/reviews/")), `${task.task_id} is DONE without an independent review proof reference.`);
+      }
     }
     if (["BLOCKED", "DEFERRED"].includes(task.status)) {
       assert(task.blocker !== null, `${task.task_id} is ${task.status} without a blocker record.`);
@@ -256,6 +279,10 @@ if (backlog) {
   );
   notes.push(`task_count=${tasks.length}`);
   notes.push(`portfolio_weight=${portfolioTotal}`);
+  const trackedNonzeroWeight = tasks.filter((task) => task.weight > 0).reduce((sum, task) => sum + task.weight, 0);
+  const acceptedWeight = tasks.reduce((sum, task) => sum + task.completed_weight, 0);
+  notes.push(`tracked_nonzero_weight=${trackedNonzeroWeight}`);
+  notes.push(`accepted_weight=${acceptedWeight}`);
   notes.push(`status_counts=${JSON.stringify(statusCounts)}`);
 }
 

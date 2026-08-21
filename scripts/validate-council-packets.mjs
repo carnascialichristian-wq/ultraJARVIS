@@ -2,7 +2,7 @@
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 
 const root = resolve(process.cwd());
@@ -29,13 +29,23 @@ const schemaPaths = {
   review: "schemas/review-result.schema.json"
 };
 
-const missionPath = "prompts/council/missions/UJ-MISSION-M0-COUNCIL-001.json";
-const cardPaths = [
-  "prompts/delegation-cards/UJ-RUN-001-CLAUDE.json",
-  "prompts/delegation-cards/UJ-CAP-001-GEMINI.json",
-  "prompts/delegation-cards/UJ-GGL-001-GEMINI.json",
-  "prompts/delegation-cards/UJ-RED-001-GROK.json"
-];
+const missionDirectory = "prompts/council/missions";
+const cardDirectory = "prompts/delegation-cards";
+
+function listJsonFiles(directory) {
+  const absolute = resolve(root, directory);
+  if (!existsSync(absolute)) {
+    fail(`Missing directory: ${directory}`);
+    return [];
+  }
+  return readdirSync(absolute, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
+    .map((entry) => `${directory}/${entry.name}`)
+    .sort();
+}
+
+const missionPaths = schemasOnly ? [] : listJsonFiles(missionDirectory);
+const cardPaths = schemasOnly ? [] : listJsonFiles(cardDirectory);
 
 function fail(message) {
   failures.push(message);
@@ -422,43 +432,54 @@ function validateImportedReview(review, sourceLabel, options = {}) {
 }
 
 if (!schemasOnly) {
-  const mission = parse(missionPath);
+  const missions = missionPaths.map((path) => ({ path, mission: parse(path) }));
   const cards = cardPaths.map((path) => ({ path, card: parse(path) }));
-  if (mission && schemas.mission) {
-    validate(mission, schemas.mission, schemas.mission).forEach((error) => fail(`mission: ${error}`));
-    verifyInputPins(missionPath, mission.repository?.commit_sha, mission.inputs);
+  for (const { path, mission } of missions) {
+    if (!mission || !schemas.mission) continue;
+    validate(mission, schemas.mission, schemas.mission).forEach((error) => fail(`${path}: ${error}`));
+    verifyInputPins(path, mission.repository?.commit_sha, mission.inputs);
   }
   for (const { path, card } of cards) {
     if (card && schemas.delegation) validate(card, schemas.delegation, schemas.delegation).forEach((error) => fail(`${path}: ${error}`));
   }
 
+  const missionIds = missions.map(({ mission }) => mission?.mission_id).filter(Boolean);
   const cardIds = cards.map(({ card }) => card?.card_id).filter(Boolean);
   const idempotencyKeys = cards.map(({ card }) => card?.idempotency_key).filter(Boolean);
+  assert(missionPaths.length > 0, "At least one mission packet must exist.");
+  assert(cardPaths.length > 0, "At least one delegation card must exist.");
+  assert(new Set(missionIds).size === missionIds.length, "Mission IDs must be unique.");
   assert(new Set(cardIds).size === cardIds.length, "Delegation card IDs must be unique.");
   assert(new Set(idempotencyKeys).size === idempotencyKeys.length, "Delegation idempotency keys must be unique.");
-  const missionCardIds = [...(mission?.delegation_card_ids ?? [])].sort();
-  assert(deepEqual(missionCardIds, [...cardIds].sort()), "Mission card IDs must match the four card files.");
 
   const byTask = new Map(backlog?.tasks?.map((task) => [task.task_id, task]) ?? []);
-  const expectedTargets = new Map([
-    ["UJ-RUN-001", "CLAUDE"],
-    ["UJ-CAP-001", "GEMINI"],
-    ["UJ-GGL-001", "GEMINI"],
-    ["UJ-RED-001", "GROK"]
-  ]);
+  const byMission = new Map(missions.map(({ mission }) => [mission?.mission_id, mission]));
+  const reviewerId = (value) => value === "Christian" ? "CHRISTIAN" : value;
+  const liveProgressStates = ["READY", "IN_PROGRESS", "REVIEW", "DONE"];
   for (const { path, card } of cards) {
     if (!card) continue;
     const task = byTask.get(card.task_id);
-    assert(expectedTargets.get(card.task_id) === card.target_ai, `${path} target AI does not match the mission assignment.`);
+    const mission = byMission.get(card.mission_id);
+    assert(task, `${path} references an unknown backlog task.`);
+    assert(mission, `${path} references an unknown mission.`);
     assert(task?.owner === card.target_ai, `${path} target AI differs from backlog owner.`);
-    assert(["READY", "REVIEW"].includes(task?.status), `${path} task must be READY or REVIEW in the source snapshot.`);
+    assert(reviewerId(task?.reviewer) === card.reviewer, `${path} reviewer differs from backlog.`);
+    assert(card.reviewer !== card.target_ai, `${path} reviewer must be independent of target AI.`);
+    // task_snapshot.status is immutable issuance evidence (the schema keeps it at READY).
+    // The live ledger may advance without invalidating that historical authorization.
+    assert(
+      liveProgressStates.includes(task?.status),
+      `${path} live task must be one of ${liveProgressStates.join("/")}; found ${task?.status ?? "MISSING"}.`,
+    );
     assert(task?.weight === card.task_snapshot.weight, `${path} task weight differs from backlog.`);
-    assert(task?.reviewer === card.reviewer, `${path} reviewer differs from backlog.`);
+    assert(task?.priority === card.task_snapshot.priority, `${path} task priority differs from backlog.`);
+    assert(card.task_snapshot.status === "READY" && card.task_snapshot.accepted_weight === 0, `${path} issuance snapshot must remain READY at 0 accepted weight.`);
     assert(mission?.repository?.commit_sha === card.repository_scope.read_ref, `${path} read_ref must match mission repository commit.`);
     const cardCriteria = (card.acceptance_criteria ?? []).map(({ criterion_id, text }) => ({ criterion_id, text }));
     const backlogCriteria = (task?.acceptance_criteria ?? []).map(({ criterion_id, text }) => ({ criterion_id, text }));
     assert(deepEqual(cardCriteria, backlogCriteria), `${path} acceptance criteria must match BACKLOG.json exactly.`);
-    assert(card.mission_id === mission?.mission_id, `${path} mission_id mismatch.`);
+    assert(mission?.assigned_task_ids?.includes(card.task_id), `${path} task is not assigned by its mission.`);
+    assert(mission?.delegation_card_ids?.includes(card.card_id), `${path} card ID is not listed by its mission.`);
     assert(card.status === "READY", `${path} must be READY.`);
     assert(card.allowed_modes.length === 1 && card.allowed_modes[0] === "HUMAN_BRIDGE", `${path} must begin as HUMAN_BRIDGE only.`);
     assert(card.call_budget.incremental_cost_eur === 0, `${path} cost must be zero.`);
@@ -467,8 +488,17 @@ if (!schemasOnly) {
     verifyInputPins(path, card.repository_scope?.read_ref, card.input_artifacts);
   }
 
-  const assigned = new Set(mission?.assigned_task_ids ?? []);
-  assert(expectedTargets.size === assigned.size && [...expectedTargets.keys()].every((id) => assigned.has(id)), "Mission assigned tasks must be exactly the first four specialist tasks.");
+  for (const { path, mission } of missions) {
+    if (!mission) continue;
+    const missionCards = cards.filter(({ card }) => card?.mission_id === mission.mission_id);
+    const discoveredCardIds = missionCards.map(({ card }) => card.card_id).sort();
+    const declaredCardIds = [...(mission.delegation_card_ids ?? [])].sort();
+    assert(deepEqual(declaredCardIds, discoveredCardIds), `${path} delegation_card_ids must match discovered card files for this mission.`);
+    const assigned = new Set(mission.assigned_task_ids ?? []);
+    assert(assigned.size === (mission.assigned_task_ids ?? []).length, `${path} assigned task IDs must be unique.`);
+    for (const taskId of assigned) assert(byTask.has(taskId), `${path} assigns unknown task ${taskId}.`);
+    for (const { card } of missionCards) assert(assigned.has(card.task_id), `${path} does not assign card task ${card.task_id}.`);
+  }
 }
 
 const reviewResultRequested = process.argv.includes("--review-result");
@@ -521,7 +551,7 @@ const scannedPaths = [
   ...Object.values(schemaPaths),
   "docs/program/COUNCIL_PACKETS.md",
   "docs/program/COUNCIL_IMPORT_AND_MERGE.md",
-  ...(schemasOnly ? [] : [missionPath, ...cardPaths])
+  ...(schemasOnly ? [] : [...missionPaths, ...cardPaths])
 ];
 const secretPatterns = [
   /ghp_[A-Za-z0-9]{20,}/,
@@ -548,7 +578,10 @@ for (const path of [...scannedPaths].sort()) {
 }
 notes.push(`mode=${schemasOnly ? "schemas-only" : "full"}`);
 notes.push(`schema_count=${Object.values(schemas).filter(Boolean).length}`);
-if (!schemasOnly) notes.push(`delegation_card_count=${cardPaths.length}`);
+if (!schemasOnly) {
+  notes.push(`mission_count=${missionPaths.length}`);
+  notes.push(`delegation_card_count=${cardPaths.length}`);
+}
 notes.push(`council_artifact_set_sha256=${digest.digest("hex")}`);
 
 if (failures.length) {
