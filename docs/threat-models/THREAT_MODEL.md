@@ -123,7 +123,7 @@ Se la sicurezza dipende dal fatto che il modello non venga convinto, non è sicu
 | **Severità / Probabilità / Rilevabilità** | ALTA / **ALTA** / PARZIALE |
 | **Controlli** | `originLabel` su ogni artifact; il contenuto `UNTRUSTED_EXTERNAL` non è mai canale di istruzioni; i limiti stanno nel runtime e non nel prompt, quindi la persuasione non produce privilegi |
 | **Residuo** | il modello può comunque produrre **contenuto avvelenato conforme allo schema**. Lo schema garantisce la forma, non la verità |
-| **Owner / Test** | CLAUDE / `T-SEC-1` ⏳ pendente; suite completa in `UJ-INJ-001` (GROK) |
+| **Owner / Test** | CLAUDE / `T-SEC-1` ✅ implementata (14 prove, bloccante nel gate); suite completa in `UJ-INJ-001` (GROK) |
 
 > È la minaccia a **probabilità più alta** dell'intero programma, perché non richiede un
 > attaccante dedicato: basta che il sistema legga una pagina qualsiasi che contiene testo
@@ -367,12 +367,12 @@ Le 15 difese di §17, con lo stato onesto di ciascuna. Non è una lista di inten
 | 11 | audit immutabile | ✅ progettata e testata | hash chain, `T-LG-1` |
 | 12 | kill switch | ✅ progettata e testata | `T-KS-1`, 11 stati |
 | 13 | canary e rollback | ⚠️ parziale | `rollbackPlan` obbligatorio in `ApprovalCard`, meccanica assente |
-| 14 | test di prompt injection | ❌ **non implementati** | `T-SEC-1`, coordinare con `UJ-INJ-001` |
+| 14 | test di prompt injection | ⚠️ **parziali** | `T-SEC-1` implementata: `tests/threat-model/prompt-injection.test.mjs`, 14 prove, bloccante nel gate. Copre le difese che *questo* deliverable dichiara; la suite completa resta in `UJ-INJ-001` (GROK) |
 | 15 | policy preflight e postflight | ⚠️ preflight progettato, **postflight no** | serve per TH-08 |
 
-**Sintesi onesta: 8 su 15 progettate, 3 parziali, 4 assenti.** Le quattro assenti
-(egress deny, sandbox, test di injection, postflight) sono tutte concentrate sulle
-minacce a residuo più alto. Non è un caso: sono le difese che richiedono infrastruttura,
+**Sintesi onesta: 8 su 15 progettate, 4 parziali, 3 assenti.** La difesa 14 e' passata da assente a parziale in sessione 8. Le tre assenti restano egress deny, sandbox e postflight, tutte dipendenti dall'infrastruttura non ancora scelta. Le tre assenti
+(egress deny, sandbox, postflight) sono tutte concentrate sulle minacce a residuo
+più alto. Non è un caso: sono le difese che richiedono infrastruttura,
 e l'infrastruttura non è ancora scelta.
 
 ---
