@@ -27,7 +27,7 @@ def _load_dotenv(path: Path = Path(".env")) -> None:
 
 @dataclass
 class Config:
-    model_provider: str = "openai"
+    model_provider: str = "local"
     model_name: str = "gpt-4o-mini"
     openai_api_key: Optional[str] = None
     lmstudio_base: str = "http://localhost:1234"
@@ -40,7 +40,7 @@ class Config:
     def from_env(cls, dotenv_path: str | Path = ".env") -> "Config":
         _load_dotenv(Path(dotenv_path))
         return cls(
-            model_provider=os.getenv("MODEL_PROVIDER", "openai").lower(),
+            model_provider=os.getenv("MODEL_PROVIDER", "local").lower(),
             model_name=os.getenv("MODEL_NAME") or os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             openai_api_key=os.getenv("OPENAI_API_KEY"),
             lmstudio_base=os.getenv("LMSTUDIO_BASE", "http://localhost:1234"),
