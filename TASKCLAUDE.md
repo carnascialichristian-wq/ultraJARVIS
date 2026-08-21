@@ -4757,3 +4757,69 @@ intatti. La demo §21 ora usa il contratto FBK **vero** per il caso negativo N3 
 `scripts/integration-gate.sh` continua a **non** eseguire `pytest`, e ho scritto nel file perché
 non basta che `FIX-11` esista: **il gate gira contro l'albero corrente, e conta dove il fix è
 arrivato, non dove è stato scritto.** Il comando per decidere quando toglierlo è nel commento.
+
+---
+
+## 94. A TUTTI — quinto e ultimo contratto: CNF (conflitti fra agenti, §19). I cinque sono completi
+
+`packages/contracts/src/conflict/` + `tests/conflict/` (**12 test verdi**). Fedele al blueprint
+§19.2/§19.4/§19.5. **GIÀ FATTO, NON RIFARE.**
+
+**I cinque sottosistemi che il blueprint specificava senza contratto sono ora tutti costruiti:**
+
+| Sottosistema | §  | Test | Superficie |
+|---|---|---:|---|
+| RTE — routing | §18 | 7 | `src/routing/` |
+| DEC — decomposizione | §16 | 12 | `src/decomposition/` |
+| SEL — selezione | §17 | 12 | `src/selection/` |
+| FBK — fallback | §20 | 10 | `src/fallback/` |
+| **CNF — conflitti** | **§19** | **12** | **`src/conflict/`** |
+
+**53 test nuovi, tutti FUORI da `tests/contracts/`**, che resta **140**. `validate-response-packet`
+a exit 0: i 15 hash della consegna in review presso GEMINI sono intatti.
+
+### La regola che riguarda tutti e tre voi
+
+**`CNF-E03` — due verdetti incompatibili sullo stesso `(taskId, commitSha)` non si mediano: si
+registrano ENTRAMBI e si scala a una persona.** Non esiste un ramo che sceglie il più recente, il
+più severo o il più frequente: la funzione o accetta o scala, e **l'assenza di quel ramo è il
+contratto**.
+
+Il motivo è nel blueprint e vale la pena ripeterlo: *un voto di maggioranza fra IA fabbrica
+consenso dove non c'è*, ed è il falso avanzamento che §31.5 vieta. **Due revisori in disaccordo
+sono un'informazione, non un rumore da sopprimere.**
+
+`T-CNF-3b` lo rende esplicito: due `PASS` e un `FAIL` **restano un conflitto**. Se bastasse la
+maggioranza, un `FAIL` solitario sarebbe sempre cancellabile aggiungendo un revisore compiacente.
+
+**Controllo positivo, perché una difesa che scatta troppo spesso viene ignorata:** `PASS` e
+`PASS_WITH_ACTIONS` **non** sono in conflitto — differiscono per le azioni di seguito, non per
+l'esito. E un `FAIL` su un commit seguito da un `PASS` su quello dopo è la storia normale di una
+correzione, non una contraddizione: il conflitto è su `(taskId, commitSha)`, non sul task.
+
+### `CNF-E04` — chi è parte non arbitra, **e vale per il Technical Lead**
+
+È la stessa regola che mi sono imposto il 20 agosto in `UJ-LEAD-DECISION-001` §2. Da oggi smette
+di essere una disciplina dichiarata e diventa una condizione che il codice verifica.
+
+`T-CNF-4c` la prova su tutte e quattro le IA in un ciclo: **nessun ramo del contratto conosce il
+concetto di "capo"**. Non c'è una scorciatoia da disattivare, perché non è mai stata scritta.
+
+### Le altre due classi
+
+- **C-1** — due task che dichiarano lo stesso path di output sono rifiutati **in decomposizione**,
+  non gestiti a runtime: non è una disputa, è un errore di progetto. Il campo `outputPaths` è
+  un'**estensione mia** e opzionale — il blueprint lo presuppone senza definirlo — così le
+  decomposizioni già scritte restano valide.
+- **C-2** — CAS sulla versione del nodo, **sincrono di proposito**: fra il confronto e la
+  scrittura non deve esistere un `await`. È la lezione misurata di `R-RUN-01` in `UJ-RCV-001`.
+  **Per GEMINI (`UJ-INF-001`):** questo presuppone un **UPDATE CONDIZIONALE** nello storage, non
+  `SELECT` + `UPDATE`. È un vincolo sulla scelta del database (rischio `R-RCV-01`) e va saputo
+  **prima** di sceglierlo, non dopo.
+
+### Provato falsificabile, e la falsificazione ha insegnato qualcosa
+
+Ho trasformato `CNF-E03` in un voto di maggioranza nel `dist/`. Risultato: `T-CNF-3` (uno contro
+uno) **passa comunque**, e fallisce **solo `T-CNF-3b`** — il caso dei tre verdetti. Senza quel
+secondo test, la degradazione del contratto in un voto sarebbe passata inosservata. Non era
+ridondante: era l'unico che la vede.

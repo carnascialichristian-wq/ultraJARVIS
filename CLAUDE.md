@@ -5915,6 +5915,78 @@ dove doveva. Registro però una scelta che poteva andare male: ho aggiunto un ca
 calcolabile — ma è un'estensione mia, non una lettura del piano, e l'ho dichiarata nel commento
 del sorgente invece di lasciarla passare come se fosse specificata.
 
+## Sessione 7, quinta parte — CNF, e i cinque contratti mancanti sono completi
+
+Ultimo dei cinque sottosistemi che il blueprint specifica e che non avevano contratto: i
+**conflitti fra agenti** (`CNF`, §19). `packages/contracts/src/conflict/` + `tests/conflict/`,
+**12 test verdi**.
+
+| Sottosistema | §  | Test |
+|---|---|---:|
+| RTE — routing | §18 | 7 |
+| DEC — decomposizione | §16 | 12 |
+| SEL — selezione | §17 | 12 |
+| FBK — fallback | §20 | 10 |
+| **CNF — conflitti** | **§19** | **12** |
+
+**53 test nuovi in totale, tutti fuori da `tests/contracts/`**, che resta **140**. I 15 hash
+della consegna in review restano intatti — `validate-response-packet` a exit 0.
+
+### La regola che mi riguarda personalmente, e l'ho scritta contro me stesso
+
+`CNF-E04`: **chi è parte di un conflitto non lo arbitra.** È letteralmente la disciplina che mi
+sono imposto stamattina in `UJ-LEAD-DECISION-001` §2 — non accettare peso sui miei task. Da oggi
+smette di essere una dichiarazione in un documento e diventa una condizione che il codice
+verifica.
+
+`T-CNF-4c` la prova su tutte e quattro le IA in un ciclo, e la parte che conta è questa:
+**nessun ramo del contratto conosce il concetto di "capo".** Non c'è un'eccezione da
+disattivare, perché non è mai stata scritta. Un potere che si può revocare solo con la buona
+volontà non è contenuto; uno che non è mai stato rappresentato nel tipo lo è.
+
+### `CNF-E03` — l'assenza di un ramo È il contratto
+
+Due verdetti incompatibili sullo stesso `(taskId, commitSha)` non si mediano: si registrano
+**entrambi** e si scala a una persona. Non esiste un `else` che sceglie il più recente, il più
+severo o il più frequente. **L'assenza di quel ramo è la garanzia**, non un'omissione.
+
+Il motivo sta nel blueprint ed è forte: *un voto di maggioranza fra IA fabbrica consenso dove non
+c'è.* Due revisori in disaccordo sono un'informazione, non un rumore da sopprimere.
+
+### La falsificazione ha insegnato qualcosa che non sapevo
+
+Ho degradato `CNF-E03` in un voto di maggioranza nel `dist/`. Mi aspettavo che fallissero i due
+test di C-3. Ne è fallito **uno solo**: `T-CNF-3b`, il caso dei **tre** verdetti. `T-CNF-3` —
+uno contro uno — **passa anche col contratto rotto**, perché 1 > 0 vale in entrambe le versioni.
+
+Quindi il test che sembrava un di più — *"un terzo verdetto concorde non trasforma l'escalation
+in una maggioranza 2-1"* — è **l'unico che vede la degradazione**. Se avessi scritto solo il caso
+uno-contro-uno, avrei avuto una suite verde su un contratto che aveva smesso di fare la cosa per
+cui esiste.
+
+È la lezione della trappola 21 in una forma più fine: non basta che un test fallisca quando rompi
+il codice — **serve che esista il test che fallisce per QUELLA rottura**, e i casi limite sono
+quelli che la vedono.
+
+### Un'estensione mia, dichiarata
+
+`outputPaths` su `TaskNode`: il blueprint §19.5 parla di *"due `TaskNode` che dichiarano lo stesso
+path di output"* ma non definisce il campo. L'ho aggiunto **opzionale**, così le decomposizioni
+già scritte restano valide, e l'ho dichiarato nel commento del sorgente — come `viaTag` per FBK.
+Sono due campi che il piano presuppone e non nomina: aggiungerli in silenzio sarebbe stato
+spacciare un'invenzione per una lettura.
+
+### Un vincolo che va a GEMINI prima che scelga
+
+Il CAS di `C-2` è **sincrono di proposito**: fra il confronto della versione e la scrittura non
+deve esistere un `await` — è `R-RUN-01` misurato in `UJ-RCV-001`. Su database questo presuppone
+un **UPDATE CONDIZIONALE**, non `SELECT` + `UPDATE`. È un vincolo sulla scelta dello storage
+(`R-RCV-01`, owner `UJ-INF-001`) e va saputo **prima**, non scoperto dopo.
+
+### Errori
+
+Nessuno. Typecheck, build e 12 test verdi al primo tentativo su entrambi i contratti di oggi.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE

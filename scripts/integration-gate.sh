@@ -118,6 +118,16 @@ NAMES+=("FBK suite ($tot_fbk pass)"); CODES+=("$fbk_rc"); BLOCKING+=("1")
 if [ "$fbk_rc" -eq 0 ]; then printf '  [ ok ] %-38s %s pass\n' "FBK suite (fallback)" "$tot_fbk";
 else fail=1; printf '  [FAIL] %-38s (BLOCCANTE)\n' "FBK suite (fallback)"; fi
 
+echo "-- B1f) contratto CNF (conflitti fra agenti, blueprint §19) --"
+tot_cnf=0; cnf_rc=0
+for f in tests/conflict/*.test.mjs; do
+  node --test "$f" > "$LOG_DIR/cnf" 2>&1 || cnf_rc=1
+  p=$(grep -E '^# pass ' "$LOG_DIR/cnf" | awk '{print $3}'); tot_cnf=$((tot_cnf + ${p:-0}))
+done
+NAMES+=("CNF suite ($tot_cnf pass)"); CODES+=("$cnf_rc"); BLOCKING+=("1")
+if [ "$cnf_rc" -eq 0 ]; then printf '  [ ok ] %-38s %s pass\n' "CNF suite (conflict)" "$tot_cnf";
+else fail=1; printf '  [FAIL] %-38s (BLOCCANTE)\n' "CNF suite (conflict)"; fi
+
 echo "-- B2) demo end-to-end §21 di UJ-RUN-001 --"
 run 1 "demo end-to-end (mission-demo)"  node packages/contracts/demo/mission-demo.mjs
 
