@@ -5764,6 +5764,85 @@ Non ho toccato `core/`, `tools/`, `advisors/`, `bin/uj`. Ho modificato tre file 
 ogni modifica e lasciandogli il potere di rifiuto. Nessun merge su `main`. Nessuna chiamata di
 rete a pagamento. Nessun peso auto-assegnato: il mio portafoglio resta **0/76**.
 
+## Sessione 7, terza parte — Grok ha applicato i fix, e li ho verificati invece di accreditarli
+
+**Richiesta di Christian:** *"ok adesso continua te a lavorare alle tue task."*
+
+### Trappola 11, tredicesima volta che paga, e stavolta il ramo è nato stamattina
+
+`git fetch` con il `+`. Un ramo nuovo, **`agent/uj-grok-security-fixes-20260821`**, delle 12:37
+di oggi. Due commit, due file, `+19/−6`: `FIX-19a` e `FIX-11` — **esattamente le due che avevo
+messo in cima all'ordine ieri sera, applicate nell'ordine giusto.**
+
+Se avessi preso il prossimo task dal RESUME_POINT senza il fetch, avrei costruito un contratto
+mentre il lavoro con più valore era verificare una correzione appena arrivata sui miei findings.
+
+### Ho verificato invece di accreditare, ed era la cosa giusta
+
+Trappola 30: *una correzione che chiude il tuo finding va verificata con lo stesso metro con cui
+hai trovato il finding.* Ho rieseguito i comandi di riproduzione scritti quando ho aperto i
+findings, contro il codice nuovo, in un worktree materializzato sul ref (trappola E38).
+
+| FIX | Esito |
+|---|---|
+| `FIX-19a` / `S-26` | ✅ **CHIUSO** — carico ostile rifiutato (`dangerous patterns ['rm -rf', 'eval(']`), carico benigno eseguito |
+| `FIX-11` / `S-18` | ✅ **CHIUSO** — con controllo negativo su `main` |
+
+**La prova di `FIX-11` è un confronto, non un'asserzione**, ed è la parte di cui sono più
+contento. Stessi tre file di test, stesso comando, due worktree:
+
+| Ref | `pytest` | `git status` dopo |
+|---|---|---|
+| `origin/main` @ `27b7673` | 11 passed | ` M grok.md` · `?? a.txt` · `?? notes/` · `?? sub/` |
+| ramo di Grok @ `c4bb58a` | 11 passed | **vuoto** |
+
+**Il conteggio dei test non cambia, e non è un difetto del fix: è il finding.** In sessione 4
+avevo scritto che due di quei test *"passano per il motivo sbagliato"* — passavano perché la root
+reale era davvero protetta, non perché la fixture isolasse. Da oggi passano per il motivo giusto,
+e il segnale che qualcosa è cambiato è `git status`, non il numero verde. Se avessi guardato solo
+gli 11 passed avrei concluso che non era successo niente.
+
+**Due conseguenze che si chiudono insieme.** Il corollario di sessione 4 — *finché la fixture non
+isola, `FIX-3` e `FIX-4` non hanno una prova valida* — cade: adesso quella prova esiste. E il mio
+`integration-gate.sh` esclude `pytest` di proposito perché corromperebbe il repository: quando
+questi due commit arrivano su `main`, quell'esclusione va tolta.
+
+### Il residuo, e la parte onesta è dire di chi è la colpa
+
+`S-26` resta **parziale**: `{"modules": ["../fuori.py"]}` carica ed esegue un modulo **fuori dalla
+job dir**, perché il filtro di `graph_exec.py:76` guarda il suffisso `.py` e non il contenimento.
+
+**Non è una svista di Grok.** `FIX-19a`, come l'avevo scritto io, copriva solo l'assenza del gate;
+il path traversal era nella mia §26 ma non nella correzione che gli ho consegnato. E non aggrava
+il fix appena applicato — lo `scan_text` sta a monte, quindi anche il modulo raggiunto per
+traversal viene scansionato. → `FIX-19b`, una riga.
+
+### ERRORE — la prima misura accusava una correzione corretta
+
+| # | Errore | Come si è manifestato | Correzione | Lezione |
+|---|---|---|---|---|
+| E40 | **`deps.json` con la chiave sbagliata**: ho usato `nodes`, ma `graph_exec` legge `modules` (riga 74) | la sonda diceva che il carico ostile veniva **ESEGUITO**, cioè che il fix di Grok non funzionava. Era falso: la lista dei moduli risultava vuota e **non veniva caricato niente** | letto il sorgente per il formato vero, e aggiunta al codice della sonda la guardia: se `loaded` è vuoto stampa `NON_MISURATO`, mai *"eseguito"* | **trappola 12 dal lato di chi scrive il test, quarta occorrenza.** Il segnale che ha salvato non è stato un errore ma l'incoerenza interna all'output — `order: []` e `loaded: []` dentro un esito che dichiarava un'esecuzione. Stavolta avrebbe prodotto **un'accusa falsa a una correzione corretta, il giorno dopo averla chiesta io**: il danno peggiore possibile per la fiducia di chi consegna |
+
+Secondo errore, minore e preso dal conteggio: nel bilancio avevo scritto *"1 GEMINI, 1 Christian,
+13 GROK"* **deducendolo** invece di contarlo. La colonna owner della tabella dice **1 GEMINI e 14
+GROK**; `S-06` ha owner GROK e resolver Christian, quindi la frase giusta è *"14 per owner, di cui
+uno è una decisione di policy: 13 correzioni di codice"*. È la trappola 24, e l'ha presa lo script
+di conteggio che ho eseguito invece di fidarmi della sottrazione.
+
+### Bilancio aggiornato, contato dalla tabella
+
+**11 chiusi · 1 superato · 2 parziali · 15 aperti** (era 10/1/1/17), totale 29 verificato.
+
+### File
+
+`docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §32 e §30 aggiornata ·
+`docs/threat-models/GROK_FIX_LIST.md` (riquadro in cima) ·
+`docs/threat-models/probes/GROK-FIXES-20260821-verification-probe.py` (nuova, gira dalla root,
+rimuove ciò che crea, con le tre trappole scritte in testa).
+
+**Nessuna riga di codice di Grok modificata.** I due worktree di misura rimossi, indice pulito
+verificato prima del commit.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE

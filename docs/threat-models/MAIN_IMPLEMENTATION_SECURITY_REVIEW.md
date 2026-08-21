@@ -2512,7 +2512,7 @@ nella sezione omonima; le nove chiuse hanno la verifica in §10-ter.
 | S-15 | gate stub che dicono PASS | MEDIUM | **CHIUSO** | FIX-9 | — |
 | S-16 | memoria senza provenienza | MEDIUM | **APERTO** — consumatore arrivato (§27) | UJ-MEM-001 | **GEMINI** |
 | S-17 | `cloud_bridge` a pagamento di default | CRITICA | **APERTO su main** — fix su ramo CLAUDE | FIX-10 | GROK |
-| S-18 | la suite sovrascrive `grok.md` | HIGH | **APERTO** | FIX-11 | GROK |
+| S-18 | la suite sovrascrive `grok.md` | HIGH | ✅ **CHIUSO 2026-08-21** — verificato con controllo negativo, §32.3 | FIX-11 *(applicato)* | GROK |
 | S-19 | budget gate inghiottito in `embed()` | HIGH | **APERTO** | FIX-13 (stesso ponte di FIX-10) | GROK |
 | S-20 | promozione cabla `safe=True` | MEDIUM | **APERTO** | FIX-12 | GROK |
 | S-21 | `PRIVILEGED_KWARGS` denylist | MEDIUM | **APERTO, latente** | FIX-14 | GROK |
@@ -2520,22 +2520,32 @@ nella sezione omonima; le nove chiuse hanno la verifica in §10-ter.
 | S-23 | `PROTECTED` nomina il vecchio posto | MEDIUM | **APERTO** | FIX-16 | GROK |
 | S-24 | contatore spesa spento per default | HIGH | **APERTO** | FIX-17 (con FIX-10) | GROK |
 | S-25 | webhook pagamento non verifica firma | HIGH | **APERTO, latente** | FIX-18 | GROK |
-| S-26 | gate di safety sulla copia, non sull'esecuzione | HIGH | **APERTO** | FIX-19 *(primo)* | GROK |
+| S-26 | gate di safety sulla copia, non sull'esecuzione | HIGH | 🟡 **PARZIALE 2026-08-21** — gate chiuso (§32.1), **path traversal aperto** (§32.2) | FIX-19a *(applicato)* · **FIX-19b** *(da fare)* | GROK |
 | S-27 | prompt interpolato grezzo nel sorgente | MEDIUM | **APERTO** | FIX-20 | GROK |
 | S-28 | `websearch` non più stub, etichettato tale | LOW | **APERTO** | FIX-21 | GROK |
 | S-29 | debate loop fail-open (decisione però consumata) | LOW | **APERTO** | FIX-22 | GROK |
 
 ### 30.1 Il bilancio
 
-**Contato dalla tabella, non dedotto (trappola 24): 10 chiusi, 1 superato, 1 parziale, 17 aperti.**
-Dei 17 aperti:
+> **AGGIORNATO IL 2026-08-21.** Grok ha applicato `FIX-19a` e `FIX-11`, verificati eseguendo
+> in §32. Il bilancio passa da *10 chiusi / 1 superato / 1 parziale / 17 aperti* a:
+>
+> **11 chiusi · 1 superato · 2 parziali · 15 aperti** — contato dalla tabella, non dedotto.
+> `S-18` passa ad ✅ **chiuso**; `S-26` da aperto a 🟡 **parziale** (gate chiuso, path traversal
+> aperto → `FIX-19b`, una riga).
 
-- **1 è di GEMINI** (`S-16`, lo schema di memoria) — e la finestra per correggerlo a costo quasi
+**Contato dalla tabella al 2026-08-19 (superato dal riquadro sopra): 10 chiusi, 1 superato,
+1 parziale, 17 aperti.** Dei 15 aperti al 21 agosto, per **colonna owner**: **1 GEMINI, 14 GROK**.
+E dei 14 attribuiti a Grok, **uno non è codice da correggere**:
+
+- **`S-16` è di GEMINI** (lo schema di memoria) — e la finestra per correggerlo a costo quasi
   nullo è aperta **adesso** (§27);
-- **1 è di Christian** (`S-06`, una decisione di policy, non un bug);
-- **15 sono di GROK** (`FIX-22` è LOW, advisory), e l'ordine per i principali è in `FIX_ORDER_ANALYSIS_20260819.md`, verificato:
-  `FIX-19 → FIX-11 → FIX-10+FIX-13+FIX-17 → FIX-15+FIX-16 → FIX-18 → FIX-12 → FIX-14`, con
-  `FIX-20`/`FIX-21` a valle (MEDIUM/LOW).
+- **`S-06` ha owner GROK ma resolver Christian**: l'automazione UI nel catalogo è una decisione
+  di policy, non un bug. Restano quindi **13 correzioni di codice** in carico a Grok;
+- l'ordine per le principali è in `FIX_ORDER_ANALYSIS_20260819.md`, verificato.
+  Le prime due dell'ordine sono state applicate il 21; **quello che resta parte da qui**:
+  `FIX-19b` *(una riga, chiude il residuo di `S-26`)* `→ FIX-10+FIX-13+FIX-17 → FIX-15+FIX-16
+  → FIX-18 → FIX-12 → FIX-14`, con `FIX-20`/`FIX-21` a valle (MEDIUM/LOW).
 
 **Perché il conteggio dei chiusi differisce dalla §20** (che diceva *"12 chiusi"* sui primi 20):
 questa tabella ricontabilizza da zero e classifica `S-08` (`advisors.safety` evadibile) come
@@ -2630,3 +2640,102 @@ all'intenzione dichiarata dal nome ("debate/safety vote").
 - `critic.py` e `style.py` sono **puri advisor read-only**: letti, nessun costrutto pericoloso,
   nessuna scrittura fuori dai file del job. Verificati e trovati corretti.
 - **Non ho toccato `advisors/`.**
+
+---
+
+## 32. 2026-08-21 — GROK applica `FIX-19a` e `FIX-11`. Verificati eseguendo, uno resta mezzo aperto
+
+**Ref misurato:** `agent/uj-grok-security-fixes-20260821` @ `c4bb58a` (2 commit, 2 file, +19/−6).
+**Controllo negativo:** `origin/main` @ `27b7673`.
+**Sonda:** `docs/threat-models/probes/GROK-FIXES-20260821-verification-probe.py`, eseguibile
+dalla root, rimuove ciò che crea.
+
+Sono le due correzioni che avevo messo in cima all'ordine in
+`FIX_ORDER_ANALYSIS_20260819.md`, applicate **nell'ordine giusto**. Non ho accreditato i
+messaggi di commit: ho rieseguito i comandi di riproduzione che avevo scritto aprendo i
+findings, contro il codice nuovo (trappola 30).
+
+### 32.1 `FIX-19a` / `S-26` — **CHIUSO** per il primo difetto
+
+`core/graph_exec.py:52-58` chiama ora `advisors.safety.scan_text` sul sorgente **prima** di
+`spec.loader.exec_module`, e solleva `GraphError` se ci sono hit. Misurato:
+
+| Caso | Atteso | Ottenuto |
+|---|---|---|
+| modulo con `eval(` e `rm -rf` | rifiutato | **rifiutato** — `dangerous patterns ['rm -rf', 'eval(']` |
+| modulo benigno (**controllo positivo**) | eseguito | **eseguito** — `loaded: ['mod.py']` |
+
+Il controllo positivo non è decorativo: un gate che rifiuta tutto è un guasto, non una difesa,
+e senza il secondo caso i due esiti sono indistinguibili.
+
+**Grok ha copiato nel commento anche il limite che gli avevo dichiarato** — *"necessary but not
+sufficient (scanner has known evasions per S-08 / FIX-9)"*. È la cosa giusta: quel limite deve
+vivere accanto al codice, non in un documento che nessuno riapre.
+
+### 32.2 `S-26`, secondo difetto — **RESTA APERTO**, e non è una svista di Grok
+
+`FIX-19a` come l'avevo scritto io copriva **solo** l'assenza del gate. Il path traversal da
+`deps.json` era nella mia §26 ma non nella correzione che gli ho consegnato.
+
+Misurato a `c4bb58a`: `{"modules": ["../fuori.py"]}` carica ed esegue un modulo **fuori dalla
+job dir**. Il filtro di `graph_exec.py:76` è `m.endswith(".py") and m != "test_tool.py"`: guarda
+il **suffisso**, non il contenimento.
+
+**Non aggrava `FIX-19a`, e va detto per non gonfiare il rilievo:** lo `scan_text` sta a monte di
+`exec_module`, quindi anche il modulo raggiunto per traversal viene scansionato. Resta però
+l'esecuzione di codice fuori dal perimetro previsto, con uno scanner che ha evasioni note
+(`S-08`).
+
+→ **`FIX-19b`**, una riga: risolvere ogni voce di `modules` e rifiutare quelle che escono da
+`job_dir`, con lo stesso `Path.resolve()` + `relative_to()` già presente in `tools/files.py`.
+
+### 32.3 `FIX-11` / `S-18` — **CHIUSO**, e la prova è un confronto
+
+`tools/files.py` non cattura più `PROJECT_ROOT` nei default degli argomenti: `root` è
+`Path | None = None` e viene risolto **a runtime** in tutte e cinque le funzioni. Quindi il
+`monkeypatch` della fixture `tmp_root`, che era un no-op, adesso ha effetto.
+
+Stessi tre file di test, stesso comando, due worktree:
+
+| Ref | `pytest` | `git status` dopo |
+|---|---|---|
+| `origin/main` @ `27b7673` | 11 passed | ` M grok.md` · `?? a.txt` · `?? notes/` · `?? sub/` |
+| ramo di Grok @ `c4bb58a` | 11 passed | **vuoto** |
+
+E la scrittura mirata del vettore di `S-18` — `safe_write("grok.md", …, force=True)` dopo il
+monkeypatch — finisce nella root finta: `grok.md` reale **intatto**, hash `d72ece89c9e7` prima e
+dopo.
+
+**Controllo positivo su tre casi**, perché il fix non deve aver aperto nulla:
+`core/registry.py` rifiutato · file normale scritto · path assoluto fuori root rifiutato.
+**3 su 3 corretti.**
+
+**Il conteggio dei test non cambia, e non è un difetto: è il finding.** In sessione 4 avevo
+scritto che `test_protected_refusal` e `test_escape_root_refused` *"passano per il motivo
+sbagliato"* — passavano perché la root reale era davvero protetta, non perché la fixture
+isolasse. Da oggi passano per il motivo giusto. Un fix che lascia 11 su 11 è, qui, esattamente
+l'esito atteso; il segnale che è cambiato qualcosa è `git status`, non il numero verde.
+
+**Corollario che si chiude oggi:** in sessione 4 avevo scritto che finché la fixture non isola,
+**`FIX-3` e `FIX-4` non hanno una prova valida**, perché le loro asserzioni passerebbero anche
+se il contenimento fosse stato tolto dalla funzione. Adesso quella prova esiste.
+
+**E sblocca un mio vincolo di processo:** `scripts/integration-gate.sh` non esegue `pytest` di
+proposito, con l'avvertenza scritta in testa che corromperebbe il repository. Quando questi due
+commit arrivano su `main`, quell'esclusione va tolta e il gate va esteso alla suite Python.
+
+### 32.4 Un errore mio, fermato dall'incoerenza fra output e attesa
+
+La prima esecuzione della sonda diceva che il carico ostile veniva **eseguito**, cioè che il fix
+di Grok non funzionava. Falso: il mio `deps.json` usava la chiave `nodes`, mentre `graph_exec`
+legge `modules` (riga 74). La lista dei moduli risultava vuota e **non veniva caricato niente** —
+il ramo che volevo provare non è mai stato eseguito.
+
+Il segnale che ha salvato non è stato un errore: è stato `order: []` e `loaded: []` in un esito
+che dichiarava un'esecuzione. È la trappola 12 dal lato di chi scrive il test, **quarta
+occorrenza** in questo programma, e stavolta avrebbe prodotto un'accusa falsa a una correzione
+corretta, il giorno dopo aver chiesto io stesso quella correzione.
+
+**Contromisura, e sta nel codice della sonda e non solo qui:** se `loaded` è vuoto la cella
+stampa `NON_MISURATO`, mai *"eseguito"*. È l'estensione di `E22` e `E38` — un guasto a monte non
+deve mai leggersi come un esito.

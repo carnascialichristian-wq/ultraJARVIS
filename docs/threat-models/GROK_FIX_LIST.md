@@ -15,7 +15,51 @@
 
 ---
 
+> ## ⚡ 2026-08-21 — GROK HA APPLICATO LE PRIME DUE, E LE HO VERIFICATE ESEGUENDO
+>
+> Ramo **`agent/uj-grok-security-fixes-20260821`** @ `c4bb58a`, due commit, due file.
+> Sono esattamente le due che avevo messo in cima all'ordine, **nell'ordine giusto**.
+>
+> | FIX | Finding | Esito della MIA verifica |
+> |---|---|---|
+> | **`FIX-19a`** | `S-26` esecuzione senza gate | ✅ **CHIUSO** — carico ostile **rifiutato** (`dangerous patterns ['rm -rf', 'eval(']`), carico benigno **eseguito** (controllo positivo) |
+> | **`FIX-11`** | `S-18` la suite sovrascrive `grok.md` | ✅ **CHIUSO** — con controllo negativo su `main`, sotto |
+>
+> **La prova di `FIX-11` è un confronto, non un'asserzione.** Stessi tre file di test, stesso
+> comando, due worktree:
+>
+> | Ref | pytest | `git status` dopo |
+> |---|---|---|
+> | `origin/main` @ `27b7673` | 11 passed | ` M grok.md` · `?? a.txt` · `?? notes/` · `?? sub/` |
+> | ramo di Grok @ `c4bb58a` | 11 passed | **vuoto** |
+>
+> **Il conteggio dei test non cambia, e non è un difetto del fix: è il finding.** In sessione 4
+> avevo scritto che `test_protected_refusal` e `test_escape_root_refused` *"passano per il motivo
+> sbagliato"* — passavano perché la root reale era davvero protetta, non perché la fixture
+> isolasse. Da oggi passano per il motivo giusto. Un fix che non muove il conteggio, qui, è
+> esattamente ciò che ci si deve aspettare.
+>
+> ### ⚠️ RESTA APERTO il secondo difetto di `S-26`, e non è una svista di Grok: non gliel'avevo
+> ### messo in `FIX-19a`
+>
+> Misurato al ref `c4bb58a`: un `deps.json` con `"modules": ["../fuori.py"]` carica ed esegue un
+> modulo **fuori dalla job dir**. Il filtro di `graph_exec.py:76` è
+> `m.endswith(".py") and m != "test_tool.py"` — guarda il suffisso, non il contenimento.
+>
+> **Non aggrava `FIX-19a`**, e va detto: lo `scan_text` è a monte di `exec_module`, quindi anche
+> il modulo raggiunto per traversal viene scansionato. Ma resta l'esecuzione di codice fuori dal
+> perimetro previsto, e lo scanner ha evasioni note (`S-08`).
+>
+> → **`FIX-19b`**, una riga: risolvere ogni voce di `modules` e rifiutare quelle che escono da
+> `job_dir`, con lo stesso `Path.resolve()` + `relative_to()` già usato in `tools/files.py`.
+>
+> **Riproduzione, dalla root:** `docs/threat-models/probes/GROK-FIXES-20260821-verification-probe.py`
+> — passandogli un worktree a `origin/main` si ottiene il controllo negativo.
+>
+> ---
+>
 > ## STATO DELLE CORREZIONI — riverificato su `origin/main` @ `27b767309090`, 2026-08-19
+> ### (la tabella qui sotto precede il 21 agosto: per `FIX-11` e `FIX-19` vale il riquadro sopra)
 >
 > **Leggi questa tabella prima di aprire una sezione.** Nove correzioni su ventidue sono
 > chiuse — otto applicate e una superata — verificate da me eseguendo, non leggendo. Lavorare su
