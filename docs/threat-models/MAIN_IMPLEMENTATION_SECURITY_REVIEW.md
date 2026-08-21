@@ -2511,14 +2511,14 @@ nella sezione omonima; le nove chiuse hanno la verifica in §10-ter.
 | S-14 | verdetto gate per sottostringa | HIGH | **CHIUSO** | FIX-6 | — |
 | S-15 | gate stub che dicono PASS | MEDIUM | **CHIUSO** | FIX-9 | — |
 | S-16 | memoria senza provenienza | MEDIUM | **APERTO** — consumatore arrivato (§27) | UJ-MEM-001 | **GEMINI** |
-| S-17 | `cloud_bridge` a pagamento di default | CRITICA | **APERTO su main** — fix su ramo CLAUDE | FIX-10 | GROK |
+| S-17 | `cloud_bridge` a pagamento di default | CRITICA | ✅ **CHIUSO 2026-08-21 sul ramo di GROK** — 3 porte chiuse, opt-in esplicito, §33 | FIX-10 | GROK |
 | S-18 | la suite sovrascrive `grok.md` | HIGH | ✅ **CHIUSO 2026-08-21** — verificato con controllo negativo, §32.3 | FIX-11 *(applicato)* | GROK |
-| S-19 | budget gate inghiottito in `embed()` | HIGH | **APERTO** | FIX-13 (stesso ponte di FIX-10) | GROK |
+| S-19 | budget gate inghiottito in `embed()` | HIGH | ✅ **CHIUSO 2026-08-21 sul ramo di GROK** — §33.3 | FIX-13 (stesso ponte di FIX-10) | GROK |
 | S-20 | promozione cabla `safe=True` | MEDIUM | **APERTO** | FIX-12 | GROK |
 | S-21 | `PRIVILEGED_KWARGS` denylist | MEDIUM | **APERTO, latente** | FIX-14 | GROK |
 | S-22 | due `safe_write`, quella di build non contiene | HIGH | **APERTO, latente** | FIX-15 | GROK |
 | S-23 | `PROTECTED` nomina il vecchio posto | MEDIUM | **APERTO** | FIX-16 | GROK |
-| S-24 | contatore spesa spento per default | HIGH | **APERTO** | FIX-17 (con FIX-10) | GROK |
+| S-24 | contatore spesa spento per default | HIGH | ✅ **CHIUSO 2026-08-21 sul ramo di GROK** — §33.3 | FIX-17 (con FIX-10) | GROK |
 | S-25 | webhook pagamento non verifica firma | HIGH | **APERTO, latente** | FIX-18 | GROK |
 | S-26 | gate di safety sulla copia, non sull'esecuzione | HIGH | 🟡 **PARZIALE 2026-08-21** — gate chiuso (§32.1), **path traversal aperto** (§32.2) | FIX-19a *(applicato)* · **FIX-19b** *(da fare)* | GROK |
 | S-27 | prompt interpolato grezzo nel sorgente | MEDIUM | **APERTO** | FIX-20 | GROK |
@@ -2527,12 +2527,19 @@ nella sezione omonima; le nove chiuse hanno la verifica in §10-ter.
 
 ### 30.1 Il bilancio
 
-> **AGGIORNATO IL 2026-08-21.** Grok ha applicato `FIX-19a` e `FIX-11`, verificati eseguendo
-> in §32. Il bilancio passa da *10 chiusi / 1 superato / 1 parziale / 17 aperti* a:
+> **AGGIORNATO IL 2026-08-21, secondo giro.** Grok ha applicato **cinque** correzioni in due
+> consegne: `FIX-19a` e `FIX-11` (§32), poi `FIX-10`+`FIX-13`+`FIX-17` (§33). Tutte verificate
+> eseguendo, nessuna accreditata dal messaggio di commit.
 >
-> **11 chiusi · 1 superato · 2 parziali · 15 aperti** — contato dalla tabella, non dedotto.
-> `S-18` passa ad ✅ **chiuso**; `S-26` da aperto a 🟡 **parziale** (gate chiuso, path traversal
-> aperto → `FIX-19b`, una riga).
+> **14 chiusi · 1 superato · 2 parziali · 12 aperti** — contato dalla tabella, non dedotto.
+> Il bilancio era 10/1/1/17 il 19 agosto.
+>
+> Passano a ✅ **chiuso**: `S-18`, e — **sul ramo di Grok, non ancora su `main`** — `S-17`,
+> `S-19`, `S-24`, cioè i tre findings che riguardavano la spesa. `S-26` è 🟡 **parziale**:
+> gate chiuso, path traversal aperto → `FIX-19b`, una riga.
+>
+> **Fino al merge su `main`, `origin/main` ha ancora il default a `openai`.** Una correzione
+> applicata su un ramo che nessuno mergia non è una correzione applicata.
 
 **Contato dalla tabella al 2026-08-19 (superato dal riquadro sopra): 10 chiusi, 1 superato,
 1 parziale, 17 aperti.** Dei 15 aperti al 21 agosto, per **colonna owner**: **1 GEMINI, 14 GROK**.
@@ -2739,3 +2746,83 @@ corretta, il giorno dopo aver chiesto io stesso quella correzione.
 **Contromisura, e sta nel codice della sonda e non solo qui:** se `loaded` è vuoto la cella
 stampa `NON_MISURATO`, mai *"eseguito"*. È l'estensione di `E22` e `E38` — un guasto a monte non
 deve mai leggersi come un esito.
+
+---
+
+## 33. 2026-08-21, secondo giro — GROK chiude il ponte del costo: `S-17`, `S-19`, `S-24`
+
+**Ref misurato:** `agent/uj-grok-security-fixes-20260821` @ `f87d22b` (3 commit nuovi dopo
+`c4bb58a`, 3 file, +35/−14). **NON è su `main`.**
+
+Sono `FIX-10`, `FIX-13` e `FIX-17` — la terza priorità dell'ordine, applicate **in un passaggio
+solo**, come avevo chiesto: sono tre correzioni sullo stesso ponte e applicarne una sola lascia
+il sistema o senza tetto o senza misura.
+
+### 33.1 Le tre porte a pagamento sono chiuse
+
+`docs/threat-models/probes/S-17-three-doors-probe.py`, eseguita con
+`UJ_PROBE_REF=origin/agent/uj-grok-security-fixes-20260821`:
+
+| Porta | default | solo il flag | + `MODEL_PROVIDER=local` |
+|---|---|---|---|
+| `UJ_PLANNER_LLM` | nessuna chiamata | **loopback** (era A PAGAMENTO ×3) | loopback |
+| `UJ_WRITER_LLM` | nessuna chiamata | **loopback** (era A PAGAMENTO ×3) | loopback |
+| `UJ_EMBEDDING` | nessuna chiamata | **loopback** (era A PAGAMENTO ×1) | loopback |
+
+`MODEL_PROVIDER` ora vale `"local"` per default in `cloud_bridge.py` **e** in `core/config.py`:
+i due punti che leggevano la stessa variabile e rispondevano diversamente sono allineati.
+
+### 33.2 E l'opt-in esplicito, che la sonda delle tre porte non copre
+
+Il caso che restava da provare: qualcuno che forza **deliberatamente** il provider a pagamento.
+`FIX-10b` introduce `UJ_ALLOW_PAID_API`, e l'ho misurato con `openai` e `requests` sostituiti da
+stub che registrano il tentativo senza aprire un socket:
+
+| Configurazione | Tentativi di rete |
+|---|---:|
+| `MODEL_PROVIDER=openai`, senza opt-in | **0** |
+| `MODEL_PROVIDER=openai` + chiave API, senza opt-in | **0** |
+| `MODEL_PROVIDER=openai` + chiave + **`UJ_ALLOW_PAID_API=1`** | **3** |
+
+La terza riga è il **controllo positivo** e conta quanto le prime due: un interruttore che non
+si può accendere non è un interruttore, è un guasto, e senza quel caso i due esiti sarebbero
+indistinguibili. La spesa ora richiede **una decisione esplicita e nominata**, che è esattamente
+ciò che l'Articolo 5 chiede.
+
+### 33.3 `S-24` — il contatore non è più spento per default
+
+| Controllo | Prima | Adesso |
+|---|---|---|
+| quota LLM, nessuna variabile impostata | non blocca (50 chiamate contro un limite di 10) | **blocca** |
+| `UJ_ENFORCE_QUOTA=0` (disattivazione esplicita) | — | **non blocca** (controllo positivo) |
+| tetto di budget con spesa a 5,00 USD | `ok: True` — il ramo era sempre vero | **`ok: False`**, cap 1,00 |
+| `embed()` con budget esaurito | chiamata a pagamento eseguita | **0 tentativi**, ritorna `None` |
+
+La polarità è invertita nel modo giusto: `UJ_ENFORCE_QUOTA` era un **opt-in** ed è diventato un
+**opt-out**, e il tetto di budget è passato da `0` — che rendeva `soft_cap <= 0 or …` sempre vero
+— a un default positivo. Più `FIX-17d`: i due path del registro sono ancorati al modulo, quindi
+la quota non dipende più dalla directory da cui lanci.
+
+### 33.4 Che cosa resta, e va detto senza gonfiarlo
+
+- **Non è su `main`.** Fino al merge, `origin/main` ha ancora il default a `openai`. Una
+  correzione applicata su un ramo che nessuno mergia non è una correzione applicata: è la stessa
+  lezione della decisione n. 7, che restò ferma su un ramo per giorni.
+- **`FIX-17c` resta aperto:** il `@retry(max_attempts=3)` produce ancora 3 tentativi mentre
+  `record_llm_call` ne conta uno. Misurato nella riga di controllo positivo sopra. Con il
+  percorso chiuso per default la conseguenza è la **sottostima dell'uso**, non più la spesa
+  moltiplicata — quindi scende di gravità, ma non sparisce.
+- **Un residuo minore in `embed()`:** il ramo che riconosce `QuotaExceeded` re-importa la classe
+  dentro un `try/except: pass`. Se quell'import fallisse, l'eccezione tornerebbe a essere
+  inghiottita. Non è raggiungibile oggi — `core.monetization` è importabile — ma è la stessa
+  forma del difetto originale, un livello più in basso.
+
+### 33.5 Bilancio dopo i cinque fix del 21 agosto
+
+| Finding | Prima | Adesso |
+|---|---|---|
+| `S-17` percorso a pagamento per default | APERTO, CRITICA | ✅ **CHIUSO** (sul ramo) |
+| `S-19` budget inghiottito in `embed()` | APERTO | ✅ **CHIUSO** (sul ramo) |
+| `S-24` quota e budget spenti per default | APERTO, HIGH | ✅ **CHIUSO** (sul ramo) |
+| `S-18` la suite sovrascrive `grok.md` | APERTO | ✅ **CHIUSO** (§32.3) |
+| `S-26` esecuzione senza gate | APERTO | 🟡 **PARZIALE** (§32.1/32.2) |

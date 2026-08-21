@@ -5987,6 +5987,97 @@ un **UPDATE CONDIZIONALE**, non `SELECT` + `UPDATE`. È un vincolo sulla scelta 
 
 Nessuno. Typecheck, build e 12 test verdi al primo tentativo su entrambi i contratti di oggi.
 
+## Sessione 7, sesta parte — Grok chiude il ponte del costo, e revisiona il mio task senza darmi peso
+
+**Richiesta di Christian:** guardare i lavori delle tre IA, breve resoconto, controllare se
+vanno bene, percentuali di pianificazione per ciascuno, poi un prompt con i link, poi continuare.
+
+### Trappola 11, quattordicesima volta: due consegne nuove nello stesso giorno
+
+`agent/uj-grok-security-fixes-20260821` avanzato da `c4bb58a` a `f87d22b` (tre commit nuovi), e
+un ramo mai visto: `agent/uj-sec-001-grok-review-20260821`. **Grok ha revisionato un mio task.**
+
+### I tre fix del costo: chiusi, e verificati nei casi che la mia sonda non copriva
+
+`FIX-10` + `FIX-13` + `FIX-17`, applicati **in un passaggio solo** come avevo chiesto. Le tre
+porte a pagamento vanno tutte a **loopback**, misurato con la sonda delle tre porte.
+
+Ma il caso che conta l'ho dovuto misurare a parte, perché la sonda non lo copre: **qualcuno che
+forza deliberatamente il provider a pagamento.**
+
+| Configurazione | Tentativi di rete |
+|---|---:|
+| `MODEL_PROVIDER=openai`, senza opt-in | **0** |
+| `MODEL_PROVIDER=openai` + chiave API, senza opt-in | **0** |
+| `MODEL_PROVIDER=openai` + chiave + `UJ_ALLOW_PAID_API=1` | **3** |
+
+La terza riga è il **controllo positivo** e vale quanto le prime due: un interruttore che non si
+può accendere non è un interruttore, è un guasto, e senza quel caso i due esiti sarebbero
+indistinguibili.
+
+E `S-24`: la quota passa da **opt-in a opt-out**, il tetto di budget da `0` — che rendeva
+`soft_cap <= 0 or …` sempre vero — a un default positivo. Misurato: `spent 5,00 / cap 1,00 /
+ok=False`. `embed()` con budget esaurito: **0 tentativi**.
+
+**Bilancio: 14 chiusi · 1 superato · 2 parziali · 12 aperti** (era 10/1/1/17 il 19), contato
+dalla tabella §30.
+
+**E niente di questo è su `main`.** `origin/main` ha ancora il default `openai`. L'ho scritto in
+grassetto nel dispatch: una correzione applicata su un ramo che nessuno mergia non è una
+correzione applicata — è la lezione della decisione n. 7.
+
+### Grok ha revisionato `UJ-SEC-001` e NON mi ha dato peso. È la cosa migliore della giornata
+
+`PASS_WITH_ACTIONS`, 2 criteri su 2, **peso 0 su 13**, e in `F-SEC-005` dichiara di non aver
+potuto rieseguire `npx tsc` e `node --test` nel suo ambiente.
+
+**Gli avevo scritto: *"non assegnarmi peso senza aver eseguito i comandi"*. Poteva darmi 13/13 e
+nessuno se ne sarebbe accorto.** Non l'ha fatto, e l'ha dichiarato invece di far finta. Come
+Technical Lead **non tocco quel peso**: resta 0/13, e il mio portafoglio resta 0/76.
+
+E ha rilevato tutte e tre le cose che avevo scritto **contro me stesso** nella §5 dell'evidenza —
+test del threat model pendenti, `TH-10` parzialmente aperta, `OV-7` senza verifica del rollback.
+La review ha fatto il suo mestiere, che è la ragione per cui quella sezione esiste.
+
+**5 hash su 5 coincidono** al commit che pinna. Un rilievo formale minore, che però spiega tutto:
+cita `UJ-SEC-001-AC-EVIDENCE.md` **senza hash**, e quel file **non esiste a `27b7673`** — sta sul
+mio ramo. Ha revisionato i sei artefatti su `main` ma non il pacchetto di consegna che avevo
+preparato. Non è un difetto del suo lavoro: **nessun reviewer ha ancora un checkout completo del
+monorepo**, ed è il vero blocco. L'ho chiesto a ChatGPT.
+
+### Le percentuali di pianificazione, ricalcolate
+
+M0 ∪ M1: 17 task, 177 unità, **52 accettate = 29,4 %** (era 14,7 % ieri).
+
+| IA | Task | Unità | Accettate | % |
+|---|---:|---:|---:|---:|
+| CHATGPT | 3 | 47 | 21 | 44,7 % |
+| GROK | 4 | 39 | 13 | 33,3 % |
+| GEMINI | 4 | 44 | 13 | 29,5 % |
+| **CLAUDE** | 4 | 39 | **0** | **0 %** |
+
+**Il 44,7 % di ChatGPT è tutto `UJ-META-001`**, accettato prima del mandato: misura che ha
+consegnato per primo il documento su cui poggia il resto, non lavoro recente. L'ho scritto nel
+suo blocco invece di lasciare che il numero parlasse da solo.
+
+### ERRORE — la sonda dava `NON MISURATO` su tutte e sei le celle
+
+`textwrap.dedent(STUB + code)`: lo stub non è indentato, il codice sì, quindi `dedent` non trova
+un prefisso comune e lascia il codice indentato → `IndentationError` in ogni sottoprocesso.
+
+**La guardia ha funzionato:** ogni cella ha stampato `NON MISURATO` con l'errore, invece di
+`nessuna chiamata`. Se avessi lasciato il comportamento di default avrei letto sei zeri e
+concluso che tutto era chiuso — cioè la conclusione giusta per il motivo sbagliato, che è peggio
+di una conclusione sbagliata perché non lascia tracce. È l'estensione di `E22`/`E38`/`E40`, e
+questa volta la contromisura scritta nel codice giorni fa ha pagato senza che dovessi pensarci.
+
+### File
+
+`prompts/handoffs/CLAUDE-DISPATCH-20260821.md` (tre blocchi) ·
+`MAIN_IMPLEMENTATION_SECURITY_REVIEW.md` §33 e §30 aggiornata ·
+`docs/threat-models/probes/GROK-COST-FIXES-20260821-probe.py` (nuova).
+**Nessuna riga di codice di Grok modificata. Nessun peso assegnato a me stesso.**
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
