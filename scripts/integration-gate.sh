@@ -128,6 +128,16 @@ NAMES+=("CNF suite ($tot_cnf pass)"); CODES+=("$cnf_rc"); BLOCKING+=("1")
 if [ "$cnf_rc" -eq 0 ]; then printf '  [ ok ] %-38s %s pass\n' "CNF suite (conflict)" "$tot_cnf";
 else fail=1; printf '  [FAIL] %-38s (BLOCCANTE)\n' "CNF suite (conflict)"; fi
 
+echo "-- B1g) T-SEC-1 (prompt injection, THREAT_MODEL.md TH-01) --"
+tot_sec=0; sec_rc=0
+for f in tests/threat-model/*.test.mjs; do
+  node --test "$f" > "$LOG_DIR/tsec" 2>&1 || sec_rc=1
+  p=$(grep -E '^# pass ' "$LOG_DIR/tsec" | awk '{print $3}'); tot_sec=$((tot_sec + ${p:-0}))
+done
+NAMES+=("T-SEC-1 suite ($tot_sec pass)"); CODES+=("$sec_rc"); BLOCKING+=("1")
+if [ "$sec_rc" -eq 0 ]; then printf '  [ ok ] %-38s %s pass\n' "T-SEC-1 suite (threat model)" "$tot_sec";
+else fail=1; printf '  [FAIL] %-38s (BLOCCANTE)\n' "T-SEC-1 suite (threat model)"; fi
+
 echo "-- B2) demo end-to-end §21 di UJ-RUN-001 --"
 run 1 "demo end-to-end (mission-demo)"  node packages/contracts/demo/mission-demo.mjs
 

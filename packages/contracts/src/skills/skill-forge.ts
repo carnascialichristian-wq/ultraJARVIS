@@ -89,8 +89,13 @@ export type AdvanceVerdict =
   | { readonly allowed: true; readonly to: ForgeState }
   | { readonly allowed: false; readonly rule: string; readonly detail: string };
 
+// S-28: `indexOf` dava -1 per uno stadio fuori dominio, e -1 e' aritmeticamente
+// valido: con `from` sconosciuto, `toIdx !== fromIdx + 1` diventava `0 !== 0` e
+// il passaggio allo stadio 0 veniva AMMESSO. NaN non e' mai uguale a nulla,
+// quindi ogni confronto con uno stadio ignoto ora rifiuta.
 function stageIndex(stage: ForgeState): number {
-  return (FORGE_STAGES as readonly string[]).indexOf(stage);
+  const i = (FORGE_STAGES as readonly string[]).indexOf(stage);
+  return i < 0 ? Number.NaN : i;
 }
 
 /** Evidence each stage requires before the pipeline may leave it. */

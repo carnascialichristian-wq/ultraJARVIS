@@ -99,21 +99,61 @@ export type TruthLabel =
 // Ceiling comparison — the mechanical basis of INV-D8 / TA-2 / TA-4 / TA-5 / TA-8
 // ---------------------------------------------------------------------------
 
-function rankOf<T extends readonly string[]>(order: T, value: T[number]): number {
-  return order.indexOf(value);
+/**
+ * S-28 — ranking inside a CLOSED domain, biased so that the unknown fails closed.
+ *
+ * The naive form was `order.indexOf(value)`, and `indexOf` returns -1 for a value
+ * outside the domain. Since `-1 <= n` holds for every n, the comparison ADMITTED
+ * whatever it did not recognise: the functions that impose the limit ceiling were
+ * fail-open. Measured before the fix:
+ *
+ *   autonomyWithin("L5", "L2")        -> true
+ *   autonomyWithin("L9_GODMODE","L0") -> true
+ *   dataClassWithin("C9", "C0")       -> true
+ *   sideEffectWithin("NUKE","NONE")   -> true
+ *
+ * That defeated the strongest claim of this very file, three lines above
+ * AUTONOMY_ORDER: L5 "cannot be reached by configuration error, BY A MANIFEST, or
+ * by a persuaded model". It is true inside TypeScript. But a manifest is JSON and
+ * JSON arrives as strings, so the manifest path was exactly the one that defeated
+ * it — the type system does not survive the wire.
+ *
+ * The fix biases each side in its safe direction instead of throwing: an
+ * unrecognised CHILD is treated as maximally permissive, an unrecognised PARENT as
+ * maximally restrictive. Both make `within` false, so an unknown value can never
+ * widen a limit, and no exception is introduced that a hostile input could use to
+ * halt a run. Regression tests: tests/threat-model/prompt-injection.test.mjs.
+ *
+ * Keep the ranking here, in one place: the same `indexOf` shape appeared at five
+ * sites across the contracts, and a per-site patch guarantees a sixth.
+ */
+export function isInDomain<T extends readonly string[]>(order: T, value: string): boolean {
+  return (order as readonly string[]).indexOf(value) >= 0;
+}
+
+/** Rank of a value being CHECKED against a ceiling. Unknown = maximally permissive. */
+export function rankAsChild<T extends readonly string[]>(order: T, value: string): number {
+  const i = (order as readonly string[]).indexOf(value);
+  return i < 0 ? Number.POSITIVE_INFINITY : i;
+}
+
+/** Rank of a value ACTING as a ceiling. Unknown = maximally restrictive. */
+export function rankAsParent<T extends readonly string[]>(order: T, value: string): number {
+  const i = (order as readonly string[]).indexOf(value);
+  return i < 0 ? Number.NEGATIVE_INFINITY : i;
 }
 
 /** True when `child` is not more permissive than `parent`. */
 export function dataClassWithin(child: DataClass, parent: DataClass): boolean {
-  return rankOf(DATA_CLASS_ORDER, child) <= rankOf(DATA_CLASS_ORDER, parent);
+  return rankAsChild(DATA_CLASS_ORDER, child) <= rankAsParent(DATA_CLASS_ORDER, parent);
 }
 
 export function autonomyWithin(child: AutonomyLevel, parent: AutonomyLevel): boolean {
-  return rankOf(AUTONOMY_ORDER, child) <= rankOf(AUTONOMY_ORDER, parent);
+  return rankAsChild(AUTONOMY_ORDER, child) <= rankAsParent(AUTONOMY_ORDER, parent);
 }
 
 export function sideEffectWithin(child: SideEffectLevel, parent: SideEffectLevel): boolean {
-  return rankOf(SIDE_EFFECT_ORDER, child) <= rankOf(SIDE_EFFECT_ORDER, parent);
+  return rankAsChild(SIDE_EFFECT_ORDER, child) <= rankAsParent(SIDE_EFFECT_ORDER, parent);
 }
 
 // ---------------------------------------------------------------------------

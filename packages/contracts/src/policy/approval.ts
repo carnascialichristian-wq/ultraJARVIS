@@ -8,6 +8,7 @@
  * gate depends on a model reading a table correctly at runtime.
  */
 
+import { isInDomain } from "../runtime/common.js";
 import {
   autonomyWithin,
   dataClassWithin,
@@ -39,6 +40,11 @@ export const GATE_ORDER = [
 ] as const satisfies readonly Gate[];
 
 export function strictestGate(a: Gate, b: Gate): Gate {
+  // S-28: `indexOf` gives -1 for a value outside GATE_ORDER, and -1 never wins a
+  // `>=`, so an unrecognised gate was silently replaced by the permissive one.
+  // Measured before the fix: strictestGate("SCONOSCIUTO", "ALLOW") -> "ALLOW".
+  // An unrecognised gate is now treated as the strictest, never dropped.
+  if (!isInDomain(GATE_ORDER, a) || !isInDomain(GATE_ORDER, b)) return "DENY";
   return GATE_ORDER.indexOf(a) >= GATE_ORDER.indexOf(b) ? a : b;
 }
 

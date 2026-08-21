@@ -25,6 +25,7 @@
 
 import type { AiId, CapabilityTag, TaskId, TaskNode } from "../decomposition/decomposition.js";
 import type { AutonomyLevel, DataClass, SideEffectLevel } from "../runtime/common.js";
+import { rankAsChild } from "../runtime/common.js";
 import {
   AUTONOMY_ORDER,
   DATA_CLASS_ORDER,
@@ -100,8 +101,11 @@ export interface SelectionInput {
 
 // --- helper di ranking e ceiling --------------------------------------------
 
+// S-28: un valore fuori dominio dava -1, cioe' il rango piu' basso, quindi veniva
+// scelto come "il ceiling piu' stretto" e propagato nel grant risultante. Con
+// rankAsChild l'ignoto vale +Infinity e non vince mai contro un limite reale.
 function rank<T extends readonly string[]>(order: T, value: T[number]): number {
-  return order.indexOf(value);
+  return rankAsChild(order, value);
 }
 
 /** Il ceiling più stretto fra due, sulla stessa scala ordinata (per il grant risultante). */
