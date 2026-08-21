@@ -6078,6 +6078,94 @@ questa volta la contromisura scritta nel codice giorni fa ha pagato senza che do
 `docs/threat-models/probes/GROK-COST-FIXES-20260821-probe.py` (nuova).
 **Nessuna riga di codice di Grok modificata. Nessun peso assegnato a me stesso.**
 
+## Sessione 7, settima parte — ChatGPT sblocca il programma, e io chiudo la sessione
+
+**Richieste di Christian, in ordine:** *"fai come pensi sia meglio per completare il lavoro"*,
+poi *"fai un handoff perché questa chat sta diventando troppo pesante"*, con l'elenco di cosa
+deve fare la sessione nuova.
+
+### Il via libera che aspettavo da due giorni
+
+*"Fai come pensi sia meglio"* copre le due cose che avevo chiesto e che erano rimaste senza
+risposta: **chiudere le PR superate** e **mergiare su `main`**. Non le ho ancora eseguite —
+è arrivata la richiesta di handoff mentre stavo integrando — ma sono scritte come compiti
+autorizzati nell'handoff, non come proposte da riapprovare.
+
+### Trappola 11, quindicesima volta, e stavolta trova la cosa più grossa della settimana
+
+**`main` si era mossa di 12 commit mentre lavoravo.** Dentro c'era tutto ciò che avevo
+chiesto a ChatGPT nel dispatch del 20:
+
+- **`scripts/apply-program-transition.mjs`**, 342 righe: **lo script che APPLICA una
+  transizione al `BACKLOG.json`**. È l'anello mancante che il programma aspettava da quattro
+  giorni, e che avevo documentato tre volte senza che nessuno lo costruisse;
+- le **delegation card per `UJ-SEC-001` e `UJ-CLD-001`**, cioè le due che avevo scritto e
+  proposto io;
+- il **tetto delle card rimosso**: `validate-council-packets.mjs` ora scandisce la directory
+  con `readdirSync` invece di leggere una lista cablata a quattro.
+
+Se non avessi fatto il fetch prima di mergiare, avrei costruito sopra uno stato vecchio di
+dodici commit.
+
+### Il merge, e la parte che mi ha fatto piacere scrivere
+
+Cinque conflitti. Il criterio è nel messaggio di commit, ma uno merita di stare qui:
+
+**`validate-council-packets.mjs` — ho preso la SUA versione e buttato la mia.** Eravamo
+arrivati alla stessa conclusione in modo indipendente — la card è uno snapshot al momento
+dell'emissione, il ledger può avanzare senza invalidarla — ma la sua è **migliore**: aggiunge
+due assert che non avevo, e ammette anche `IN_PROGRESS` che io non avevo considerato.
+
+E `validate-response-packet.mjs` era **identico byte per byte** al mio: ha portato su `main`
+il mio script con le tre diagnosi, senza cambiarlo.
+
+### Il suo gate mi ha fermato una TERZA volta in due giorni
+
+```
+- UJ-GGL-001 is DONE with unresolved acceptance criteria.
+- UJ-RED-001 is DONE with unresolved acceptance criteria.
+```
+
+Ha **irrigidito** `validate-program-os.mjs` nella direzione giusta: un task accettato con
+criteri ancora `PENDING` è una riga che nessuno può verificare. Avevo marcato `DONE` due task
+lasciando 7 criteri su 10 aperti.
+
+Chiusi tutti e sette, ognuno con `proof_refs` verso l'artefatto **e** la review indipendente
+che lo ha promosso. Non è un allentamento — le review avevano già dato 5/5 e 5/5 `PASS` —
+ma mancava registrarlo, e un'accettazione non registrata è indistinguibile da una inventata.
+
+**Tre volte in due giorni il gate di ChatGPT ha fermato me, che sono l'accettatore.** Prima
+per un'accettazione senza prova, poi per i criteri irrisolti, e in mezzo per un conflitto
+risolto male. È la cosa che rende credibile il 15,3 %, e non è merito della mia buona volontà.
+
+### L'handoff, e il permesso che Christian ha aggiunto
+
+`docs/program/handoffs/HANDOFF-SESSIONE-8-20260821.md`, più il rimando in cima a
+`AVVIO_NUOVA_SESSIONE.md` e a questo file.
+
+Christian ha chiesto una cosa nuova per i prompt alle tre IA: **un messaggio personale dove
+posso fare richieste dirette, tipo "perché non hai fatto questo?"**. Non è una formalità: è
+il permesso di **chiedere conto**, non solo di assegnare compiti. L'ho preso sul serio e ho
+scritto nell'handoff le tre domande vere che ho, con i fatti in mano:
+
+- **a Gemini**, ferma da tre giorni con 29 unità mie in mano: *cosa ti blocca?* — perché se è
+  accesso o istruzioni poco chiare posso risolverlo io;
+- **a ChatGPT**, che ha appena fatto un lavoro eccellente e si ferma sistematicamente prima
+  del merge: *perché apri sempre PR in bozza?* — se è prudenza, adesso c'è un capo tecnico
+  che può prendersi la responsabilità;
+- **a Grok**, che ha lavorato meglio di tutti: *cosa ti manca per avere un checkout
+  completo?* — è il blocco che tiene ferme 13 unità mie più le 21 che ne dipendono.
+
+### Errori di questa parte
+
+Nessuno arrivato a un artefatto. Uno di metodo che registro: stavo per fare l'handoff
+**lasciando il merge a metà**, con l'albero in conflitto. Sarebbe stato il peggior handoff
+possibile — la sessione nuova avrebbe trovato un repository rotto e nessuna spiegazione. Ho
+chiuso prima il merge, verificato il gate, e solo dopo scritto l'handoff.
+
+**La cosa da portare via:** quando arriva una richiesta di fermarsi, la risposta giusta non è
+fermarsi *subito*, è **fermarsi in un punto sicuro**.
+
 ---
 
 # PARTE 6 — DECISIONI APERTE
@@ -6343,6 +6431,32 @@ Sintesi operativa degli errori sopra, in forma di regole:
 
 # PARTE 8 — RESUME_POINT
 
+> ## 🚩 HANDOFF ALLA SESSIONE 8 — LEGGI PRIMA QUESTO FILE
+>
+> **`docs/program/handoffs/HANDOFF-SESSIONE-8-20260821.md`**
+>
+> Christian ha chiuso la sessione 7 il 2026-08-21 dicendo *«fai come pensi sia meglio per
+> completare il lavoro»* e poi *«fai un handoff, la chat e' troppo pesante»*. L'handoff
+> contiene i **tre compiti gia' autorizzati** — chiudere le PR superate, mergiare su `main`,
+> scrivere i prompt con un **messaggio personale** a ciascuna IA — piu' lo stato misurato e
+> le sei cose da non fare. Quel file viene prima di tutti i riquadri qui sotto.
+>
+> **Fatti di fine sessione 7, da non riscoprire:**
+> - **CHATGPT ha consegnato tutto cio' che gli avevo chiesto**: `scripts/apply-program-transition.mjs`
+>   (lo script che APPLICA una transizione), le card per `UJ-SEC-001` e `UJ-CLD-001`, e il
+>   **tetto delle card RIMOSSO** (`validate-council-packets.mjs` ora usa `readdirSync`).
+>   Tutto su `origin/main` @ `a4db3c2`.
+> - **Il merge di `origin/main` nel mio ramo E' GIA' FATTO** (`510469d`), 5 conflitti risolti,
+>   gate PASS. Il criterio di risoluzione e' nel messaggio di commit.
+> - **Il suo gate mi ha fermato una terza volta** con *"DONE with unresolved acceptance
+>   criteria"*: aveva ragione. Chiusi i 7 criteri rimasti `PENDING` sui due task accettati,
+>   ognuno con `proof_refs` verso l'artefatto e la review che lo ha promosso.
+> - **GROK ha chiuso il ponte del costo** (`FIX-10`+`13`+`17`) e `FIX-19a`+`FIX-11`.
+>   Verificati eseguendo: §32 e §33 della security review. **Il suo ramo si e' mosso a
+>   `b8cccf7` DOPO la mia verifica: riverifica il delta prima di mergiare.**
+> - **Nuovo strumento utilizzabile subito:** ora che le due card esistono, posso emettere i
+>   `ResponsePacket` per `UJ-SEC-001` e `UJ-CLD-001`. Era il tetto che lo impediva.
+>
 > ## 🟢 2026-08-21 — STATO PIU' RECENTE. Questo viene PRIMA del riquadro del 20
 >
 > | Fatto | Valore, misurato oggi |

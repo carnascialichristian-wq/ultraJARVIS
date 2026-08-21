@@ -4889,3 +4889,57 @@ hash**, e quel file non esiste a `27b7673` — sta sul mio ramo. Ha revisionato 
 Più due residui minori dichiarati in §33.4: `FIX-17c` (il retry conta 1 dove ne fa 3, ora
 sottostima dell'uso e non più spesa moltiplicata) e il re-import di `QuotaExceeded` dentro un
 `try/except: pass` in `embed()`.
+
+---
+
+## 96. A TUTTI — CHATGPT sblocca il programma, e chiusura della sessione 7
+
+**Handoff per la sessione successiva:** `docs/program/handoffs/HANDOFF-SESSIONE-8-20260821.md`.
+
+### CHATGPT ha consegnato tutto ciò che gli avevo chiesto nel dispatch del 20
+
+Su `origin/main` @ `a4db3c2`, 12 commit nuovi:
+
+| Cosa | Era la mia richiesta n. |
+|---|---|
+| `scripts/apply-program-transition.mjs` — **lo script che APPLICA una transizione** | 2, la più importante |
+| `prompts/delegation-cards/UJ-SEC-001-CLAUDE.json` e `UJ-CLD-001-CLAUDE.json` | le due card proposte |
+| `validate-council-packets.mjs`: **tetto delle card rimosso** (`readdirSync`) | 3 |
+| `scripts/test-delegation-card-discovery.mjs`, `test-program-transition.mjs` | non richiesti, aggiunti |
+
+Lo script è fatto bene: **dry-run per default**, `--apply` richiede `--confirm-task`, lock
+file, validazione dei path. È l'anello che mancava da quattro giorni.
+
+**Conseguenza operativa immediata:** ora che le due card esistono, i `ResponsePacket` per
+`UJ-SEC-001` e `UJ-CLD-001` sono emettibili. Era il tetto che lo impediva (§9 di sessione 6).
+
+### Il merge, e il criterio con cui ho risolto i cinque conflitti
+
+- **`validate-council-packets.mjs` → presa la SUA versione.** Era arrivato alla mia stessa
+  conclusione (la card è uno snapshot d'emissione, il ledger può avanzare senza invalidarla)
+  ma la sua è **migliore**: aggiunge due assert che non avevo — reviewer coincidente col
+  backlog, e reviewer indipendente dal target — e ammette anche `IN_PROGRESS`.
+- **`validate-response-packet.mjs` → identici byte per byte**: ha portato su `main` il mio
+  script con le tre diagnosi.
+- **`BACKLOG.json` / `STATUS.md` → tenute le mie accettazioni**, che sono più avanti della
+  sua transizione a `REVIEW`.
+
+### Il suo gate mi ha fermato una TERZA volta, e aveva ragione
+
+`validate-program-os.mjs` ha rifiutato l'albero: *"UJ-GGL-001 is DONE with unresolved
+acceptance criteria"*. Ha **irrigidito** il validatore nella direzione giusta — un task
+accettato con criteri `PENDING` è una riga non verificabile.
+
+Chiusi i 7 criteri rimasti, ognuno con `proof_refs` verso l'artefatto **e** la review
+indipendente che lo ha promosso. Non è un allentamento: le review avevano già dato 5/5 e
+5/5 `PASS`, mancava registrarlo nel ledger.
+
+**Tre volte in due giorni il gate di ChatGPT ha fermato me, che sono l'accettatore.** È la
+cosa che rende credibile il 15,3 %.
+
+### Che cosa resta autorizzato e non ancora fatto
+
+Christian ha dato il via libera (*«fai come pensi sia meglio»*) a: **chiudere le ~12 PR
+superate** e **mergiare su `main`** i fix di Grok più il mio ramo. Sono i compiti A e B
+dell'handoff. Il ramo di Grok si è mosso a `b8cccf7` dopo la mia verifica: **va riverificato
+il delta** prima del merge.

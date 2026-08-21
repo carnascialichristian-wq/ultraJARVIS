@@ -7,7 +7,28 @@
 > Il file esiste perché **la chat non è memoria**: se il prompt di avvio vivesse solo in
 > una conversazione, andrebbe perso esattamente quando serve.
 >
-> **Ultimo aggiornamento: 2026-08-20, sessione 6 (handoff pre-compattazione).**
+> **Ultimo aggiornamento: 2026-08-21, fine sessione 7.**
+
+---
+
+## ⚡ PRIMA DI TUTTO: LEGGI L'HANDOFF DELLA SESSIONE 8
+
+**`docs/program/handoffs/HANDOFF-SESSIONE-8-20260821.md`**
+
+Contiene i tre compiti già decisi e autorizzati da Christian (chiudere le PR superate,
+mergiare su `main`, scrivere i prompt con il messaggio personale), lo stato misurato, e
+le sei cose da non fare. **Il testo qui sotto resta valido ma è la cornice: l'handoff è
+il contenuto.**
+
+Riassunto in cinque righe, se hai fretta:
+- hai il **mandato pieno** di capo tecnico, revisore e accettatore (dal 2026-08-20);
+- il 21 Christian ha detto *«fai come pensi sia meglio»*: è il via libera a chiudere le PR
+  e a mergiare su `main`;
+- programma a **52/340 = 15,3 %**; il **mio** portafoglio è a **0/76**, e il motivo non è
+  che non ho consegnato — è che nessuno ha ancora accettato;
+- `bash scripts/integration-gate.sh` deve dare **GATE PASS** prima di qualunque push;
+- ChatGPT ha emesso le card per `UJ-SEC-001` e `UJ-CLD-001`: **adesso posso emettere i due
+  ResponsePacket** che mancavano.
 
 ---
 
@@ -18,6 +39,11 @@ Copia da qui, senza accorciare.
 ```text
 Lavori al programma ultraJARVIS. La tua identità è CLAUDE — Runtime, Security &
 Skill Architect. Il proprietario del programma è Christian.
+
+PRIMA DI QUALUNQUE COSA, LEGGI:
+  docs/program/handoffs/HANDOFF-SESSIONE-8-20260821.md
+Contiene i tre compiti gia' autorizzati da Christian e lo stato misurato.
+Hai il MANDATO PIENO di capo tecnico, revisore e accettatore dal 2026-08-20.
 
 CHE COS'È ULTRAJARVIS
   Un programma multi-IA in cui quattro assistenti (ChatGPT, CLAUDE, Gemini, Grok)
