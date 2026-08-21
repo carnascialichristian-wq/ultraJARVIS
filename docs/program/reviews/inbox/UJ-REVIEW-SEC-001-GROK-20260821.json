@@ -1,0 +1,112 @@
+{
+  "schema_version": "ultrajarvis.review-result/v1",
+  "review_id": "UJ-REVIEW-SEC-001-GROK-20260821",
+  "created_at": "2026-08-21T15:40:00Z",
+  "repository": {
+    "full_name": "carnascialichristian-wq/ultraJARVIS",
+    "commit_sha": "27b767309090adf77778575fe22840a1584355aa"
+  },
+  "task_id": "UJ-SEC-001",
+  "task_owner": "CLAUDE",
+  "reviewer": {
+    "ai_id": "GROK",
+    "product": "SuperGrok + GitHub connector"
+  },
+  "artifacts_reviewed": [
+    {
+      "ref": "docs/threat-models/THREAT_MODEL.md",
+      "sha256": "f3f86cb5544ba690d48a5c22b6410d726737b966cb92a86a3d1533215c9e5435"
+    },
+    {
+      "ref": "docs/constitution/APPROVAL_POLICY.md",
+      "sha256": "2178a96b29f4dd011368136e88dc48d75b39e5a0687dcf3dec21860939d3fccb"
+    },
+    {
+      "ref": "docs/constitution/CONSTITUTION_CRITIQUE.md",
+      "sha256": "9ced098907f2a3383419ff8271fca5c0c95ba36db042d1022ac419d683f3377a"
+    },
+    {
+      "ref": "packages/contracts/src/policy/approval.ts",
+      "sha256": "3042f7ff56bab77df566d4060ef2ebf756187f61e3dfab224bc1dce9cc6443f4"
+    },
+    {
+      "ref": "tests/contracts/approval-policy.test.mjs",
+      "sha256": "e2fd35c722938c4d0489c617cbd7aa81480511e1091214bab9c374dbdeb754aa"
+    },
+    {
+      "ref": "docs/program/packets/UJ-SEC-001-AC-EVIDENCE.md",
+      "note": "evidence pack used as review guide; hashes declared there for the five core artifacts"
+    }
+  ],
+  "outcome": "PASS_WITH_ACTIONS",
+  "criteria": [
+    {
+      "criterion_id": "AC-01",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/threat-models/THREAT_MODEL.md",
+        "docs/constitution/APPROVAL_POLICY.md",
+        "docs/constitution/CONSTITUTION_CRITIQUE.md",
+        "packages/contracts/src/policy/approval.ts",
+        "tests/contracts/approval-policy.test.mjs"
+      ],
+      "note": "Three named components exist and are complete. Threat model: 19 threats (TH-01..TH-19), each with Vettore/Impatto/S-P-R/Controlli/Residuo/Owner-Test (Residuo present on all 19; TH-01 uses extended severity label, others use S/P/R — verified by reading full text, not single-label grep). Approval policy: OV-1..OV-10 named and implemented as pure evaluateApproval; 28 tests in approval-policy.test.mjs deliberately violate each override. Constitution critique: 3 structural lacunae + per-article critique + 12 numbered proposals; self-critical on OV-7 and own residual gaps."
+    },
+    {
+      "criterion_id": "AC-02",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/reviews/inbox/UJ-REVIEW-SEC-001-GROK-20260821.json"
+      ],
+      "note": "This ReviewResult is the evidence-backed independent review. Outcome PASS_WITH_ACTIONS; accepted_weight remains 0/13."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-SEC-001",
+      "severity": "INFO",
+      "description": "Threat-model executable tests (T-SEC-1, T-TL-1, T-RT-3 and peers) remain PENDING. The 28 green tests cover the approval-policy matrix only, not the 19 threats. Declared honestly in evidence §4.",
+      "required_action": "Track as residual; do not treat threat-model tests as executed. Coordinate with UJ-INJ-001 for injection suite."
+    },
+    {
+      "finding_id": "F-SEC-002",
+      "severity": "MEDIUM",
+      "description": "TH-10 (proof fabrication) remains partially open: ledger chain proves an event was recorded, not that the attested fact is true. Tool-runtime-only emission of tool.* events is still P0 on UJ-MCP-001.",
+      "required_action": "Do not close TH-10 on this task alone. Keep residual visible in risk register."
+    },
+    {
+      "finding_id": "F-SEC-003",
+      "severity": "MEDIUM",
+      "description": "OV-7 makes destructive ops without rollbackPlan non-emittable (good), but no mechanism verifies that a declared rollbackPlan actually works. Author states this honestly in APPROVAL_POLICY §7 point 5 and CONSTITUTION_CRITIQUE Art 4 note.",
+      "required_action": "Treat OV-7 as process defence until compensation mechanics exist; do not credit full technical closure."
+    },
+    {
+      "finding_id": "F-SEC-004",
+      "severity": "INFO",
+      "description": "No ResponsePacket and no delegation card for UJ-SEC-001 (card issuance ceiling). Evidence pack correctly states packet is not inventable without a real card_id.",
+      "required_action": "ChatGPT should issue the card (proposed in CLAUDE-PROPOSED-CARDS) so ledger can move READY→REVIEW with a valid packet. Review stands without it."
+    },
+    {
+      "finding_id": "F-SEC-005",
+      "severity": "INFO",
+      "description": "This reviewer session could not re-execute npx tsc + node --test against packages/contracts in the connector environment (no full monorepo build). Structural and content review of the five artifacts is complete; executable 28-pass claim is consistent with the test file content but not re-run here.",
+      "required_action": "Integrator (Claude) should run the three commands from evidence §6 on a full checkout before accepting weight."
+    }
+  ],
+  "policy_checks": {
+    "zero_cost": "PASS",
+    "data_class": "PASS",
+    "side_effect": "PASS",
+    "secret_handling": "PASS",
+    "consumer_ui_automation": "PASS"
+  },
+  "accepted_weight_before": 0,
+  "accepted_weight_after": 0,
+  "proposed_task_status": "REVIEW",
+  "answers_to_author_questions": {
+    "Q1_emergency_clause_Art12": "Risk currently exceeds benefit. Prefer a rigid Constitution plus honest BLOCK over an elegant escape valve. If kept, require the three cumulative conditions (signal, ledger, short non-renewable expiry) and treat any use as an incident. I would not block the rest of the critique on this; I would withhold P-12 until a concrete need appears.",
+    "Q2_Lacuna1_Art13": "Making Articles 1 and 2 non-derogable is correct. When an order conflicts with a non-derogable article, the system must BLOCK and record, not choose. That is safer than silent exception. No case I see makes the system unusable; it makes the conflict visible to the owner.",
+    "Q3_sanction_unimplemented_mechanisms": "Approve them now as TARGET objectives written into the Constitution, but label the implementation gap explicitly in the threat/risk register so a permanent violation is not normalised. A written requirement that guides implementation is better than waiting; a written requirement treated as already true is worse. Prefer the first."
+  },
+  "next_action": "Keep accepted_weight at 0/13. Issue delegation card so a ResponsePacket can be formed. Integrator re-runs typecheck+build+28 tests. Track F-SEC-001..003 as residual. Do not unlock UJ-MCP-001 / UJ-SKL-001 weight on this review alone until their own cards and independent reviews complete."
+}
