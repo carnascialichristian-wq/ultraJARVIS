@@ -15,6 +15,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFile, readdir } from "node:fs/promises";
 
 import {
   checkSpawn,
@@ -410,6 +411,42 @@ test("the key encoding is injective: shifted field boundaries do not collide", (
     buildIdempotencyKey(left, sha256Hex),
     buildIdempotencyKey(right, sha256Hex),
   );
+});
+
+test("MEASURED: the tool-cycle key is injective, so a separator inside a tool name cannot forge a cycle", () => {
+  // E6, second occurrence. hasToolCycle used to build its k-gram key by joining
+  // the window on a NUL byte. ToolId is a branded string with no runtime
+  // validation, so nothing stops that byte from appearing inside a tool name —
+  // and then two DIFFERENT windows collapse onto the same key.
+  //
+  // Under the old NUL join this exact sequence reports a cycle that does not
+  // exist: window 0 is ["a", "b\u0000c"] -> "a\0b\0c" and window 3 is
+  // ["a\u0000b", "c"] -> "a\0b\0c". Same key, so the second occurrence trips
+  // the repeat counter. It is a FALSE POSITIVE: no window actually repeats.
+  const forged = ["a", "b\u0000c", "x", "a\u0000b", "c", "x"];
+  assert.equal(hasToolCycle(forged, 2, 2), false);
+
+  // The detector must still fire on a window that genuinely repeats, including
+  // when the tool names contain the byte that used to be the separator.
+  const genuine = ["a\u0000b", "c", "a\u0000b", "c"];
+  assert.equal(hasToolCycle(genuine, 2, 2), true);
+});
+
+test("no runtime contract source carries a NUL byte (E6 pinned mechanically, not by comment)", async () => {
+  // A NUL turns a source file BINARY for git and grep. depth-guard.ts carried one
+  // for four sessions and was therefore silently absent from every text-based
+  // audit of this repository — including the provider-neutrality scan that
+  // finally surfaced it, which reported "binary file matches" instead of a line.
+  // A comment saying "do not do this" does not stop it happening a third time.
+  const dir = new URL("../../packages/contracts/src/runtime/", import.meta.url);
+  const names = (await readdir(dir)).filter((n) => n.endsWith(".ts"));
+  assert.ok(names.length > 0, "no runtime contract sources found");
+  const offenders = [];
+  for (const name of names) {
+    const bytes = await readFile(new URL(name, dir));
+    if (bytes.includes(0x00)) offenders.push(name);
+  }
+  assert.deepEqual(offenders, []);
 });
 
 test("different payloads produce different keys", () => {

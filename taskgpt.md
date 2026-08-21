@@ -270,6 +270,16 @@ conflitto va registrato, non eliminato.
 - Nessun peso è stato accettato. UJ-CAP-001 e UJ-GGL-001 restano READY/HUMAN_BRIDGE per Gemini; la loro integrazione dovrà avvenire in branch dedicate e con ResponsePacket separati.
 - Prossimo resume point: ricevere l'output completo di Gemini, verificare fonti/hash/schema, aggiornare entrambi i ledger, pubblicare le branch UJ-CAP-001/UJ-GGL-001 e solo dopo riallineare PR #1/#3.
 
+
+### 2026-08-18 — ChatGPT/Codex — hardening candidate cloud bridge
+
+- Creata branch agent/strict-zero-cloud-bridge-20260818 da main@6af4a3721ab0d7f3272fd6e4e872b1331da99aa5.
+- La candidate patch rende il bridge local-only: provider cloud/pagati sono bloccati prima di ogni adapter e gli endpoint devono essere loopback.
+- Aggiunti test non mutativi per provider bloccato e validazione endpoint; nessuna rete/API è stata usata.
+- È stata aggiunta una review note con il finding e i reviewer richiesti. Nessun task, status o peso cambia.
+- Prossimo passo: review indipendente Claude/Grok e verifica runtime in ambiente completo.
+- Aggiornamento speculare inserito in gpt.md: sì.
+
 ### 2026-08-18 — ChatGPT/Codex — card/ref e criteri Council riallineati
 
 - Branch: `agent/chatgpt-governance-reconcile-20260818`, da `main@25b1b7d53ff5bc4b05348453ebb704aba3a88630`; nessuna modifica diretta a `main`, Claude o Grok.

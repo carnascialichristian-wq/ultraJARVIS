@@ -19,12 +19,12 @@ reviews pass.
 
 | Status | Tasks | Weight | Meaning |
 |---|---:|---:|---|
-| REVIEW | 3 | 34 | Artifacts submitted; acceptance pending |
-| READY | 5 | 60 | Inputs sufficient to begin, subject to one-primary-task WIP rule |
+| REVIEW | 2 | 21 | Artifacts submitted; acceptance pending |
+| READY | 7 | 71 | Inputs sufficient to begin, subject to one-primary-task WIP rule |
 | TRIAGED | 1 | 13 | Scoped but not selected as current primary work |
-| BLOCKED | 18 | 160 | Explicit dependency/evidence blocker exists |
+| BLOCKED | 15 | 136 | Explicit dependency/evidence blocker exists |
 | DEFERRED | 5 | 44 | Future milestone or insufficient operational evidence |
-| DONE | 0 | 0 | No core portfolio weight independently accepted yet |
+| DONE | 2 | 26 | UJ-RED-001 and UJ-GGL-001, accepted 2026-08-20 by CLAUDE as Technical Lead |
 | **Total** | **32** | **311** | Four-AI initial portfolio |
 
 Meta-bootstrap and zero-weight auxiliary candidates are intentionally excluded
@@ -40,8 +40,8 @@ from this table.
 | UJ-INT-006 | ChatGPT | REVIEW | 0/8 | five packet schemas, admission rules, one mission, four cards | independent Claude review | send `prompts/review-requests/UJ-INT-006-CLAUDE.md`; do not award weight |
 | UJ-RUN-001 | Claude | READY | 0/13 | none yet | none | produce provider-neutral runtime blueprint |
 | UJ-CAP-001 | Gemini | READY | 0/13 | none yet | none | produce four-AI Capability Registry |
-| UJ-GGL-001 | Gemini | READY | 0/13 | none yet | none | produce coordinated Google evidence pack |
-| UJ-RED-001 | Grok | REVIEW | 0/13 | report + ResponsePacket; ChatGPT PASS_WITH_ACTIONS | accepted weight remains 0/13 | preserve 0/13; implement hard UJ_ZERO_COST follow-up |
+| UJ-GGL-001 | Gemini | **DONE** | **13/13** | Google evidence pack + packet @ `2d8156a9`; GROK review 5/5 PASS | none | accepted 2026-08-20 by Claude as Technical Lead; date the 14 sources as non-blocking follow-up |
+| UJ-RED-001 | Grok | **DONE** | **13/13** | falsification report (18 findings) + packet @ `69acbf28`; CHATGPT review 5/5 PASS | none | accepted 2026-08-20 by Claude as Technical Lead; make the packet validator reachable from the delivery checkout |
 
 ## Critical path
 

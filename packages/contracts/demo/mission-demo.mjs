@@ -1,0 +1,275 @@
+/**
+ * mission-demo.mjs — la demo end-to-end minima del blueprint §21 di UJ-RUN-001.
+ *
+ * "Se la demo non gira, il documento è teoria." Questo è il primo taglio di codice
+ * eseguibile che rende il blueprint falsificabile — atto n.4 del mandato di Technical
+ * Lead (CLAUDE.md PARTE 3-bis §4).
+ *
+ * Onestà su cosa è REALE e cosa è DEMO-MINIMALE:
+ *   - Usa i CONTRATTI VERI dove esistono: checkSpawn, nextState, verifyLedgerChain,
+ *     buildIdempotencyKey, AtomicActiveTaskCounter, mayStartNewStep, e i tre
+ *     sottosistemi gia' contrattualizzati: validateDecomposition (DEC),
+ *     selectAgent (SEL), admitAdapterRegistration (RTE).
+ *   - Usa logica DEMO-MINIMALE, marcata [demo], per i due sottosistemi che NON hanno
+ *     ancora un contratto (conflitto CNF-, fallback FBK-). Quando quei contratti
+ *     arriveranno (M2/M3), la demo va ricablata su di essi. Finché non arrivano,
+ *     questa demo NON chiude T-E2E-1/2/3 nel blueprint: quelle prove restano
+ *     "DA IMPLEMENTARE".
+ *
+ * COSTO ZERO PER COSTRUZIONE: nessun import di rete, nessuna chiave. L'unico adapter
+ * è `echo@1`, che restituisce l'input in maiuscolo. Il passo 9 verifica che nessuna
+ * libreria di rete sia stata caricata.
+ *
+ * Uso:  node packages/contracts/demo/mission-demo.mjs
+ *       (richiede prima `npx tsc -p packages/contracts` per generare dist/)
+ * Exit: 0 se i 9 osservabili e i 4 casi negativi passano, 1 altrimenti.
+ */
+
+import { createHash } from "node:crypto";
+import { mkdtempSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+  checkSpawn,
+  nextState,
+  verifyLedgerChain,
+  buildIdempotencyKey,
+  mayStartNewStep,
+} from "../dist/runtime/index.js";
+import { AtomicActiveTaskCounter } from "../dist/recovery/index.js";
+import { admitAdapterRegistration } from "../dist/routing/index.js";
+import { validateDecomposition } from "../dist/decomposition/index.js";
+import { selectAgent } from "../dist/selection/index.js";
+import { admitTaskFallbacks } from "../dist/fallback/index.js";
+
+import net from "node:net";
+
+// Sentinella di costo: intercetta OGNI tentativo di connessione reale e registra gli host
+// non-loopback. E' la misura corretta di "0 richieste uscenti" del §21 passo 9 — non il
+// proxy fragile su process.moduleLoadList, che segnala 'net' anche quando Node lo carica per
+// ragioni interne SENZA aprire nessun socket (falso segnale, corretto qui).
+const nonLoopbackAttempts = [];
+const isLoopback = (h) => !h || h === "localhost" || h === "127.0.0.1" || h === "::1" || h.startsWith("127.");
+const _connect = net.Socket.prototype.connect;
+net.Socket.prototype.connect = function (...args) {
+  const opt = args[0];
+  const host = typeof opt === "object" && opt ? opt.host : (typeof args[1] === "string" ? args[1] : undefined);
+  if (!isLoopback(host)) nonLoopbackAttempts.push(String(host));
+  return _connect.apply(this, args);
+};
+
+const sha256 = (s) => createHash("sha256").update(s).digest("hex");
+let failures = 0;
+const obs = [];
+function check(step, label, ok, detail) {
+  obs.push({ step, ok });
+  if (!ok) failures += 1;
+  const tag = ok ? "[ ok ]" : "[FAIL]";
+  console.log(`  ${tag} ${step}. ${label}${detail ? "  — " + detail : ""}`);
+}
+
+console.log("== UJ-RUN-001 demo end-to-end (§21) ==");
+console.log("adapter unico: echo@1 (ZERO_LOCAL). Nessuna rete, nessuna chiave.\n");
+
+// --- limiti condivisi, forma dai test dei contratti --------------------------
+const budget = { maxProviderCalls: 10, maxToolCalls: 10, maxWallClockMs: 60000, recoveryReserveCalls: 2 };
+const parentLimits = {
+  toolAllowlist: [
+    { toolId: "echo", version: "1.0.0", manifestHash: "he", maxSideEffect: "INTERNAL_WRITE" },
+  ],
+  maxDataClass: "C2", maxAutonomy: "L3", maxSideEffect: "INTERNAL_WRITE",
+  quotaBudget: budget, deadline: "2026-08-20T12:00:00Z",
+};
+const childLimits = {
+  toolAllowlist: [{ toolId: "echo", version: "1.0.0", manifestHash: "he", maxSideEffect: "INTERNAL_WRITE" }],
+  maxDataClass: "C1", maxAutonomy: "L2", maxSideEffect: "INTERNAL_WRITE",
+  quotaBudget: { ...budget, maxProviderCalls: 5 }, deadline: "2026-08-20T11:00:00Z",
+};
+
+// --- ledger in-process -------------------------------------------------------
+const hashEvent = (e) =>
+  sha256(`${e.seq}|${e.type}|${e.at}|${e.prevHash ?? ""}|${JSON.stringify(e.payload ?? {})}`);
+const ledger = [];
+let prevHash = null;
+function emit(type, payload) {
+  const e = { seq: ledger.length, runId: "run-demo", type, at: "2026-08-20T10:00:00Z", prevHash, payload, selfHash: "" };
+  e.selfHash = hashEvent(e);
+  prevHash = e.selfHash;
+  ledger.push(e);
+  return e;
+}
+
+// === PERCORSO FELICE — i 9 osservabili =======================================
+
+// 1) decomposizione: 3 nodi, VALIDATI dal contratto DEC reale (blueprint §16)
+const MISSION = "produrre out/hello.txt contenente ok, e verificarlo";
+const crit = (id, text) => ({ id, text });
+const decompose = (mission) => ({
+  missionId: sha256(mission).slice(0, 12),
+  nodes: [
+    { taskId: "root", parentId: null, depth: 0, weight: 3, owner: "CLAUDE", reviewer: "GEMINI",
+      requiredCapabilities: ["echo"], acceptanceCriteria: [crit("c0", "`out/hello.txt` contains `ok`, exit code 0")], dependsOn: [] },
+    { taskId: "n1-read", parentId: "root", depth: 1, weight: 1, owner: "CLAUDE", reviewer: "GEMINI",
+      requiredCapabilities: ["echo"], acceptanceCriteria: [crit("c1", "input letto, `plan.md` scritto")], dependsOn: [] },
+    { taskId: "n2-echo", parentId: "root", depth: 1, weight: 1, owner: "CLAUDE", reviewer: "GEMINI",
+      requiredCapabilities: ["echo"], acceptanceCriteria: [crit("c2", "risultato di `echo@1` non vuoto")], dependsOn: ["n1-read"] },
+    { taskId: "n3-write", parentId: "root", depth: 1, weight: 1, owner: "CLAUDE", reviewer: "GEMINI",
+      requiredCapabilities: ["echo"], acceptanceCriteria: [crit("c3", "`out/hello.txt` verificato, exit code 0")], dependsOn: ["n2-echo"] },
+  ],
+});
+const DEC_CTX = { capabilityIndex: ["echo"], ceilings: { maxDepth: 3, maxFanOut: 5 } };
+const decA = decompose(MISSION);
+const decB = decompose(MISSION);
+const stable = sha256(JSON.stringify(decA.nodes)) === sha256(JSON.stringify(decB.nodes));
+const validated = validateDecomposition(decA, DEC_CTX).admitted === true;
+check(1, "decomposizione: DAG valido (contratto DEC) e stabile su due esecuzioni",
+  decA.nodes.length === 4 && stable && validated, `${decA.nodes.length} nodi, DEC ammette`);
+
+// 2) selezione: contratto SEL reale (src/selection/selection.ts, blueprint §17), non piu' [demo].
+// Due candidati coprono "echo"; il MENO privilegiato (SEL §17.6.4) deve vincere. Nessuna
+// stringa di vendor nell'input della selezione: e' la proprieta' AC-01 (§17.1).
+const VENDOR = /openai|anthropic|gpt-4|claude-|gemini|api\.stripe/i;
+const SEL_CANDIDATES = [
+  { agentId: "agent-broad", declaredCapabilities: ["echo", "write"], maxDataClass: "C2", maxAutonomy: "L2", maxSideEffect: "INTERNAL_WRITE", expiresAt: null },
+  { agentId: "agent-local", declaredCapabilities: ["echo"], maxDataClass: "C1", maxAutonomy: "L1", maxSideEffect: "NONE", expiresAt: null },
+];
+const SEL_PARENT = { capabilities: ["echo", "write"], maxDataClass: "C3", maxAutonomy: "L3", maxSideEffect: "EXTERNAL_WRITE" };
+const SEL_NOW = "2026-08-20T00:00:00Z";
+const selections = decA.nodes.map((n) => selectAgent({ task: n, candidates: SEL_CANDIDATES, parentGrants: SEL_PARENT, now: SEL_NOW }));
+const allAssigned = selections.every((a) => a.kind === "ASSIGNED");
+const leastPrivilegedWins = selections.every((a) => a.kind === "ASSIGNED" && a.agentId === "agent-local");
+// L'input di ROUTING (candidati + missione) non contiene stringhe di vendor: e' cio' su cui il
+// selettore decide. owner/reviewer dei nodi sono AI_ID di governance (CLAUDE, GEMINI...), letti
+// solo per l'uguaglianza di indipendenza SEL-E03 — neutrale per costruzione (provato da T-SEL-2).
+const inputHasNoVendor = !VENDOR.test(MISSION) && !VENDOR.test(JSON.stringify(SEL_CANDIDATES));
+check(2, `selezione (contratto SEL): ${selections.length}/${selections.length} ASSIGNED al meno privilegiato, input di routing senza vendor`,
+  allAssigned && leastPrivilegedWins && inputHasNoVendor);
+
+// 3) esecuzione nodo 1 con echo@1: eventi tool.invoked + tool.completed
+const echo = (input) => String(input).toUpperCase();
+emit("tool.invoked", { node: "n1", tool: "echo@1" });
+const out1 = echo("ok");
+emit("tool.completed", { node: "n1", tool: "echo@1", result: out1 });
+check(3, "esecuzione nodo 1: tool.invoked + tool.completed con echo@1",
+  ledger.some((e) => e.type === "tool.invoked") && ledger.some((e) => e.type === "tool.completed"));
+
+// 4) checkpoint dopo il nodo 1
+const cp = emit("checkpoint.created", { checkpointId: "cp-1", afterNode: "n1", ledgerLen: ledger.length });
+check(4, "checkpoint dopo nodo 1: checkpointId emesso",
+  cp.payload.checkpointId === "cp-1", `ledger a ${ledger.length} eventi`);
+
+// 6-prep) idempotency key del side effect del nodo 1 (serve al resume)
+const idemNode1 = buildIdempotencyKey(
+  { runId: "run-demo", taskId: "UJ-RUN-001", operationName: "echo", canonicalPayload: '{"in":"ok"}', toolVersion: "1.0.0" },
+  sha256,
+);
+const sideEffectsSeen = new Set([idemNode1]);
+
+// 5) kill switch durante il nodo 2: HALTED da uno stato non terminale (contratto vero)
+const moves = nextState("MONITORING", "KILL_SWITCH");
+emit("kill.engaged", { scope: "RUN" });
+check(5, "kill switch: HALTED raggiunto da MONITORING (nextState, contratto vero)",
+  moves.length > 0 && moves[0].to === "HALTED");
+
+// 6) resume dal checkpoint: il nodo 1 NON viene rieseguito (stessa idempotencyKey)
+const kill = { engaged: false, scope: "RUN", engagedBy: "OWNER", engagedAt: "2026-08-20T10:00:00Z", gracePeriodMs: 0 };
+const idemAgain = buildIdempotencyKey(
+  { runId: "run-demo", taskId: "UJ-RUN-001", operationName: "echo", canonicalPayload: '{"in":"ok"}', toolVersion: "1.0.0" },
+  sha256,
+);
+const alreadyDone = sideEffectsSeen.has(idemAgain);
+emit("resume.fromCheckpoint", { checkpointId: "cp-1", node1Reexecuted: !alreadyDone });
+check(6, "resume: nodo 1 non rieseguito (stessa idempotencyKey), mayStartNewStep ok",
+  alreadyDone && idemAgain === idemNode1 && mayStartNewStep(kill) === true);
+
+// 7) completamento: out/hello.txt esiste e contiene ok
+const workDir = mkdtempSync(join(tmpdir(), "uj-demo-"));
+const outFile = join(workDir, "hello.txt");
+writeFileSync(outFile, echo("ok").toLowerCase() + "\n", "utf8"); // echo poi normalizzato a 'ok'
+emit("tool.completed", { node: "n3", wrote: "out/hello.txt" });
+check(7, "completamento: out/hello.txt esiste e contiene 'ok'",
+  existsSync(outFile) && readFileSync(outFile, "utf8").trim() === "ok", outFile);
+
+// 8) verifica del ledger: catena intatta, e alterare un evento la rompe (contratto vero)
+const intact = verifyLedgerChain(ledger, hashEvent).intact === true;
+const tampered = ledger.map((e) => ({ ...e }));
+tampered[3] = { ...tampered[3], payload: { ...tampered[3].payload, checkpointId: "FORGED" } };
+tampered[3].selfHash = hashEvent(tampered[3]);
+const broken = verifyLedgerChain(tampered, hashEvent).intact === false;
+check(8, "ledger: catena intatta, e un evento alterato la rompe",
+  intact && broken);
+
+// 9) controllo di costo: zero tentativi di connessione a host non-loopback in tutta la demo
+check(9, "controllo di costo: 0 tentativi di connessione non-loopback",
+  nonLoopbackAttempts.length === 0,
+  nonLoopbackAttempts.length ? "tentativi: " + nonLoopbackAttempts.join(",") : "nessuno");
+
+// === CASI NEGATIVI — i 4 richiesti ==========================================
+console.log("\n  -- casi negativi (una demo del solo percorso felice non prova nulla) --");
+let negFail = 0;
+function neg(label, ok, detail) {
+  if (!ok) { negFail += 1; failures += 1; }
+  console.log(`  ${ok ? "[ ok ]" : "[FAIL]"} ${label}${detail ? "  — " + detail : ""}`);
+}
+
+// N1) un nodo che chiede un tool non posseduto dal padre -> rifiuto (contratto vero)
+const badChild = { ...childLimits, toolAllowlist: [
+  { toolId: "repo.destroy", version: "1.0.0", manifestHash: "hx", maxSideEffect: "DESTRUCTIVE" },
+] };
+const d1 = checkSpawn({ parentDepth: 1, childDepth: 2, parentChildCount: 0, activeAtomicTasks: 3, parentLimits, childLimits: badChild });
+neg("N1 tool non posseduto dal padre -> checkSpawn rifiuta (analogo SEL-E02/TA-2)",
+  d1.admitted === false, "invarianti: " + (d1.admitted ? "-" : d1.violations.map((v) => v.invariant).join(",")));
+
+// N2) un adapter METERED registrato a L2 -> rifiuto ALLA REGISTRAZIONE (contratto VERO)
+// Usa il contratto RTE reale (src/routing/adapter-routing.ts, blueprint §18), non piu' [demo].
+const r2 = admitAdapterRegistration(
+  { adapterId: "paid@1", costClass: "METERED", endpointConstraint: "NONE" },
+  { runMaxAutonomy: "L2", strictZeroCard: false },
+);
+neg("N2 adapter METERED a L2 -> rifiuto alla registrazione (RTE-E02, contratto vero)",
+  r2.admitted === false && r2.violations.some((v) => v.rule === "RTE-E02"));
+
+// N3) una capability senza fallback -> BLOCKED prima della coda.
+// Usa il contratto FBK reale (src/fallback/capability-fallback.ts, blueprint §20), non piu' [demo].
+// Il task chiede due capability: una ha un binding a costo zero, l'altra no.
+const taskN3 = {
+  taskId: "UJ-DEMO-N3",
+  parentId: null,
+  depth: 1,
+  weight: 3,
+  owner: "CLAUDE",
+  reviewer: "GEMINI",
+  requiredCapabilities: ["cap.echo", "cap.embed"],
+  acceptanceCriteria: [{ criterionId: "AC-01", text: "`node --test` returns exit code 0." }],
+  dependsOn: [],
+};
+const r3 = admitTaskFallbacks(
+  taskN3,
+  [{
+    tag: "cap.echo",
+    primary: { adapterId: "local@1", costClass: "ZERO_LOCAL" },
+    fallback: { kind: "ZERO_LOCAL", detail: "loopback" },
+  }],
+  { essential: true },
+);
+neg("N3 capability senza fallback -> FBK-E01 col tag nominato, task BLOCKED (contratto vero)",
+  r3.outcome === "BLOCKED_NO_FALLBACK" &&
+  r3.violations.some((v) => v.rule === "FBK-E01" && v.tag === "cap.embed"));
+
+// N4) due claim concorrenti sullo stesso nodo -> esattamente un vincitore (contratto vero)
+const claim = new AtomicActiveTaskCounter(1); // un solo slot = un solo claim vincente
+const results = await Promise.all([claim.reserve(), claim.reserve()]);
+const winners = results.filter((r) => r.granted).length;
+neg("N4 due claim concorrenti -> esattamente un vincitore (AtomicActiveTaskCounter, analogo CNF-E02)",
+  winners === 1, `vincitori: ${winners}`);
+
+// === esito ===================================================================
+console.log("\n== esito ==");
+console.log(`  osservabili: ${obs.filter((o) => o.ok).length}/9  ·  casi negativi: ${4 - negFail}/4`);
+if (failures === 0) {
+  console.log("DEMO: PASS — la catena decompose->select->execute->checkpoint->kill->resume->verify gira, a costo zero");
+  process.exit(0);
+} else {
+  console.log(`DEMO: FAIL — ${failures} controlli non passati`);
+  process.exit(1);
+}

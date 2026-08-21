@@ -6,7 +6,7 @@
 | Milestone | M0 / M2 |
 | Owner | CLAUDE (Runtime, Security & Skill Architect) |
 | Reviewer | GEMINI |
-| Stato | REVIEW |
+| Stato | **REVIEW** — attende la review di GEMINI. Vedi nota di stato |
 | Peso | 13 |
 | Data class | C1 INTERNAL |
 | Side effect | INTERNAL_WRITE (solo file su branch dedicato) |
@@ -16,12 +16,36 @@
 | Contratti collegati | `packages/contracts/src/runtime/*.ts` |
 | Threat notes | `docs/threat-models/RUNTIME_THREAT_NOTES.md` |
 
-> **Nota di provenienza.** Il prompt canonico vive attualmente sul branch
-> `agent/ultrajarvis-master-prompt-v1` (PR #1, draft) e non è ancora su `main`.
-> Questo blueprint è stato scritto contro il commit `b8a7697` di quel branch, il cui
-> contenuto è stato verificato con SHA-256 corrispondente a quello dichiarato nella PR.
-> Se la PR #1 viene modificata prima del merge, questo documento va riconciliato.
-> Etichetta: `OBSERVATION`.
+> **Nota di stato — 2026-08-19, il blocco e' stato sciolto.** Questo documento ha dichiarato
+> `BLOCKED` dalla sessione 5 fino a oggi, e prima ancora `REVIEW` per un motivo sbagliato. Ora
+> dichiara `REVIEW` perche' **tutte le condizioni di ammissibilita' sono verificate**, non
+> perche' si sia smesso di controllarle.
+>
+> **Storico del blocco, per chi ha visto le versioni precedenti.** La delegation card
+> `UJ-CARD-RUN-001-CLAUDE` non esisteva al commit che il suo stesso `read_ref` nominava
+> (`3611b1b4`); entrava nella storia dodici minuti dopo, con `d48e1e85`. CHATGPT ha corretto il
+> `read_ref` a `25b1b7d53ff5` con `4b63b94`, e ha poi ripristinato i sedici hash degli input
+> pinati con `6ba3a2b` dopo che un giro intermedio li aveva sostituiti con valori che non
+> corrispondevano a nulla.
+>
+> **Le sei condizioni, tutte verificate per esecuzione il 2026-08-19:** la card esiste al
+> proprio `read_ref`; il `read_ref` e' raggiungibile da `origin/main`; i quattro input pinati
+> coincidono, 4 su 4; `validate-council-packets.mjs` passa a exit 0 su `origin/main`; i criteri
+> della card coincidono con quelli del `BACKLOG.json` (`AC-01`…`AC-05`); il task e' `READY` nel
+> ledger, reviewer GEMINI.
+>
+> **`REVIEW` non significa accettato.** Il peso accettato resta **0/13** e ci resta finche'
+> GEMINI non si esprime: e' la disciplina del §7.3, non una formalita'.
+
+> **Nota di provenienza — aggiornata, la versione precedente era scaduta.**
+> Questo blueprint è stato scritto in sessione 1 contro il commit `b8a7697` del branch
+> `agent/ultrajarvis-master-prompt-v1`, quando il prompt canonico non era ancora su `main`.
+> **Quella condizione non vale più.** Il prompt canonico è su `main` e i byte sono gli stessi:
+> `git show origin/main:docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md | sha256sum` e
+> `git show b8a7697:...` restituiscono entrambi
+> `a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87`, verificato in sessione 6.
+> La provenienza resta quindi valida e non c'è nulla da riconciliare: cambia solo dove il
+> documento va letto. Etichetta: `EXPERIMENT_RESULT`.
 
 ---
 
@@ -1035,8 +1059,26 @@ Le funzioni pure di questo deliverable sono **già testate**; i test di livello 
 non lo sono, perché il runtime non esiste ancora. La distinzione è esplicita: dichiarare
 superati test che non girano sarebbe falso avanzamento (§31.5).
 
-**Stato:** 33 test eseguiti, 33 passati.
-Comando: `cd packages/contracts && npx tsc && cd ../.. && node --test tests/contracts/runtime-invariants.test.mjs`
+**Stato:** **36 test eseguiti, 36 passati** in `tests/contracts/runtime-invariants.test.mjs`.
+Nella suite completa dei contratti: **140 eseguiti, 140 passati, 0 falliti**
+(`approval-policy` 28 · `recovery` 9 · **`runtime-invariants` 36** · `skill-forge` 37 ·
+`tool-admission` 30).
+
+Comando, e la riga di **build non e' opzionale** — i test importano da `dist/`, che e' in
+`.gitignore` e in un container nuovo non esiste:
+
+```bash
+npx tsc -p packages/contracts --noEmit    # typecheck
+npx tsc -p packages/contracts             # BUILD
+node --test tests/contracts/runtime-invariants.test.mjs
+```
+
+> **Correzione di un conteggio stantio.** Questa riga ha dichiarato `33` dalla sessione 1 fino
+> alla sessione 5, senza essere riaggiornata mentre la suite cresceva: 33 alla stesura, 34 dopo
+> la regressione sulla idempotency key, **36** dopo i due test di regressione di `E6` (la
+> seconda occorrenza del separatore NUL, in `depth-guard.ts`). Il numero e' stato rimisurato
+> eseguendo il file identico al blob committato, non dedotto dalla tabella qui sotto — che
+> elenca gli **ID** dei test, non il loro totale, e per questo non e' mai stata in conflitto.
 
 #### Implementati e verdi (`tests/contracts/runtime-invariants.test.mjs`)
 
@@ -1124,15 +1166,566 @@ una risposta rassicurante.
 | vincoli e zero-cost truthfulness | 15 | 15 | nessuna API a pagamento, nessun compute locale, nessun sempre-on |
 | fattibilità tecnica e sostituibilità | 15 | 13 | contratti provider-neutral; kernel non ancora scelto per esperimento M2 |
 | sicurezza, privacy, approval | 15 | 13 | invarianti e threat notes presenti; threat model completo è UJ-SEC-001 |
-| artifact concreti e testabilità | 15 | 14 | contratti che compilano; 22 test specificati ma non ancora implementati |
+| artifact concreti e testabilità | 15 | 14 | contratti che compilano; **36/36** test runtime verdi e **140/140** nella suite; **33 prove specificate e non implementate** (11 di §13.3 + 22 delle §16-21) |
 | fonti e disciplina epistemica | 10 | 9 | prompt canonico verificato con hash; fonti esterne raccolte, non asserite |
 | roadmap ed estendibilità | 10 | 8 | ADR aperti dichiarati; non invado milestone altrui |
 | status e remaining work | 10 | 9 | pesi e delta nell'handoff, formula §7.4 applicata |
 | collaborazione e handoff | 5 | 5 | handoff per tutte e tre le altre IA + Christian |
 | chiarezza | 5 | 4 | documento lungo per necessità di contratto |
-| **Totale** | **100** | **90** | soglia "pronto per review" raggiunta |
+| **Totale** | **100** | **90** | soglia raggiunta **sul contenuto**. Non è un giudizio di ammissibilità: il task è `BLOCKED` per il `read_ref` della card, non per la qualità dell'artefatto |
 
 Nessun critical failure di §43: nessuna API a pagamento proposta come attiva, nessuna
 automazione di UI consumer, nessun modello locale, nessun segreto esposto, nessun
 billing, nessuna percentuale o test inventati, nessuna skill autopromossa, nessun
 repository copiato, nessun side effect non approvato.
+
+---
+
+# PARTE II — sezioni aggiunte in sessione 5 (2026-08-18)
+
+> **Perché numerate da 16 e non intercalate.** Le sezioni 0–15 sono citate per numero dal
+> `ResponsePacket` di `UJ-RUN-001`, dalla review checklist §13, dai contratti in
+> `packages/contracts/src/runtime/` (che riportano `Blueprint §N` nei loro header) e dalle
+> threat notes. Rinumerarle romperebbe quei riferimenti in silenzio. Le sezioni nuove si
+> aggiungono in coda: **estensione, mai riscrittura.**
+>
+> **Stato delle prove in questa parte.** Dove una prova **esiste già** è nominata con il file
+> e il nome del test. Dove **non esiste**, è scritto `PROVA DA IMPLEMENTARE` con l'asserzione
+> esatta che dovrà fare. Nessuna delle due categorie è dichiarata eseguita se non lo è: le
+> sezioni 16–21 specificano contratti, non risultati.
+
+---
+
+## 16. Decomposizione dei task
+
+### 16.1 Responsabilità
+
+Trasformare una `MissionSpec` in un **DAG di task**, ciascuno con un solo owner, un reviewer
+diverso dall'owner, un peso e criteri di accettazione verificabili. La decomposizione è la
+sola sede in cui nascono i task: nessun agente può crearne uno a runtime.
+
+**La parte strutturale è una funzione pura.** Non richiede alcuna chiamata a modello: dato lo
+stesso `MissionSpec` e lo stesso registro di capability, produce lo stesso DAG byte per byte.
+Un modello può *proporre* una decomposizione, ma la proposta entra come input dati e passa
+per gli stessi controlli di una scritta a mano. Questo è ciò che rende la decomposizione
+testabile e a costo zero.
+
+### 16.2 Input
+
+| Campo | Tipo | Vincolo |
+|---|---|---|
+| `missionId` | `MissionId` | esiste nel ledger, stato `OPEN` |
+| `objective` | `string` | non vuoto |
+| `capabilityIndex` | `readonly CapabilityTag[]` | chiuso: nessun tag inventato in decomposizione |
+| `budget` | `QuotaBudget` | `costClass` di ogni ramo deve essere `ZERO_*` (§20) |
+| `ceilings` | `{ maxDepth, maxFanOut, maxActive }` | non modificabili dagli agenti (`DG-1..DG-3`) |
+
+### 16.3 Output
+
+```ts
+interface TaskNode {
+  readonly taskId: TaskId;
+  readonly parentId: TaskId | null;
+  readonly depth: number;              // 0 per la radice
+  readonly weight: number;             // intero > 0
+  readonly owner: AiId;
+  readonly reviewer: AiId;             // invariante: reviewer !== owner
+  readonly requiredCapabilities: readonly CapabilityTag[];
+  readonly acceptanceCriteria: readonly Criterion[];  // >= 1, ognuno falsificabile
+  readonly dependsOn: readonly TaskId[];
+}
+interface Decomposition {
+  readonly missionId: MissionId;
+  readonly nodes: readonly TaskNode[];
+  readonly contentHash: ContentHash;   // sui nodi ordinati per taskId
+}
+```
+
+### 16.4 Stato
+
+`DRAFT → VALIDATED → FROZEN`. Solo una decomposizione `FROZEN` può generare delegation card.
+`FROZEN` è **append-only**: aggiungere un task richiede una nuova decomposizione con un nuovo
+`contentHash` e un evento `mission.decomposition.superseded` che nomina la precedente.
+
+### 16.5 Errori
+
+| Codice | Condizione | Effetto |
+|---|---|---|
+| `DEC-E01` | ciclo nel DAG | rifiuto, nessun task creato |
+| `DEC-E02` | somma dei pesi dei figli ≠ peso del padre | rifiuto |
+| `DEC-E03` | `reviewer === owner` su almeno un nodo | rifiuto, nodo nominato |
+| `DEC-E04` | nodo senza `acceptanceCriteria` o con criteri non falsificabili | rifiuto |
+| `DEC-E05` | `depth > maxDepth` o `fanOut > maxFanOut` | rifiuto, invariante `DG-*` nominata |
+| `DEC-E06` | `requiredCapabilities` contiene un tag fuori da `capabilityIndex` | rifiuto |
+| `DEC-E07` | task irraggiungibile dalla radice | rifiuto |
+
+Tutti gli errori sono **rifiuti in blocco**: non esiste decomposizione parzialmente accettata.
+Una decomposizione a metà è peggio di nessuna, perché produce task orfani che nessuno possiede.
+
+### 16.6 Controlli
+
+1. **Aciclicità** — ordinamento topologico; fallisce se resta un nodo con archi entranti.
+2. **Conservazione del peso** — per ogni nodo non foglia, `weight === Σ weight(figli)`.
+3. **Indipendenza del reviewer** — `reviewer !== owner`, verificato su ogni nodo.
+4. **Falsificabilità dei criteri** — ogni `Criterion` deve avere un `verification` che nomina
+   un artefatto o un comando. Un criterio la cui verità dipende solo dal verdetto del reviewer
+   **non è falsificabile e va rifiutato** (`DEC-E04`).
+5. **Determinismo** — due esecuzioni sullo stesso input producono lo stesso `contentHash`.
+
+> **Il controllo 4 esiste per un difetto osservato, non per ipotesi.** Nel `BACKLOG.json`
+> corrente, 41 criteri di accettazione su 43 task hanno la forma *"`<REVIEWER>` issues an
+> evidence-backed PASS or PASS_WITH_ACTIONS review"*. Un criterio del genere è vero se e solo
+> se il reviewer approva: nessuna proprietà del deliverable lo rende vero o falso. `DEC-E04`
+> impedisce meccanicamente che una decomposizione futura ne produca altri.
+
+### 16.7 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-DEC-1` un DAG con ciclo è rifiutato con `DEC-E01` | **PROVA DA IMPLEMENTARE** |
+| `T-DEC-2` pesi che non si conservano sono rifiutati con `DEC-E02` | **PROVA DA IMPLEMENTARE** |
+| `T-DEC-3` `reviewer === owner` è rifiutato e il nodo è nominato | **PROVA DA IMPLEMENTARE** |
+| `T-DEC-4` un criterio che nomina solo l'esito del reviewer è rifiutato con `DEC-E04` | **PROVA DA IMPLEMENTARE** |
+| `T-DEC-5` due esecuzioni producono lo stesso `contentHash` | **PROVA DA IMPLEMENTARE** |
+| profondità e fan-out oltre il ceiling | **ESISTE**: `tests/contracts/runtime-invariants.test.mjs`, `T-DG-1`, `T-DG-2`, `T-DG-3` |
+
+---
+
+## 17. Selezione e assegnazione degli agenti
+
+### 17.1 Responsabilità
+
+Legare un `TaskNode` a un `AgentManifest`. La selezione avviene **per capability dichiarate e
+ceiling**, mai per qualità percepita di un modello e mai per nome di fornitore.
+
+> **Regola dura:** l'input della selezione **non contiene stringhe di vendor**. Se sostituire
+> ogni nome di fornitore con un identificatore opaco cambia l'assegnazione, il router non è
+> provider-neutral e va rifiutato. Questa è la proprietà che `AC-01` di `UJ-RUN-001` chiede, ed
+> è meccanicamente verificabile (§17.6, controllo 3).
+
+### 17.2 Input
+
+| Campo | Tipo | Nota |
+|---|---|---|
+| `task` | `TaskNode` | da una decomposizione `FROZEN` |
+| `candidates` | `readonly AgentManifest[]` | tutti i manifest ammessi, senza pre-filtro |
+| `parentGrants` | `EffectiveGrants` | l'allowlist effettiva del padre (§9) |
+| `now` | `IsoTimestamp` | iniettato, mai letto dall'orologio dentro la funzione |
+
+`now` è un parametro perché una selezione che legge l'orologio non è riproducibile: due
+esecuzioni sullo stesso input darebbero risultati diversi e il ledger non sarebbe replayabile.
+
+### 17.3 Output
+
+```ts
+type Assignment =
+  | { readonly kind: "ASSIGNED"; readonly agentId: AgentId; readonly grants: EffectiveGrants }
+  | { readonly kind: "HUMAN_BRIDGE"; readonly reason: string; readonly envelope: BridgeEnvelope }
+  | { readonly kind: "REFUSED"; readonly violations: readonly string[] };
+```
+
+Tre esiti e nessun quarto. In particolare **non esiste un esito "assegnato con riserva"**: un
+agente che non soddisfa un invariante non viene assegnato, non viene assegnato con un avviso.
+
+### 17.4 Stato
+
+`UNASSIGNED → ASSIGNED → RUNNING → (DONE_PROPOSED | FAILED | CANCELLED)`, oppure
+`UNASSIGNED → AWAITING_HUMAN` quando l'esito è `HUMAN_BRIDGE`. `AWAITING_HUMAN` **non è uno
+stato di errore**: è un esito legittimo e previsto (§18.4).
+
+### 17.5 Errori
+
+| Codice | Condizione | Esito |
+|---|---|---|
+| `SEL-E01` | nessun candidato copre `requiredCapabilities` | `HUMAN_BRIDGE`, non `REFUSED` |
+| `SEL-E02` | il candidato migliore violerebbe un ceiling (`TA-2`, `TA-4`, `TA-5`, `TA-8`) | `REFUSED`, invarianti elencate **tutte** |
+| `SEL-E03` | il candidato è l'owner del task **ed** è anche il reviewer | `REFUSED` |
+| `SEL-E04` | il manifest è scaduto rispetto a `now` | `REFUSED` |
+| `SEL-E05` | due candidati ugualmente idonei | risolto dal tie-break §17.6, **mai** a caso |
+
+`SEL-E01` produce `HUMAN_BRIDGE` e non un fallimento: l'assenza di un agente capace è una
+condizione normale in un programma a costo zero, e la risposta corretta è chiedere a una
+persona, non fermarsi.
+
+### 17.6 Controlli
+
+1. **Copertura** — `requiredCapabilities ⊆ declaredCapabilities(candidate)`.
+2. **Ceiling** — tutti i controlli di §9 applicati contro `parentGrants`, e il rifiuto elenca
+   **ogni** invariante violata, non la prima. Un rifiuto che si ferma alla prima violazione
+   nasconde le altre e fa correggere il problema una volta sola invece che tutte.
+3. **Neutralità di provider (meccanico)** — data una funzione di offuscamento `σ` che sostituisce
+   ogni nome di fornitore con un identificatore opaco stabile:
+   `select(task, candidates) ≡ σ⁻¹(select(σ(task), σ(candidates)))`.
+   Se l'uguaglianza non regge, esiste una dipendenza dal vendor da rimuovere.
+4. **Determinismo e tie-break** — a parità di idoneità l'ordine è: (a) `maxAutonomy` più basso,
+   (b) `maxDataClass` più bassa, (c) `maxSideEffect` più basso, (d) `agentId` in ordine
+   lessicografico. Il tie-break preferisce **l'agente meno privilegiato**, non il più capace.
+5. **Indipendenza del reviewer** — verificata di nuovo qui e non solo in decomposizione, perché
+   i manifest possono cambiare fra `FROZEN` e assegnazione.
+
+### 17.7 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-SEL-1` nessun candidato idoneo → `HUMAN_BRIDGE`, non `REFUSED` | **PROVA DA IMPLEMENTARE** |
+| `T-SEL-2` offuscando i nomi dei vendor l'assegnazione non cambia | **PROVA DA IMPLEMENTARE** |
+| `T-SEL-3` a parità di idoneità vince il candidato meno privilegiato | **PROVA DA IMPLEMENTARE** |
+| `T-SEL-4` un rifiuto elenca tutte le invarianti violate | **ESISTE** (analoga): `rejection reports every violated invariant, not only the first` |
+| `T-SEL-5` un tool non posseduto dal padre non è assegnabile | **ESISTE**: `T-TA-1` |
+
+---
+
+## 18. Routing provider-neutral e HUMAN_BRIDGE
+
+### 18.1 Responsabilità
+
+Il runtime **non chiama mai un fornitore**. Emette una `ProviderRequest` verso un adapter
+registrato, e ogni adapter dichiara la propria classe di costo. È l'unico punto in cui il
+vincolo dell'Articolo 5 diventa meccanico invece che documentale.
+
+### 18.2 Classe di costo, e perché `METERED` è irrappresentabile a L2
+
+```ts
+type CostClass =
+  | "ZERO_LOCAL"              // esecuzione locale, loopback, nessuna rete uscente
+  | "ZERO_SUBSCRIPTION_HUMAN" // abbonamento già pagato, mediato da una persona
+  | "METERED";                // a consumo — vietato sotto STRICT_ZERO_CARD
+
+interface ProviderAdapter {
+  readonly adapterId: string;
+  readonly costClass: CostClass;
+  readonly endpointConstraint: "LOOPBACK_ONLY" | "NONE";
+  send(req: ProviderRequest): Promise<ProviderResponse>;
+}
+```
+
+**Regola di registrazione:** un adapter con `costClass: "METERED"` **non può essere
+registrato** quando l'autonomia massima del run è `L2`. Il rifiuto avviene alla registrazione,
+non alla chiamata: un controllo che scatta al momento della chiamata protegge solo se qualcuno
+arriva fin lì con la configurazione giusta.
+
+**Il default non è una variabile d'ambiente.** Se il `CostClass` di un adapter deve essere
+letto dall'ambiente, il valore assente deve risolvere a `ZERO_LOCAL`, mai a `METERED`.
+
+> **Questa regola nasce da un difetto misurato, non da un principio astratto.** In
+> `cloud_bridge.py` su `main`, `PROVIDER = os.getenv("MODEL_PROVIDER", "openai")` è una
+> **costante di modulo**: il default è a pagamento e viene fissato una volta sola all'import,
+> quindi impostare la variabile dopo non protegge. Misurato: **sei percorsi a pagamento o
+> remoti su sette attacchi**. Il contratto qui sopra rende quella configurazione
+> irrappresentabile: il default cade su `ZERO_LOCAL` e `METERED` non è registrabile a `L2`.
+
+### 18.3 Input e output
+
+| | |
+|---|---|
+| **Input** | `ProviderRequest { runId, agentId, capabilityTag, payloadRef, maxDataClass, idempotencyKey }` |
+| **Output** | `ProviderResponse { status, artifactRef?, bridgeEnvelope?, usage }` |
+
+`payloadRef` è un **riferimento content-addressed**, non il payload. Il routing non trasporta
+il contenuto: così il livello di routing non può, nemmeno per errore, mandare fuori dati di
+classe superiore a quella dichiarata.
+
+### 18.4 HUMAN_BRIDGE come stato di prima classe
+
+`AWAITING_HUMAN` è uno **stato terminale del passo**, non un errore e non un'attesa attiva.
+
+```ts
+interface BridgeEnvelope {
+  readonly envelopeId: string;
+  readonly createdAt: IsoTimestamp;
+  readonly instruction: string;       // cosa la persona deve fare, in una frase
+  readonly payloadRef: ArtifactRef;   // cosa deve copiare
+  readonly expectedSchema: SchemaRef; // cosa deve riportare indietro
+  readonly idempotencyKey: IdempotencyKey;
+  readonly resumeToken: string;       // lega la risposta al checkpoint esatto
+  readonly expiresAt: IsoTimestamp | null;
+}
+```
+
+Quattro regole:
+
+| ID | Regola |
+|---|---|
+| `HB-1` | **Nessun retry automatico.** Un envelope scaduto **non** viene rilanciato: viene marcato `EXPIRED` e il task resta parcheggiato. Rilanciare significherebbe chiedere due volte la stessa cosa a una persona, che è il modo più veloce per farle ignorare le richieste. |
+| `HB-2` | **Idempotenza sulla risposta.** Due risposte con lo stesso `idempotencyKey` producono un solo avanzamento. Christian può incollare due volte senza duplicare un side effect. |
+| `HB-3` | **Nessun segreto nell'envelope.** `payloadRef` è un riferimento; l'envelope non contiene mai token, cookie o chiavi. |
+| `HB-4` | **La risposta è validata come input non fidato.** Arriva da un canale umano ed è soggetta agli stessi controlli di schema e classe di dato di qualunque artifact esterno — inclusa la difesa da prompt injection di §11 S7. |
+
+### 18.5 Errori
+
+| Codice | Condizione | Effetto |
+|---|---|---|
+| `RTE-E01` | adapter con `costClass: METERED` registrato a `L2` | rifiuto **alla registrazione** |
+| `RTE-E02` | `endpointConstraint: LOOPBACK_ONLY` e host non di loopback | rifiuto prima di costruire la richiesta |
+| `RTE-E03` | `maxDataClass` della richiesta > ceiling dell'agente | rifiuto, nessuna chiamata |
+| `RTE-E04` | nessun adapter per `capabilityTag` | `AWAITING_HUMAN` con envelope |
+| `RTE-E05` | risposta del bridge che non valida contro `expectedSchema` | rifiuto, task resta parcheggiato |
+| `RTE-E06` | envelope scaduto | `EXPIRED`, **nessun rilancio** (`HB-1`) |
+
+### 18.6 Controlli
+
+1. **Statico** — nessun adapter registrato ha `costClass: METERED` quando `maxAutonomy ≤ L2`.
+2. **Dinamico, per attacco** — con configurazione di default, il numero di richieste uscenti
+   verso host non di loopback deve essere **zero**. La sonda sostituisce il livello di trasporto
+   con uno stub che registra il tentativo e solleva: si misura senza spendere.
+3. **Offuscamento** — vale la stessa proprietà `σ` di §17.6: il routing non deve cambiare se i
+   nomi dei fornitori vengono sostituiti.
+4. **Nessun fallback verso l'alto** — il fallimento di un adapter `ZERO_LOCAL` non può ricadere
+   su uno `METERED`. Il fallback è sempre verso `HUMAN_BRIDGE` o verso il fallimento pulito.
+
+### 18.7 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-RTE-1` registrare un adapter `METERED` a `L2` fallisce | **PROVA DA IMPLEMENTARE** |
+| `T-RTE-2` default → zero richieste uscenti non-loopback | **PROVA DA IMPLEMENTARE** nel runtime TS. *Metodo già validato altrove:* `docs/threat-models/probes/S-17-strict-zero-candidate-probe.py` misura esattamente questo su `cloud_bridge.py` (7 attacchi × 3 varianti) |
+| `T-RTE-3` un endpoint non-loopback è rifiutato con `LOOPBACK_ONLY` | **PROVA DA IMPLEMENTARE** |
+| `T-RTE-4` due risposte del bridge con la stessa chiave producono un avanzamento | **PROVA DA IMPLEMENTARE** |
+| `T-RTE-5` un envelope scaduto non viene rilanciato | **PROVA DA IMPLEMENTARE** |
+| `T-RTE-6` la chiave di idempotenza è iniettiva | **ESISTE**: `the key encoding is injective: shifted field boundaries do not collide` |
+
+---
+
+## 19. Conflitti fra agenti
+
+### 19.1 Responsabilità
+
+Rendere impossibili, o almeno rilevabili e non silenziosi, i tre conflitti che un sistema
+multi-agente produce davvero: **due scrittori sullo stesso artefatto**, **due pretendenti allo
+stesso task**, **due verdetti incompatibili sullo stesso deliverable**.
+
+### 19.2 Le tre classi, e come si chiudono
+
+| Classe | Meccanismo | Perché non un voto di maggioranza |
+|---|---|---|
+| **C-1 · scrittura concorrente** | **Single-writer per path.** La mappa di proprietà è *derivata* dalla decomposizione (§16), non dichiarata a parte. Ogni path ha esattamente un `taskId` che può scriverlo. | Non è una disputa: è un errore di progetto, e va chiuso a monte. |
+| **C-2 · doppia rivendicazione** | **Compare-and-set sul ledger.** La transizione `UNASSIGNED → ASSIGNED` è un CAS sulla versione del nodo; il secondo pretendente perde e riceve `SEL-E05`. | Due agenti che eseguono lo stesso task sprecano quota e producono due artefatti da riconciliare. |
+| **C-3 · verdetti incompatibili** | **Escalation a HUMAN_BRIDGE.** Due `ReviewResult` con esito diverso sullo stesso `(taskId, commitSha)` non si mediano: si registrano entrambi e si apre un envelope per il proprietario. | Un voto di maggioranza fra IA fabbrica consenso dove non c'è, ed è esattamente il *falso avanzamento* che §31.5 vieta. Due revisori in disaccordo sono un'informazione, non un rumore da sopprimere. |
+
+### 19.3 Input, output, stato
+
+| | |
+|---|---|
+| **Input** | evento di scrittura, di claim o di verdetto, con `(runId, taskId, targetRef, version)` |
+| **Output** | `ACCEPTED` · `REJECTED_CONFLICT { winner, loser, reason }` · `ESCALATED { envelopeId }` |
+| **Stato** | il conflitto stesso è un record nel ledger: `conflict.detected`, `conflict.resolved`, `conflict.escalated`. Non esiste risoluzione che non lasci traccia. |
+
+### 19.4 Errori
+
+| Codice | Condizione | Effetto |
+|---|---|---|
+| `CNF-E01` | due task rivendicano lo stesso path in scrittura | rifiuto **in decomposizione**, non a runtime |
+| `CNF-E02` | CAS fallito sul claim | `REJECTED_CONFLICT`, il perdente non ritenta automaticamente |
+| `CNF-E03` | due verdetti diversi sullo stesso `(taskId, commitSha)` | `ESCALATED`, nessuna media |
+| `CNF-E04` | un agente tenta di risolvere un conflitto che lo riguarda | rifiuto: chi è parte non arbitra |
+
+### 19.5 Controlli
+
+1. **Unicità dello scrittore** — calcolata dalla decomposizione: se due `TaskNode` dichiarano lo
+   stesso path di output, la decomposizione è rifiutata (`CNF-E01`), non gestita a runtime.
+2. **Atomicità del claim** — il CAS presuppone un update condizionale nello storage. **È un
+   vincolo sulla scelta di database**, e va dichiarato a chi la fa (rischio `R-RCV-01`, owner
+   `UJ-INF-001`), non scoperto dopo.
+3. **Nessuna auto-arbitraggio** — l'arbitro di un conflitto non può essere né owner né reviewer
+   di uno dei due lati.
+4. **Tracciabilità** — ogni conflitto lascia almeno due eventi nel ledger; un conflitto risolto
+   senza `conflict.detected` precedente è esso stesso un difetto.
+
+### 19.6 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-CNF-1` due task con lo stesso path di output → decomposizione rifiutata | **PROVA DA IMPLEMENTARE** |
+| `T-CNF-2` due claim concorrenti → esattamente uno vince | **PROVA DA IMPLEMENTARE** (richiede lo storage con CAS) |
+| `T-CNF-3` due verdetti diversi → `ESCALATED`, nessuna media | **PROVA DA IMPLEMENTARE** |
+| `T-CNF-4` il contatore dei task attivi è atomico | **ESISTE**: `T-DG-4b` / `AtomicActiveTaskCounter` |
+
+---
+
+## 20. Fallback locale a costo zero
+
+### 20.1 Responsabilità
+
+Garantire che **nessun task possa iniziare** se la capability che richiede non ha un fallback
+a costo zero. Il controllo è in **admission**, non a runtime: scoprire l'assenza di un fallback
+quando il percorso primario è già fallito significa scoprirla nel momento peggiore.
+
+### 20.2 Contratto
+
+```ts
+type FallbackKind = "ZERO_LOCAL" | "HUMAN_BRIDGE" | "FAIL_CLOSED";
+
+interface CapabilityBinding {
+  readonly tag: CapabilityTag;
+  readonly primary: { readonly adapterId: string; readonly costClass: CostClass };
+  readonly fallback: { readonly kind: FallbackKind; readonly detail: string };
+}
+```
+
+**Regola:** `fallback.kind` deve essere uno dei tre valori, e `FAIL_CLOSED` è ammesso solo se il
+task è dichiarato non essenziale alla missione. **Non esiste un quarto valore, e in particolare
+non esiste un fallback verso un adapter `METERED`.** Il tipo lo rende irrappresentabile: è lo
+stesso metodo con cui `L5 — Broad Autonomy` è tenuto fuori dal sistema dei tipi.
+
+### 20.3 Input, output, stato
+
+| | |
+|---|---|
+| **Input** | `readonly CapabilityBinding[]` più il `TaskNode` che le richiede |
+| **Output** | `ADMITTED` oppure `BLOCKED_NO_FALLBACK { tag }` |
+| **Stato** | un task senza fallback nasce `BLOCKED`, con il tag mancante nominato. Non entra in coda. |
+
+### 20.4 Errori
+
+| Codice | Condizione | Effetto |
+|---|---|---|
+| `FBK-E01` | una `requiredCapability` non ha binding | `BLOCKED_NO_FALLBACK`, tag nominato |
+| `FBK-E02` | `fallback.kind` non è fra i tre valori | rifiuto del binding alla registrazione |
+| `FBK-E03` | `FAIL_CLOSED` su un task essenziale | rifiuto |
+| `FBK-E04` | il fallback punta a un adapter `METERED` | irrappresentabile per tipo; se emerge a runtime è un difetto di serializzazione da trattare come `RTE-E01` |
+
+### 20.5 Controlli
+
+1. **Lint dei manifest** — ogni `CapabilityTag` referenziata da un task ha un `CapabilityBinding`.
+2. **Chiusura sui costi** — l'insieme dei `costClass` raggiungibili da un task, seguendo primario
+   e fallback **transitivamente**, non contiene `METERED`. Il controllo è sulla chiusura, non sul
+   primo salto: un fallback che a sua volta ricade su uno a pagamento è la porta che conta.
+3. **Fail-safe, non fail-open** — un binding malformato produce `BLOCKED`, mai un default
+   permissivo.
+
+### 20.6 Prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-FBK-1` un task con una capability senza binding nasce `BLOCKED` | **PROVA DA IMPLEMENTARE** |
+| `T-FBK-2` la chiusura transitiva dei `costClass` non contiene `METERED` | **PROVA DA IMPLEMENTARE** |
+| `T-FBK-3` un binding malformato produce `BLOCKED`, non un default permissivo | **PROVA DA IMPLEMENTARE** |
+| `T-FBK-4` `L5` resta irrappresentabile (stesso metodo di tipizzazione) | **ESISTE**: `packages/contracts/src/runtime/agent-manifest.ts` |
+
+---
+
+## 21. Demo end-to-end minima
+
+### 21.1 Responsabilità
+
+Dimostrare l'intera catena **senza rete, senza chiavi, senza costo**: decomposizione →
+selezione → esecuzione → checkpoint → kill → resume → verifica del ledger. Serve a rendere
+il blueprint falsificabile: se la demo non gira, il documento è teoria.
+
+### 21.2 Scenario, deliberatamente banale
+
+Missione: *"produrre `out/hello.txt` contenente `ok`, e verificarlo."*
+
+Un solo adapter registrato, `echo@1`, `costClass: ZERO_LOCAL`, che restituisce l'input
+maiuscolo senza toccare la rete. Nessun modello coinvolto: la demo prova **il runtime**, non
+la qualità di un'inferenza.
+
+### 21.3 Passi osservabili
+
+| # | Passo | Osservabile atteso |
+|---:|---|---|
+| 1 | decomposizione della missione | 3 nodi, `contentHash` stabile su due esecuzioni |
+| 2 | selezione | tutti e 3 `ASSIGNED`; nessuna stringa di vendor nell'input |
+| 3 | esecuzione del nodo 1 | evento `tool.invoked` + `tool.completed` con `echo@1` |
+| 4 | checkpoint dopo il nodo 1 | `checkpointId` emesso, ledger a N eventi |
+| 5 | **kill switch** durante il nodo 2 | stato `HALTED` raggiunto da uno stato non terminale |
+| 6 | resume dal checkpoint | il nodo 1 **non** viene rieseguito: stessa `idempotencyKey`, side effect non duplicato |
+| 7 | completamento | `out/hello.txt` esiste e contiene `ok` |
+| 8 | verifica del ledger | catena di hash intatta; alterare un evento passato la rompe |
+| 9 | **controllo di costo** | richieste uscenti verso host non-loopback: **0** |
+
+### 21.4 Errori che la demo deve saper mostrare
+
+Una demo che mostra solo il percorso felice non prova nulla. Sono richiesti quattro casi
+negativi, ognuno con l'errore atteso:
+
+| Caso | Errore atteso |
+|---|---|
+| un nodo che chiede un tool non posseduto dal padre | `SEL-E02`, invariante `TA-2` nominata |
+| un adapter `METERED` registrato a `L2` | `RTE-E01`, rifiuto **alla registrazione** |
+| una capability senza fallback | `FBK-E01`, task `BLOCKED` prima della coda |
+| due claim concorrenti sullo stesso nodo | `CNF-E02`, esattamente un vincitore |
+
+### 21.5 Controlli e prova richiesta
+
+| Prova | Stato |
+|---|---|
+| `T-E2E-1` i 9 passi osservabili nell'ordine, exit 0 | **PROVA DA IMPLEMENTARE** |
+| `T-E2E-2` i 4 casi negativi con l'errore esatto | **PROVA DA IMPLEMENTARE** |
+| `T-E2E-3` zero richieste uscenti non-loopback per l'intera demo | **PROVA DA IMPLEMENTARE** |
+| kill switch raggiungibile da ogni stato non terminale | **ESISTE**: `T-KS-1` |
+| integrità della catena del ledger e rilevamento della riscrittura | **ESISTE**: `T-LG-1` (tre test) |
+
+### 21.6 Cosa la demo NON prova, dichiarato
+
+- **Non prova la qualità del ragionamento**: l'unico adapter è `echo@1`.
+- **Non prova il comportamento sotto concorrenza reale**: i due claim di §21.4 sono simulati
+  in-process, non su storage distribuito. Il caso reale dipende dal CAS e quindi da `UJ-INF-001`.
+- **Non prova la resistenza a un tool ostile**: quello è `UJ-SKL-001`, portafoglio separato.
+- **Non prova che un fornitore reale sia gratuito**: prova che *il runtime* non ne chiama nessuno.
+
+---
+
+## 22. Mappa di tracciabilità dei 24 requisiti
+
+Serve al reviewer per verificare la copertura **contando**, invece di leggere in diagonale.
+
+| # | Requisito | Sezione | Prove |
+|---:|---|---|---|
+| 1 | AgentManifest | §3 | esistenti |
+| 2 | TeamSpec | §4 | esistenti |
+| 3 | Supervisor | §5 | esistenti (`T-KS-1`, default-deny) |
+| 4 | RunLedger | §7 | esistenti (`T-LG-1` ×3) |
+| 5 | **Task decomposition** | **§16** | 5 da implementare, 3 esistenti |
+| 6 | **Selezione e assegnazione agenti** | **§17** | 3 da implementare, 2 esistenti |
+| 7 | Limiti di profondità e loop | §6 | esistenti (`T-DG-*`, `T-LP-*`) |
+| 8 | Approval gate | §5, §9 | esistenti |
+| 9 | Timeout | §5, §8 | esistenti (`T-DG-9`) |
+| 10 | Retry | §8 | esistenti (4 test) |
+| 11 | Cancellation | §8 | esistenti (`T-KS-1`) |
+| 12 | Checkpoint | §8 | esistenti |
+| 13 | Idempotency key | §8 | esistenti (3 test, incluso l'iniettività) |
+| 14 | Recovery | §8 | esistenti (`recovery.test.mjs`, 9) |
+| 15 | Gestione degli errori | §11 | esistenti (S1–S12) |
+| 16 | **Routing provider-neutral** | **§18** | 5 da implementare, 1 esistente |
+| 17 | **HUMAN_BRIDGE** | **§18.4** | 2 da implementare |
+| 18 | Policy e data-class enforcement | §9, §18.3 | esistenti (`T-TA-2`) |
+| 19 | Tool admission | §9 | esistenti (`T-TA-*`) |
+| 20 | Audit trail | §7 | esistenti (`T-LG-1`) |
+| 21 | **Conflitti fra agenti** | **§19** | 3 da implementare, 1 esistente |
+| 22 | **Demo end-to-end minima** | **§21** | 3 da implementare, 2 esistenti |
+| 23 | Criteri di accettazione verificabili | §13, §16.6 | esistenti |
+| 24 | **Fallback locale senza costi** | **§20** | 3 da implementare, 1 esistente |
+
+**Bilancio onesto:** 24 requisiti su 24 hanno una sezione. **Non** 24 su 24 hanno una prova
+eseguita: le sezioni 16-21 ne specificano **22 nuove da implementare**, e il resto poggia sui
+**140 test che passano oggi** (di cui **36** in `runtime-invariants`). Dichiarare coperto cio'
+che e' solo specificato sarebbe falso avanzamento.
+
+**Le 22, contate per sezione** — così il numero e' ricontabile invece che asserito:
+
+| Sezione | Prove specificate |
+|---|---:|
+| §16 decomposizione dei task | 5 |
+| §17 selezione e assegnazione agenti | 3 |
+| §18 routing provider-neutral e HUMAN_BRIDGE | 5 |
+| §19 conflitti fra agenti | 3 |
+| §20 fallback locale a costo zero | 3 |
+| §21 demo end-to-end minima | 3 |
+| **totale §16-21** | **22** |
+
+A queste si aggiungono le **11** gia' elencate come `⏳ PENDING` in §13.3, che richiedono lo
+stesso runtime assente. **Totale specificato e non implementato: 33.**
+
+Comando che riproduce il conteggio:
+
+```bash
+grep -cE '^\|.*PROVA DA IMPLEMENTARE' docs/architecture/RUNTIME_BLUEPRINT.md   # -> 22
+grep -cE '^\|.*⏳ PENDING'            docs/architecture/RUNTIME_BLUEPRINT.md   # -> 11
+```
+
+**L'ancora `^\|` non e' un dettaglio.** Senza di essa i due comandi restituiscono 24 e 13
+invece di 22 e 11, perche' contano anche le menzioni in prosa — comprese quelle di questo
+stesso paragrafo. Documentare un comando di conteggio dentro il documento che conta ne cambia
+il risultato: e' il motivo per cui entrambi i comandi sono ancorati alle righe di tabella, che
+sono le sole a rappresentare una prova.

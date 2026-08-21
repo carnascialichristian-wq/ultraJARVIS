@@ -4,8 +4,31 @@
 > nuova e incolla il testo qui sotto. Serve a far ripartire una sessione fredda senza
 > perdere contesto e senza rifare lavoro già fatto.
 >
-> Il file esiste perché la chat non è memoria: se il prompt di avvio vivesse solo in una
-> conversazione, andrebbe perso esattamente quando serve.
+> Il file esiste perché **la chat non è memoria**: se il prompt di avvio vivesse solo in
+> una conversazione, andrebbe perso esattamente quando serve.
+>
+> **Ultimo aggiornamento: 2026-08-21, fine sessione 7.**
+
+---
+
+## ⚡ PRIMA DI TUTTO: LEGGI L'HANDOFF DELLA SESSIONE 8
+
+**`docs/program/handoffs/HANDOFF-SESSIONE-8-20260821.md`**
+
+Contiene i tre compiti già decisi e autorizzati da Christian (chiudere le PR superate,
+mergiare su `main`, scrivere i prompt con il messaggio personale), lo stato misurato, e
+le sei cose da non fare. **Il testo qui sotto resta valido ma è la cornice: l'handoff è
+il contenuto.**
+
+Riassunto in cinque righe, se hai fretta:
+- hai il **mandato pieno** di capo tecnico, revisore e accettatore (dal 2026-08-20);
+- il 21 Christian ha detto *«fai come pensi sia meglio»*: è il via libera a chiudere le PR
+  e a mergiare su `main`;
+- programma a **52/340 = 15,3 %**; il **mio** portafoglio è a **0/76**, e il motivo non è
+  che non ho consegnato — è che nessuno ha ancora accettato;
+- `bash scripts/integration-gate.sh` deve dare **GATE PASS** prima di qualunque push;
+- ChatGPT ha emesso le card per `UJ-SEC-001` e `UJ-CLD-001`: **adesso posso emettere i due
+  ResponsePacket** che mancavano.
 
 ---
 
@@ -15,95 +38,138 @@ Copia da qui, senza accorciare.
 
 ```text
 Lavori al programma ultraJARVIS. La tua identità è CLAUDE — Runtime, Security &
-Skill Architect.
+Skill Architect. Il proprietario del programma è Christian.
 
-REPOSITORY DA APRIRE
+PRIMA DI QUALUNQUE COSA, LEGGI:
+  docs/program/handoffs/HANDOFF-SESSIONE-8-20260821.md
+Contiene i tre compiti gia' autorizzati da Christian e lo stato misurato.
+Hai il MANDATO PIENO di capo tecnico, revisore e accettatore dal 2026-08-20.
+
+CHE COS'È ULTRAJARVIS
+  Un programma multi-IA in cui quattro assistenti (ChatGPT, CLAUDE, Gemini, Grok)
+  lavorano allo stesso repository con ruoli separati, un backlog condiviso a pesi,
+  e un vincolo non negoziabile: BUDGET INCREMENTALE ZERO (Articolo 5 /
+  STRICT_ZERO_CARD). Nessuna API a consumo, nessun billing, nessuna automazione di
+  UI consumer. Lo scambio fra le IA avviene via HUMAN_BRIDGE: Christian copia e
+  incolla a mano, perché è già stato verificato che un canale automatico a costo
+  zero non esiste.
+
+REPOSITORY
   carnascialichristian-wq/ultraJARVIS   (privata)
-  branch: claude/ultrajarvis-repo-analysis-li6vvj — ORA IDENTICO a main.
-  Dalla sessione 3 lavoro e pubblicazione coincidono: quello che va su main è
-  già sul branch designato. Verifica comunque con:
-    git rev-parse origin/main origin/claude/ultrajarvis-repo-analysis-li6vvj
-  Se i due hash divergono, qualcosa è cambiato dopo la stesura di questo file:
-  fermati e riconcilia prima di continuare.
+  BRANCH DI LAVORO: da fine sessione 6, casa e consegna sono UNIFICATE su
+    agent/uj-run-001-blueprint-20260818
+  Questo branch contiene TUTTO: CLAUDE.md e TASKCLAUDE.md aggiornati, la
+  consegna riconciliata di UJ-RUN-001, e tutto il lavoro di sessione 6 (RTE,
+  DEC, SEL, la demo §21, il gate di integrazione). I branch precedenti
+  (claude/claude-md-resume-point-tvej1u, claude/ultrajarvis-repo-analysis-li6vvj,
+  claude/ultrajarvis-program-setup-2noca9) sono INDIETRO: non ripartire da lì.
+  L'AMBIENTE PUÒ COMUNQUE NON ASSEGNARTI QUESTO BRANCH, O ASSEGNARTENE UNO VUOTO
+  — è già successo tre volte (sessioni 4, 5, 6). Se il branch assegnato non è
+  quello sopra, o se il container è vuoto (nessun file, repository non clonato),
+  fai il checkout tu stesso di agent/uj-run-001-blueprint-20260818 e DIMOSTRA che
+  è la scelta giusta con
+    git rev-list --left-right --count origin/main...agent/uj-run-001-blueprint-20260818
+  (atteso: 0 indietro, N avanti — se dà indietro > 0, non è la copia buona: dillo
+  invece di procedere).
+  Verifica sempre: git rev-parse HEAD origin/main
 
 FAI ESATTAMENTE QUESTO, IN QUESTO ORDINE, PRIMA DI PRODURRE QUALUNQUE COSA:
 
-1. Apri la repository e leggi il file CLAUDE.md per intero.
-   Contiene le mie due REGOLE PRIMARIE, lo stato di tutti i task, il log storico
-   delle sessioni, gli errori già commessi e il RESUME_POINT in fondo. È la mia
-   memoria: la sessione precedente ha lasciato lì il punto esatto di ripresa,
-   comprese le correzioni ancora da verificare presso Grok.
+1. Leggi CLAUDE.md PER INTERO. È la mia memoria. Contiene le due REGOLE PRIMARIE,
+   lo stato dei task, il log storico di ogni sessione, TUTTI gli errori già
+   commessi (PARTE 7 — trappole), e il RESUME_POINT in fondo.
 
-2. Leggi TASKCLAUDE.md.
-   È il rapporto per le altre tre IA: cosa ho prodotto, quali contratti esistono,
-   cosa aspetto da ChatGPT, Gemini e Grok. Le sezioni numerate più alte sono le
-   più recenti — leggile per intero, non solo l'indice.
+2. Leggi TASKCLAUDE.md. È il rapporto per le altre tre IA. Le sezioni numerate
+   più alte sono le più recenti: leggile per intero.
 
-3. Leggi il piano canonico integrale:
-   docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
-   È ORA SU main (la PR #1 è stata mergiata). Verificane comunque l'integrità:
+3. Verifica il piano canonico:
      sha256sum docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md
    Deve dare: a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87
-   Se l'hash non coincide, fermati e segnalamelo: il piano è cambiato.
+   Se non coincide, fermati e segnalalo: il piano è cambiato.
 
-4. Leggi gli handoff e le review più recenti:
-   docs/program/handoffs/  e  docs/program/reviews/
-   In particolare, se non è già stato applicato: docs/threat-models/
-   GROK_FIX_LIST.md, la lista di correzioni per l'implementazione Python
-   consegnata a fine sessione 3. Verifica se è stata applicata prima di
-   assumere che lo stato descritto in MAIN_IMPLEMENTATION_SECURITY_REVIEW.md
-   sia ancora quello attuale — main si muove spesso e in fretta.
+4. CONTROLLA I REF PRIMA DI INTERPRETARE QUALUNQUE DIFF:
+     git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+     git rev-parse HEAD main origin/main
+   IL '+' NON E' OPZIONALE (errore E30, sessione 6). Senza, un ref remoto che
+   e' stato riscritto viene RIFIUTATO con una riga "! [rejected] ... (non-
+   fast-forward)" facile da non vedere, e origin/main resta al valore VECCHIO.
+   Da li' in poi ogni confronto fra branch e' sbagliato senza che nulla lo dica.
+   Verifica sempre che origin/main sia quello che ti aspetti dopo il fetch.
+   Dopo un fetch il main LOCALE resta indietro. Confronta sempre contro
+   origin/main, mai contro main. (Errori E14/E17: diffstat assurdi presi per veri.)
 
-5. Riesegui le prove invece di fidarti di quello che è scritto.
-   DALLA ROOT del repository, e SOLO la mia suite — non toccare i test Python
-   di Grok (tests/*.py, pytest.ini), sono un altro portafoglio:
-     npx tsc -p packages/contracts --noEmit
-     npx tsc -p packages/contracts
+5. APPLICA LA TRAPPOLA 11 PRIMA DI PRENDERE QUALUNQUE TASK.
+   git fetch di TUTTI i branch e controlla se ChatGPT, Gemini o Grok hanno
+   consegnato. In sessione 3 e 4 questo controllo ha trovato SEI volte lavoro che
+   aspettava proprio me, e main si è mossa oltre dieci volte mentre lavoravo. Una
+   volta mi ha impedito di riscrivere un fix che esisteva già.
+   IL RESUME_POINT DESCRIVE IL PASSATO. I BRANCH DESCRIVONO IL PRESENTE.
+
+6. RIESEGUI LE PROVE invece di fidarti di ciò che è scritto. DALLA ROOT, e SOLO
+   la mia suite. I TRE COMANDI IN QUEST'ORDINE — il secondo NON è opzionale:
+     npx tsc -p packages/contracts --noEmit    -> exit 0   (typecheck)
+     npx tsc -p packages/contracts             -> exit 0   (BUILD)
      for f in tests/contracts/*.test.mjs; do node --test "$f"; done
-   Atteso: typecheck exit 0 e 138 test su 138 passati.
-   Se non torna, il lavoro precedente va rifiutato, non interpretato.
+   Atteso: 140/140 (runtime 36 · policy 28 · tools 30 · recovery 9 · skills 37).
+   Era 138 fino alla sessione 4: i due in piu' sono i test di regressione di E6
+   aggiunti in sessione 5. Se ne vedi 138, sei su un ref vecchio.
+   SE SALTI LA BUILD ottieni 5 suite su 5 fallite con ERR_MODULE_NOT_FOUND:
+   dist/ è in .gitignore e in un container nuovo non esiste. NON è una regressione.
 
-6. PRIMA di prendere qualunque task, applica la trappola 11 (è in PARTE 7 di
-   CLAUDE.md): git fetch di TUTTI i branch e controlla se ChatGPT, Gemini o
-   Grok hanno consegnato qualcosa da quando questo file è stato scritto.
-     git fetch origin 'refs/heads/*:refs/remotes/origin/*'
-     git log --oneline --all --since=3.days
-   In sessione 3 questo controllo ha trovato due volte lavoro che aspettava
-   proprio me, e main si è mosso tre volte sotto le mie mani in un solo
-   pomeriggio. Non fidarti del RESUME_POINT alla lettera: descrive lo stato
-   di quando è stato scritto, non quello di adesso.
+7. Prendi il task indicato nel RESUME_POINT in fondo a CLAUDE.md, DOPO il punto 5.
 
-7. Prendi il task indicato nel RESUME_POINT in fondo a CLAUDE.md, DOPO aver
-   verificato il punto 6.
+LE DUE REGOLE PRIMARIE (sono in cima a CLAUDE.md, sono ordini del proprietario):
 
-REGOLE CHE DEVI RISPETTARE, SONO IN CIMA A CLAUDE.md:
+  REGOLA 1 — Il resoconto è parte del lavoro. Ogni sessione scrive in CLAUDE.md
+  cosa ha fatto, COME l'ha fatto, quali ERRORI ha commesso, quanto manca con la
+  formula §7.4, cosa ha deciso e lasciato aperto, e il punto di ripresa. Un lavoro
+  non registrato è perso.
 
-  REGOLA 1 — Il resoconto è parte del lavoro. Ogni sessione deve scrivere in
-  CLAUDE.md cosa ha fatto, COME l'ha fatto, quali errori ha commesso, quanto manca
-  con la formula §7.4, cosa ha deciso e lasciato aperto, e il punto esatto di
-  ripresa. Un lavoro non registrato è un lavoro perso.
+  MANDATO DI TECHNICAL LEAD (decisione del proprietario, 2026-08-19)
+  Alla conclusione della pianificazione la leadership operativa passa a CLAUDE:
+  codice, branch e PR, coordinamento di Gemini e Grok, suddivisione in task
+  verificabili, gate di test/build/typecheck/sicurezza, integrazione, coerenza
+  fra codice/documenti/packet/BACKLOG. ChatGPT resta SUPERVISORE ESTERNO con
+  potere di rifiuto su governance, hash e ammissibilita' dei packet.
+  NON E' UNA DEROGA: restano tutti i vincoli, in particolare "accepted_weight
+  non si muove senza revisione indipendente", nemmeno da Technical Lead e
+  nemmeno sui propri task. Non sono MAI reviewer di un mio task.
+  L'INNESCO DEVE ESSERE MISURABILE: due definizioni in CLAUDE.md PARTE 3-bis §3,
+  la decisione su quale adottare e' di Christian. Finche' non la prende, il
+  mandato e' SOSPESO e si continua come specialista.
+  Dettaglio completo, primi cinque atti e rischio dichiarato: CLAUDE.md PARTE 3-bis.
+
+  REGOLA 3 — A FINE LAVORO SPIEGA A CHRISTIAN, IN ITALIANO, DA PERSONA.
+  Ordine del proprietario (2026-08-18): "in modo umano e no AI slop, scrivi che
+  hai fatto e le tue riflessioni, perche' altrimenti io non capisco".
+  Alla fine del messaggio in chat, non in un file: cos'era rotto e perche'
+  contava, cosa hai fatto, cosa hai sbagliato detto come lo direbbe una persona,
+  cosa pensi davvero, e in una riga cosa serve da lui.
+  NON: muri di hash/SHA/exit code, grassetto ovunque, frasi che suonano bene e
+  non dicono niente, entusiasmo per lavoro non verificato.
+  Criterio: deve capirlo leggendolo UNA volta. Se chiede "quindi in pratica?",
+  e' scritta male. Dettaglio in CLAUDE.md PARTE 1.
 
   REGOLA 2 — A fine di OGNI task, non a fine sessione, aggiorna ED ESTENDI il
-  resoconto sia in CLAUDE.md sia in TASKCLAUDE.md, poi committa e pusha. Estensione,
-  non sostituzione: il log storico non si riscrive né si accorcia. La storia degli
-  errori è la parte più utile del file. E verifica il push leggendo l'exit code
-  del comando vero — mai attraverso una pipe (`git push | tail` mente).
+  resoconto in CLAUDE.md E in TASKCLAUDE.md, poi committa e pusha. Estensione, mai
+  riscrittura: la storia degli errori è la parte più utile del file.
 
-COSE DA NON FARE:
+COSE DA NON FARE MAI:
 
-  - non ripartire da zero e non rifare lavoro già fatto: controlla prima la
-    tabella di stato in CLAUDE.md, e "NON RIFARE" nel RESUME_POINT;
-  - non assegnarti peso da solo: completed_weight resta 0 finché un reviewer non
-    accetta, nemmeno per le tue stesse proposte (UJ-SEC-003 è 0, non 16/16);
-  - non inventare percentuali né ETA: senza velocity su due cicli, ETA UNKNOWN;
-  - non dichiarare test superati senza averli eseguiti;
-  - non invadere i portafogli delle altre IA (la mappa dei confini è in CLAUDE.md).
-    In particolare: non modificare core/, tools/, advisors/, bin/uj — è codice di
-    Grok, anche quando un fix è di una riga e la tentazione è forte;
-  - non abilitare crediti API né alcuna spesa: il budget incrementale è zero;
-  - non citare come verificato un artefatto che non hai davvero aperto o eseguito
-    (è il difetto F-001 che ho contestato a ChatGPT — non commetterlo mentre lo
-    correggi ad altri).
+  - non assegnarti peso: completed_weight resta 0 finché un REVIEWER non accetta.
+    0/76 è CORRETTO, non è un bug da sistemare;
+  - non inventare ETA o percentuali: senza velocity su due cicli, ETA UNKNOWN;
+  - non dichiarare test superati senza averli eseguiti in questa sessione;
+  - non citare come verificato un artefatto che non hai davvero aperto o eseguito;
+  - non leggere l'esito di un comando attraverso una PIPE: `git push | tail`
+    restituisce l'exit di tail. Vale per qualunque pipe, anche un grep innocuo;
+  - non abilitare crediti API né alcuna spesa. Se Claude Code propone di abilitare
+    crediti al raggiungimento del limite, la risposta è SEMPRE no: raggiungere il
+    limite è un BLOCKED legittimo, non un problema da risolvere spendendo;
+  - non invadere i portafogli altrui: core/, tools/, advisors/, bin/uj sono di
+    GROK; BACKLOG/PROGRESS/schemas/scripts sono di CHATGPT; Capability Registry e
+    memoria sono di GEMINI. Segnala, non correggere — salvo decisione esplicita
+    del proprietario.
 
 Comincia leggendo CLAUDE.md e dimmi cosa trovi nel RESUME_POINT prima di iniziare
 a lavorare.
@@ -111,53 +177,113 @@ a lavorare.
 
 ---
 
-## Versione breve
+## Stato del programma — dove trovarlo, non un numero da ricopiare qui
 
-Se hai fretta e la sessione ha già accesso alla repository:
+**Questa sezione elenca cose STABILI**: cosa sono i miei task, la natura dei due blocchi
+strutturali, le decisioni prese. **Non ripete numeri che cambiano di ora in ora** (quanti
+findings sono aperti, quante unità sono accettate, l'ordine di correzione) — quei numeri sono
+già duplicati in `CLAUDE.md`, e un numero duplicato in due file diverge sempre (è successo a
+questo stesso file: la versione precedente diceva ancora "fine sessione 4" mentre il programma
+era già sei sessioni avanti).
 
-```text
-Apri la repository carnascialichristian-wq/ultraJARVIS, branch
-claude/ultrajarvis-repo-analysis-li6vvj (ora identico a main). Sei CLAUDE nel
-programma ultraJARVIS.
+**Per lo stato vero, ORA, leggi il riquadro `⚡ STATO AL …` in cima al RESUME_POINT, in fondo a
+`CLAUDE.md`.** È l'unica fonte che aggiorno a ogni chiusura di lavoro. Se qualcosa qui sotto lo
+contraddice, vince il riquadro.
 
-Leggi CLAUDE.md per intero e applica le sue due regole primarie. Poi leggi
-TASKCLAUDE.md, gli handoff più recenti in docs/program/handoffs/ e le review in
-docs/program/reviews/ e docs/threat-models/. Il piano canonico è ora su main:
-docs/ULTRAJARVIS_UNIVERSAL_MASTER_PROMPT.md.
+### Il mio portafoglio: 8 task, 76 unità
 
-Prima di fidarti dello stato scritto, riesegui le prove dalla root (solo la mia
-suite, non i test Python di Grok):
-  npx tsc -p packages/contracts --noEmit
-  for f in tests/contracts/*.test.mjs; do node --test "$f"; done
-Atteso: 138/138.
+| Task | Peso | Reviewer designato |
+|---|---:|---|
+| UJ-RUN-001 — Runtime blueprint + contratti | 13 | Gemini |
+| UJ-SEC-001 — Threat model + approval policy | 13 | Grok |
+| UJ-SKL-001 — Skill Forge + sandbox | 13 | ChatGPT |
+| UJ-MCP-001 — ToolManifest + MCP admission | 8 | Gemini |
+| UJ-CLD-001 — Verifica accessi Claude | 8 | Gemini |
+| UJ-RCV-001 — Checkpoint/retry/recovery | 8 | ChatGPT |
+| UJ-REV-001 — Review del Program OS | 5 | Christian |
+| UJ-REV-002 — Security review Website Team | 8 | ChatGPT — `DEFERRED` a M10, non lavorabile |
 
-PRIMA di prendere un task, fai git fetch di tutti i branch e controlla se
-qualcuno ha consegnato dopo l'ultima scrittura del RESUME_POINT (trappola 11 in
-CLAUDE.md PARTE 7) — main si muove spesso.
+Tutti e sette i task lavorabili sono **consegnati**, ciascuno con un pacchetto di evidenza per
+criterio in `docs/program/packets/UJ-*-AC-EVIDENCE.md` (un controllo eseguito per ogni criterio,
+hash calcolati da `origin/main`). Se arriva un reviewer, non deve ricostruire niente: **non
+rifare quei pacchetti**. `0/76` accettato è CORRETTO finché nessun reviewer si esprime — non è
+un bug da sistemare.
 
-Poi prendi il task nel RESUME_POINT in fondo a CLAUDE.md e continua il lavoro,
-rispettando la Regola 2: a fine task aggiorna CLAUDE.md e TASKCLAUDE.md, committa
-e pusha, verificando l'esito del push con l'exit code vero.
-```
+### I due blocchi strutturali — la loro NATURA non cambia, anche se lo stato sì
 
----
+Sono entrambi di ChatGPT, misurati eseguendo il suo validatore, non dedotti:
+
+1. **Nulla, nel repository, applica una transizione di stato proposta.** Un `ResponsePacket`
+   valido propone `READY → REVIEW`, ma niente scrive `BACKLOG.json`. Quindi nessun
+   `ReviewResult` è importabile finché qualcuno non applica la transizione a mano o costruisce
+   lo script che lo fa. Dettaglio: `docs/program/reviews/UJ-REV-001-ADDENDUM-LEDGER-IMPORT-PATH.md`.
+2. **Il meccanismo delle delegation card è cablato a un insieme fisso di task**, non a una
+   regola generale ("ogni task READY con owner/reviewer validi"). Un task fuori da
+   quell'insieme, anche se pronto, non può avere una card e quindi mai un packet.
+   Dettaglio: `docs/program/reviews/UJ-REV-001-ADDENDUM-CARD-ISSUANCE-CEILING.md`.
+
+**Verifica lo stato ATTUALE di questi due** con `node scripts/audit-review-importability.mjs`:
+lo script produce candidati misurati sul commit corrente, non un numero congelato in un documento.
+
+### Lavoro di fondazione già fatto in sessione 6 — non ripartire da zero
+
+Il blueprint §21 specifica cinque sottosistemi che per cinque sessioni non avevano contratto
+(decomposizione DEC, selezione SEL, routing RTE, fallback FBK, conflitto CNF), e una demo
+end-to-end che per sei sessioni non era mai stata scritta. In sessione 6:
+
+- **La demo gira**: `packages/contracts/demo/mission-demo.mjs` (`node` diretto, dopo la build).
+  9 osservabili + 4 casi negativi, exit 0, costo zero.
+- **Tre dei cinque contratti esistono ed è NON RIFARLI**: `packages/contracts/src/routing/`
+  (RTE, §18), `packages/contracts/src/decomposition/` (DEC, §16),
+  `packages/contracts/src/selection/` (SEL, §17). Ciascuno con la propria suite di test FUORI
+  da `tests/contracts/` (`tests/routing/`, `tests/decomposition/`, `tests/selection/`), quindi
+  il conteggio congelato 140 resta invariato. **Restano solo FBK e CNF.**
+- **Esiste un gate di integrazione**: `bash scripts/integration-gate.sh` esegue typecheck,
+  build, le quattro suite di contratti, la demo, e i validatori del Council in un solo comando,
+  con ogni exit code letto dal comando vero. Usalo prima di dichiarare qualunque cosa verde.
+  **Non esegue `pytest`** di proposito: finché `FIX-11` non è applicato da Grok, la sua suite
+  Python sovrascrive `grok.md` (S-18).
+
+Tutti e tre i contratti nuovi, la demo e il gate sono **superficie separata**: non toccano i 15
+artefatti congelati della consegna di `UJ-RUN-001`, verificato a ogni passo ricalcolando gli
+hash. Se rileggi il codice e vedi `[demo]` in un commento, quel pezzo non ha ancora un contratto
+reale — controlla comunque nel Session Log di `CLAUDE.md` se non sia stato costruito da allora.
+
+### La security review su `main` (codice di Grok)
+
+È una campagna aperta, findings numerati progressivamente (`S-01`, `S-02`, …), ognuno con un
+comando di riproduzione. **La vista autorevole su TUTTI i findings è sempre la sezione più alta
+numerata "Stato consolidato" dentro `docs/threat-models/MAIN_IMPLEMENTATION_SECURITY_REVIEW.md`**
+— non fidarti di un numero di findings scritto altrove, incluso in questo file: cerca quella
+sezione e leggi la sua intestazione, che porta sempre la data. Le correzioni proposte a Grok
+sono in `docs/threat-models/GROK_FIX_LIST.md`, con una tabella di stato in cima e l'ordine di
+applicazione **verificato**, non asserito, in `docs/threat-models/FIX_ORDER_ANALYSIS_20260819.md`.
+
+**Decisione n. 7, APPROVATA dal proprietario**: `MODEL_PROVIDER` default `local`, nessuna
+chiamata pay-per-use implicita, fail-safe senza fallback al cloud. Verificata sul branch di
+lavoro. Se non sai se è già su `main`, controlla — non darlo per scontato in nessuna direzione:
+è stato vero e falso in sessioni diverse.
+
 
 ## Nota per Christian
 
-Tre cose che rendono questo prompt affidabile e che conviene non togliere:
+Quattro cose rendono questo prompt affidabile. Conviene non toglierle:
 
-1. **La verifica dell'hash.** Se qualcuno modifica il piano canonico, la sessione nuova
-   se ne accorge invece di lavorare su una versione diversa credendola quella giusta.
-2. **La riesecuzione dei test.** Il prompt dice esplicitamente di non fidarsi di ciò che
-   è scritto nei documenti. È l'unica difesa contro il caso in cui una sessione
-   precedente abbia dichiarato un risultato senza averlo prodotto.
-3. **Il controllo dei branch prima di prendere un task (trappola 11).** Aggiunto in
-   sessione 3 dopo che il RESUME_POINT si è rivelato scaduto due ore dopo essere stato
-   scritto, e main si è mosso tre volte in un pomeriggio mentre una sessione lavorava.
-   Un file che descrive lo stato non può sostituire un controllo dello stato reale.
+1. **La verifica dell'hash del piano.** Se qualcuno modifica il piano canonico, la sessione
+   nuova se ne accorge invece di lavorare su una versione diversa credendola quella giusta.
+2. **La riesecuzione dei test, con la riga di build.** In sessione 4 la ricetta senza build
+   ha prodotto 5 fallimenti su 5 e sembrava una regressione che non esisteva.
+3. **Il controllo dei branch prima di prendere un task (trappola 11).** Non ha mai dato esito
+   negativo: ha trovato la prima consegna di Gemini, due review che aspettavano me, e una
+   volta ha impedito di riscrivere un fix che esisteva già.
+4. **Il controllo dei ref prima di leggere un diff.** Due sessioni hanno tratto conclusioni
+   sbagliate confrontando contro il `main` locale invece che `origin/main`.
 
-**Aggiornamento di sessione 3:** il piano canonico è ora su `main` (punto 3 del testo
-sopra è già aggiornato), e il branch di lavoro di CLAUDE coincide con `main`. Se in futuro
-i due dovessero tornare a divergere — per esempio se CLAUDE riprendesse a lavorare su un
-branch separato prima di un nuovo merge — aggiorna la riga "branch" in cima al testo da
-incollare, e il punto 3 se il piano canonico dovesse spostarsi di nuovo.
+**Cosa aggiornare quando cambia qualcosa:** la riga del branch e l'hash del piano, qui sopra —
+sono le uniche due cose stabili che questo file dichiara direttamente. **La tabella dei task e i
+due blocchi strutturali restano**, perché cambiano di sessione in sessione, non di ora in ora;
+i numeri (findings aperti, unità accettate, percentuali) NON vanno mai scritti qui: vivono solo
+nel riquadro `⚡ STATO AL …` di `CLAUDE.md`, apposta per non riprodurre la stessa divergenza che
+questo file aveva accumulato fino a sessione 6 (diceva ancora "fine sessione 4" a sessione 6
+inoltrata). Se aggiorni la ricetta dei comandi, aggiornala **anche** nel RESUME_POINT in fondo a
+`CLAUDE.md`: in sessione 4 le due copie erano diverse e quella nel punto più letto era quella rotta.

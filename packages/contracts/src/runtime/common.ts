@@ -117,6 +117,33 @@ export function sideEffectWithin(child: SideEffectLevel, parent: SideEffectLevel
 }
 
 // ---------------------------------------------------------------------------
+// Injective encoding of a string tuple (error E6, generalised)
+// ---------------------------------------------------------------------------
+
+/**
+ * Joins `parts` into one string from which the original tuple is recoverable.
+ *
+ * A plain separator does NOT do this. Whatever byte is chosen, an element may
+ * contain it, and then two different tuples collapse onto the same string:
+ * `["a|b", "c"]` and `["a", "b|c"]` both become `"a|b|c"`. Whether that is
+ * reachable today depends on validation that may not exist — `ToolId`, `RunId`
+ * and friends are branded strings with no runtime check — so the encoding must
+ * not rely on it.
+ *
+ * This was first found as error E6, where a NUL byte was used as the separator
+ * in the idempotency key. Two consequences followed: colliding keys, and a
+ * source file that git and grep classify as BINARY, which silently removes it
+ * from every text-based audit of the repository.
+ *
+ * Length prefixing makes the encoding injective without depending on the
+ * alphabet of the inputs. It lives here, once, because the same mistake was
+ * made twice in two different files.
+ */
+export function encodeInjective(parts: readonly string[]): string {
+  return parts.map((part) => `${part.length}:${part}`).join("|");
+}
+
+// ---------------------------------------------------------------------------
 // Provenance and criteria
 // ---------------------------------------------------------------------------
 

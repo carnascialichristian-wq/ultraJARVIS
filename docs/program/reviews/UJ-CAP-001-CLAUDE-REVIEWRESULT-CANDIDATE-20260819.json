@@ -1,0 +1,117 @@
+{
+  "schema_version": "ultrajarvis.review-result/v1",
+  "review_id": "UJ-REVIEW-CAP-001-CLAUDE-20260819",
+  "created_at": "2026-08-19T09:40:00Z",
+  "repository": {
+    "full_name": "carnascialichristian-wq/ultraJARVIS",
+    "commit_sha": "0f1c536774aff39c349b89914d8d7184ba138834"
+  },
+  "task_id": "UJ-CAP-001",
+  "task_owner": "GEMINI",
+  "reviewer": {
+    "ai_id": "CLAUDE",
+    "product": "Claude Code in a remote execution environment; no metered API used, no provider account inspected"
+  },
+  "artifacts_reviewed": [
+    {
+      "ref": "docs/program/CAPABILITY_REGISTRY.md",
+      "sha256": "df73f85f2156109c76700bf2bf5d7b559727fade3478228178baafa37d0ce3fd"
+    },
+    {
+      "ref": "docs/program/CAPABILITY_REGISTRY.json",
+      "sha256": "45900e3595f186cb92ce199de095da3daaf782dc8e7cf319d44614c350be8ebe"
+    },
+    {
+      "ref": "docs/program/packets/UJ-RESPONSE-CAP-001-GEMINI-001.json",
+      "sha256": "a2a2c130fe52ca2ea1b4422e66315a92748c3e3c42fdb6ab58aed99c8f224bd7"
+    }
+  ],
+  "outcome": "FAIL",
+  "criteria": [
+    {
+      "criterion_id": "AC-01",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/CAPABILITY_REGISTRY.json",
+        "docs/program/CAPABILITY_REGISTRY.md"
+      ],
+      "note": "Four providers, 19 capabilities, access_path and access_mode present on 19 of 19. Status distribution recomputed from the JSON: HUMAN_BRIDGE 11, BLOCKED 4, UNKNOWN 3, PREVIEW 1, ACTIVE 0. G-004 is closed: the quarantined candidate marked four consumer web UIs ACTIVE against its own taxonomy; no capability is ACTIVE now, and the admission boundary states why."
+    },
+    {
+      "criterion_id": "AC-02",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/CAPABILITY_REGISTRY.json"
+      ],
+      "note": "Field subscription_vs_api_entitlement present on 19 of 19 with 15 distinct values, so the separation is made per capability rather than by one repeated sentence. Every paid API route outside the Google free tier is BLOCKED with its cause named: CAP-OAI-002, CAP-ANT-002, CAP-GGL-004, CAP-XAI-002."
+    },
+    {
+      "criterion_id": "AC-03",
+      "result": "PASS",
+      "evidence_refs": [
+        "docs/program/CAPABILITY_REGISTRY.json"
+      ],
+      "note": "Both clauses hold literally. Source and date: official_primary_url on 19 of 19 with 18 distinct URLs, verified_at_utc on 19 of 19. Unknowns not promoted: CAP-GGL-001, the only capability that would enable zero-cost automated work, stays UNKNOWN rather than being promoted, and its rate limits are now declared dynamic with the primary source cited. I reopened that source myself. See F-102: the fields are present but verified_at_utc is a constant that contradicts the freshness field on 11 records. That is a weakness of the evidence recorded as a finding, not grounds to reinterpret the criterion into a failure."
+    },
+    {
+      "criterion_id": "AC-04",
+      "result": "FAIL",
+      "evidence_refs": [
+        "docs/program/CAPABILITY_REGISTRY.json",
+        "docs/program/CAPABILITY_REGISTRY.md"
+      ],
+      "note": "Three of the four path classes named by AC-04 are governed on 19 of 19 records: paid via incremental_cost, billing-risk via billing_requirement, UI-automation via ui_automation_risk, each with a fallback field. The fourth, local-compute, has no field, no capability and no status. Case-insensitive search for local-compute, LOCAL_COMPUTE, local compute and on-device returns 0 across both artifacts. The word local does occur 8 times, always as a fallback destination, which is the defect: local compute is treated only as a safe refuge and never as a governed path. The registry's own policy_enforcement names zero heavy local inference as part of STRICT_ZERO_CARD, so the constraint is declared twice and instantiated nowhere. See F-103."
+    },
+    {
+      "criterion_id": "AC-05",
+      "result": "FAIL",
+      "evidence_refs": [
+        "docs/program/packets/UJ-RESPONSE-CAP-001-GEMINI-001.json"
+      ],
+      "note": "Four of the five clauses hold: the two artifact hashes are authentic when recomputed from the committed bytes, the packet proposes REVIEW, keeps accepted weight at 0 of 13, and its delta targets the right task. The first clause, that the packet is valid, is false at the declared commit: node scripts/validate-response-packet.mjs exits 1 with two errors, because source_commit_sha 3611b1b4 does not contain either artifact. Isolated by changing that one field and nothing else: the packet then validates PASS at exit 0. The root cause is upstream and is not GEMINI's: her delegation card on this branch declares read_ref 3611b1b4, and CHATGPT repinned the cards to 25b1b7d5 eight hours after this packet was written. See F-101."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "F-101",
+      "severity": "HIGH",
+      "description": "Blocking for AC-05 only, with no substantive risk. The ResponsePacket declares source_commit_sha 3611b1b400cf57b5021bab228a3de9470d6eca5c, at which neither cited artifact exists (git cat-file -e exits 128) and which is not reachable from origin/main (git merge-base --is-ancestor exits 1). Measured: validate-response-packet.mjs exits 1 with exactly two errors, both of this kind. Repinning that single field to a commit that contains the artifacts makes the same bytes validate PASS at exit 0. Root cause is upstream: the delegation card on GEMINI's branch declares read_ref 3611b1b4 and the old Markdown header carried Governing Commit 3611b1b4, so the value was inherited, not invented. CHATGPT corrected the cards at 2026-08-19 00:30, eight hours after this packet at 2026-08-18 16:13. This is the second measured casualty of that stale read_ref after UJ-RUN-001.",
+      "required_action": "GEMINI: set source_commit_sha to a commit that actually contains both artifacts, do not reuse 3611b1b4, then re-run node scripts/validate-response-packet.mjs on the packet and report the exit code. No registry content needs to change for this. CHATGPT: warn GEMINI and GROK together that specialist branches created before 4b63b94 still carry the stale read_ref, so the defect reproduces on any delivery from such a branch."
+    },
+    {
+      "finding_id": "F-102",
+      "severity": "HIGH",
+      "description": "verified_at_utc is the single constant 2026-08-18T13:35:00Z on all 19 capabilities, identical to the second and equal to the packet's own timestamp. A timestamp that never varies is a default, not an observation. The undeniable form: on the same record the freshness field contradicts it. The 8 Google records say Official documentation checked on 2026-08-18 and their timestamp is earned; the 11 non-Google records say Catalog entry from Gemini, not independently reverified in this correction, and still carry a verification timestamp. The document's own admission boundary agrees with the prose, describing the non-Google rows as catalog context, not acceptance evidence, so the defect is in one field rather than in the substance. Same structure as S-20 in GROK's code: a correct mechanism whose condition never varies.",
+      "required_action": "GEMINI: set verified_at_utc to null or UNKNOWN on the 11 records whose freshness says not independently reverified, and leave it unchanged on the 8 Google records where it is earned. This makes the registry more honest without removing any coverage."
+    },
+    {
+      "finding_id": "F-103",
+      "severity": "HIGH",
+      "description": "AC-04 names four path classes to be disabled or blocked with fallbacks. Three are governed on 19 of 19 records. The fourth, local-compute, is absent: no field, no capability, no status. This is not a reading error on my part, because the registry itself names the constraint twice and never instantiates it: policy_enforcement.description lists zero heavy local inference as part of STRICT_ZERO_CARD, and the ResponsePacket attests no_heavy_local_inference true. Operational consequence: a router built from this registry would send a heavy workload to local processing as the safe fallback and never meet a limit, because local compute appears only as a fallback destination in 8 records and never as a path with a status. Correction to my own earlier wording: in the previous verdict I wrote that local has zero occurrences, which was not exact.",
+      "required_action": "GEMINI: add one capability record, for example CAP-LOC-001, for heavy local inference, with status BLOCKED, the cause named as STRICT_ZERO_CARD heavy local inference, and an explicit fallback such as HUMAN_BRIDGE or light execution without a model. One record closes AC-04."
+    },
+    {
+      "finding_id": "F-104",
+      "severity": "MEDIUM",
+      "description": "The registry does not contain the surfaces the program actually runs on. Zero occurrences in both artifacts of Claude Code, claude-code, code.claude.com, Agent SDK, Gemini CLI and Codex. Anthropic is covered by four capabilities, Web UI, Messages API, Projects and MCP, and none of them is the execution surface of this program. Two measurable consequences. First, UJ-CLD-001, already delivered, holds a VERIFIED_FACT cited to the primary source that the Agent SDK requires API-key authentication and is therefore PAID_ONLY_DISABLED under Article 5, which is exactly the kind of row this registry exists to hold and needs importing rather than researching. Second, a reader asking how CLAUDE works at zero cost finds no answer, because the real path, Claude Code in HUMAN_BRIDGE mode, is not catalogued. This is F-004 of the previous round, still open and in wider form: that finding was closed by removing CLD-SDK-001 rather than classifying it.",
+      "required_action": "GEMINI: add two records, Claude Code as HUMAN_BRIDGE and Agent SDK as BLOCKED, citing docs/program/evidence/UJ-CLD-001-CAPABILITY-RECORDS.md as the source. The verification work is already done and does not need repeating; confidence 0.5 with that citation is acceptable."
+    },
+    {
+      "finding_id": "F-105",
+      "severity": "LOW",
+      "description": "The Routing rules section states that the registry keeps UJ-CAP-001 and UJ-GGL-001 at REVIEW with accepted weight 0/13. Measured in BACKLOG.json on origin/main, both tasks are READY. The intent is right and the weight half is correct, but an artifact that declares a ledger state the ledger does not hold becomes false as soon as the ledger moves. This is the defect class that cost me three rounds of reconciliation on UJ-RUN-001.",
+      "required_action": "GEMINI: split the sentence into measured status in BACKLOG.json and status proposed by the packet, as in docs/program/handoffs/HANDOFF-UJ-RUN-001.md section 5, instead of one sentence that conflates them."
+    }
+  ],
+  "policy_checks": {
+    "zero_cost": "PASS",
+    "data_class": "PASS",
+    "side_effect": "PASS",
+    "secret_handling": "PASS",
+    "consumer_ui_automation": "PASS"
+  },
+  "accepted_weight_before": 0,
+  "accepted_weight_after": 0,
+  "proposed_task_status": "REVIEW",
+  "next_action": "GEMINI applies the five corrections in section 8 of docs/program/reviews/UJ-CAP-001-CLAUDE-VERDICT-20260819.md, in order; corrections 1, 3 and 4 are the ones that close AC-05 and AC-04. CHATGPT supplies the missing ledger step: nothing in the repository applies a proposed status transition, so UJ-CAP-001 stays READY while its packet proposes REVIEW, and this ReviewResult is therefore not importable at validate-council-packets.mjs line 347. Accepted weight stays 0 of 13 in every case."
+}
