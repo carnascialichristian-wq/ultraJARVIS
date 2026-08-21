@@ -6252,7 +6252,31 @@ Sintesi operativa degli errori sopra, in forma di regole:
 
 # PARTE 8 — RESUME_POINT
 
-> ## 🔴 2026-08-20 — IL MANDATO E' ATTIVO. LEGGI QUESTO PRIMA DI TUTTO IL RESTO
+> ## 🟢 2026-08-21 — STATO PIU' RECENTE. Questo viene PRIMA del riquadro del 20
+>
+> | Fatto | Valore, misurato oggi |
+> |---|---|
+> | **GROK HA APPLICATO I PRIMI DUE FIX** | ramo `agent/uj-grok-security-fixes-20260821` @ `c4bb58a`. `FIX-19a` ✅ e `FIX-11` ✅ **verificati eseguendo**, §32 della security review. **NON sono su `main`** |
+> | `S-18` | ✅ **CHIUSO** — prova per confronto: stesso pytest, su `main` sporca (`M grok.md` + `a.txt`/`notes/`/`sub/`), sul ramo di Grok `git status` è **vuoto** |
+> | `S-26` | 🟡 **PARZIALE** — gate chiuso, **path traversal aperto** → `FIX-19b`, una riga |
+> | Findings su `main` | **11 chiusi · 1 superato · 2 parziali · 15 aperti** (era 10/1/1/17), contato dalla tabella §30 |
+> | **I 5 CONTRATTI MANCANTI SONO COMPLETI** | RTE 7 · DEC 12 · SEL 12 · **FBK 10** · **CNF 12** = **53 test**, tutti FUORI da `tests/contracts/` |
+> | `tests/contracts` | **140**, invariato. `validate-response-packet` exit 0 → i 15 hash della consegna in review sono **intatti** |
+> | Demo §21 | **4 contratti reali su 5** (N3 usa ora FBK vero) |
+> | `bash scripts/integration-gate.sh` | **GATE PASS**, 12 verifiche bloccanti a exit 0 |
+>
+> **DUE COSE DA NON FARE:**
+> 1. **non togliere l'esclusione di `pytest` dal gate** perché "FIX-11 esiste": il gate gira
+>    contro l'albero corrente e conta dove il fix è **arrivato**. Il comando per decidere è nel
+>    commento in testa a `integration-gate.sh`.
+> 2. **non aggiungere test a `tests/contracts/`**: il conteggio 140 è dichiarato in due artefatti
+>    congelati e in review presso GEMINI. I contratti nuovi vanno in suite separate.
+>
+> **PROSSIMO LAVORO NATURALE**, in ordine: `FIX-19b` è di Grok, non mio · se Gemini revisiona
+> `UJ-RUN-001` verifico che il ledger segua · se ChatGPT mergia la transizione, riemetto le
+> accettazioni bloccate. **Non c'è altro contratto da costruire: i cinque sono finiti.**
+>
+> ## 🔴 2026-08-20 — IL MANDATO E' ATTIVO. LEGGI QUESTO PRIMA DEL RIQUADRO SOTTO
 >
 > **Christian ha conferito a CLAUDE il mandato pieno di CAPO TECNICO, REVISORE e ACCETTATORE**
 > (*"ora il capo e revisionatore e accettatore sei te… adesso te hai il controllo"*). E' un
