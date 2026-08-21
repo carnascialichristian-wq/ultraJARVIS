@@ -1,6 +1,6 @@
 # STATUS v0.1
 
-Snapshot date: 2026-08-17. Numeric source: `BACKLOG.json` on the same ref.
+Snapshot date: 2026-08-20. Numeric source: `BACKLOG.json` on the same ref.
 
 ## Executive status
 
@@ -11,7 +11,7 @@ Snapshot date: 2026-08-17. Numeric source: `BACKLOG.json` on the same ref.
 | Meta bootstrap only | 26 / 29 | 89.66% | 3 | HIGH: PR #1 and its remaining gate are observable |
 | Lifetime ultraJARVIS program | UNKNOWN | N/A | UNKNOWN | Correctly unbaselined and extensible |
 
-`UJ-INT-001` and `UJ-INT-006` are submitted for review with 21 units of produced
+`UJ-INT-001`, `UJ-INT-006`, and `UJ-RED-001` are submitted for review with 34 units of produced
 scope, but they contribute zero accepted weight until their named independent
 reviews pass.
 

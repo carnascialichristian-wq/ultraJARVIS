@@ -12,11 +12,11 @@
     "commit_sha": "25b1b7d53ff5bc4b05348453ebb704aba3a88630"
   },
   "title": "M0 first specialist council cycle",
-  "objective": "Collect four distinct, schema-valid specialist artifacts needed to review the Program OS and unlock evidence-backed architecture synthesis without paid APIs or consumer UI automation.",
+  "objective": "Collect schema-valid specialist artifacts needed to review the Program OS, security model, and provider capabilities without paid APIs or consumer UI automation.",
   "non_goals": [
     "Do not merge PR #1 or write directly to main.",
     "Do not enable billing, paid APIs, production infrastructure, or external messages.",
-    "Do not synthesize architecture v1 before all four specialist tasks are at least REVIEW.",
+    "Do not synthesize architecture v1 before the original four specialist tasks are at least REVIEW.",
     "Do not let one AI impersonate or complete another AI's task."
   ],
   "inputs": [
@@ -103,19 +103,33 @@
       "criterion_id": "SC-05",
       "text": "All accepted synthesis claims preserve source response, artifact hash, and unresolved dissent.",
       "verification": "A later SynthesisPacket passes deterministic reconciliation; this mission does not self-declare that result."
+    },
+    {
+      "criterion_id": "SC-06",
+      "text": "Claude returns UJ-SEC-001 with a threat model, executable approval policy, and Constitution critique.",
+      "verification": "Importer admits the packet and Grok can independently review it."
+    },
+    {
+      "criterion_id": "SC-07",
+      "text": "Claude returns UJ-CLD-001 with an official-source access and automation capability matrix.",
+      "verification": "Importer admits the packet and Gemini can independently review it."
     }
   ],
   "assigned_task_ids": [
     "UJ-RUN-001",
     "UJ-CAP-001",
     "UJ-GGL-001",
-    "UJ-RED-001"
+    "UJ-RED-001",
+    "UJ-SEC-001",
+    "UJ-CLD-001"
   ],
   "delegation_card_ids": [
     "UJ-CARD-RUN-001-CLAUDE",
     "UJ-CARD-CAP-001-GEMINI",
     "UJ-CARD-GGL-001-GEMINI",
-    "UJ-CARD-RED-001-GROK"
+    "UJ-CARD-RED-001-GROK",
+    "UJ-CARD-SEC-001-CLAUDE",
+    "UJ-CARD-CLD-001-CLAUDE"
   ],
   "deadline": null,
   "approval_policy_ref": "docs/program/GOVERNANCE.md#pull-request-gate",

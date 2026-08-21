@@ -287,3 +287,15 @@ conflitto va registrato, non eliminato.
 - Le quattro task specialistiche restano READY 0/13, ma il BACKLOG ora replica AC-01..AC-05 delle card. Validator aggiornato per bloccare future divergenze.
 - Nessuna risposta specialistica viene auto-accettata: Claude resta BLOCKED; lo snapshot Grok v8 non è il packet UJ-RED-001.
 - Resume: inviare le card corrette e attendere packet schema-validi con prove verificabili.
+
+
+### 2026-08-21 — ChatGPT/Codex — transizioni Program OS e verifica UJ-SEC-001
+
+- Autorizzazione Christian: aggiornare e mergiare la PR #19, trasformare la transizione manuale in script, correggere AC-02 di UJ-INT-001 ed eseguire i tre comandi UJ-SEC-001.
+- Head remota pubblicata prima del merge: `704d8efaeb121567088be3106235e827470b18c1` sulla PR #19; il tree remoto `1ff8ebd0d5ff17e6e497ccc4ec8a0adf29105ec4` coincide con il tree locale verificato.
+- Transizione: `scripts/apply-program-transition.mjs` è dry-run per default; `--apply` richiede `--confirm-task`, verifica schema/pin/hash, scrive atomicamente BACKLOG+STATUS, esegue i due gate e fa rollback su errore. Nessuna azione GitHub è incorporata nello script.
+- Regressioni: intake ReviewResult 7/7 PASS; transizione 5/5 PASS, incluso un vero apply READY→REVIEW a 0/13 in una worktree usa-e-getta; Program OS PASS (43 task, baseline 311, totale nonzero 340, accettato 26); Council PASS (5 schemi, 1 missione, 6 card); discovery card 5/5 task READY eleggibili coperti.
+- Card: rimosso il tetto cablato a quattro task e aggiunte le card UJ-SEC-001 e UJ-CLD-001. Lo snapshot della card resta immutabile READY/0; il ledger vivo può avanzare senza invalidarla.
+- UJ-INT-001 AC-02 ora distingue la baseline iniziale nominata 311 dal totale corrente nonzero 340.
+- UJ-SEC-001: i tre comandi richiesti sono stati rieseguiti e passano: typecheck exit 0, build exit 0, approval-policy 28/28. Il ReviewResult Grok della PR #22 non è importabile: 11 errori reali (schema, finding_id, campo extra, task ancora READY e prova assente sul ref). Resta quindi READY 0/13; UJ-MCP-001 e UJ-SKL-001 restano BLOCKED. Nessun peso è stato inventato.
+- Prossimo gate: Claude produce un ResponsePacket UJ-SEC-001 usando la nuova card; Grok corregge e ripubblica il ReviewResult con gli hash/schema canonici. Solo allora lo script può applicare REVIEW e una successiva accettazione valida.

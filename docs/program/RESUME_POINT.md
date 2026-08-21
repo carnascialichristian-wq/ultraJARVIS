@@ -1,61 +1,61 @@
-# RESUME_POINT — UJ-INT-001 + UJ-INT-006
+# RESUME_POINT — program transitions + UJ-SEC-001 gate
 
-## Repository checkpoint
+Snapshot prepared: 2026-08-21.
+
+Before acting, read `AGENTS.md`, `gpt.md`, `taskgpt.md`, the current
+remote ref, and `docs/program/BACKLOG.json`. Append the measured outcome to
+both continuity ledgers before ending the next repository session.
+
+## Remote checkpoint before the authorized merge
 
 - Repository: `carnascialichristian-wq/ultraJARVIS`
-- Branch: `agent/ultrajarvis-master-prompt-v1`
-- Pull request: #1 (draft)
-- Immutable Council contract commit: `3611b1b400cf57b5021bab228a3de9470d6eca5c`
-- Expected state after this package: UJ-INT-001 `REVIEW` at 0/13 and
-  UJ-INT-006 `REVIEW` at 0/8
-- Canonical next numeric source: `docs/program/BACKLOG.json`
+- Target: `main`
+- Main observed before merge: `27b767309090adf77778575fe22840a1584355aa`
+- Pull request: #19, draft/open when this checkpoint was written
+- Pinned PR head: `704d8efaeb121567088be3106235e827470b18c1`
+- Pinned PR tree: `1ff8ebd0d5ff17e6e497ccc4ec8a0adf29105ec4`
+- Christian explicitly authorized the merge. The next session must re-read GitHub
+  and record the actual merge commit; do not infer it from this file.
 
-Replace the commit placeholder below with the observed remote commit when
-starting the next session; do not infer it from chat:
+## What the PR head contains
 
-`ULTRAJARVIS_HEAD=<read branch HEAD from GitHub>`
+- UJ-RED-001 manual ledger transition: `READY -> REVIEW`, still `0/13`.
+- `scripts/apply-program-transition.mjs`: dry-run by default; explicit
+  `--apply --confirm-task`; schema, identity, commit and artifact-hash gates;
+  atomic BACKLOG/STATUS write; validator check and rollback.
+- Program transition regression: 5 PASS, including an isolated real apply.
+- Dynamic mission/card discovery; six valid cards, including UJ-SEC-001 and
+  UJ-CLD-001; all five eligible READY tasks have a card.
+- UJ-INT-001 AC-02 distinguishes the named 311 baseline from the current
+  nonzero tracked total of 340.
 
-## Exact next-session command
+## Verification at the pinned PR tree
 
-> Read the full canonical prompt, `AGENTS.md`, `gpt.md`, `taskgpt.md`, and every
-> artifact indexed by `docs/program/README.md` at `ULTRAJARVIS_HEAD`. Reconcile
-> the branch with `docs/program/BACKLOG.json`. Run
-> `node scripts/validate-program-os.mjs` and
-> `node scripts/validate-council-packets.mjs`, then
-> `node scripts/test-review-result-intake.mjs`. Do not change accepted weight.
-> If a ReviewResult is supplied, stage it as an untrusted candidate and run
-> `node scripts/validate-council-packets.mjs --review-result <candidate.json>
-> --expected-commit <ULTRAJARVIS_HEAD>` before considering any ledger delta;
-> read `docs/program/REVIEW_RESULT_IMPORT.md` and preserve a failed candidate as
-> quarantine evidence, not a backlog change.
-> If a specialist ResponsePacket is supplied, freeze its bytes/hash and apply
-> every admission stage in `COUNCIL_IMPORT_AND_MERGE.md`; invalid output is
-> quarantined/rejected, never guessed. Do not start UJ-INT-002 until UJ-RUN-001,
-> UJ-CAP-001, UJ-GGL-001, and UJ-RED-001 are each at least REVIEW. If no valid
-> response exists, keep UJ-INT-001 and UJ-INT-006 in REVIEW and transfer exactly
-> one review request or ready card to its named target through HUMAN_BRIDGE.
-> Before ending the session, append the evidence-based resoconto to both
-> `gpt.md` and `taskgpt.md`, publish it to the working branch, and update this
-> resume point if the next concrete action changes. Grok must return the exact
-> append blocks even when it has no direct GitHub write access.
+- `node scripts/validate-program-os.mjs`: PASS, 43 tasks, baseline 311,
+  tracked nonzero 340, accepted 26 (meta-bootstrap only).
+- `node scripts/validate-council-packets.mjs`: PASS, 5 schemas, 1 mission,
+  6 cards.
+- `node scripts/test-review-result-intake.mjs`: PASS, 7 cases.
+- `node scripts/test-program-transition.mjs`: PASS, 5 cases.
+- `node scripts/test-delegation-card-discovery.mjs`: PASS.
+- UJ-SEC-001 commands: typecheck PASS, build PASS, approval policy 28/28 PASS.
 
-## Prepared next actions
+## UJ-SEC-001 remains blocked from acceptance
 
-| Actor | Task | Immediate action |
-|---|---|---|
-| ChatGPT | UJ-INT-001 + UJ-INT-006 | verify remote tree, import only valid packets, keep 0/13 and 0/8 until reviews |
-| Claude | UJ-INT-006 review / UJ-RUN-001 | send `prompts/review-requests/UJ-INT-006-CLAUDE.md`; then use `UJ-RUN-001-CLAUDE.json` for production |
-| Gemini | UJ-CAP-001 + UJ-GGL-001 | use the two separate Gemini cards and return separate ResponsePackets |
-| Grok | UJ-INT-001 review / UJ-RED-001 | send `prompts/review-requests/UJ-INT-001-GROK.md`; then use `UJ-RED-001-GROK.json` for falsification |
-| Christian | UJ-META-002 | accept/amend the four protected PR decisions; do not merge before review gates |
+The Grok ReviewResult on PR #22 is not importable: the real intake reports
+11 errors, including schema violations, invalid finding IDs, an extra field,
+the task still being READY, and an evidence ref absent at its pinned commit.
+It also proposes `accepted_weight_after: 0`. Therefore UJ-SEC-001 remains
+`READY 0/13`; UJ-MCP-001 and UJ-SKL-001 remain dependency-blocked.
 
-No deployment, billing, account creation, production write, message send, or
-destructive action is pending.
+## Exact next gate
 
+1. Claude uses `prompts/delegation-cards/UJ-SEC-001-CLAUDE.json` to publish a
+   ResponsePacket that proposes `READY -> REVIEW` with weight unchanged.
+2. Grok republishes a schema-valid ReviewResult with canonical 64-hex artifact
+   hashes and no extra fields.
+3. ChatGPT previews each transition with `apply-program-transition.mjs` and
+   applies it only when all pinned checks pass.
 
-## Latest remote reconciliation — 2026-08-18 — cloud bridge STRICT_ZERO candidate
-
-- Main di partenza: 6af4a3721ab0d7f3272fd6e4e872b1331da99aa5. La branch agent/strict-zero-cloud-bridge-20260818 è una candidate PR separata e non modifica main.
-- Il finding è il percorso OpenAI/pay-per-use presente nel cloud_bridge originale; la candidate lo blocca e limita il fallback a endpoint loopback.
-- Test e review note sono pubblicati, ma l'esecuzione runtime resta da fare in un checkout con dipendenze. Nessun peso, status backlog o task acceptance cambia.
-- Prossimo comando: verificare la candidate con test reali, poi attendere review Claude/Grok; in parallelo resta aperto l'intake Gemini CAP/GGL.
+No paid API, billing, consumer UI automation, secret access, deployment,
+branch deletion, or accepted-weight increase is authorized by this checkpoint.
