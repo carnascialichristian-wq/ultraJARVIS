@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
-  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260819-REVIEW-R6",
+  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260819-REVIEW-R7",
   "created_at": "2026-08-19T08:32:58Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "b2b32733e8db7394fbc0a7f0503bb2795f3b4821",
+  "source_commit_sha": "caa14a307f99401158ccece141d996ae9a519850",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -31,7 +31,7 @@
   ],
   "task_id": "UJ-RUN-001",
   "status": "REVIEW",
-  "executive_delta": "REVIEW. The blocking condition is resolved and every admissibility clause is verified by execution on origin/main: the delegation card exists at its own read_ref 25b1b7d53ff5, that ref is reachable from origin/main, the four pinned inputs match 4 of 4, validate-council-packets.mjs passes at exit 0, the card's acceptance criteria equal those in BACKLOG.json (AC-01..AC-05), and the task is READY with reviewer GEMINI. CHATGPT got there in three commits: 4b63b94 repinned the read_ref, 6ba3a2b restored the sixteen input hashes that the same repin had replaced with values matching nothing, and 27b7673 closed both validator findings by removing the canonical-plan exemption from the integrity check and computing hashes at the pinned ref rather than from the working tree. The delivered work is byte-identical to the BLOCKED rounds apart from the status declarations, which live in four places and all moved in one commit. REVIEW is not acceptance: accepted weight stays 0/13 until GEMINI rules.",
+  "executive_delta": "REVIEW. The blocking condition is resolved and every admissibility clause is verified by execution on origin/main: the delegation card exists at its own read_ref 25b1b7d53ff5, that ref is reachable from origin/main, the four pinned inputs match 4 of 4, validate-council-packets.mjs passes at exit 0, the card's acceptance criteria equal those in BACKLOG.json (AC-01..AC-05), and the task is READY with reviewer GEMINI. CHATGPT got there in three commits: 4b63b94 repinned the read_ref, 6ba3a2b restored the sixteen input hashes that the same repin had replaced with values matching nothing, and 27b7673 closed both validator findings by removing the canonical-plan exemption from the integrity check and computing hashes at the pinned ref rather than from the working tree. The delivered work is byte-identical to the BLOCKED rounds apart from the status declarations, which live in four places and all moved in one commit. REVIEW is not acceptance: accepted weight stays 0/13 until GEMINI rules. HASH CHANGE NOTICE: common.ts was modified in this session to close S-28, a fail-open in the limit-monotonicity checks discovered while writing T-SEC-1. The packet is reissued at the commit that contains the fix; exactly one artifact hash changed, which is the count of files touched. The reviewer should review the fixed version, not the previously pinned one.",
   "facts": [
     {
       "claim": "The delegation card is absent at its own declared read_ref. `git cat-file -e 3611b1b4:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json` fails; the card enters the history at d48e1e8519a8d7af90ea44e770f0db7fd3938fb3, twelve minutes after 3611b1b4.",
@@ -176,6 +176,12 @@
       "classification": "EXPERIMENT_RESULT",
       "source_ref": "recomputation of all fifteen hashes at both source commits; npx tsc; node --test",
       "verified_at": "2026-08-19T08:32:58Z"
+    },
+    {
+      "claim": "S-28, found and closed in this session: the monotonicity checks were fail-open. `rankOf` used `indexOf`, which returns -1 outside the domain, and `-1 <= n` holds for every n, so the functions that impose the limit ceiling admitted whatever they did not recognise. Measured before the fix: autonomyWithin(\"L5\",\"L2\") was true, defeating this blueprint's own claim that L5 is unreachable by a manifest. A manifest is JSON and JSON arrives as strings, so the type system did not survive the wire. The same indexOf-as-rank shape existed at five sites; four were fail-open and were corrected in one place, and the fifth (resolveCostClass) was already fail-closed and serves as the positive control. Regression tests in tests/threat-model/prompt-injection.test.mjs, wired into the integration gate as blocking.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "node --test tests/threat-model/prompt-injection.test.mjs (T-SEC-1.C5, C6, C7)",
+      "verified_at": "2026-08-21T18:00:00Z"
     }
   ],
   "assumptions": [
@@ -233,7 +239,7 @@
     },
     {
       "ref": "packages/contracts/src/runtime/common.ts",
-      "sha256": "86baa7e4050a252f5d4650be35753585ae4f1bd3733691a8b4ba31ef70919c51",
+      "sha256": "808e8ce664d15c192077408b363ca1ec1f7431c54325f8859044d3aafea88b46",
       "media_type": "application/typescript",
       "data_class": "C1",
       "summary": "Runtime contract module 'common': provider-neutral TypeScript types compiled under strict mode."
@@ -350,7 +356,7 @@
       "24 of 24 requirements mapped to a section",
       "branch containment: agent/uj-run-001-blueprint-20260818 only",
       "runtime-invariants: 36 tests, 36 pass, 0 fail, run from the repository root on the file byte-identical to the committed blob",
-      "exactly 4 of 15 artifact hashes changed between 79408449 and a7e03e97: the handoff, the blueprint, packages/contracts/src/runtime/index.ts and packages/contracts/package.json — the four artifacts that carried a superseded state, and no others",
+      "exactly 4 of 15 artifact hashes changed between 79408449 and a7e03e97: the handoff, the blueprint, packages/contracts/src/runtime/index.ts and packages/contracts/package.json \u2014 the four artifacts that carried a superseded state, and no others",
       "no occurrence of a superseded branch, status or test count remains in a position that presents it as current; every surviving mention sits in an explicitly labelled history section or in a sentence that states the correction",
       "two read_ref candidates identified that satisfy both clauses: 3cbae5c1 and the main tip 25b1b7d5",
       "read_ref defect closed: 4 of 4 cards contain themselves at their declared read_ref and it is reachable from origin/main",
@@ -370,7 +376,7 @@
       "classification": "INTERNAL_WRITE",
       "description": "Artifacts committed to the CLAUDE working branch only. No write to main, no merge, no deployment, no external call.",
       "approval_ref": null,
-      "idempotency_key": "UJ-IDEMP-RUN-001-CLAUDE-RESPONSE",
+      "idempotency_key": "UJ-IDEMP-RUN-001-CLAUDE-RESPONSE-REVIEW-R7",
       "proof_ref": "docs/program/handoffs/HANDOFF-UJ-RUN-001.md"
     }
   ],
@@ -406,6 +412,14 @@
       "trigger": "Any of the four cards is used as-is while the sixteen pins are wrong.",
       "mitigation": "Closed by 6ba3a2b; the canonical-plan exemption was removed by 27b7673, so the gate now covers all four inputs.",
       "owner": "CHATGPT"
+    },
+    {
+      "risk_id": "R-028",
+      "event": "[S-28] A value outside a closed domain reaching the contracts from JSON, a manifest or an envelope. Closed for the five known sites; the shape can recur wherever a new ordered domain is introduced.",
+      "severity": "HIGH",
+      "trigger": "A new ordered vocabulary is added and ranked with a bare indexOf.",
+      "mitigation": "isInDomain / rankAsChild / rankAsParent live in one place in runtime/common.ts and are the only sanctioned way to rank a closed domain.",
+      "owner": "CLAUDE"
     }
   ],
   "task_ledger_delta": [

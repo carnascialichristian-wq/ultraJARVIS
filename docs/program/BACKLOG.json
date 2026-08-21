@@ -233,7 +233,7 @@
       "acceptance_criteria": [
         {
           "criterion_id": "AC-01",
-          "text": "All twelve deliverable groups in master prompt §39.1 exist as repository artifacts.",
+          "text": "All twelve deliverable groups in master prompt \u00a739.1 exist as repository artifacts.",
           "state": "PENDING",
           "proof_refs": [
             "docs/program/PROJECT_STATE.md",
@@ -883,7 +883,7 @@
         },
         {
           "ref": "packages/contracts/src/runtime/common.ts",
-          "hash": "sha256:86baa7e4050a252f5d4650be35753585ae4f1bd3733691a8b4ba31ef70919c51"
+          "hash": "sha256:808e8ce664d15c192077408b363ca1ec1f7431c54325f8859044d3aafea88b46"
         },
         {
           "ref": "packages/contracts/src/runtime/depth-guard.ts",
@@ -931,7 +931,7 @@
         },
         {
           "ref": "docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json",
-          "hash": "sha256:d4ea360019461c5f1d763cec5310d15ca3d565d69b6375be9874076334830f72"
+          "hash": "sha256:41d41fee7ec92fc52b4532795c1a8520aa31646303555e0a1c90fee9cf104919"
         }
       ],
       "data_class": "C1",
@@ -990,7 +990,7 @@
       "proof": [
         {
           "ref": "docs/threat-models/THREAT_MODEL.md",
-          "hash": "sha256:f3f86cb5544ba690d48a5c22b6410d726737b966cb92a86a3d1533215c9e5435"
+          "hash": "sha256:007dd02fb029f5f47623d6ebcd7e30977f2b61512db926f2c7c5473b0e6f262f"
         },
         {
           "ref": "docs/constitution/APPROVAL_POLICY.md",
@@ -998,7 +998,7 @@
         },
         {
           "ref": "packages/contracts/src/policy/approval.ts",
-          "hash": "sha256:3042f7ff56bab77df566d4060ef2ebf756187f61e3dfab224bc1dce9cc6443f4"
+          "hash": "sha256:3d876cdc725b4f93ac0d7e05608df5f1a202f933a73f13101ccaa9f145b8697a"
         },
         {
           "ref": "tests/contracts/approval-policy.test.mjs",
@@ -1018,7 +1018,7 @@
         },
         {
           "ref": "docs/program/packets/UJ-RESP-SEC-001-CLAUDE.json",
-          "hash": "sha256:f2166f3fdd16890ffe086a4212a2c72a72904661df0abb97c4c098570afecffc"
+          "hash": "sha256:81159e9d7dd4fd9842fa1d9f1f5ea0de54a8fb78b4e05a7998c5394ee5916b1f"
         }
       ],
       "data_class": "C1",
@@ -1255,7 +1255,7 @@
         },
         {
           "ref": "docs/program/packets/UJ-RESP-CLD-001-CLAUDE.json",
-          "hash": "sha256:689cbd533c414e19e70c5121997e76810373f80f729badead5bcd28688aab830"
+          "hash": "sha256:d708bdc74511dfc562c56d6e0c4964679b0e181b2698e197f8bb2dd7fdf84b28"
         }
       ],
       "data_class": "C1",

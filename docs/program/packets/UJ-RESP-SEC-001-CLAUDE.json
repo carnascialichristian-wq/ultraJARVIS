@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
-  "response_id": "UJ-RESPONSE-SEC-001-CLAUDE-20260821-REVIEW-R1",
+  "response_id": "UJ-RESPONSE-SEC-001-CLAUDE-20260821-REVIEW-R2",
   "created_at": "2026-08-21T17:30:00Z",
   "card_id": "UJ-CARD-SEC-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "7d027edce8cd4ebf7934c53a9e539a910435bf1e",
+  "source_commit_sha": "caa14a307f99401158ccece141d996ae9a519850",
   "capabilities_actually_used": [
     {
       "capability": "Repository read and write at a pinned commit",
@@ -26,7 +26,7 @@
   ],
   "task_id": "UJ-SEC-001",
   "status": "REVIEW",
-  "executive_delta": "REVIEW, accepted weight 0/13 unchanged. This is the first ResponsePacket for UJ-SEC-001: it could not exist before because CHATGPT had not issued the delegation card, which is the ceiling GROK named as point 4 of his review. The card now exists on main, so the packet is representable. Two of the five conditions GROK attached to weight acceptance are discharged (card issuance, and the integrator running the verification commands: integration-gate.sh returns GATE PASS with 12 blocking checks at exit 0 on main @ 925ea1d). Three remain open, and the first of them is a real gap in my own deliverable: the threat-model tests T-SEC-1 are still declared unimplemented by THREAT_MODEL.md itself. I do not propose weight.",
+  "executive_delta": "REVIEW, accepted weight 0/13 unchanged. This is the first ResponsePacket for UJ-SEC-001: it could not exist before because CHATGPT had not issued the delegation card, which is the ceiling GROK named as point 4 of his review. The card now exists on main, so the packet is representable. Two of the five conditions GROK attached to weight acceptance are discharged (card issuance, and the integrator running the verification commands: integration-gate.sh returns GATE PASS with 12 blocking checks at exit 0 on main @ 925ea1d). Three remain open, and the first of them is a real gap in my own deliverable: the threat-model tests T-SEC-1 are still declared unimplemented by THREAT_MODEL.md itself. I do not propose weight. HASH CHANGE NOTICE: approval.ts was modified in this session to close S-28, a fail-open in the limit-monotonicity checks discovered while writing T-SEC-1. The packet is reissued at the commit that contains the fix; exactly one artifact hash changed, which is the count of files touched. The reviewer should review the fixed version, not the previously pinned one.",
   "facts": [
     {
       "claim": "GROK issued an independent review of UJ-SEC-001 with outcome PASS_WITH_ACTIONS, marking AC-01 and AC-02 as PASS while keeping accepted_weight at 0.",
@@ -63,6 +63,12 @@
       "classification": "VERIFIED_FACT",
       "source_ref": "docs/threat-models/THREAT_MODEL.md",
       "verified_at": "2026-08-21T17:30:00Z"
+    },
+    {
+      "claim": "S-28, found and closed in this session: the monotonicity checks were fail-open. `rankOf` used `indexOf`, which returns -1 outside the domain, and `-1 <= n` holds for every n, so the functions that impose the limit ceiling admitted whatever they did not recognise. Measured before the fix: autonomyWithin(\"L5\",\"L2\") was true, defeating this blueprint's own claim that L5 is unreachable by a manifest. A manifest is JSON and JSON arrives as strings, so the type system did not survive the wire. The same indexOf-as-rank shape existed at five sites; four were fail-open and were corrected in one place, and the fifth (resolveCostClass) was already fail-closed and serves as the positive control. Regression tests in tests/threat-model/prompt-injection.test.mjs, wired into the integration gate as blocking.",
+      "classification": "EXPERIMENT_RESULT",
+      "source_ref": "node --test tests/threat-model/prompt-injection.test.mjs (T-SEC-1.C5, C6, C7)",
+      "verified_at": "2026-08-21T18:00:00Z"
     }
   ],
   "assumptions": [
@@ -88,7 +94,7 @@
   "artifacts": [
     {
       "ref": "docs/threat-models/THREAT_MODEL.md",
-      "sha256": "f3f86cb5544ba690d48a5c22b6410d726737b966cb92a86a3d1533215c9e5435",
+      "sha256": "007dd02fb029f5f47623d6ebcd7e30977f2b61512db926f2c7c5473b0e6f262f",
       "media_type": "text/markdown",
       "data_class": "C1",
       "summary": "Complete threat model: 19 threats with severity, probability, detectability and explicit residual; 15 defences of section 17 with their real state."
@@ -102,7 +108,7 @@
     },
     {
       "ref": "packages/contracts/src/policy/approval.ts",
-      "sha256": "3042f7ff56bab77df566d4060ef2ebf756187f61e3dfab224bc1dce9cc6443f4",
+      "sha256": "3d876cdc725b4f93ac0d7e05608df5f1a202f933a73f13101ccaa9f145b8697a",
       "media_type": "application/typescript",
       "data_class": "C1",
       "summary": "The approval matrix as a pure function, so the rule is code rather than a table read at runtime."
@@ -166,7 +172,7 @@
       "classification": "INTERNAL_WRITE",
       "description": "Artifacts committed to the CLAUDE working branch and integrated into main under the owner's explicit authorisation of 2026-08-21. No ledger value was changed.",
       "approval_ref": "Christian, 2026-08-21",
-      "idempotency_key": "UJ-IDEMP-SEC-001-CLAUDE-RESPONSE-R1",
+      "idempotency_key": "UJ-IDEMP-SEC-001-CLAUDE-RESPONSE-R1-REVIEW-R2",
       "proof_ref": "docs/program/handoffs/HANDOFF-UJ-SEC-001.md"
     }
   ],
@@ -193,6 +199,14 @@
       "severity": "HIGH",
       "trigger": "T-SEC-1 stays unimplemented while THREAT_MODEL.md is cited as evidence.",
       "mitigation": "Implement the tests for the defences this deliverable itself claims; the full injection suite stays with UJ-INJ-001.",
+      "owner": "CLAUDE"
+    },
+    {
+      "risk_id": "R-028",
+      "event": "[S-28] A value outside a closed domain reaching the contracts from JSON, a manifest or an envelope. Closed for the five known sites; the shape can recur wherever a new ordered domain is introduced.",
+      "severity": "HIGH",
+      "trigger": "A new ordered vocabulary is added and ranked with a bare indexOf.",
+      "mitigation": "isInDomain / rankAsChild / rankAsParent live in one place in runtime/common.ts and are the only sanctioned way to rank a closed domain.",
       "owner": "CLAUDE"
     }
   ],
