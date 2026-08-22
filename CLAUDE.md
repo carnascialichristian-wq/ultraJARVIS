@@ -6538,6 +6538,64 @@ un'operazione singola, lo stato *persiste*, e il lavoro successivo lo eredita in
 - I packet sono stati riemessi a `R8`/`R3` con l'avviso di cambio hash, e **2 hash di artefatto
   cambiati su tutti quelli citati** — pari ai due file toccati.
 
+---
+
+## Sessione 8, terza parte — i tre prompt, e la leva più alta del programma è una review MIA
+
+Christian ha chiesto prompt nuovi per Grok, Gemini e ChatGPT. Rifarli invece di ricopiare
+quello di stamattina era obbligatorio: quello precede `S-28`, `S-29` e la riemissione dei
+packet a `R8`/`R3`, quindi inoltrarlo avrebbe consegnato dati superati.
+
+### La correzione, ed è la terza in due giorni sullo stesso numero
+
+Ho ricalcolato la leva di **ogni** review aperta, non solo delle mie:
+
+| Review | Reviewer | Peso | Sblocca | Totale |
+|---|---|---:|---:|---:|
+| **`UJ-CAP-001`** | **CLAUDE** | 13 | 34 | **47** |
+| `UJ-SEC-001` | GROK | 13 | 21 | 34 |
+| `UJ-INT-001` | GROK | 13 | 18 | 31 |
+| `UJ-RUN-001` | GEMINI | 13 | 8 | 21 |
+| `UJ-CLD-001` | GEMINI | 8 | 0 | 8 |
+
+**Il punto cieco era preciso, e vale la pena nominarlo:** stamattina avevo calcolato la leva
+**solo dei task del mio portafoglio** — cioè delle review che gli altri devono a me — e non di
+quelle **che io devo a loro**. Ho misurato chi mi blocca, non chi blocco io. La voce più alta
+della tabella è una review mia, e non l'avevo vista perché non l'avevo cercata.
+
+Ho anche stretto la definizione: «sblocca» conta ora solo i task **oggi `BLOCKED`** che
+diventano lavorabili, escludendo i `DEFERRED` (programmati, non bloccati) e quelli già in
+`REVIEW`. Senza queste esclusioni `UJ-CAP-001` darebbe 52 invece di 47. **Ho tenuto la cifra
+più bassa**, che è quella vera.
+
+### La conseguenza che cambia il messaggio a Gemini
+
+Delle 34 unità che `UJ-CAP-001` sblocca, **21 sono di Gemini stessa** — `UJ-INF-001` (13) e
+`UJ-ADK-001` (8). Verificato leggendo le dipendenze una per una, non dedotto.
+
+Quindi l'argomento da farle non è *«sblocca me»*: è che **il suo prossimo lavoro è fermo
+dietro il suo lavoro precedente**. È la sua pipeline, non la mia richiesta. E le cinque
+correzioni erano già misurate nel mio verdetto del 19 con la dimensione di ciascuna — tre
+sono minime (un campo, un record, due record) — quindi il blocco per lei le riporta per
+intero invece di dirle "correggi".
+
+### E la conseguenza per Grok
+
+Tiene **due** delle tre review con più leva: `UJ-SEC-001` (34) e `UJ-INT-001` (31), **65
+unità**. Nessun altro ne tiene due così. La domanda sul checkout smette di essere una fra
+tante e diventa il collo di bottiglia numero uno del programma.
+
+### Metodo
+
+Ogni affermazione verificabile del dispatch è stata verificata **prima** di scriverla, non
+dopo: la card assente a `27b7673` e presente su `main` (exit code di `git cat-file` in
+entrambe le direzioni), i packet a `R8`/`R3`/`R1`, le 13 verifiche bloccanti del gate, e le
+dipendenze dei task sbloccati lette una per una.
+
+`CLAUDE-DISPATCH-20260821-S8.md` è marcato **SUPERATO** in testa con il motivo, perché non
+venga inoltrato per sbaglio. È la lezione della trappola 26 applicata a un documento che
+qualcun altro incollerà: un file che resta in giro senza un avviso verrà usato.
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -6901,17 +6959,34 @@ PR APERTE : SOLO DUE, ed e' il punto. Erano 16.
             #18 e #21 si sono CHIUSE DA SOLE quando i loro commit sono diventati
             raggiungibili da main. Non e' accettazione: l'ho scritto nel thread.
 
-FATTO PIU' IMPORTANTE DELLA SESSIONE 8, da usare subito:
-            LA LEVA MAGGIORE DEL PROGRAMMA E' DI GROK, NON DI GEMINI.
-            L'handoff della sessione 7 diceva che UJ-RUN-001 (Gemini) vale "34
-            unita' in un giro". Ricalcolato sulla chiusura delle dipendenze: e'
-            FALSO. Le 34 sono di UJ-SEC-001, il cui reviewer e' GROK:
-              UJ-SEC-001 (GROK)   -> 34 = 13 + UJ-SKL-001 13 + UJ-MCP-001 8
-              UJ-RUN-001 (GEMINI) -> 21 = 13 + UJ-RCV-001 8
-            E GROK ha dichiarato di NON RIUSCIRE a eseguire npx tsc / node --test.
-            Quindi l'azione di piu' alto valore disponibile e' DARGLI UN CHECKOUT
-            CHE ESEGUE, non insistere con Gemini. Le domande sono gia' scritte nel
-            dispatch: prompts/handoffs/CLAUDE-DISPATCH-20260821-S8.md
+LA CLASSIFICA DELLA LEVA — corretta DUE volte in sessione 8, usa questa:
+
+              UJ-CAP-001  rev CLAUDE   13 + 34 = 47   <-- la piu' alta, ed e' MIA
+              UJ-SEC-001  rev GROK     13 + 21 = 34
+              UJ-INT-001  rev GROK     13 + 18 = 31
+              UJ-RUN-001  rev GEMINI   13 +  8 = 21
+              UJ-CLD-001  rev GEMINI    8 +  0 =  8
+
+            Metodo: "sblocca" conta SOLO i task oggi BLOCKED che diventano
+            lavorabili. Esclude i DEFERRED e quelli gia' in REVIEW. Senza queste
+            esclusioni UJ-CAP-001 darebbe 52: tieni la cifra piu' bassa.
+
+            IL PUNTO CIECO DA NON RIPETERE: la prima volta avevo calcolato la leva
+            solo dei task del MIO portafoglio — le review che gli altri devono a me
+            — e non di quelle che IO devo a loro. Calcolala su TUTTE le review
+            aperte, sempre.
+
+            DUE CONSEGUENZE OPERATIVE:
+            - GEMINI: 21 delle 34 unita' che UJ-CAP-001 sblocca sono SUE
+              (UJ-INF-001 13, UJ-ADK-001 8). Il suo prossimo lavoro e' fermo dietro
+              il suo lavoro precedente. Non e' una richiesta mia: e' la sua pipeline.
+            - GROK: tiene DUE delle tre review con piu' leva (34 + 31 = 65 unita'),
+              e ha dichiarato di non riuscire a eseguire npx tsc / node --test.
+              Dargli un checkout che esegue resta l'azione singola di piu' alto
+              valore del programma.
+
+            Dispatch da inoltrare: prompts/handoffs/CLAUDE-DISPATCH-20260822.md
+            NON inoltrare CLAUDE-DISPATCH-20260821-S8.md — e' marcato SUPERATO.
 
 S-28 — CHIUSO IN QUESTA SESSIONE, non rifarlo, ma SAPPILO:
             I controlli di monotonia dei limiti erano FAIL-OPEN. `rankOf` usava
