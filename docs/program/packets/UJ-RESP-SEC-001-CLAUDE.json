@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
-  "response_id": "UJ-RESPONSE-SEC-001-CLAUDE-20260821-REVIEW-R2",
+  "response_id": "UJ-RESPONSE-SEC-001-CLAUDE-20260821-REVIEW-R3",
   "created_at": "2026-08-21T17:30:00Z",
   "card_id": "UJ-CARD-SEC-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "caa14a307f99401158ccece141d996ae9a519850",
+  "source_commit_sha": "0e4fb449c43f1c93eae1bee6c95c5bd281df15c2",
   "capabilities_actually_used": [
     {
       "capability": "Repository read and write at a pinned commit",
@@ -26,7 +26,7 @@
   ],
   "task_id": "UJ-SEC-001",
   "status": "REVIEW",
-  "executive_delta": "REVIEW, accepted weight 0/13 unchanged. This is the first ResponsePacket for UJ-SEC-001: it could not exist before because CHATGPT had not issued the delegation card, which is the ceiling GROK named as point 4 of his review. The card now exists on main, so the packet is representable. Two of the five conditions GROK attached to weight acceptance are discharged (card issuance, and the integrator running the verification commands: integration-gate.sh returns GATE PASS with 12 blocking checks at exit 0 on main @ 925ea1d). Three remain open, and the first of them is a real gap in my own deliverable: the threat-model tests T-SEC-1 are still declared unimplemented by THREAT_MODEL.md itself. I do not propose weight. HASH CHANGE NOTICE: approval.ts was modified in this session to close S-28, a fail-open in the limit-monotonicity checks discovered while writing T-SEC-1. The packet is reissued at the commit that contains the fix; exactly one artifact hash changed, which is the count of files touched. The reviewer should review the fixed version, not the previously pinned one.",
+  "executive_delta": "REVIEW, accepted weight 0/13 unchanged. This is the first ResponsePacket for UJ-SEC-001: it could not exist before because CHATGPT had not issued the delegation card, which is the ceiling GROK named as point 4 of his review. The card now exists on main, so the packet is representable. Two of the five conditions GROK attached to weight acceptance are discharged (card issuance, and the integrator running the verification commands: integration-gate.sh returns GATE PASS with 12 blocking checks at exit 0 on main @ 925ea1d). Three remain open, and the first of them is a real gap in my own deliverable: the threat-model tests T-SEC-1 are still declared unimplemented by THREAT_MODEL.md itself. I do not propose weight. HASH CHANGE NOTICE: approval.ts was modified in this session to close S-28, a fail-open in the limit-monotonicity checks discovered while writing T-SEC-1. The packet is reissued at the commit that contains the fix; exactly one artifact hash changed, which is the count of files touched. The reviewer should review the fixed version, not the previously pinned one. HASH CHANGE NOTICE (S-29): supervisor.ts and/or THREAT_MODEL.md were modified to close S-29 \u2014 guard names were free strings, so a typo silently removed a guard, and `.originLabel` was declared and never read. Reissued at the commit that contains the fix. The reviewer should review the fixed version.",
   "facts": [
     {
       "claim": "GROK issued an independent review of UJ-SEC-001 with outcome PASS_WITH_ACTIONS, marking AC-01 and AC-02 as PASS while keeping accepted_weight at 0.",
@@ -94,7 +94,7 @@
   "artifacts": [
     {
       "ref": "docs/threat-models/THREAT_MODEL.md",
-      "sha256": "007dd02fb029f5f47623d6ebcd7e30977f2b61512db926f2c7c5473b0e6f262f",
+      "sha256": "9b59e423deedc1a04facf43fac7881bb00d5ce9a5d022d67558f49c5eac2254e",
       "media_type": "text/markdown",
       "data_class": "C1",
       "summary": "Complete threat model: 19 threats with severity, probability, detectability and explicit residual; 15 defences of section 17 with their real state."

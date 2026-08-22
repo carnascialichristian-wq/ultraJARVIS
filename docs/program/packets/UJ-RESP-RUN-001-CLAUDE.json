@@ -1,12 +1,12 @@
 {
   "schema_version": "ultrajarvis.response-packet/v1",
-  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260819-REVIEW-R7",
+  "response_id": "UJ-RESPONSE-RUN-001-CLAUDE-20260819-REVIEW-R8",
   "created_at": "2026-08-19T08:32:58Z",
   "card_id": "UJ-CARD-RUN-001-CLAUDE",
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "caa14a307f99401158ccece141d996ae9a519850",
+  "source_commit_sha": "0e4fb449c43f1c93eae1bee6c95c5bd281df15c2",
   "capabilities_actually_used": [
     {
       "capability": "Repository read at a pinned commit",
@@ -31,7 +31,7 @@
   ],
   "task_id": "UJ-RUN-001",
   "status": "REVIEW",
-  "executive_delta": "REVIEW. The blocking condition is resolved and every admissibility clause is verified by execution on origin/main: the delegation card exists at its own read_ref 25b1b7d53ff5, that ref is reachable from origin/main, the four pinned inputs match 4 of 4, validate-council-packets.mjs passes at exit 0, the card's acceptance criteria equal those in BACKLOG.json (AC-01..AC-05), and the task is READY with reviewer GEMINI. CHATGPT got there in three commits: 4b63b94 repinned the read_ref, 6ba3a2b restored the sixteen input hashes that the same repin had replaced with values matching nothing, and 27b7673 closed both validator findings by removing the canonical-plan exemption from the integrity check and computing hashes at the pinned ref rather than from the working tree. The delivered work is byte-identical to the BLOCKED rounds apart from the status declarations, which live in four places and all moved in one commit. REVIEW is not acceptance: accepted weight stays 0/13 until GEMINI rules. HASH CHANGE NOTICE: common.ts was modified in this session to close S-28, a fail-open in the limit-monotonicity checks discovered while writing T-SEC-1. The packet is reissued at the commit that contains the fix; exactly one artifact hash changed, which is the count of files touched. The reviewer should review the fixed version, not the previously pinned one.",
+  "executive_delta": "REVIEW. The blocking condition is resolved and every admissibility clause is verified by execution on origin/main: the delegation card exists at its own read_ref 25b1b7d53ff5, that ref is reachable from origin/main, the four pinned inputs match 4 of 4, validate-council-packets.mjs passes at exit 0, the card's acceptance criteria equal those in BACKLOG.json (AC-01..AC-05), and the task is READY with reviewer GEMINI. CHATGPT got there in three commits: 4b63b94 repinned the read_ref, 6ba3a2b restored the sixteen input hashes that the same repin had replaced with values matching nothing, and 27b7673 closed both validator findings by removing the canonical-plan exemption from the integrity check and computing hashes at the pinned ref rather than from the working tree. The delivered work is byte-identical to the BLOCKED rounds apart from the status declarations, which live in four places and all moved in one commit. REVIEW is not acceptance: accepted weight stays 0/13 until GEMINI rules. HASH CHANGE NOTICE: common.ts was modified in this session to close S-28, a fail-open in the limit-monotonicity checks discovered while writing T-SEC-1. The packet is reissued at the commit that contains the fix; exactly one artifact hash changed, which is the count of files touched. The reviewer should review the fixed version, not the previously pinned one. HASH CHANGE NOTICE (S-29): supervisor.ts and/or THREAT_MODEL.md were modified to close S-29 \u2014 guard names were free strings, so a typo silently removed a guard, and `.originLabel` was declared and never read. Reissued at the commit that contains the fix. The reviewer should review the fixed version.",
   "facts": [
     {
       "claim": "The delegation card is absent at its own declared read_ref. `git cat-file -e 3611b1b4:prompts/delegation-cards/UJ-RUN-001-CLAUDE.json` fails; the card enters the history at d48e1e8519a8d7af90ea44e770f0db7fd3938fb3, twelve minutes after 3611b1b4.",
@@ -274,7 +274,7 @@
     },
     {
       "ref": "packages/contracts/src/runtime/supervisor.ts",
-      "sha256": "d9d4078c69fd1dfede055571c546d0b3ca092bd14a1807eab6eb16d99dd72779",
+      "sha256": "527a273f4064a5a89685abcef9ad2635759ef788fd96a1edadbd70fa3a12b0f1",
       "media_type": "application/typescript",
       "data_class": "C1",
       "summary": "Runtime contract module 'supervisor': provider-neutral TypeScript types compiled under strict mode."

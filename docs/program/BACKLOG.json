@@ -903,7 +903,7 @@
         },
         {
           "ref": "packages/contracts/src/runtime/supervisor.ts",
-          "hash": "sha256:d9d4078c69fd1dfede055571c546d0b3ca092bd14a1807eab6eb16d99dd72779"
+          "hash": "sha256:527a273f4064a5a89685abcef9ad2635759ef788fd96a1edadbd70fa3a12b0f1"
         },
         {
           "ref": "packages/contracts/src/runtime/team-spec.ts",
@@ -931,7 +931,7 @@
         },
         {
           "ref": "docs/program/packets/UJ-RESP-RUN-001-CLAUDE.json",
-          "hash": "sha256:41d41fee7ec92fc52b4532795c1a8520aa31646303555e0a1c90fee9cf104919"
+          "hash": "sha256:1bee49ee1a0c3451a259cb80f4cc72f86706c91fe95aef64cd90e5089db1060f"
         }
       ],
       "data_class": "C1",
@@ -990,7 +990,7 @@
       "proof": [
         {
           "ref": "docs/threat-models/THREAT_MODEL.md",
-          "hash": "sha256:007dd02fb029f5f47623d6ebcd7e30977f2b61512db926f2c7c5473b0e6f262f"
+          "hash": "sha256:9b59e423deedc1a04facf43fac7881bb00d5ce9a5d022d67558f49c5eac2254e"
         },
         {
           "ref": "docs/constitution/APPROVAL_POLICY.md",
@@ -1018,7 +1018,7 @@
         },
         {
           "ref": "docs/program/packets/UJ-RESP-SEC-001-CLAUDE.json",
-          "hash": "sha256:81159e9d7dd4fd9842fa1d9f1f5ea0de54a8fb78b4e05a7998c5394ee5916b1f"
+          "hash": "sha256:92eb789f7586dc43501a0745776f752c6dd251b932e508d35bbe09013b8eddc4"
         }
       ],
       "data_class": "C1",
@@ -1255,7 +1255,7 @@
         },
         {
           "ref": "docs/program/packets/UJ-RESP-CLD-001-CLAUDE.json",
-          "hash": "sha256:d708bdc74511dfc562c56d6e0c4964679b0e181b2698e197f8bb2dd7fdf84b28"
+          "hash": "sha256:3e9db53b0e36b8180e2131dbbf32d6bea36e280780734fa53304693fa84df9c2"
         }
       ],
       "data_class": "C1",

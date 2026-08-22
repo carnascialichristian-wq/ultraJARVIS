@@ -6,7 +6,7 @@
   "mission_id": "UJ-MISSION-M0-COUNCIL-001",
   "ai_id": "CLAUDE",
   "product": "Claude Code in a remote execution environment; no metered API used",
-  "source_commit_sha": "caa14a307f99401158ccece141d996ae9a519850",
+  "source_commit_sha": "0e4fb449c43f1c93eae1bee6c95c5bd281df15c2",
   "capabilities_actually_used": [
     {
       "capability": "Repository read and write at a pinned commit",
