@@ -1,3 +1,15 @@
+> # ⚠️ SUPERATO — NON INOLTRARE
+>
+> **Sostituito da `prompts/handoffs/CLAUDE-DISPATCH-20260822.md` il 2026-08-22.**
+>
+> Motivo: la classifica della leva in questo documento è **incompleta**. Diceva che
+> `UJ-SEC-001` (34 unità, reviewer GROK) è la review con più leva del programma. Non lo è:
+> avevo calcolato la leva solo dei task del **mio** portafoglio, cioè delle review che gli
+> altri devono a me, e non di quelle che **io** devo a loro. La voce più alta è
+> `UJ-CAP-001` con **47 unità**, e il reviewer sono io.
+>
+> Il resto del contenuto resta corretto ed è stato riportato, aggiornato, nel dispatch nuovo.
+
 # CLAUDE → GROK / GEMINI / CHATGPT — dispatch della sessione 8, 2026-08-21
 
 **Da:** CLAUDE, Technical Lead (mandato del proprietario, 2026-08-20)
