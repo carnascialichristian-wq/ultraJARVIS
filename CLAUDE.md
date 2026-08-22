@@ -6439,6 +6439,87 @@ male è uscito il difetto più grave del mio portafoglio.
   il suo file, gliel'ho segnalato con la misura e la decisione è sua;
 - non ho aperto PR nuove: non richieste.
 
+---
+
+## Sessione 8, seconda parte — `S-29`: le guardie erano stringhe, e `originLabel` non lo leggeva nessuno
+
+Trappola 11 all'apertura: nessuno ha consegnato. Gli unici rami mossi erano i miei, quindi i
+punti 2-4 del RESUME_POINT non si applicavano e sono passato al punto 5 — la lacuna che potevo
+chiudere da solo.
+
+### Che cosa era rotto, e l'avevo scritto io poche ore prima
+
+Il gruppo C di `T-SEC-1`, scritto stamattina, documentava tre lacune del **mio** deliverable:
+
+1. `.originLabel` era dichiarato in `envelopes.ts` e **non letto da nessuna parte** in tutto il
+   repository. Le difese 1 e 2 di `THREAT_MODEL.md` §5 — *separare dato da istruzione*,
+   *content origin label* — erano vocabolario senza applicazione.
+2. `Transition.guards` era `readonly string[]`: **qualunque stringa compilava**. Un refuso in un
+   nome di guardia era indistinguibile da una guardia vera, e la guardia che avrebbe dovuto
+   nominare spariva in silenzio.
+3. `nextState` restituiva le guardie **senza valutarle**, e nulla obbligava il chiamante a
+   guardarle.
+
+Il punto 2 è `S-28` applicato a un altro dominio: un vocabolario lasciato aperto. E stavolta il
+dominio governa le condizioni che gatano **ogni** cambio di stato, compresa la transizione del
+`HUMAN_BRIDGE` — che è l'unico percorso che questo programma può usare a costo zero.
+
+### La correzione, e perché è nel tipo e non in un controllo
+
+- `GuardName`: unione chiusa dei **31** nomi realmente usati. Un refuso è ora un errore di
+  compilazione, alla riga esatta della transizione che lo usa.
+- `GUARD_REGISTRY: Record<GuardName, GuardDescriptor>`: descrivere ogni guardia è
+  **obbligatorio**. Aggiungerne una a una transizione senza descriverla non compila.
+- **8 guardie implementate davvero** (`PURE`), **23 dichiarate `RUNTIME`** con scritto che cosa
+  richiedono. Una `RUNTIME` è sempre `NOT_EVALUABLE`, *visibilmente*: nessuno può scambiare una
+  guardia non implementata per una che passa. È la lezione di `E22`/`E38` sulle sonde, applicata
+  ai contratti.
+- `canTransition`: la controparte di `nextState` che **valuta**, e **fallisce chiuso**. Una
+  guardia non valutabile **blocca** la transizione e viene riportata per nome.
+- `originLabelledHumanProvided` legge davvero `.originLabel`: un risultato di bridge etichettato
+  `UNTRUSTED_EXTERNAL` o `TRUSTED_INTERNAL` è `VIOLATED`, non passa.
+
+### Falsificato in entrambe le direzioni, perché un tipo che non può fallire non prova nulla
+
+| prova | esito |
+|---|---|
+| tolto un nome dall'unione | `TS2322` alla riga della transizione che lo usa |
+| tolta una voce dal registro | `TS2741`, e **nomina** la guardia mancante |
+| entrambi ripristinati | typecheck exit 0 |
+
+### I test hanno fatto il loro mestiere, ed è la parte che porto via
+
+`T-SEC-1.C1` e `C2` asserivano lo stato **rotto**, con scritto nel messaggio d'errore *"se
+qualcuno la implementa, questo test fallisce: aggiornalo consapevolmente"*. Dopo la correzione
+sono **falliti esattamente così**. Non ho dovuto ricordarmi di aggiornarli: il test me l'ha
+imposto.
+
+È il rovescio della trappola 21 — di solito si prova un test contro il codice vecchio per
+sapere se è significativo; qui il test era stato scritto *apposta* per rompersi quando la lacuna
+si chiudeva, e ha funzionato a distanza di ore. Un test che documenta un difetto vale quanto uno
+che documenta una difesa, purché sia costruito per fallire quando il difetto sparisce.
+
+`T-SEC-1` passa da **14 a 16** prove. La suite congelata dei contratti resta a **140**:
+`nextState` e la forma di `Transition.guards` sono rimaste compatibili di proposito.
+
+### Un errore mio, nello script che faceva la modifica
+
+Sostituendo i test del gruppo C ho calcolato i confini come *«da `C1` fino a `C4`»*, e in mezzo
+c'era **`C3`**: lo script lo avrebbe cancellato. Se ne è accorto lui, non io — l'`assert` che
+cercava la coda di `C3` è fallito **prima** della scrittura, quindi il file non è stato toccato.
+La lezione: quando si riscrive per intervallo, il confine va preso sul **primo elemento che
+NON si vuole toccare**, non su uno più in là. E un `assert` prima di `write` trasforma un
+errore silenzioso in un fallimento pulito.
+
+### Che cosa NON ho fatto
+
+- **Non ho implementato le 23 guardie `RUNTIME`**: richiederebbero campi di contesto che il
+  blueprint non specifica, e inventarli sarebbe spacciare un'invenzione per una lettura. Sono
+  dichiarate con ciò che serve loro, il che è più utile di un'implementazione inventata.
+- **Non ho accettato peso.** Programma **52/340**, io **0/76**.
+- I packet sono stati riemessi a `R8`/`R3` con l'avviso di cambio hash, e **2 hash di artefatto
+  cambiati su tutti quelli citati** — pari ai due file toccati.
+
 # PARTE 6 — DECISIONI APERTE
 
 ## In attesa di Christian
@@ -6761,7 +6842,7 @@ BRANCH    : agent/uj-run-001-blueprint-20260818 — IDENTICO a main (stesso comm
               git rev-list --left-right --count origin/main...<branch>
             deve dare 0 indietro.
 
-MAIN      : 70df649. Gate di integrazione PASS, 13 verifiche bloccanti a exit 0.
+MAIN      : vedi origin/main (la sessione 8 lo ha mosso piu' volte; verificalo). Gate di integrazione PASS, 13 verifiche bloccanti a exit 0.
             sha256 del piano canonico invariata:
             a3fcdfc97b48e9b1f37e1a1798b0b5e7231309d03ab4e13683622eaf1fa69a87
 
@@ -6816,14 +6897,15 @@ S-28 — CHIUSO IN QUESTA SESSIONE, non rifarlo, ma SAPPILO:
             quinto (resolveCostClass) era gia' corretto ed e' il controllo positivo.
             Regressioni in tests/threat-model/prompt-injection.test.mjs.
 
-T-SEC-1 — IMPLEMENTATA, 14 prove, BLOCCANTE nel gate.
+T-SEC-1 — IMPLEMENTATA, 16 prove, BLOCCANTE nel gate.
             Chiude il punto 1 della review di GROK su UJ-SEC-001.
-            Il gruppo C documenta TRE LACUNE del mio stesso lavoro, ed e' la parte
-            da leggere: .originLabel non e' letto DA NESSUNA PARTE nel repository;
-            Transition.guards e' readonly string[] quindi un refuso non e'
-            rilevabile; nextState restituisce le guardie e non le valuta.
-            Quei test asseriscono lo stato ATTUALE: se qualcuno implementa
-            l'enforcement, FALLISCONO apposta, per obbligare ad aggiornarli.
+            Il gruppo C documentava TRE LACUNE del mio stesso lavoro. DUE SONO
+            CHIUSE da S-29 (originLabel ora e' letto; le guardie sono un
+            vocabolario chiuso e canTransition le valuta). Quei test asserivano lo
+            stato ROTTO e sono FALLITI dopo la correzione, esattamente come
+            progettato: e' il meccanismo che ha funzionato, non un incidente.
+            RESTA: 23 guardie su 31 sono RUNTIME, cioe' dichiarate e non
+            implementate, e lo dicono visibilmente (NOT_EVALUABLE).
 
 PROSSIMO  : 1. TRAPPOLA 11 SEMPRE PER PRIMA. In otto sessioni non ha mai dato esito
                negativo. Guarda se GROK o GEMINI hanno consegnato.
@@ -6834,12 +6916,16 @@ PROSSIMO  : 1. TRAPPOLA 11 SEMPRE PER PRIMA. In otto sessioni non ha mai dato es
             4. Se GROK ha riemesso la review di UJ-SEC-001 a un ref >= 925ea1d ->
                due delle sue cinque condizioni sono gia' soddisfatte (card emessa,
                integratore ha eseguito i comandi) e la terza (T-SEC-1) l'ho chiusa io.
-            5. LACUNA APERTA E LAVORABILE DA SOLO, se non c'e' altro: rendere i nomi
-               delle guardie un tipo invece di stringhe libere (GuardName + un
-               Record<GuardName,...> che rende una guardia mancante un errore di
-               compilazione). NON FARLO mentre UJ-RUN-001 e' in review presso Gemini
-               senza riemettere il packet: supervisor.ts e' un artefatto HASHATO
-               (trappola 45).
+            5. ~~LACUNA APERTA: i nomi delle guardie sono stringhe libere.~~ FATTO
+               nella seconda parte della sessione 8 (S-29). GuardName e' un'unione
+               chiusa di 31 nomi, GUARD_REGISTRY e' Record<GuardName,...>, e
+               canTransition valuta le guardie fallendo CHIUSO. originLabel e' ora
+               LETTO. Packet riemessi a R8/R3 con avviso di cambio hash.
+               RESTA APERTO: 23 guardie su 31 sono dichiarate RUNTIME e non
+               implementate. NON inventare i campi di contesto che servono loro:
+               il blueprint non li specifica, e inventarli sarebbe spacciare
+               un'invenzione per una lettura. Si implementano quando il kernel
+               esiste (M2/M3).
             6. Solo dopo 1-5, se non c'e' niente: registra l'attesa.
 
 DA SEGNALARE A CHATGPT (trovato in sessione 8, non ancora comunicato a lui):
@@ -6861,7 +6947,7 @@ NON RIFARE: la chiusura delle 12 PR, il merge dei fix di GROK su main, i tre
             Verifica prima, DALLA ROOT, con UN SOLO comando:
               bash scripts/integration-gate.sh   -> GATE PASS, 13 bloccanti a exit 0
             Include build, typecheck, 140 contratti, RTE 7 / DEC 12 / SEL 12 /
-            FBK 10 / CNF 12 / T-SEC-1 14, la demo §21 e i tre validatori.
+            FBK 10 / CNF 12 / T-SEC-1 16, la demo §21 e i tre validatori.
 
 RICORDA   : Regola 2 — a fine task aggiorna CLAUDE.md e TASKCLAUDE.md (estensione,
             mai riscrittura), poi commit e push. Leggi l'exit code dal comando vero,
