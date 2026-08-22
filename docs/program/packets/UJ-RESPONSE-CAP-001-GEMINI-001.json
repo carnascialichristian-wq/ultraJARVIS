@@ -1,0 +1,195 @@
+{
+  "schema_version": "ultrajarvis.response-packet/v1",
+  "response_id": "UJ-RESPONSE-CAP-001-GEMINI-001",
+  "created_at": "2026-08-18T13:35:00Z",
+  "card_id": "UJ-CARD-CAP-001-GEMINI",
+  "mission_id": "UJ-MISSION-M0-COUNCIL-001",
+  "ai_id": "GEMINI",
+  "product": "Google Gemini",
+  "source_commit_sha": "3611b1b400cf57b5021bab228a3de9470d6eca5c",
+  "capabilities_actually_used": [
+    {
+      "capability": "python_interpreter",
+      "access_path": "Gemini-provided local analysis environment",
+      "mode": "EXPERIMENTAL_SANDBOX"
+    },
+    {
+      "capability": "official_documentation_cross_referencing",
+      "access_path": "Official Google AI, Firebase, Apps Script, and Colab documentation URLs",
+      "mode": "MANUAL_TOOL"
+    }
+  ],
+  "task_id": "UJ-CAP-001",
+  "status": "REVIEW",
+  "executive_delta": "Repaired the multi-provider capability registry, preserved 19 capability IDs, downgraded unsupported certainty, and made Google free-tier routing conditional on live account, region, privacy, and billing checks.",
+  "facts": [
+    {
+      "claim": "Google's Gemini API rate-limit documentation says limits depend on the project usage tier and account state, can be viewed in AI Studio, and are not guaranteed.",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "https://ai.google.dev/gemini-api/docs/rate-limits",
+      "verified_at": "2026-08-18T13:35:00Z"
+    },
+    {
+      "claim": "Google's Gemini API terms describe content use and possible human review for Unpaid Services; for users in the EEA, Switzerland, or the UK, the Paid Services data-use terms apply to all Services even when access is free.",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "https://ai.google.dev/gemini-api/terms",
+      "verified_at": "2026-08-18T13:35:00Z"
+    },
+    {
+      "claim": "Firebase pricing lists Spark no-cost usage with no payment method needed and states that no-cost quotas apply at project level.",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "https://firebase.google.com/pricing",
+      "verified_at": "2026-08-18T13:35:00Z"
+    },
+    {
+      "claim": "The Apps Script quota reference documents per-user quotas that reset 24 hours after the first request and warns that quotas may change without notice.",
+      "classification": "VERIFIED_FACT",
+      "source_ref": "https://developers.google.com/apps-script/guides/services/quotas",
+      "verified_at": "2026-08-18T13:35:00Z"
+    }
+  ],
+  "assumptions": [
+    {
+      "statement": "No live Google AI Studio project snapshot was supplied, so Free/unbilled status and live quota values remain unverified.",
+      "validation": "Human operator must inspect the project plan, billing link, API-key tier, and current quota view before any API dispatch.",
+      "expiry": "2026-08-19T00:00:00Z"
+    },
+    {
+      "statement": "The registry is an evidence proposal and not an owner-approved architecture decision.",
+      "validation": "Claude review plus Council admission and owner decision where a protected policy is affected.",
+      "expiry": null
+    },
+    {
+      "statement": "No EEA-facing API client or public production service is authorized by this packet.",
+      "validation": "Perform a current EEA/API-client terms check and obtain the required owner gate before expanding scope.",
+      "expiry": null
+    }
+  ],
+  "decisions_proposed": [
+    {
+      "decision_id": "DEC-CAP-001",
+      "proposal": "Keep CAP-GGL-001 conditionally eligible only for redacted C0/C1 internal evaluation on a demonstrably unbilled project; do not use 429 alone as billing proof.",
+      "owner": "Christian",
+      "gate": "Current account/project snapshot plus owner acceptance of the routing boundary"
+    },
+    {
+      "decision_id": "DEC-CAP-002",
+      "proposal": "Treat dynamic quotas, regional terms, and provider privacy claims as revalidation gates rather than permanent registry facts.",
+      "owner": "CHATGPT",
+      "gate": "Independent Claude review and dated primary-source evidence"
+    }
+  ],
+  "artifacts": [
+    {
+      "ref": "docs/program/CAPABILITY_REGISTRY.md",
+      "sha256": "df73f85f2156109c76700bf2bf5d7b559727fade3478228178baafa37d0ce3fd",
+      "media_type": "text/markdown",
+      "data_class": "C1",
+      "summary": "Corrected multi-provider capability registry with conditional Google routing and explicit evidence gates."
+    },
+    {
+      "ref": "docs/program/CAPABILITY_REGISTRY.json",
+      "sha256": "45900e3595f186cb92ce199de095da3daaf782dc8e7cf319d44614c350be8ebe",
+      "media_type": "application/json",
+      "data_class": "C1",
+      "summary": "Strictly serialized machine-readable registry with 19 capability entries and corrected Google claims."
+    }
+  ],
+  "verification": {
+    "checks_run": [
+      "Repaired registry JSON was parsed and reserialized as strict UTF-8 JSON.",
+      "Markdown and JSON capability IDs were compared after repair.",
+      "Official source URLs were retained for each material Google claim.",
+      "SHA-256 hashes were calculated from the exact corrected output bytes.",
+      "ResponsePacket fields were checked against schemas/response-packet.schema.json."
+    ],
+    "passed": [
+      "The registry contains 19 matching capability IDs across Markdown and JSON.",
+      "No billing, consumer UI automation, secret, or direct-main write was performed.",
+      "The proposed ledger delta keeps accepted weight at zero and only proposes REVIEW."
+    ],
+    "failed": [],
+    "not_run": [
+      "Live Google account/project billing and quota inspection.",
+      "NotebookLM account-specific privacy/terms verification.",
+      "Live end-to-end API, WebSocket, Firebase, or Apps Script invocation.",
+      "Independent peer review by the named reviewer."
+    ]
+  },
+  "side_effects": [
+    {
+      "classification": "NONE",
+      "description": "No repository, account, billing, external service, or destructive write was performed by this response.",
+      "approval_ref": null,
+      "idempotency_key": "UJ-RESPONSE-CAP-001-GEMINI-001-NO-SIDE-EFFECTS",
+      "proof_ref": "local-correction-audit"
+    }
+  ],
+  "risks": [
+    {
+      "risk_id": "R-001",
+      "event": "A provider changes free-tier quota, capacity, or model availability.",
+      "severity": "MEDIUM",
+      "trigger": "AI Studio shows different limits or the service returns 429/503.",
+      "mitigation": "Read live limits at dispatch, use bounded backoff, and fall back without enabling billing.",
+      "owner": "CHATGPT"
+    },
+    {
+      "risk_id": "R-002",
+      "event": "Sensitive content reaches a provider under an unsuitable data-use tier.",
+      "severity": "HIGH",
+      "trigger": "Payload contains C2+ material or account/region terms are not verified.",
+      "mitigation": "Block dispatch, redact to C0/C1, and route through HUMAN_BRIDGE for a human decision.",
+      "owner": "CHATGPT"
+    },
+    {
+      "risk_id": "R-003",
+      "event": "A registry claim is accepted from a landing page that does not prove the legal or account-specific condition.",
+      "severity": "MEDIUM",
+      "trigger": "No exact dated primary citation or live account proof is attached.",
+      "mitigation": "Downgrade to UNKNOWN/ASSUMPTION and keep the dependent task blocked.",
+      "owner": "CLAUDE"
+    }
+  ],
+  "task_ledger_delta": [
+    {
+      "task_id": "UJ-CAP-001",
+      "previous_status": "READY",
+      "proposed_status": "REVIEW",
+      "weight": 13,
+      "accepted_weight_before": 0,
+      "proposed_accepted_weight": 0,
+      "proof_refs": [
+        "docs/program/CAPABILITY_REGISTRY.md",
+        "docs/program/CAPABILITY_REGISTRY.json"
+      ]
+    }
+  ],
+  "remaining_work": {
+    "weight": 13,
+    "blockers": [
+      "Independent Claude review",
+      "Live Google project plan/billing/quota check",
+      "Current regional and account terms check"
+    ],
+    "next_action": "The named reviewer (CLAUDE) must independently validate the corrected artifacts; keep accepted weight at 0 until a valid ReviewResult."
+  },
+  "confidence": {
+    "level": "MEDIUM",
+    "reason": "The artifacts and packet structure are locally checked, but live account state, dynamic quotas, and several account/region-specific terms were not available for verification."
+  },
+  "policy_attestation": {
+    "no_secret_values": true,
+    "no_paid_api": true,
+    "no_billing_enabled": true,
+    "no_consumer_ui_automation": true,
+    "no_heavy_local_inference": true,
+    "within_data_class": true,
+    "within_side_effect_limit": true
+  },
+  "handoff": {
+    "target": "CLAUDE",
+    "next_action": "Review UJ-CAP-001 independently, validate the source scope and hashes, and return a schema-valid ReviewResult or requested corrections.",
+    "resume_point": "At source commit 3611b1b400cf57b5021bab228a3de9470d6eca5c, the corrected UJ-CAP-001 artifacts are proposed as REVIEW with 0/13 accepted. Do not unlock downstream tasks until the named independent review and ledger admission succeed."
+  }
+}
