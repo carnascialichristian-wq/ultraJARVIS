@@ -354,8 +354,8 @@ Le 15 difese di §17, con lo stato onesto di ciascuna. Non è una lista di inten
 
 | # | Difesa | Stato | Dove |
 |---|---|---|---|
-| 1 | separare dato da istruzione | ✅ progettata | `originLabel` |
-| 2 | content origin label | ✅ progettata | `ArtifactRef.originLabel` |
+| 1 | separare dato da istruzione | ✅ progettata **e applicata** | `originLabel`, letto dalla guardia `originLabelledHumanProvided` |
+| 2 | content origin label | ✅ progettata **e applicata** | `ArtifactRef.originLabel` + `GUARD_REGISTRY` in `supervisor.ts` |
 | 3 | allowlist di tool | ✅ progettata e testata | `checkSpawn`, `TA-1..10` |
 | 4 | allowlist di rete / egress deny | ❌ **non progettata** | dipende dalla topologia (GEMINI) |
 | 5 | schema validation | ✅ progettata | doppia validazione §10.4 |
@@ -370,7 +370,19 @@ Le 15 difese di §17, con lo stato onesto di ciascuna. Non è una lista di inten
 | 14 | test di prompt injection | ⚠️ **parziali** | `T-SEC-1` implementata: `tests/threat-model/prompt-injection.test.mjs`, 14 prove, bloccante nel gate. Copre le difese che *questo* deliverable dichiara; la suite completa resta in `UJ-INJ-001` (GROK) |
 | 15 | policy preflight e postflight | ⚠️ preflight progettato, **postflight no** | serve per TH-08 |
 
-**Sintesi onesta: 8 su 15 progettate, 4 parziali, 3 assenti.** La difesa 14 e' passata da assente a parziale in sessione 8. Le tre assenti restano egress deny, sandbox e postflight, tutte dipendenti dall'infrastruttura non ancora scelta. Le tre assenti
+**Sintesi onesta: 8 su 15 progettate, 4 parziali, 3 assenti.** Due movimenti in sessione 8,
+entrambi verso l'alto: la difesa **14** è passata da assente a parziale (`T-SEC-1` esiste), e
+le difese **1 e 2** da "progettate" a "progettate e applicate" — `.originLabel` non era letto
+da nessuna parte, ed è ora la condizione della guardia che presidia la transizione del
+`HUMAN_BRIDGE`. Le tre assenti restano egress deny, sandbox e postflight, tutte dipendenti
+dall'infrastruttura non ancora scelta.
+
+> **Avvertenza sul significato di "applicata".** Il pacchetto dei contratti non ha I/O: la
+> guardia è una funzione pura e `canTransition` la valuta, ma chi implementerà il kernel deve
+> chiamare `canTransition` invece di `nextState`. Ciò che è cambiato è che ora **esiste** una
+> controparte che valuta, che una guardia non valutata **blocca** invece di passare, e che un
+> refuso nel nome di una guardia è un errore di compilazione. Prima non c'era nulla di tutto
+> questo: erano stringhe. Le tre assenti
 (egress deny, sandbox, postflight) sono tutte concentrate sulle minacce a residuo
 più alto. Non è un caso: sono le difese che richiedono infrastruttura,
 e l'infrastruttura non è ancora scelta.
