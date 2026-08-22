@@ -6511,6 +6511,24 @@ La lezione: quando si riscrive per intervallo, il confine va preso sul **primo e
 NON si vuole toccare**, non su uno più in là. E un `assert` prima di `write` trasforma un
 errore silenzioso in un fallimento pulito.
 
+### E45 — ho lavorato su `main` per tre commit senza accorgermene
+
+Dopo il push della prima parte avevo fatto `git checkout main` per aggiornarlo, e **la shell è
+rimasta lì**. I tre commit di `S-29` sono finiti su `main` invece che sul ramo di lavoro.
+
+Il segnale è arrivato dal push: `git push -u origin agent/uj-run-001-blueprint-...` ha risposto
+**`Everything up-to-date`** subito dopo un commit riuscito. Exit code **0**, e output che
+contraddice l'attesa — la stessa euristica della trappola 15, applicata a un caso in cui il
+comando non è fallito affatto: semplicemente non aveva nulla da mandare, perché il ref del ramo
+non si era mosso.
+
+Nessun danno: `main` e il ramo sono tenuti identici per progetto, quindi è bastato pushare
+`main` e portare il ramo in avanti. Ma se `main` fosse stato protetto, o se avessi avuto lavoro
+non ancora pronto, il commit sarebbe finito nel posto sbagliato.
+
+**È la trappola 1 applicata al branch invece che alla directory:** dopo un `checkout` fatto per
+un'operazione singola, lo stato *persiste*, e il lavoro successivo lo eredita in silenzio.
+
 ### Che cosa NON ho fatto
 
 - **Non ho implementato le 23 guardie `RUNTIME`**: richiederebbero campi di contesto che il
@@ -6823,6 +6841,16 @@ Sintesi operativa degli errori sopra, in forma di regole:
     *«lascia il difetto, oppure aggira il gate»*. La via corretta è la terza: riemettere il
     packet con la revisione incrementata e un **avviso esplicito di cambio hash**, e
     dichiarare l'aggiramento invece di nasconderlo.
+
+47. **Dopo un `git checkout` fatto per un'operazione singola, il branch RESTA quello**
+    (E45, sessione 8). Avevo fatto `checkout main` per pushare, e i tre commit successivi
+    sono finiti su `main` invece che sul ramo di lavoro. È la trappola 1 — *la working
+    directory persiste* — applicata al branch: **anche lo stato del branch persiste**, e il
+    lavoro successivo lo eredita senza dire niente. Il segnale che salva è di nuovo
+    l'incoerenza fra output e attesa: `git push <ramo>` che risponde `Everything up-to-date`
+    subito dopo un commit riuscito, con exit code 0. Contromisura: stampare
+    `git rev-parse --abbrev-ref HEAD` nello stesso comando del commit, come si fa già con
+    `git status --short` per l'indice (trappola 39).
 
 ---
 
